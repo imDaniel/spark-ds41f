@@ -2743,6 +2743,11 @@ def prepare_project(directory: Path, name: str, record: dict) -> None:
     temporary = Path(tempfile.mkdtemp(prefix=f".{name}.", dir=source.parent))
     try:
         checked(["git", "init", "--quiet"], cwd=temporary)
+        # A disposable replay tree has no need for background packing. Keep
+        # fetch/am from launching maintenance that races later patches or the
+        # final directory rename; only this checkout's Git config is changed.
+        checked(["git", "config", "--local", "maintenance.auto", "false"], cwd=temporary)
+        checked(["git", "config", "--local", "gc.auto", "0"], cwd=temporary)
         checked(["git", "remote", "add", "upstream", record["upstream"]], cwd=temporary)
         checked(
             ["git", "fetch", "--quiet", "--filter=blob:none", "--no-tags", "upstream", record["revision"]],

@@ -1,0 +1,5 @@
+python3 -m unittest discover -s tests
+Ran 418 tests in 124.987s
+OK (skipped=5)
+
+Build regression tests (included above): 5 passed.

@@ -1,0 +1,28 @@
+{
+  "diagnostic": "cached upstream promisor packs; not an independent fresh fetch",
+  "replay_exit": "passed",
+  "commands": {
+    "am": 172,
+    "mailsplit": 172,
+    "maintenance": 172,
+    "commit-graph": 10,
+    "repack": 130,
+    "pack-objects": 385,
+    "multi-pack-index": 38
+  },
+  "error_count": 332,
+  "error_examples": [
+    "Unable to create '<local-path>': File exists.\n\nAnother git process seems to be running in this repository, or the lock file may be stale",
+    "failed to write commit-graph",
+    "task 'commit-graph' failed",
+    "failed to perform geometric repack",
+    "task 'geometric-repack' failed",
+    "1 line adds whitespace errors.",
+    "could not find pack '.tmp-71525-pack-4613dde6a0f4bbfd47069b38520a0f97688b791b.pack'",
+    "could not find pack '.tmp-71496-pack-4613dde6a0f4bbfd47069b38520a0f97688b791b.pack'",
+    "could not find pack '.tmp-71525-pack-92829fe006577c64a2ef1dd2accec6a8c496d08c.pack'",
+    "could not find pack '.tmp-71692-pack-cdc1b94435b57d4ed1b10a0dd31d928a12bcbf32.pack'",
+    "could not find pack '.tmp-71717-pack-d70dc031391a9caece6ea50633ef85251c413b4b.pack'",
+    "could not find pack 'pack-00d01e05d6baa4508e12030482ff0362e4903d36.pack'"
+  ]
+}
