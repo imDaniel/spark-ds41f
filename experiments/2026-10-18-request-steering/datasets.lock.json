@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "datasets": [
+    {
+      "name": "xstest",
+      "revision": "d7bb5bd738c1fcbc36edd83d5e7d1b71a3e2d84d",
+      "url": "https://raw.githubusercontent.com/paul-rottger/xstest/d7bb5bd738c1fcbc36edd83d5e7d1b71a3e2d84d/xstest_prompts.csv",
+      "sha256": "11783fb294ed017473ee53c207d71f2161c7672c8d0b037501e78387f801cb5a",
+      "rows": 450,
+      "columns": [
+        "id",
+        "prompt",
+        "type",
+        "label",
+        "focus",
+        "note"
+      ],
+      "license": "CC-BY-4.0"
+    },
+    {
+      "name": "or-bench-hard-1k",
+      "revision": "e36d8b80e81837c8a8f264bbb2a49f1b32c7e272",
+      "url": "https://huggingface.co/datasets/bench-llm/or-bench/resolve/e36d8b80e81837c8a8f264bbb2a49f1b32c7e272/or-bench-hard-1k.csv",
+      "sha256": "a6e2f1166416efe5901f3bb05c47dc92ab3aca3acfe143693d38b8057d841e6d",
+      "rows": 1319,
+      "columns": [
+        "prompt",
+        "category"
+      ],
+      "license": "CC-BY-4.0"
+    },
+    {
+      "name": "or-bench-toxic",
+      "revision": "e36d8b80e81837c8a8f264bbb2a49f1b32c7e272",
+      "url": "https://huggingface.co/datasets/bench-llm/or-bench/resolve/e36d8b80e81837c8a8f264bbb2a49f1b32c7e272/or-bench-toxic.csv",
+      "sha256": "3be45901faae3b4b2b51bf7f8a2784c1650a1cc8c631dbc8b171d5312d4e0057",
+      "rows": 655,
+      "columns": [
+        "prompt",
+        "category"
+      ],
+      "license": "CC-BY-4.0"
+    }
+  ]
+}

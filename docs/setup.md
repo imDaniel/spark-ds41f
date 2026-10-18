@@ -421,7 +421,8 @@ Two files describe your site and stay out of git:
 - **The shape.** Name your cabling once: `bin/spark site shape tp3-triangle
   --apply` (or `tp3-triangle-4k`, `tp4-ring`) writes the git-ignored
   `config/site.json`, which `cluster sync` copies to every node. Every command
-  then resolves the recipe at that shape; `--shape NAME` overrides it.
+  then resolves the recipe at that shape; `--shape NAME` overrides it. A site
+  that names none gets the recipe's `default_shape`, `tp4-ring`.
 - **The recipe.** In `config/cluster.json`, set `distributed.master_addr` to the head's management IP, `host.home`,
   `deployment.repository` if you use a fork (the launch checks every node's
   `origin` against it), and the interface names in `GLOO_SOCKET_IFNAME`, `NCCL_SOCKET_IFNAME`,
@@ -443,13 +444,22 @@ Commands that change the nodes need the configuration named with
 
 ## 5. Model
 
-On every node, download the pinned revision into the Hugging Face cache the
-profile mounts:
+On every node, download the pinned revision of the recipe's model,
+DeepSeek-V4.1-Flash-1017 (476 GiB), into the Hugging Face cache the profile
+mounts:
 
 ```sh
-huggingface-cli download deepseek-ai/DeepSeek-V4.1-Flash \
-  --revision dba1be0a40aa45a94ad051997016db3960a90277
+hf download deepseek-ai/DeepSeek-V4.1-Flash-1017 \
+  --revision 1bae0e1088993b9b82de08f59de5be5a34e42170
 ```
+
+The profile (`models.v41-flash-1017` in [config/cluster.json](../config/cluster.json))
+mounts the whole hub cache, because recent `hf` versions link a repository's blobs
+into a shared store under `hub/blobs`. To copy the checkpoint between nodes, copy
+both `hub/blobs` and the repository's folder. The original checkpoint
+(`deepseek-ai/DeepSeek-V4.1-Flash`, revision
+`dba1be0a40aa45a94ad051997016db3960a90277`) still serves with `"model": "v41-flash"`;
+its config, tokenizer and tensor layout are the same, and every weight shard differs.
 
 ## 6. Image
 

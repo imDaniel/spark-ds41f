@@ -25,6 +25,7 @@ CANDIDATE = "experiments/2026-10-03-tilelang-kernels"
 # Experiments that run the TileLang family and may therefore build its sources.
 TILELANG_EXPERIMENTS = (
     CANDIDATE,
+    "experiments/2026-10-18-request-steering/",
     "experiments/2026-10-03-packed-bf16-head/tilelang-tp4",
     "experiments/2026-10-03-tilelang-tp4-performance",
     "experiments/2026-10-04-tilelang-1m",
@@ -55,6 +56,8 @@ TILELANG_EXPERIMENTS = (
     "experiments/2026-10-17-r6t",
     "experiments/2026-10-17-r6u",
     "experiments/2026-10-17-r6v",
+    "experiments/2026-10-18-r6w-swiglu",
+    "experiments/2026-10-18-apple-rsi",
 )
 FLAGS = ("--attention-backend", "--linear-backend", "--moe-backend")
 # Each TileLang profile and the B12X configuration it mirrors, with that

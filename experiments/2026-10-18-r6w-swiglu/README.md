@@ -1,0 +1,170 @@
+# r6w candidate: the routed SwiGLU over the live tiles
+
+r6w is r6v ([experiments/2026-10-17-r6v](../2026-10-17-r6v/README.md)) with vLLM 0181,
+the experiment [2026-10-14-moe-swiglu](../2026-10-14-moe-swiglu/README.md) planned (owner
+approved 2026-10-14, PR #233), built on r6v's tree.
+
+## Why
+
+Between the routed experts' gate/up and down GEMMs, TileKernels'
+`swiglu_forward_and_per_token_cast` applies DeepSeek's clamp, the SwiGLU and the route
+weight, and casts the down projection's input to MXFP8. It takes about 22 µs a layer at
+every decode row count, 1 to 96 (bench 2026-10-14, `tk-swiglu`), and nothing overlaps it:
+each of its 48 1,024-thread CTAs walks the boundaries of all 384 experts, one expert at a
+time, before it reaches a row. The shared expert's SwiGLU takes about 3 µs.
+
+**Ceiling** (the 2026-10-14 experiment, from the 2026-10-13 fixed-row profile, TP4): a kernel
+near 3 µs saves 20-27 µs a layer, about **2.4-2.7% of a decode step** at one to sixteen
+streams (40 layers), plus the drafter's MoE layer. Prefill is memory-bound at about
+230 GB/s in this kernel; it must not lose there.
+
+## Change
+
+vLLM 0181, `moe_swiglu_cast` in `vllm/models/deepseek_v4_1/tilelang/moe.py`, replacing the
+TileKernels call:
+
+- **Schedule.** A CTA takes 4 rows of one 32-row tile of the dispatch layout (2 when a row
+  has fewer than four warps: TP3's 768 columns), issues every row's loads before any
+  row's arithmetic, and the CTAs of tiles past `num_tiles` (`tile_expert < 0`) stop at
+  once; padding rows (`order < 0`) are skipped, as TileKernels skips them. A decode step
+  pays for its live rows only.
+- **Arithmetic, element for element TileKernels'.** Route weights; the clamp by compare and
+  select (spark-ds41f's TileKernels patch 0001, so a NaN passes as through `torch.clamp`);
+  the fast `__expf`/`__fdividef` product, its certificate and the precise fallback; the
+  same vector width and `get_sf_and_inv`. A warp takes the same `32 * vec` consecutive
+  columns of one row as a TileKernels 32-thread group, so the certificate's warp vote
+  covers the same elements and every byte and scale must equal TileKernels'.
+
+## Gates
+
+1. **Bits** (`bundles/swiglu-tests`, `bundles/swiglu-bench`): every live row's E4M3 bytes
+   and UE8M0 scales equal TileKernels' on real dispatch layouts at TP4, TP3 and the
+   drafter's shapes, decode captures and prefill chunks, with gates past the fast exp's
+   domain and the smallest scales; a NaN gate value reaches its row; graph replays give
+   the eager bits. The TileLang MoE tests (FP32 reference, arithmetic, NaN rows) pass.
+2. **Time per call** (`bundles/swiglu-bench`): faster at decode; within kbench's 3% floor at
+   every prefill size.
+3. **Serving** (`screen.json`, the ring, 1017): temperature-0 and greedy outputs identical
+   to r6v's (3eab5112 / db25fde3, c9cf9dbe); the `release` suite plus `single-stream`, r6w,
+   r6v, r6w again: never slower on any metric, the engine grid and the closed-loop streams
+   faster.
+
+## Runs
+
+1. `kernel.json`: the tests on dgx1 and the bench on dgx2, the overlay mounted over the r6v
+   image.
+2. `screen.json`: the determinism gate and distinct streams on the overlay arm, then the
+   release comparison.
+
+The owner decides promotion; an image build follows a promotion decision.
+
+## Results
+
+### Kernel (2026-10-18, dgx2, r6v image with the overlay)
+
+Every size's bytes and scales equal TileKernels' at every shape, and graph replays give
+the eager bits; the TileLang MoE tests pass (47, `bundles/swiglu-tests` on dgx1). Time per
+call, microseconds, warm / cold, TileKernels then ours
+([results/bench-default.txt](results/bench-default.txt)):
+
+| Rows | TP4 TileKernels | TP4 ours | TP3 TileKernels | TP3 ours |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 21.9 / 24.6 | **1.5** / 4.4 | 22.3 / 26.4 | **1.9** / 6.1 |
+| 6 | 22.0 / 24.6 | **2.4** / 6.0 | 22.8 / 26.6 | **3.0** / 6.1 |
+| 16 | 22.1 / 24.6 | **4.3** / 8.2 | 22.9 / 26.6 | **3.4** / 8.2 |
+| 48 | 22.6 / 26.6 | **9.2** / 14.5 | 22.8 / 26.6 | **6.3** / 12.3 |
+| 96 | 23.5 / 26.8 | **12.8** / 20.5 | 24.2 / 27.0 | **8.4** / 16.4 |
+| 512 | 32.3 / 43.0 | 21.3 / 41.0 | | |
+| 8,192 | 661 / 637 | 615 / 592 | | |
+
+Worst ratio (ours / TileKernels) per bucket, warm or cold: TP4 decode 0.77, mid 0.95,
+prefill 0.96; TP3 0.61, 0.98, 0.98; the drafter (128 experts, top 3) 0.85, 0.90, 0.93.
+
+How the schedule was chosen, all at identical bits:
+- 8 rows a CTA, loads row by row: decode 2-10x faster, but slower cold at TP3's 512 rows
+  (1.09) and the drafter's 96 rows (1.19): each row's loads waited for the previous row's
+  arithmetic, while TileKernels prefetches its next token into L2
+  ([results/bench-rows-sweep-serial.txt](results/bench-rows-sweep-serial.txt), 1-8 rows).
+  One row a CTA was worse everywhere (1.15-1.75 cold).
+- Every row's loads first: the drafter and TP4 within the floor at 4 and 8 rows; TP3's 512
+  rows needed 2 rows a CTA (its rows have 3 warps, TP4's 9)
+  ([results/bench-rows-sweep-loads-first.txt](results/bench-rows-sweep-loads-first.txt)).
+
+### Serving (2026-10-18, the ring, 1017; overlay arms)
+
+**Determinism:** temperature-0 and greedy outputs identical to r6v's (3eab5112 / db25fde3,
+c9cf9dbe; 0 token and 0 log-probability differences in every scenario); the release suite's
+model step: greedy responses identical 256/256, teacher-forced distributions identical over
+65,536 positions (KL 0).
+
+**Release comparison** (r6w, r6v, r6w again; verdicts against the run's own repeat):
+
+| Metric | r6w | r6v | r6w again | Change | ±95% | Verdict |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Engine grid, geometric mean of 20 decode shapes (step time) | | | | -2.17% | 0.15% | better |
+| c16 output tok/s | 241.6 | 242.3 | 241.7 | -0.29% | 0.87% | same |
+| c8 output tok/s | 186.1 | 184.8 | 185.9 | +0.72% | 1.14% | same |
+| Poisson output tok/s | 180.4 | 180.4 | 180.4 | 0.00% | 16.9% | same |
+| Single stream (c1) tok/s | 72.7 | 70.9 | | +2.6% | | |
+| Prefill 32K-1M tok/s | | | | +0.1-0.3% | | |
+
+The grid is faster at 19 of 20 shapes (1-3.5%; 12x72 rows -0.7%, within its interval).
+No metric is slower.
+
+**Why c16 is level although its steps are faster:** at sixteen streams r6w ran 3.65% more
+engine steps a second but committed 3.8% fewer tokens a step, because its draft budget
+verified fewer drafts (1.72 against 1.78 draft tokens a draft). The budget prices drafts
+from cost curves each build profiles once at its first boot (5 replays a shape, median) and
+then pins. r6w's pinned curve makes 48 to 96 rows 5.9% steeper than r6v's, while the
+100-replay grid puts the two slopes within 0.3-1.7% of each other: profile noise, plus a
+real but small steepening (TileKernels' kernel cost the same at every row count, this one
+grows with rows), makes r6w draft less. `samecosts.json` runs r6w on r6v's pinned curves,
+so both builds make the same draft choices.
+
+**Profile** (`profile.json`: r6w, r6v, r6w again under the torch profiler, every arm on r6v's
+pinned cost curves so all three verify the same shapes; every rank's trace):
+
+| Workload | r6w span/step | r6v | r6w again | r6w vs r6v |
+| --- | ---: | ---: | ---: | ---: |
+| One stream, 26 steps | 37.68 ms | 38.54 ms | 37.60 ms | -2.2% |
+| Sixteen code streams, 110 steps | 58.25 ms | 58.63 ms | 57.98 ms | -0.65% to -1.1% |
+
+The same on all four ranks. TileKernels' SwiGLU costs 0.94 ms a step at one stream and
+1.11 ms at sixteen; `moe_swiglu_cast` 0.13 and about 0.43 ms. At sixteen streams r6v's
+shared-expert MXFP8 GEMM (it overlaps the routed experts) also takes 0.86 ms a step against
+0.56 ms beside the new kernel: TileKernels' 48 1,024-thread CTAs held the SMs it shares.
+Every other kernel is level. With the same draft choices, r6w's step is faster at both
+loads; the level c16 throughput above is the draft budget's, not the step's.
+
+**Same cost curves** (`samecosts.json`, the screen suite: r6w on r6v's pinned curves, r6v,
+r6w again): with equal drafting (30.52 against 30.50 tokens a step), c16 is 243.4 and 243.2
+tok/s against r6v's 242.2 (+0.49%, verdict same; repeat -0.08%), engine steps a second
++0.42%, the grid -2.03% (better), prefill level, greedy responses identical 128/128.
+
+### Verdict (for the owner; the owner decides promotion)
+
+Correct: every output identical to r6v's. Never slower: no metric of the release
+comparison is worse; the decode step is faster at every load (grid -2.2%, profile -2.2% at
+one stream and -0.65 to -1.1% at sixteen); c1 +2.6%; with equal drafting c16 +0.5%. On its
+own first-boot cost profile r6w drafts less at sixteen streams and c16 is level (-0.29%).
+An image build (`build.json`), its release tests and the built gate (`gate-tp4-1017.json`)
+follow a promotion decision; the built image profiles its own curves at its first boot.
+
+### The next step, judged by its ceiling: not built
+
+The 2026-10-14 plan's second step folds the SwiGLU into the gate/up GEMM's epilogue. With
+this kernel's measured times its ceiling is small:
+- **Decode:** the whole kernel is 1.9 us (one stream, 3 rows, about 18 live tiles) to
+  12.8 us (16 streams, 96 rows) a layer, so 40 target layers and the drafter's give
+  about 0.08 ms of a 19.2 ms one-stream step (0.4%) and about 0.5 ms of a 51 ms
+  16-stream step (1.0%).
+- **Prefill:** about 615 us a sequence-parallel layer at 8,192 rows, about 12 ms of a
+  1.4 s chunk (0.9%).
+- **Risk:** in a GEMM epilogue a warp holds an MMA fragment, not 32 * vec consecutive
+  columns of one row, so the certificate's warp vote would cover different elements;
+  bits would then depend on the certificate's soundness, which this kernel does not
+  rely on. Gate and up columns would also have to share a tile (a weight repack).
+
+At or under the bench noise floor (about 1%), with a bit-identity risk: not built. Each
+idea is bounded from measurements before it is built, and this one does not clear the
+floor.

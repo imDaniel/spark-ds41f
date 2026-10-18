@@ -1,0 +1,19 @@
+{
+ "experiment": "experiments/2026-10-18-scale-codes",
+ "run": "scale-codes-kernel",
+ "jobs": [
+  {
+   "kind": "kernel",
+   "bundles": [
+    {
+     "node": "dgx3",
+     "bundle": "experiments/2026-10-18-scale-codes/bundles/codes-bench"
+    },
+    {
+     "node": "dgx4",
+     "bundle": "experiments/2026-10-18-scale-codes/bundles/codes-tests"
+    }
+   ]
+  }
+ ]
+}

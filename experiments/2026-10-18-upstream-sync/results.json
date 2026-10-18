@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "scope": "Source integration and local CPU validation; no cluster operations",
+  "upstream": {
+    "repository": "https://github.com/christopherowen/spark-ds41f",
+    "revision": "53ef3558f4ca56f244cfb1566061199ad9a8975f",
+    "commits_since_validation_baseline": 52
+  },
+  "downstream_steering_revision": "2e99502fdb547a7325719a758f45b00be5986ce9",
+  "conflicts_resolved": [
+    ".github/workflows/validate.yml"
+  ],
+  "ci": {
+    "same_repository_pull_requests_validated": true,
+    "path_gated_replays_preserved": true,
+    "steering_full_stack_replay_retained": true,
+    "actionlint_version": "1.7.12",
+    "actionlint_passed": true
+  },
+  "validation": {
+    "repository_unittest": {
+      "run": 430,
+      "passed": 425,
+      "skipped": 5,
+      "failed": 0
+    },
+    "steering_cpu_pytest": {
+      "passed": 83,
+      "cuda_skipped": 25,
+      "failed": 0
+    },
+    "fresh_vllm_replay": {
+      "patches": 180,
+      "head": "eddd508799a2508f12114b36fbd20cf478f045e9",
+      "tree": "5de1eabc3f19b3f646796ef802cbf26a181661a6"
+    },
+    "complete_build_input_check": true,
+    "doctor_shapes": [
+      "tp4-ring",
+      "tp3-triangle",
+      "tp3-triangle-4k"
+    ],
+    "steering_doctor": true,
+    "json_documents_validated": 2093,
+    "script_syntax_checks": true,
+    "git_diff_check": true
+  },
+  "preservation": {
+    "steering_experiment_byte_identical": true,
+    "steering_patches": 8,
+    "author_patches": 172,
+    "promoted_lock_unchanged": true,
+    "runtime_image_unchanged": true,
+    "node_operations": []
+  },
+  "inherited_whitespace_fix": "Remove one trailing blank line from upstream LICENSE; license text unchanged"
+}

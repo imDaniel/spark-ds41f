@@ -13,6 +13,7 @@ def summarize(raw: dict, *, slo_ttft_s: float | None = None, slo_tpot_ms: float 
     }
     if failed:
         summary["requests"]["first_error"] = failed[0]["error"]
+    summary["requests"]["foreign"] = _foreign(raw)
     if raw["window"] is None:  # burst
         events = [e for r in records for e in r["events"]]
         if events:
@@ -51,6 +52,22 @@ def summarize(raw: dict, *, slo_ttft_s: float | None = None, slo_tpot_ms: float 
     summary["requests_per_s"] = len(completed) / (w1 - w0)
     summary["latency"] = _latency(in_window, slo_ttft_s, slo_tpot_ms, w1 - w0)
     return summary
+
+
+def _foreign(raw: dict) -> int | None:
+    """Requests the server finished during the run that were not the run's own: someone
+    else's load on the server (a production client reaching a lab arm, 2026-10-18), so the
+    run's speeds are not the build's. The run's fences (one scrape before its first request,
+    one after its last drained) contain every own request, so the count is the server's
+    finished requests between them less the run's own successful ones, exactly. None when
+    the run has no fences or the server exports no counter."""
+    fences = raw.get("fences") or {}
+    scrapes = fences.get("scrapes") or []
+    if len(scrapes) != 2 or not all(s and "requests_finished" in s for s in scrapes):
+        return None
+    finished = scrapes[1]["requests_finished"] - scrapes[0]["requests_finished"]
+    own = sum(1 for r in raw["records"] if r["end"] is not None and not r["error"])
+    return max(0, round(finished - own))
 
 
 def _latency(records: list[dict], slo_ttft_s, slo_tpot_ms, seconds) -> dict:

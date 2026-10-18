@@ -92,7 +92,8 @@ undo it.
 | 4 | `tp4-ring` | 1,048,576 | 64 KiB | required |
 
 Name your cabling once with `bin/spark site shape NAME --apply`; every command
-then resolves the recipe at that shape (`--shape NAME` overrides it). The 4 KiB
+then resolves the recipe at that shape (`--shape NAME` overrides it). A site that
+names none gets the recipe's default, `tp4-ring`. The 4 KiB
 shape needs no kernel change, so it is the shortest path to a running service.
 A shape starts only once a release benchmark has qualified the recipe's image
 on it (`benchmark_reference`); `cluster start --unqualified-shape` overrides that.
@@ -145,15 +146,15 @@ and the triangle (whose release run is r6u's,
   - DeepSeek's TileKernels 2.0.0 for the MoE top-k gate, the SwiGLU and
     quantization casts and mHC, with the mHC projection a TileLang kernel;
   - TileLang kernels for RoPE, the CSA compressor and its projection, the KV
-    cache writers, the Engram gate and hash, the index-head weight scale and
-    the sparse-MLA metadata (the first port off Triton);
+    cache writers, the Engram gate, hash and row gather, the index-head weight
+    scale, the sparse-MLA metadata (the first port off Triton), the WO
+    projection and the drafter's context-KV projection;
   - sparknet's one-shot RoCE all-reduce and all-gather, explicit and
     fail-stop;
   - L2 weight prefetch during decode (the next layer's weights and scale
     words stream into L2 while latency-bound kernels run);
-  - B12X's fused WO projection, the drafter's context-KV projection, the
-    Engram row lookup and the vision tower's kernels, which the family does
-    not replace yet, and its checkpoint loader;
+  - B12X's vision tower kernels, which the family does not replace yet, and
+    its checkpoint loader;
 - B12X, with all its fixes, as the alternative backend in the same image: its
   FP4 KV writer rounds like DeepSeek's reference quantizer, its indexer top-k
   breaks score ties by position, its dense GEMM and prefill kernels fence
@@ -172,8 +173,9 @@ and the triangle (whose release run is r6u's,
   logits from the packed head, the mHC stream projection in FP32 (each FP32
   weight split into three exact TF32 parts), the shared expert's SwiGLU in
   FP32 with one rounding, and MoE partials rounded once per rank with the
-  shared expert added in the combine; WO-A's FP8 activations are the known
-  deviation left;
+  shared expert added in the combine, and WO-A on BF16 activations with its
+  input quantized as the reference's 2026-10-12 revision does (`act_quant`,
+  block 32, UE8M0);
 - every row's result is independent of its batch: each kernel adds its
   reduction in a fixed order, the collectives add every rank's partial in rank
   order with one FP32 rounding, prefill chunks leave room for every stream's
@@ -752,3 +754,13 @@ Canonical vLLM main is parked; the serving sources are Local Inference Lab's
 `integration/karmic-kraken-beta` vLLM and B12X, TileLang, DeepSeek's
 TileKernels and sparknet, with the local patch series
 ([docs/upstreams.md](docs/upstreams.md)).
+
+## License
+
+spark-ds41f is licensed under the [Apache License 2.0](LICENSE).
+
+Files copied from upstream projects keep their own copyright and license
+headers. These are the vLLM and B12X sources in experiment overlays and bundles,
+and in `docs/serving-audit-2026-10-01/sources`. Each patch series changes its
+upstream's code under that project's license. The upstreams are listed in
+[docs/upstreams.md](docs/upstreams.md).

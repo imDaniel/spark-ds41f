@@ -1,0 +1,359 @@
+From 479a2fd753cfc128640756b3401712025cea2d77 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 15:43:50 +0900
+Subject: [PATCH] Admit request steering and isolate prefix cache identity
+
+Base: r6v plus profile contracts. Rationale: canonical FP32 request dose and content-bound cache salt before scheduling. Stock requests retain their original salt and optional dependencies stay unloaded. Quality: reject unsupported resumable identity changes. Validation: CPU request, boundary and salt tests; real prefix matching remains an integration gate. Upstream status: independent downstream experiment; no upstream submission.
+---
+ .../test_deepseek_v4_1_steering_request.py    |  83 +++++++++++++++
+ vllm/models/deepseek_v4_1/steering/cache.py   |  28 +++++
+ vllm/models/deepseek_v4_1/steering/config.py  | 100 ++++++++++++++++++
+ vllm/models/deepseek_v4_1/steering/request.py |  56 ++++++++++
+ vllm/v1/engine/input_processor.py             |  25 ++++-
+ 5 files changed, 291 insertions(+), 1 deletion(-)
+ create mode 100644 tests/models/test_deepseek_v4_1_steering_request.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/cache.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/config.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/request.py
+
+diff --git a/tests/models/test_deepseek_v4_1_steering_request.py b/tests/models/test_deepseek_v4_1_steering_request.py
+new file mode 100644
+index 000000000..77a861452
+--- /dev/null
++++ b/tests/models/test_deepseek_v4_1_steering_request.py
+@@ -0,0 +1,83 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++from types import SimpleNamespace
++
++import pytest
++
++from tests.models.steering_test_support import valid_profile
++
++# The helper installs this isolated package before its contracts are imported.
++# isort: off
++from ds41_steering_test.cache import steering_cache_salt
++from ds41_steering_test.config import admit
++from ds41_steering_test.request import STOCK, parse_selection
++# isort: on
++
++@pytest.mark.parametrize(
++    "value",
++    [
++        None,
++        True,
++        False,
++        "0.5",
++        float("nan"),
++        float("inf"),
++        -1e-100,
++        1.00000000001,
++        10**500,
++    ],
++)
++def test_scale_rejects_before_float32_rounding(tmp_path, value):
++    with pytest.raises(ValueError):
++        parse_selection(
++            {"steering_profile": "test-profile", "steering_scale": value},
++            valid_profile(tmp_path),
++        )
++
++
++def test_named_default_zero_and_unknown(tmp_path):
++    p = valid_profile(tmp_path)
++    assert parse_selection(None, p) == STOCK
++    assert parse_selection({"steering_profile": p.profile_id}, p).scale == 1
++    for scale in [0, -0.0, 1e-100]:
++        assert (
++            parse_selection(
++                {"steering_profile": p.profile_id, "steering_scale": scale}, p
++            )
++            == STOCK
++        )
++    assert parse_selection({"steering_scale": 0}, None) == STOCK
++    for args in [
++        {"steering_scale": 0.1},
++        {"steering_profile": "bad", "steering_scale": 0},
++        {"steering_profile": None, "steering_scale": 0},
++    ]:
++        with pytest.raises(ValueError):
++            parse_selection(args, p)
++    with pytest.raises(ValueError):
++        parse_selection({"steering_profile": p.profile_id, "steering_scale": 0}, None)
++
++
++def test_cache_identity_and_admission_do_not_mutate_caller(tmp_path):
++    p = valid_profile(tmp_path)
++    args = {"steering_profile": p.profile_id, "steering_scale": 0.5, "other": 7}
++    clone = SimpleNamespace(extra_args=args)
++    salt = admit(clone, p, "caller")
++    assert args == {"steering_profile": p.profile_id, "steering_scale": 0.5, "other": 7}
++    assert clone.extra_args is not args
++    assert salt != "caller"
++    a = parse_selection(args, p)
++    b = parse_selection({**args, "steering_scale": 0.50000000000001}, p)
++    assert a == b and steering_cache_salt("caller", a) == steering_cache_salt(
++        "caller", b
++    )
++    assert len({steering_cache_salt(x, a) for x in [None, "", "caller", "other"]}) == 4
++    assert steering_cache_salt(None, STOCK) is None
++    assert steering_cache_salt("caller", STOCK) == "caller"
++    c = parse_selection({**args, "steering_scale": 0.75}, p)
++    assert steering_cache_salt("caller", c) != salt
++    for kw in [{"resumable": True}, {"session_id": "existing"}]:
++        with pytest.raises(ValueError):
++            admit(clone, p, "caller", **kw)
++    # Ordinary streamed HTTP responses do not set resumable/session_id.
++    assert admit(clone, p, "caller", resumable=False) == salt
+diff --git a/vllm/models/deepseek_v4_1/steering/cache.py b/vllm/models/deepseek_v4_1/steering/cache.py
+new file mode 100644
+index 000000000..796934d7c
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/cache.py
+@@ -0,0 +1,28 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""A content-addressed namespace in the existing request cache-salt field."""
++
++import hashlib
++import struct
++
++from .request import SteeringSelection
++
++
++def steering_cache_salt(
++    original: str | None, selection: SteeringSelection
++) -> str | None:
++    if not selection.active:
++        return original
++    if original is not None and not isinstance(original, str):
++        raise ValueError("cache_salt must be a string or absent")
++    salt = b"" if original is None else original.encode("utf-8")
++    identity = bytes.fromhex(selection.profile_identity)
++    payload = (
++        b"DS41-STEERING-CACHE\x00\x01"
++        + identity
++        + struct.pack("!I", selection.scale_bits)
++        + bytes([original is not None])
++        + struct.pack("!Q", len(salt))
++        + salt
++    )
++    return "ds41-steering-v1:" + hashlib.sha256(payload).hexdigest()
+diff --git a/vllm/models/deepseek_v4_1/steering/config.py b/vllm/models/deepseek_v4_1/steering/config.py
+new file mode 100644
+index 000000000..3de0b7522
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/config.py
+@@ -0,0 +1,100 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Validate the opt-in startup contract before admission or graph preparation."""
++
++import os
++
++from .profile import OPERATOR_VERSION, load_profile, model_identity, template_identity
++
++OFFICIAL_1017_REVISION = "1bae0e1088993b9b82de08f59de5be5a34e42170"
++
++
++def load_configured_profile(vllm_config):
++    additional = vllm_config.additional_config or {}
++    if "ds41_steering" not in additional:
++        return None
++    config = additional["ds41_steering"]
++    keys = {"schema_version", "operator_version", "profile_path", "profile_sha256"}
++    if (
++        not isinstance(config, dict)
++        or set(config) != keys
++        or type(config["schema_version"]) is not int
++        or config["schema_version"] != 1
++        or config["operator_version"] != OPERATOR_VERSION
++        or not isinstance(config["profile_path"], str)
++    ):
++        raise ValueError("Invalid additional_config.ds41_steering")
++    parallel = vllm_config.parallel_config
++    if (
++        parallel.tensor_parallel_size != 4
++        or parallel.pipeline_parallel_size != 1
++        or parallel.data_parallel_size != 1
++        or parallel.decode_context_parallel_size != 1
++        or getattr(parallel, "prefill_context_parallel_size", 1) != 1
++        or parallel.use_ubatching
++        or vllm_config.lora_config is not None
++        or vllm_config.kv_transfer_config is not None
++        or vllm_config.use_request_boundary_checkpoints
++    ):
++        raise ValueError(
++            "Steering requires TP4 without PP/DP/DBO/LoRA/KV connectors "
++            "or boundary checkpoints"
++        )
++    cache = vllm_config.cache_config
++    offload = vllm_config.offload_config
++    if offload.uva.cpu_offload_gb or offload.prefetch.offload_group_size:
++        raise ValueError("Steering weight offload is not qualified")
++    if getattr(cache, "kv_offloading_size", None) or getattr(
++        cache, "enable_kv_cache_transfer", False
++    ):
++        raise ValueError("Steering KV offload/transfer is not qualified")
++    if (
++        os.environ.get("VLLM_USE_V2_MODEL_RUNNER") != "1"
++        or os.environ.get("VLLM_DS41_KERNEL_BACKEND") != "tilelang"
++    ):
++        raise ValueError("Steering requires the V2 model runner and TileLang backend")
++    model = vllm_config.model_config
++    hf = model.hf_config
++    if (
++        getattr(hf, "model_type", None) != "deepseek_v41"
++        or hf.hidden_size != 5120
++        or hf.num_hidden_layers != 40
++        or model.tokenizer_mode != "deepseek_v41"
++    ):
++        raise ValueError(
++            "Steering requires DeepSeek V4.1 Flash 1017 with its native tokenizer"
++        )
++    profile = load_profile(
++        config["profile_path"],
++        config["profile_sha256"],
++        expected_model_identity=model_identity(model.model),
++        expected_template_identity=template_identity(model.model),
++    )
++    if (
++        profile.model_revision != OFFICIAL_1017_REVISION
++        or profile.hidden_size != hf.hidden_size
++        or profile.num_hidden_layers != hf.num_hidden_layers
++    ):
++        raise ValueError("Steering profile and model revision/geometry do not match")
++    return profile
++
++
++def admit(sampling_params, profile, original_salt, *, resumable=False, session_id=None):
++    from .cache import steering_cache_salt
++    from .request import parse_selection
++
++    selection = parse_selection(sampling_params.extra_args, profile)
++    if selection.active and (resumable or session_id is not None):
++        raise ValueError(
++            "Steering identity changes require a new request; "
++            "resumable sessions are not qualified"
++        )
++    if sampling_params.extra_args and (
++        "steering_profile" in sampling_params.extra_args
++        or "steering_scale" in sampling_params.extra_args
++    ):
++        extra = dict(sampling_params.extra_args)
++        if "steering_profile" in extra or "steering_scale" in extra:
++            extra["steering_scale"] = selection.scale
++        sampling_params.extra_args = extra
++    return steering_cache_salt(original_salt, selection)
+diff --git a/vllm/models/deepseek_v4_1/steering/request.py b/vllm/models/deepseek_v4_1/steering/request.py
+new file mode 100644
+index 000000000..500ea6777
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/request.py
+@@ -0,0 +1,56 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Pure CPU request contract, independent of CUDA and model imports."""
++
++from __future__ import annotations
++
++import math
++import struct
++from dataclasses import dataclass
++from typing import TYPE_CHECKING, Any
++
++if TYPE_CHECKING:
++    from .profile import SteeringProfile
++
++
++@dataclass(frozen=True)
++class SteeringSelection:
++    profile_identity: str | None = None
++    scale_bits: int = 0
++
++    @property
++    def scale(self) -> float:
++        return struct.unpack("!f", struct.pack("!I", self.scale_bits))[0]
++
++    @property
++    def active(self) -> bool:
++        return self.scale_bits != 0
++
++
++STOCK = SteeringSelection()
++
++
++def parse_selection(
++    extra_args: dict[str, Any] | None, profile: SteeringProfile | None
++) -> SteeringSelection:
++    args = extra_args or {}
++    named, scaled = "steering_profile" in args, "steering_scale" in args
++    if not named and not scaled:
++        return STOCK
++    if named:
++        name = args["steering_profile"]
++        if not isinstance(name, str) or profile is None or name != profile.profile_id:
++            raise ValueError("steering_profile must name the profile loaded at startup")
++    value = args["steering_scale"] if scaled else 1
++    if type(value) not in (int, float):
++        raise ValueError("steering_scale must be a finite number in [0, 1]")
++    # Validate before rounding: an out-of-range double must not round into range.
++    if not 0 <= value <= 1 or not math.isfinite(value):
++        raise ValueError("steering_scale must be a finite number in [0, 1]")
++    if not named and value != 0:
++        raise ValueError("A nonzero steering_scale requires steering_profile")
++    bits = struct.unpack("!I", struct.pack("!f", float(value)))[0] & 0x7FFFFFFF
++    if bits == 0:
++        return STOCK
++    assert profile is not None
++    return SteeringSelection(profile.identity, bits)
+diff --git a/vllm/v1/engine/input_processor.py b/vllm/v1/engine/input_processor.py
+index bc22336a4..90cd21eec 100644
+--- a/vllm/v1/engine/input_processor.py
++++ b/vllm/v1/engine/input_processor.py
+@@ -52,6 +52,14 @@ class InputProcessor:
+         self.structured_outputs_config = vllm_config.structured_outputs_config
+         self.observability_config = vllm_config.observability_config
+ 
++        self._steering_profile = None
++        if "ds41_steering" in (vllm_config.additional_config or {}):
++            from vllm.models.deepseek_v4_1.steering.config import (
++                load_configured_profile,
++            )
++
++            self._steering_profile = load_configured_profile(vllm_config)
++
+         self.generation_config_fields = model_config.try_get_generation_config()
+ 
+         self.renderer = renderer or renderer_from_config(vllm_config)
+@@ -419,6 +427,21 @@ class InputProcessor:
+                     )
+                 )
+ 
++        cache_salt = decoder_input.get("cache_salt")
++        extra_args = sampling_params.extra_args if sampling_params is not None else None
++        if extra_args and (
++            "steering_profile" in extra_args or "steering_scale" in extra_args
++        ):
++            from vllm.models.deepseek_v4_1.steering.config import admit
++
++            cache_salt = admit(
++                sampling_params,
++                self._steering_profile,
++                cache_salt,
++                resumable=resumable,
++                session_id=session_id,
++            )
++
+         return EngineCoreRequest(
+             request_id=request_id,
+             prompt_token_ids=prompt_token_ids,
+@@ -429,7 +452,7 @@ class InputProcessor:
+             pooling_params=pooling_params,
+             arrival_time=arrival_time,
+             lora_request=lora_request,
+-            cache_salt=decoder_input.get("cache_salt"),
++            cache_salt=cache_salt,
+             priority=priority,
+             data_parallel_rank=data_parallel_rank,
+             trace_headers=trace_headers,
