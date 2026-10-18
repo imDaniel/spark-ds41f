@@ -1,30 +1,35 @@
 name: validate
 
+# Validate all pull requests in this downstream fork, including its own branches.
+# Keep upstream's weekly/manual runs and path-gated source replay.
 on:
-  push:
   pull_request:
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: validate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   repository:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-      - name: Use the example site configuration
+        with:
+          # A pull request's merge commit and the base it merges into.
+          fetch-depth: 2
+      - name: Use the example site
+        run: scripts/example_site.py
+      - name: Validate every shape of the recipe
         run: |
-          cp config/nodes.example.json config/nodes.json
-          python3 - <<'PYCONFIG'
-          import json
-          from pathlib import Path
-          p = Path('config/cluster.json')
-          c = json.loads(p.read_text())
-          c['distributed']['master_addr'] = json.loads(Path('config/nodes.json').read_text())['nodes'][0]['management_ip']
-          p.write_text(json.dumps(c, indent=2) + '\n')
-          PYCONFIG
-      - name: Validate configuration
-        run: bin/spark doctor
+          for shape in $(python3 -c 'import json; print(*json.load(open("config/cluster.json"))["shapes"])'); do
+            bin/spark --shape "$shape" doctor
+          done
       - name: Compile helper
         run: python3 -m py_compile bin/spark
       - name: Unit tests
@@ -57,135 +62,81 @@ jobs:
                   *) sh -n "$file" ;;
                 esac
               done
-      - name: Validate JSON and patches
+      - name: Validate JSON
         run: |
-          git diff --check
           find config manifests experiments -name '*.json' -print0 \
             | xargs -0 -n1 python3 -m json.tool >/dev/null
+      - name: Check the pull request's whitespace
+        if: github.event_name == 'pull_request'
+        # .gitattributes exempts patches and recorded outputs.
+        run: git diff --check HEAD^1 HEAD
+
+  # The patch stacks take minutes to fetch: a pull request runs them only when it
+  # touches a series, the lock or the helper that prepares them.
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      patches: ${{ steps.paths.outputs.patches }}
+      steering: ${{ steps.paths.outputs.steering }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - id: paths
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" != pull_request ] || git diff --name-only HEAD^1 HEAD | grep -qE \
+              '^(patches/|upstreams\.lock\.json$|bin/spark$|experiments/[^/]+/(vllm|b12x|nccl[^/]*|tilelang|tile_kernels)/|experiments/2026-10-03-balanced-policy/)'; then
+            echo patches=true >> "$GITHUB_OUTPUT"
+          else
+            echo patches=false >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$EVENT" != pull_request ] || git diff --name-only HEAD^1 HEAD | grep -qE \
+              '^(experiments/2026-10-18-request-steering/|bin/spark$|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
+            echo steering=true >> "$GITHUB_OUTPUT"
+          else
+            echo steering=false >> "$GITHUB_OUTPUT"
+          fi
 
   patch-stacks:
+    needs: changes
+    if: needs.changes.outputs.patches == 'true'
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        source: [vllm, b12x]
+        source: [vllm, b12x, nccl, tilelang, tile_kernels]
     steps:
       - uses: actions/checkout@v5
-      - name: Use the example site configuration
-        run: |
-          cp config/nodes.example.json config/nodes.json
-          python3 - <<'PYCONFIG'
-          import json
-          from pathlib import Path
-          p = Path('config/cluster.json')
-          c = json.loads(p.read_text())
-          c['distributed']['master_addr'] = json.loads(Path('config/nodes.json').read_text())['nodes'][0]['management_ip']
-          p.write_text(json.dumps(c, indent=2) + '\n')
-          PYCONFIG
+      - name: Use the example site
+        run: scripts/example_site.py
       - name: Apply the local series and check the recorded patch head and tree
         run: bin/spark build prepare --only "${{ matrix.source }}"
 
   request-steering-stack:
+    needs: changes
+    if: needs.changes.outputs.steering == 'true' || needs.changes.outputs.patches == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
+      - name: Use the example site
+        run: scripts/example_site.py
       - name: Use the four-node example map for the isolated experiment
         run: cp config/examples/nodes-ring4.json config/nodes-steering-example.local.json
-      - name: Replay and verify the experimental request-steering vLLM series
+      - name: Replay and verify all 180 experimental request-steering vLLM patches
         run: bin/spark --shape tp4-ring --cluster-config experiments/2026-10-18-request-steering/cluster.json build prepare --only vllm
 
-  rocenante-ring4:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - name: Prepare the experimental relay series
-        run: bin/spark --cluster-config experiments/2026-10-02-rocenante-ring4/cluster.json build prepare --only b12x
-      - name: Stress the real C proxy with simulated DMA and sanitizers
-        run: python3 experiments/2026-10-02-rocenante-ring4/test-protocol.py
-
-  rocenante-mesh4:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - name: Prepare the experimental NIC-forwarded series
-        run: bin/spark --cluster-config experiments/2026-10-02-rocenante-mesh4/cluster.json build prepare --only b12x
-      - name: Stress endpoint QPs and check opposite-only flow labels
-        run: python3 experiments/2026-10-02-rocenante-mesh4/test-protocol.py
-
-  rocenante-fourpaths:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - name: Prepare the four-path experiment
-        run: bin/spark --cluster-config experiments/2026-10-02-mesh4-fourpaths/cluster.json build prepare --only b12x
-      - name: Stress mixed path counts and rotating submission order
-        run: python3 experiments/2026-10-02-mesh4-fourpaths/test-protocol.py
-
-  rocenante-bidirectional:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - name: Use the ring example on the CPU-only builder
-        run: cp config/examples/nodes-ring4.json config/nodes-ring4.local.json
-      - name: Prepare the bidirectional relay experiment
-        run: bin/spark --cluster-config experiments/2026-10-03-ring4-bidirectional/cluster.json build prepare --only b12x
-      - name: Check both relay directions and receiver completion ordering
-        run: python3 experiments/2026-10-03-ring4-bidirectional/test-protocol.py
-
-  nccl-bidirectional:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - name: Use the ring example on the CPU-only builder
-        run: cp config/examples/nodes-ring4.json config/nodes-ring4.local.json
-      - name: Prepare the bidirectional NCCL policy
-        run: bin/spark --cluster-config experiments/2026-10-03-nccl-bidirectional/cluster.json build prepare --only nccl
-      - name: Verify direct reciprocal rings and unsupported geometry rejection
-        run: python3 experiments/2026-10-03-nccl-bidirectional/test-policy.py
-
-  nccl-balanced-plans:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - name: Use the ring example on the CPU-only builder
-        run: cp config/examples/nodes-ring4.json config/nodes-ring4.local.json
-      - name: Prepare the balanced allocation experiment
-        run: bin/spark --cluster-config experiments/2026-10-03-balanced-policy/paired.json build prepare --only nccl
-      - name: Verify direction and PCIe-root coverage
-        run: python3 experiments/2026-10-03-balanced-policy/test-policy.py
-      - name: Verify fine partition boundaries preserve every element
-        run: python3 experiments/2026-10-03-balanced-policy/test-allocation.py
-
+  # Production applies this experiment's adaptive NCCL series.
   nccl-adaptive-plans:
+    needs: changes
+    if: needs.changes.outputs.patches == 'true'
     runs-on: ubuntu-24.04
     env:
       BALANCED_TEST_PROFILE: experiments/2026-10-03-balanced-policy/adaptive.json
     steps:
       - uses: actions/checkout@v5
-      - run: cp config/examples/nodes-ring4.json config/nodes-ring4.local.json
+      - run: scripts/example_site.py
       - run: bin/spark --cluster-config experiments/2026-10-03-balanced-policy/adaptive.json build prepare --only nccl
       - run: python3 experiments/2026-10-03-balanced-policy/test-policy.py
       - run: python3 experiments/2026-10-03-balanced-policy/test-allocation.py
       - run: python3 experiments/2026-10-03-balanced-policy/test-threads.py
-
-  rocenante-dispatch:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - run: cp config/examples/nodes-ring4.json config/nodes-ring4.local.json
-      - run: bin/spark --cluster-config experiments/2026-10-03-balanced-policy/selected.json build prepare --only b12x
-      - run: python3 experiments/2026-10-03-balanced-policy/test-dispatch.py
-      - run: python3 experiments/2026-10-03-balanced-policy/test-relay.py
-
-  collective-contract:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v5
-      - run: cp config/examples/nodes-ring4.json config/nodes-ring4.local.json
-      - name: Prepare the explicit collective policy
-        run: bin/spark --cluster-config experiments/2026-10-03-collective-contract/candidate.json build prepare --only vllm,b12x
-      - name: Check dispatch limits, reporting, SP boundary and fail-stop behavior
-        run: python3 experiments/2026-10-03-collective-contract/test-contract.py
-      - name: Prepare the TP3 and TP4 profiles' sources (the TP4 recipe's lock)
-        run: bin/spark --cluster-config experiments/2026-10-04-tp4-memory-tuning/candidate.json build prepare --only vllm,b12x
-      - name: Check TP3 and TP4 layout against pinned source helpers
-        run: python3 experiments/2026-10-03-transport-profiles/check-layout-source.py

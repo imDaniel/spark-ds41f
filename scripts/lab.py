@@ -1477,9 +1477,13 @@ def run_kernel_bundles(step: dict) -> list[dict]:
         return verdict
 
     # Same thermal starting point as a bench: every node below the cooling threshold.
+    # The site's fan policy applies here too: on a board that cannot run the fan
+    # control (host.fan_control false) cool_nodes returns without touching the fans,
+    # exactly as command_bench passes it.
     names = sorted({entry["node"] for entry in step["bundles"]})
     spark.cool_nodes(nodes, [spark.node_by_name(nodes, name) for name in names],
-                      spark.COOL_BELOW_C, spark.COOL_TIMEOUT_S)
+                      spark.COOL_BELOW_C, spark.COOL_TIMEOUT_S,
+                      fan_control=spark.fan_control_enabled(cluster))
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(step["bundles"])) as pool:
         verdicts = list(pool.map(one, step["bundles"]))
     local = ROOT / step["out"]
@@ -1650,7 +1654,11 @@ def execute(spec: dict, dry: bool, keep_open: bool, close_on_failure: bool = Tru
                     break
             elif step["kind"] == "analyze":
                 summary = analyze(step)
-                log(f"analysed {step['out']}: {'PASSED' if summary['passed'] else 'DIFFERENCES'}")
+                passed = summary["passed"]
+                log(f"analysed {step['out']}: {'PASSED' if passed else 'DIFFERENCES'}")
+                if not passed:
+                    failed = f"analysis of {step['out']} found differences"
+                    break
             elif step["kind"] == "image":
                 problem = run_image(step)
                 if problem:
