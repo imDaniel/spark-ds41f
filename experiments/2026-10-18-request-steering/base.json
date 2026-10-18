@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "status": "planning-only",
+  "created_on": "2026-10-18",
+  "development_policy": {
+    "foundation": "original-spark-ds41f-project",
+    "upstream_tracking": "continue-integrating-upstream-development",
+    "baseline_scope": "current-modification-and-validation-cycle-only",
+    "permanent_r6v_constraint": false,
+    "upstream_update": "select-new-baseline-adapt-patches-and-revalidate-preserving-prior-evidence"
+  },
+  "deployment": {
+    "repository": "https://github.com/imDaniel/spark-ds41f",
+    "upstream": "https://github.com/christopherowen/spark-ds41f",
+    "base_commit": "11d31712a5821948f3cbfe14c0ae8419efb22a81",
+    "baseline": "2026-10-17-karmic-kraken-r6v"
+  },
+  "vllm": {
+    "upstream": "https://github.com/local-inference-lab/vllm.git",
+    "base_revision": "19f2c20ed4d64ae22bd009ceacadd85e2a81e354",
+    "canonical_base": {
+      "upstream": "https://github.com/vllm-project/vllm.git",
+      "revision": "0f8fa53acf43a9a6a7a1f7e6b196950c78cd6d7a"
+    },
+    "author_series": "experiments/2026-10-17-r6v/vllm/series",
+    "author_patch_count": 172,
+    "source_manifest": "manifests/sources/2026-10-17-r6v-source.json",
+    "patchset_sha256": "00b1018e0078de4fc986554d9eccc8ed1e7f404e54268ba4e71054e03396c0c4",
+    "patch_head": "c001cc4ed77bef686ddd006be0dd706b9c15d7b7",
+    "expected_tree": "d11e9836e61bc2b763d6805d3324ec8fb5376360"
+  },
+  "target": {
+    "runner": "V2",
+    "kernel_backend": "tilelang",
+    "topology": "tp4-ring",
+    "model_repository": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+    "model_revision": "1bae0e1088993b9b82de08f59de5be5a34e42170",
+    "profile_id": "heretic-1017-attn-v1",
+    "operator": "attention-writer-direction-projection",
+    "layer_indexing": "zero-based",
+    "layers": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39
+    ],
+    "hidden_size": 5120,
+    "direction_dtype": "float32",
+    "direction_payload_bytes": 778240,
+    "candidate_layer_alpha": 2.5,
+    "request_scale_range": [
+      0,
+      1
+    ]
+  },
+  "profile_source": {
+    "repository": "pqhaz/DeepSeek-V4.1-Flash-1017-heretic",
+    "revision": "12d58ad0878b5008e80d720251adb969a0069412",
+    "file": "ablation_directions.pt",
+    "file_sha256": "87e81bffab36b046786eb7a3888c8d12c69ddef145235e363e0d4fb2c8fe31b4",
+    "tensor": "projected",
+    "slice": "[2:40]",
+    "runtime_artifact": "not-created"
+  },
+  "execution": {
+    "implemented_patch_count": 0,
+    "candidate_config_created": false,
+    "candidate_image_built": false,
+    "gpu_tests_run": false,
+    "cluster_operations_authorized": false,
+    "weights_modified": false
+  },
+  "baseline_validation": {
+    "local_example_doctor": "passed",
+    "fresh_build_prepare_vllm": "passed-fresh-macos-and-local-linux-with-build-helper-fix",
+    "candidate_validation": "not-implemented",
+    "existing_cpu_suite": {
+      "status": "passed",
+      "tests_run": 418,
+      "skipped": 5,
+      "fixture": "isolated-example-node-maps-with-original-recipe"
+    },
+    "planning_links_identity_and_diff": "passed",
+    "full_build_prepare": "passed-macos-all-inputs",
+    "build_check": "passed-macos",
+    "p0_fix": {
+      "commit": "9635927",
+      "pull_request": "https://github.com/imDaniel/spark-ds41f/pull/2",
+      "merge_status": "merged",
+      "scope": "repository-local-Git-maintenance-in-disposable-source-checkouts",
+      "merge_commit": "58d72027a85782260901993702ed9c61f5f5a514"
+    },
+    "export_context_sha256": "398e3570245a35cce7d013ff02335dd4467bc78ce4aef764c60b4518dcc20170",
+    "original_failures_retained": [
+      "0154-missing-git-blob",
+      "0103-missing-git-blob"
+    ]
+  }
+}
