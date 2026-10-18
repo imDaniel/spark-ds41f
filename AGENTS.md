@@ -5,6 +5,35 @@ Read `README.md`, `docs/methodology.md`, `docs/upstreams.md`, `docs/inspiration.
 before changing runtime or build state. For performance work, `TODO.md` lists
 the open levers, measured dead ends, and the lean screening routine.
 
+## Fork maintenance policy
+
+This fork follows an independent downstream maintenance strategy. Develop,
+review and release site-specific changes in `imDaniel/spark-ds41f` (or another
+owner-controlled component fork explicitly selected for the task). Keep local
+feature planning and releases independent of the upstream roadmap; integrate
+upstream updates here after validation. Treat `christopherowen/spark-ds41f` and
+the author's component forks as read-only integration sources. Do not push our
+branches or open patch pull requests there. Any future upstream contribution
+requires a separate, explicit owner request defining its scope. This policy
+takes precedence over the inherited contribution-flow guidance below and in
+`CONTRIBUTING.md` and `docs/upstreams.md`.
+
+Continue development on the original project's evolving codebase. r6v is the
+stable starting point for the current steering modification and validation
+cycle, not a permanent fork baseline. Pin exact revisions per experiment for
+reproducibility; select and validate a new baseline when integrating upstream
+updates, and preserve earlier experiment records.
+
+For planning documents and wording revisions, finish drafting and review locally
+before publishing a PR. Keep one final commit in each such PR rather than
+pushing the intermediate editing steps.
+
+Keep deployment `origin` pointed at this fork and disable its `upstream` push
+URL. Preserve upstream provenance and small rebasable patch boundaries. If an
+upstream independently supplies equivalent functionality, adopt it and retire
+the redundant downstream patch after validation; no upstream submission is
+needed for that maintenance step.
+
 ## Sources of truth
 
 - `config/cluster.json` is the promoted runtime configuration: one recipe for every
