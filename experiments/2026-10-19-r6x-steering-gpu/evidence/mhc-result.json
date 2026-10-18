@@ -1,0 +1,90 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "case": "pre-world1-rows1",
+      "stock_bits_equal": true,
+      "parent_us": 11.887999534606934,
+      "candidate_us": 11.419903755187988,
+      "change_pct": -3.9375487697175693
+    },
+    {
+      "case": "broadcast-world1-rows1",
+      "stock_bits_equal": true,
+      "parent_us": 8.205408096313477,
+      "candidate_us": 8.206624031066895,
+      "change_pct": 0.014818699315699568
+    },
+    {
+      "case": "post_pre-world1-rows1",
+      "stock_bits_equal": true,
+      "parent_us": 12.28604793548584,
+      "candidate_us": 12.292896270751953,
+      "change_pct": 0.055740750012311935
+    },
+    {
+      "case": "post_pre-world4-rows1",
+      "stock_bits_equal": true,
+      "parent_us": 12.29206371307373,
+      "candidate_us": 12.296575546264648,
+      "change_pct": 0.03670525386325618
+    },
+    {
+      "case": "pre-world1-rows96",
+      "stock_bits_equal": true,
+      "parent_us": 32.59462356567383,
+      "candidate_us": 33.08863830566406,
+      "change_pct": 1.5156325981027452
+    },
+    {
+      "case": "broadcast-world1-rows96",
+      "stock_bits_equal": true,
+      "parent_us": 21.31056022644043,
+      "candidate_us": 21.181215286254883,
+      "change_pct": -0.6069523222813511
+    },
+    {
+      "case": "post_pre-world1-rows96",
+      "stock_bits_equal": true,
+      "parent_us": 35.40652847290039,
+      "candidate_us": 35.4317741394043,
+      "change_pct": 0.07130229252276798
+    },
+    {
+      "case": "post_pre-world4-rows96",
+      "stock_bits_equal": true,
+      "parent_us": 37.39440155029297,
+      "candidate_us": 37.53411102294922,
+      "change_pct": 0.3736106659397942
+    },
+    {
+      "case": "pre-world1-rows8192",
+      "stock_bits_equal": true,
+      "parent_us": 3729.01611328125,
+      "candidate_us": 3705.3790283203125,
+      "change_pct": -0.6338692095416709
+    },
+    {
+      "case": "broadcast-world1-rows8192",
+      "stock_bits_equal": true,
+      "parent_us": 3409.45068359375,
+      "candidate_us": 3371.5695190429688,
+      "change_pct": -1.1110635720019357
+    },
+    {
+      "case": "post_pre-world1-rows8192",
+      "stock_bits_equal": true,
+      "parent_us": 4872.9327392578125,
+      "candidate_us": 4860.085754394531,
+      "change_pct": -0.26363969196172565
+    },
+    {
+      "case": "post_pre-world4-rows8192",
+      "stock_bits_equal": true,
+      "parent_us": 5904.522705078125,
+      "candidate_us": 5952.2637939453125,
+      "change_pct": 0.8085511945974622
+    }
+  ],
+  "scope": "independent-image stock mHC; diagnostic timings only"
+}

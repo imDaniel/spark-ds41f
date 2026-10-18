@@ -1,0 +1,2 @@
+The byte-for-byte original historical official recipe is retained here. SHA-256: 8458d5a7d6f9d7ad229e1df8e0b73102a367cd0f3f90b05e4b843d595063993f.
+Its measured source was the 172-patch r6v/d11 tree because the root lock selected r6v at the time. After the r6x integration, official.json now explicitly names the retained r6v lock to preserve that original source selection. Historical result/receipt bytes and the recipes deployed on the nodes are unchanged.

@@ -1,0 +1,179 @@
+"""Test-only launch-layout screening; never installed in a serving source tree."""
+import argparse
+import gc
+import hashlib
+import json
+import random
+import statistics
+import time
+import traceback
+from pathlib import Path
+from types import SimpleNamespace
+
+import torch
+
+from vllm.models.deepseek_v4_1.steering import consume, ops
+from vllm.models.deepseek_v4_1.tilelang import mhc
+from vllm.v1.worker.workspace import (
+    collect_cuda_graph_capture_resources,
+    init_workspace_manager,
+    reset_workspace_manager,
+)
+
+p = argparse.ArgumentParser()
+p.add_argument('--output', type=Path, required=True)
+p.add_argument('--identity', type=Path, required=True)
+a = p.parse_args()
+assert not a.output.exists()
+identity = json.loads(a.identity.read_text())
+for name, module in [('ops', ops), ('consume', consume), ('mhc', mhc)]:
+    assert hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest() == identity[name], name
+assert torch.cuda.get_device_capability() == (12, 1)
+init_workspace_manager(torch.device('cuda'))
+record = dict(identity=identity, device=torch.cuda.get_device_name(), torch=torch.__version__,
+              scope='same-source isolated kernels, not r6x whole-model qualification',
+              cases=[], completed=False)
+a.output.write_text(json.dumps(record, indent=2))
+started = time.time()
+
+
+def save():
+    record['elapsed_seconds'] = time.time() - started
+    a.output.write_text(json.dumps(record, indent=2))
+
+
+def capture(fn, repetitions):
+    stream = torch.cuda.Stream()
+    stream.wait_stream(torch.cuda.current_stream())
+    with torch.cuda.stream(stream):
+        for _ in range(3):
+            fn()
+    torch.cuda.current_stream().wait_stream(stream)
+    torch.cuda.synchronize()
+    graph = torch.cuda.CUDAGraph()
+    with collect_cuda_graph_capture_resources() as resources, torch.cuda.graph(graph):
+        for _ in range(repetitions):
+            output = fn()
+    graph.replay()
+    torch.cuda.synchronize()
+    return graph, resources, output
+
+
+def elapsed(graph, repetitions):
+    start, end = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
+    start.record()
+    for _ in range(12):
+        graph.replay()
+    end.record()
+    end.synchronize()
+    return start.elapsed_time(end) * 1000 / (12 * repetitions)
+
+
+try:
+    for rows in (1, 4, 5, 6, 16, 96, 128, 205):
+        h = 5120
+        gen = torch.Generator(device='cuda').manual_seed(20261019 + rows)
+        writer = torch.randn(rows, h, device='cuda', dtype=torch.bfloat16, generator=gen)
+        original_writer = writer.clone()
+        direction = torch.randn(h, device='cuda', generator=gen)
+        direction /= direction.double().norm().float()
+        scales = torch.ones(rows, device='cuda')
+        dots = torch.full((rows, 2), float('nan'), device='cuda')
+        residual = torch.randn(rows, 4, h, device='cuda', dtype=torch.bfloat16, generator=gen)
+        post = torch.rand(rows, 4, device='cuda', generator=gen)
+        comb = torch.rand(rows, 4, 4, device='cuda', generator=gen)
+        fn = torch.randn(24, 4 * h, device='cuda', generator=gen) / (4 * h) ** 0.5
+        params = (residual, post, comb, fn, torch.ones(3, device='cuda'),
+                  torch.zeros(24, device='cuda'), torch.ones(h, device='cuda', dtype=torch.bfloat16), post)
+        layer = mhc.TileKernelsMHC(SimpleNamespace(hc_mult=4, hidden_size=h,
+                     rms_norm_eps=1e-6, hc_eps=1e-6, hc_sinkhorn_iters=20))
+        layer.steering_enabled = True
+        # Test-only declaration scope: ordinary WORLD=1 consumer, no transport.
+        layer._entries = lambda: [(mode, 1) for mode in ('pre', 'post_pre', 'broadcast')]
+        layer.declare_kernels()
+        controls = dict(steering_direction=direction, steering_scales=scales,
+                        steering_dots=dots, steering_alpha=2.5)
+
+        def launch(warps):
+            return ops._dot_kernel[(rows,)](writer, direction, scales, dots, 0,
+                         HIDDEN=h, WORLD=1, BLOCK=8192, num_warps=warps, enable_fp_fusion=False)
+
+        def invoke(warps):
+            launch(warps)
+            return layer.post_pre(writer, *params, **controls)
+
+        case = dict(rows=rows, seed=20261019 + rows, layouts={}, samples=[])
+        record['cases'].append(case)
+        graphs = {}
+        for warps in (8, 4, 16, 32):
+            entry = dict(correctness=False)
+            case['layouts'][str(warps)] = entry
+            try:
+                writer.copy_(original_writer)
+                scales.fill_(1.0)
+                compiled = launch(warps)
+                torch.cuda.synchronize()
+                entry['kernel'] = dict(registers=compiled.n_regs, spills=compiled.n_spills,
+                                       shared_bytes=compiled.metadata.shared)
+                reference_dot = (writer.double() * direction.double()).sum(-1)
+                error = ((dots[:, 0].double() + dots[:, 1].double()) - reference_dot).abs()
+                denominator = (writer.double().abs() * direction.double().abs()).sum(-1)
+                entry['dot_max_relative_to_absolute_sum'] = (error / denominator).max().item()
+                assert (error <= 2e-12 * denominator).all(), 'compensated dot accuracy'
+                graph, resources, observed = capture(lambda: invoke(warps), 1)
+                pointers = [t.data_ptr() for t in observed]
+                for near_collinear in (False, True):
+                    if near_collinear:
+                        writer.copy_((direction[None, :] * 64).to(torch.bfloat16).expand_as(writer))
+                    for dose in (0.0, 0.25, 0.5, 0.75, 1.0, 2.0, 4.0, 1.0):
+                        scales.fill_(dose)
+                        if rows > 1:
+                            scales[0] = 0
+                        dots.fill_(float('nan'))
+                        graph.replay()
+                        projected = writer.clone()
+                        ops.project_writer(projected, direction, scales, 2.5)
+                        expected = layer.post_pre(projected, *params)
+                        for actual, oracle in zip(observed, expected):
+                            torch.testing.assert_close(actual, oracle, rtol=0, atol=0)
+                        assert pointers == [t.data_ptr() for t in observed]
+                        if dose == 0:
+                            assert dots.isnan().all(), 'zero row read/write contract'
+                entry['correctness'] = True
+                entry['graph_dose_cases'] = 16
+                del graph, resources, observed
+                writer.copy_(original_writer)
+                scales.fill_(1.0)
+                dot_graph = capture(lambda: launch(warps), 128)
+                total_graph = capture(lambda: invoke(warps), 16)
+                graphs[warps] = (dot_graph, total_graph)
+            except Exception:
+                entry['error'] = traceback.format_exc()
+            save()
+        assert 8 in graphs, 'baseline itself failed'
+        writer.copy_(original_writer)
+        scales.fill_(1.0)
+        # Each round alternates deterministic order; retain every window.
+        order = list(graphs)
+        rng = random.Random(1729 + rows)
+        for round_number in range(11):
+            rng.shuffle(order)
+            for warps in order:
+                dot_graph, total_graph = graphs[warps]
+                case['samples'].append(dict(round=round_number, warps=warps,
+                    dot_us=elapsed(dot_graph[0], 128), total_us=elapsed(total_graph[0], 16)))
+            save()
+        for warps in graphs:
+            selected = [s for s in case['samples'] if s['warps'] == warps]
+            case['layouts'][str(warps)]['median_dot_us'] = statistics.median(s['dot_us'] for s in selected)
+            case['layouts'][str(warps)]['median_total_us'] = statistics.median(s['total_us'] for s in selected)
+        print(json.dumps(dict(rows=rows, layouts=case['layouts'])), flush=True)
+        save()
+        del graphs, layer, writer, residual, params
+        gc.collect()
+        torch.cuda.empty_cache()
+    record['completed'] = True
+    save()
+finally:
+    save()
+    reset_workspace_manager()

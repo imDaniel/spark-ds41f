@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "files": {
+    "stock-evidence-check.json": {
+      "sha256": "517b268a6ee76452a257e1623583e6026c0610c5fed04f0139fed354a28d9555",
+      "bytes": 445
+    },
+    "trace-events.tar": {
+      "sha256": "b2cce94393713c184841a6427d78333854ac263834756a576f717c83bd4f7ca7",
+      "bytes": 37427200
+    },
+    "api-stock-observations.json": {
+      "sha256": "7a52da1feb21a047996422fcb5307aec11996e274d78cb33550e3a2af1fdd916",
+      "bytes": 340593
+    },
+    "initial-c035-gpu-kernels.txt": {
+      "sha256": "27f6d0ba9ecd4c213c71f9115b21353d9aa0120d22f679193d28145d78778ec5",
+      "bytes": 59470
+    },
+    "trace-manifest.json": {
+      "sha256": "722014510aceec3cd9fa8b5d87c201afb8a92dec0b543baf56078afafc9ddbac",
+      "bytes": 11105
+    },
+    "gpu-kernels.txt": {
+      "sha256": "076f66f13f2a260b067dc32ea04e37b61ce1febde64ab7f6665221386d478ade",
+      "bytes": 528
+    },
+    "stock-mhc-driver.py.txt": {
+      "sha256": "f7925be711c489764db9f2247ca26ce986e22446c8b0443d319fe3abaa3e7f6d",
+      "bytes": 5878
+    },
+    "mhc-candidate.json": {
+      "sha256": "ec55007198e93743de62f3580bb8c5dec88816ba8fe4939473ea3d1b70ee7b59",
+      "bytes": 20707
+    },
+    "gpu-kernels.xml": {
+      "sha256": "6d693bf30ae6b73e8ebe06ec2daf915117284c6e5c42e91421a70a88b27e552f",
+      "bytes": 4300
+    },
+    "mhc-parent.json": {
+      "sha256": "48ee37e30c6e773684b8ea896643ede61483e3f7b4f37c65f3bc75691223f5b1",
+      "bytes": 20692
+    },
+    "trace-event-check.json": {
+      "sha256": "17dc633c7a89ed0f38a6b2b5eb6305e147289fedaaae4487cbb12684c9c62dc5",
+      "bytes": 12176
+    }
+  },
+  "verification_source_sha256": {
+    "probe_model.py": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "check_traces.py": "faa3e8735cda86a5a10fc51c4d7f97f264adeebdc45d6a0b4e11bca0fba5738b",
+    "check_stock_evidence.py": "16d859980b233ed7b31f9034de74e89037089624bdf09024af50a931f605fd8e"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-19T03:13:04.228506+00:00",
+  "health_status": 200,
+  "models": [
+    {
+      "id": "deepseek-v4.1-flash",
+      "max_model_len": 1048576
+    }
+  ]
+}

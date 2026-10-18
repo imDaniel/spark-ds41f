@@ -1,0 +1,766 @@
+{
+  "node": 1,
+  "scope": "ELF machine code, code section flags/info/alignment, CUDA target flags, constants and static shared allocation; not whole-file metadata",
+  "official_kernels": 6,
+  "candidate_kernels": 7,
+  "stock_execution_equal": 6,
+  "missing_stock_execution": 0,
+  "rows": {
+    "official": [
+      {
+        "kind": "project",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b29b7d42dcce3d8efbfe6e0c2945fd33f65a6793af9761cd1d4490ca3b52b44e/kernel.cubin",
+        "bytes": 286256,
+        "sha256": "5482eaca1c2debdbe4ebf8be65c5e5d6a004ffe9f7a54319515adccf844595ef",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_project_streams_kernel",
+              "bytes": 40448,
+              "sha256": "1101c09b4b29d9921545b3abc3c7c8331458e8d3a744ae1dc0ddfdb33031b5b5",
+              "flags": 6,
+              "info": 24,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant4",
+              "bytes": 72,
+              "sha256": "834a709ba2534ebe3ee1397fd4f7bd288b2acc1d20a08d6c862dcd99b6f04400",
+              "flags": 2,
+              "alignment": 8
+            },
+            {
+              "name": ".nv.constant0.mhc_project_streams_kernel",
+              "bytes": 988,
+              "sha256": "ed02a689d8616afce681709a192fbb432e3c246c001759a89e60196b8f8bdeea",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_project_streams_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "11311911b6661fe842432b4849370e27d7abc0f8ecd676cafa25dc05fb678863",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "486339c5b068bfde268fc75ce3e2c1be550cdf0a210461e2c2a2c3350ce3546c"
+          },
+          {
+            "name": ".nv.info.mhc_project_streams_kernel",
+            "sha256": "dc8271d3d3b2109aa27f3efc0349c394ba914c2256949066c93f439e6997546c"
+          }
+        ]
+      },
+      {
+        "kind": "project",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/2ad4153e58b9e31a2cfc2794f7bc087ce3febfb6b53cdfc0135aff660095cfe6/kernel.cubin",
+        "bytes": 210160,
+        "sha256": "fbfd155c385563e55f1acb6992415c5d25c279876b5247fb72c4cfaf7edd2458",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_project_streams_kernel",
+              "bytes": 27648,
+              "sha256": "7b51fd94758de9fa2d12e6adc6c433b205d6a15d5ef475f7e7916ae2171c69ae",
+              "flags": 6,
+              "info": 24,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant4",
+              "bytes": 72,
+              "sha256": "834a709ba2534ebe3ee1397fd4f7bd288b2acc1d20a08d6c862dcd99b6f04400",
+              "flags": 2,
+              "alignment": 8
+            },
+            {
+              "name": ".nv.constant0.mhc_project_streams_kernel",
+              "bytes": 956,
+              "sha256": "00d838a26c2274c5ebe71887d0cac7bf47e85329d838d7f6668ac6ae1d195269",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_project_streams_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "9805d1b6f4c3516a35c372cffa7e91c2a487be177d6d636323630d1d9d5ce1bf",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "2b4f33f8ffd5e99797cb09a3665126f0a34c1fdfb2a0082eaae934e9d86dc8e3"
+          },
+          {
+            "name": ".nv.info.mhc_project_streams_kernel",
+            "sha256": "70f2662a7239b33db9fe92850adfa9ae886d978e183af97bbfc27b11543ac4cd"
+          }
+        ]
+      },
+      {
+        "kind": "finalize",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/dcb6becf7059eab50b403d2947db70c0ef2e839dd22a207e918fd4a118c542a4/kernel.cubin",
+        "bytes": 75472,
+        "sha256": "79387107b70dfc2ffe0cf25916a561f3c998541e9b5fa057066ed40bd94223a0",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_finalize_kernel",
+              "bytes": 20736,
+              "sha256": "89f033cf735c9a57ed6632a984c2421b7d6c3c7fd7369744b30fdef5c4736342",
+              "flags": 6,
+              "info": 15,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant0.mhc_finalize_kernel",
+              "bytes": 988,
+              "sha256": "ed02a689d8616afce681709a192fbb432e3c246c001759a89e60196b8f8bdeea",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_finalize_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "6dce8719ba6fac2e8d1a4f84803b8fcbec220830afd65e68e370218a07d187e1",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "3b9e8a983c7844cdda536a705db0af919424148b9999685a20cabd42f806c7e2"
+          },
+          {
+            "name": ".nv.info.mhc_finalize_kernel",
+            "sha256": "c0d982b91d0280d52b7c1292a8e446f5e157198223c16f6d3dbc7f8574c70bf5"
+          }
+        ]
+      },
+      {
+        "kind": "project",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b1ba400d9cd4f4b7f86bf5604b812d376dbef69abd1685016173c49693239cbd/kernel.cubin",
+        "bytes": 86320,
+        "sha256": "290428e630c6fbc3e744b777127d7cf5d0950c9280070ce52045c0c4a33e6a92",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_project_streams_kernel",
+              "bytes": 11136,
+              "sha256": "cfd8fcb2e8ba3f8c27f3fe29061ec7a99f830776edde61dd1723bd20714b466f",
+              "flags": 6,
+              "info": 24,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant4",
+              "bytes": 72,
+              "sha256": "834a709ba2534ebe3ee1397fd4f7bd288b2acc1d20a08d6c862dcd99b6f04400",
+              "flags": 2,
+              "alignment": 8
+            },
+            {
+              "name": ".nv.constant0.mhc_project_streams_kernel",
+              "bytes": 964,
+              "sha256": "788ddb3f7716950d0d204e6cad9fe3cc1dddb6140f615cb1c76bea0541722c20",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_project_streams_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "70b25d5d62cf386c5f2fd66a37a533859c363342c47942fe260db26ae51dec4f",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "0f89998e7df0c2b78cc1a1737c9c824e0cfd75ce652fd28aa1dd5b8ad7ff5051"
+          },
+          {
+            "name": ".nv.info.mhc_project_streams_kernel",
+            "sha256": "5e31695766677c125a9d8465f0bb67aed16ed61ef90656a6ab579d265aaae3cf"
+          }
+        ]
+      },
+      {
+        "kind": "project",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/0289d2da2d40cfdf675f4d67518f2c6112eca39e937470d3f59f35038b6ce465/kernel.cubin",
+        "bytes": 264288,
+        "sha256": "830962448c839b6501e540adc971f795bba15d5a2e4cb369cd1544855a733bad",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_project_streams_kernel",
+              "bytes": 37248,
+              "sha256": "136949ea27b3c4eb63858007fd6dd12b7da570c8767a98e8b1f7a8f91ef18278",
+              "flags": 6,
+              "info": 24,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant4",
+              "bytes": 72,
+              "sha256": "834a709ba2534ebe3ee1397fd4f7bd288b2acc1d20a08d6c862dcd99b6f04400",
+              "flags": 2,
+              "alignment": 8
+            },
+            {
+              "name": ".nv.constant0.mhc_project_streams_kernel",
+              "bytes": 988,
+              "sha256": "ed02a689d8616afce681709a192fbb432e3c246c001759a89e60196b8f8bdeea",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_project_streams_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "cb34120260ba4529ab6bd0f441829102714d3f48e5c1636c24b35891d8e49342",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "486339c5b068bfde268fc75ce3e2c1be550cdf0a210461e2c2a2c3350ce3546c"
+          },
+          {
+            "name": ".nv.info.mhc_project_streams_kernel",
+            "sha256": "dd9431a9af81c839dc31b71567e9aa5ed1fb0c71c17eae17c0f0de3cdb7ebb8e"
+          }
+        ]
+      },
+      {
+        "kind": "finalize",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/7f7e15aab7f7b401b660cde494f8be54f2f7d487a9f707076833fcde031afe8d/kernel.cubin",
+        "bytes": 75472,
+        "sha256": "03063fd152ab0fda1546557f627e9cff5e4603fe6f9eb5b6f7da5ff7a50d455e",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_finalize_kernel",
+              "bytes": 20736,
+              "sha256": "d9daa02a376114c0a5fe9c3b5620e5fbfb81845432ab3ee204a40cac78b8aa14",
+              "flags": 6,
+              "info": 15,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant0.mhc_finalize_kernel",
+              "bytes": 988,
+              "sha256": "ed02a689d8616afce681709a192fbb432e3c246c001759a89e60196b8f8bdeea",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_finalize_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "3a9149a97779755eef5f93904e6b74fe53c2a97f2ca134927641792b2cff12bf",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "3b9e8a983c7844cdda536a705db0af919424148b9999685a20cabd42f806c7e2"
+          },
+          {
+            "name": ".nv.info.mhc_finalize_kernel",
+            "sha256": "ac6f324a3f06f416961df2b92b6d6e09d5a94099d371dc797b1d704f4e046409"
+          }
+        ]
+      }
+    ],
+    "candidate": [
+      {
+        "kind": "project",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b29b7d42dcce3d8efbfe6e0c2945fd33f65a6793af9761cd1d4490ca3b52b44e/kernel.cubin",
+        "bytes": 286256,
+        "sha256": "46cd298541109721c1d962f1e896975f5c820e336f5854ac45439e8f52dc7504",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_project_streams_kernel",
+              "bytes": 40448,
+              "sha256": "1101c09b4b29d9921545b3abc3c7c8331458e8d3a744ae1dc0ddfdb33031b5b5",
+              "flags": 6,
+              "info": 24,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant4",
+              "bytes": 72,
+              "sha256": "834a709ba2534ebe3ee1397fd4f7bd288b2acc1d20a08d6c862dcd99b6f04400",
+              "flags": 2,
+              "alignment": 8
+            },
+            {
+              "name": ".nv.constant0.mhc_project_streams_kernel",
+              "bytes": 988,
+              "sha256": "ed02a689d8616afce681709a192fbb432e3c246c001759a89e60196b8f8bdeea",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_project_streams_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "11311911b6661fe842432b4849370e27d7abc0f8ecd676cafa25dc05fb678863",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "486339c5b068bfde268fc75ce3e2c1be550cdf0a210461e2c2a2c3350ce3546c"
+          },
+          {
+            "name": ".nv.info.mhc_project_streams_kernel",
+            "sha256": "dc8271d3d3b2109aa27f3efc0349c394ba914c2256949066c93f439e6997546c"
+          }
+        ]
+      },
+      {
+        "kind": "project",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/2ad4153e58b9e31a2cfc2794f7bc087ce3febfb6b53cdfc0135aff660095cfe6/kernel.cubin",
+        "bytes": 210160,
+        "sha256": "1ee96ac11775c33a9eb5baa2cb110eaefb7288f9ba3f39716e4fc4d74b40eff7",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_project_streams_kernel",
+              "bytes": 27648,
+              "sha256": "7b51fd94758de9fa2d12e6adc6c433b205d6a15d5ef475f7e7916ae2171c69ae",
+              "flags": 6,
+              "info": 24,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant4",
+              "bytes": 72,
+              "sha256": "834a709ba2534ebe3ee1397fd4f7bd288b2acc1d20a08d6c862dcd99b6f04400",
+              "flags": 2,
+              "alignment": 8
+            },
+            {
+              "name": ".nv.constant0.mhc_project_streams_kernel",
+              "bytes": 956,
+              "sha256": "00d838a26c2274c5ebe71887d0cac7bf47e85329d838d7f6668ac6ae1d195269",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_project_streams_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "9805d1b6f4c3516a35c372cffa7e91c2a487be177d6d636323630d1d9d5ce1bf",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "2b4f33f8ffd5e99797cb09a3665126f0a34c1fdfb2a0082eaae934e9d86dc8e3"
+          },
+          {
+            "name": ".nv.info.mhc_project_streams_kernel",
+            "sha256": "70f2662a7239b33db9fe92850adfa9ae886d978e183af97bbfc27b11543ac4cd"
+          }
+        ]
+      },
+      {
+        "kind": "finalize",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/dcb6becf7059eab50b403d2947db70c0ef2e839dd22a207e918fd4a118c542a4/kernel.cubin",
+        "bytes": 75472,
+        "sha256": "9e3557ffada4772d1279d964628812961503a0f31c11384f38cea12a354c28df",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_finalize_kernel",
+              "bytes": 20736,
+              "sha256": "89f033cf735c9a57ed6632a984c2421b7d6c3c7fd7369744b30fdef5c4736342",
+              "flags": 6,
+              "info": 15,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant0.mhc_finalize_kernel",
+              "bytes": 988,
+              "sha256": "ed02a689d8616afce681709a192fbb432e3c246c001759a89e60196b8f8bdeea",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_finalize_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "6dce8719ba6fac2e8d1a4f84803b8fcbec220830afd65e68e370218a07d187e1",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "3b9e8a983c7844cdda536a705db0af919424148b9999685a20cabd42f806c7e2"
+          },
+          {
+            "name": ".nv.info.mhc_finalize_kernel",
+            "sha256": "c0d982b91d0280d52b7c1292a8e446f5e157198223c16f6d3dbc7f8574c70bf5"
+          }
+        ]
+      },
+      {
+        "kind": "project",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b1ba400d9cd4f4b7f86bf5604b812d376dbef69abd1685016173c49693239cbd/kernel.cubin",
+        "bytes": 86320,
+        "sha256": "a5a67d3c44dad580b2e009b1d8dfc1892c524aa030d5f7c140f2fa88ce3d805f",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_project_streams_kernel",
+              "bytes": 11136,
+              "sha256": "cfd8fcb2e8ba3f8c27f3fe29061ec7a99f830776edde61dd1723bd20714b466f",
+              "flags": 6,
+              "info": 24,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant4",
+              "bytes": 72,
+              "sha256": "834a709ba2534ebe3ee1397fd4f7bd288b2acc1d20a08d6c862dcd99b6f04400",
+              "flags": 2,
+              "alignment": 8
+            },
+            {
+              "name": ".nv.constant0.mhc_project_streams_kernel",
+              "bytes": 964,
+              "sha256": "788ddb3f7716950d0d204e6cad9fe3cc1dddb6140f615cb1c76bea0541722c20",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_project_streams_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "70b25d5d62cf386c5f2fd66a37a533859c363342c47942fe260db26ae51dec4f",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "0f89998e7df0c2b78cc1a1737c9c824e0cfd75ce652fd28aa1dd5b8ad7ff5051"
+          },
+          {
+            "name": ".nv.info.mhc_project_streams_kernel",
+            "sha256": "5e31695766677c125a9d8465f0bb67aed16ed61ef90656a6ab579d265aaae3cf"
+          }
+        ]
+      },
+      {
+        "kind": "project",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/0289d2da2d40cfdf675f4d67518f2c6112eca39e937470d3f59f35038b6ce465/kernel.cubin",
+        "bytes": 264288,
+        "sha256": "2c16906dca4586fd75e6f5a03a2472917b7dfb737dd6df9a48c037dcf84d5be5",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_project_streams_kernel",
+              "bytes": 37248,
+              "sha256": "136949ea27b3c4eb63858007fd6dd12b7da570c8767a98e8b1f7a8f91ef18278",
+              "flags": 6,
+              "info": 24,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant4",
+              "bytes": 72,
+              "sha256": "834a709ba2534ebe3ee1397fd4f7bd288b2acc1d20a08d6c862dcd99b6f04400",
+              "flags": 2,
+              "alignment": 8
+            },
+            {
+              "name": ".nv.constant0.mhc_project_streams_kernel",
+              "bytes": 988,
+              "sha256": "ed02a689d8616afce681709a192fbb432e3c246c001759a89e60196b8f8bdeea",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_project_streams_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "cb34120260ba4529ab6bd0f441829102714d3f48e5c1636c24b35891d8e49342",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "486339c5b068bfde268fc75ce3e2c1be550cdf0a210461e2c2a2c3350ce3546c"
+          },
+          {
+            "name": ".nv.info.mhc_project_streams_kernel",
+            "sha256": "dd9431a9af81c839dc31b71567e9aa5ed1fb0c71c17eae17c0f0de3cdb7ebb8e"
+          }
+        ]
+      },
+      {
+        "kind": "finalize",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/7f7e15aab7f7b401b660cde494f8be54f2f7d487a9f707076833fcde031afe8d/kernel.cubin",
+        "bytes": 75472,
+        "sha256": "aa6ce81522fe702d6af34f3eada2f93df3f6a4a02742ddc7223946139a21fae0",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_finalize_kernel",
+              "bytes": 20736,
+              "sha256": "d9daa02a376114c0a5fe9c3b5620e5fbfb81845432ab3ee204a40cac78b8aa14",
+              "flags": 6,
+              "info": 15,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant0.mhc_finalize_kernel",
+              "bytes": 988,
+              "sha256": "ed02a689d8616afce681709a192fbb432e3c246c001759a89e60196b8f8bdeea",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_finalize_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "3a9149a97779755eef5f93904e6b74fe53c2a97f2ca134927641792b2cff12bf",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "3b9e8a983c7844cdda536a705db0af919424148b9999685a20cabd42f806c7e2"
+          },
+          {
+            "name": ".nv.info.mhc_finalize_kernel",
+            "sha256": "ac6f324a3f06f416961df2b92b6d6e09d5a94099d371dc797b1d704f4e046409"
+          }
+        ]
+      },
+      {
+        "kind": "project",
+        "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/8028f0a0241b3b39e8c48f659c09100938e096029a54c0a3bb3a998947928640/kernel.cubin",
+        "bytes": 320688,
+        "sha256": "d45f0336ebb67a86d227b44668f7926c831d9efa8b6ce666c89d07b150a4be47",
+        "execution": {
+          "cuda_elf_flags": 167803138,
+          "code": [
+            {
+              "name": ".text.mhc_project_streams_kernel",
+              "bytes": 48896,
+              "sha256": "6d1d1476421bd3ecf131892b498e36bf05c91e96d67eed7f611c077aaae818da",
+              "flags": 6,
+              "info": 24,
+              "alignment": 128
+            }
+          ],
+          "constants": [
+            {
+              "name": ".nv.constant4",
+              "bytes": 72,
+              "sha256": "834a709ba2534ebe3ee1397fd4f7bd288b2acc1d20a08d6c862dcd99b6f04400",
+              "flags": 2,
+              "alignment": 8
+            },
+            {
+              "name": ".nv.constant0.mhc_project_streams_kernel",
+              "bytes": 1016,
+              "sha256": "5817bc65840cf706e658b883fc8a08c91551deb915ac9f5844e0cf807cf0b705",
+              "flags": 66,
+              "alignment": 4
+            }
+          ],
+          "shared": [
+            {
+              "name": ".nv.shared.mhc_project_streams_kernel",
+              "bytes": 1024,
+              "flags": 67,
+              "alignment": 1024
+            },
+            {
+              "name": ".nv.shared.reserved.0",
+              "bytes": 64,
+              "flags": 3,
+              "alignment": 1
+            }
+          ]
+        },
+        "execution_sha256": "8a43b7eb36beeafdd2280d4f612d15952631aa0b2b519444c99e81e572b7f70b",
+        "info": [
+          {
+            "name": ".nv.info",
+            "sha256": "f5aaa6cd367e9ab12122c96baa020b0217751183ad38f18966232da6cf3d587d"
+          },
+          {
+            "name": ".nv.info.mhc_project_streams_kernel",
+            "sha256": "ab9aab81c01add4e5377de3e2e318f0cba0705026747af523790f48095db9442"
+          }
+        ]
+      }
+    ]
+  }
+}

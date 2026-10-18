@@ -1,0 +1,20 @@
+{
+  "api": {
+    "observations": 12,
+    "prompts": 3,
+    "tokens_each": 64,
+    "scope": "canonical selected API JSON equality, not hidden-state tensor bit equality"
+  },
+  "mhc": {
+    "cases": 12,
+    "input_output_byte_sha256_equal": true,
+    "graph_replays_stable": true
+  },
+  "gpu_junit": {
+    "recorded_tests": 29,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "scope": "verify retained JUnit; no new GPU execution"
+  }
+}

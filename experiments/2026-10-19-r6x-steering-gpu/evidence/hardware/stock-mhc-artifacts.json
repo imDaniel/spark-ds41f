@@ -1,0 +1,280 @@
+{
+  "scope": "rank-0 generated CUDA sources and compiled mHC CUDA ELF artifacts; host-library build metadata is not GPU instruction identity",
+  "archive": "stock-mhc-artifacts.tar.gz",
+  "archive_sha256": "455944cfdcc26036fde522674390fa23baf80c2ce5c77a6f980b492b660cc2f5",
+  "entries": [
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/7e3494170d663e26359c8466665e458f7f3dc059a109602bbcde177f660a4e40/device_kernel.cu",
+      "sha256": "0b4bb5fe08abce72e44c96ac889a6b36543eb98fa1822d20dfe8f0b22e5cda28",
+      "member": "official-0b4bb5fe08abce72e44c96ac889a6b36543eb98fa1822d20dfe8f0b22e5cda28.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/7e3494170d663e26359c8466665e458f7f3dc059a109602bbcde177f660a4e40/host_kernel.cu",
+      "sha256": "c6b5e3ee63e98f08d4cd2eed19014e894f1037db82886a436b22e679b216450f",
+      "member": "official-c6b5e3ee63e98f08d4cd2eed19014e894f1037db82886a436b22e679b216450f.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/716925d5051b170cc82762cb672e49fae82d4ed07268e9d7d9068b4f63378bf2/device_kernel.cu",
+      "sha256": "b0c911421a55698f4e2eb552fdbdb11283a296fcbdc2906ec8032894706fce3f",
+      "member": "official-b0c911421a55698f4e2eb552fdbdb11283a296fcbdc2906ec8032894706fce3f.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/716925d5051b170cc82762cb672e49fae82d4ed07268e9d7d9068b4f63378bf2/host_kernel.cu",
+      "sha256": "c1f184aea6760ab5a742ac5c762965ebe41e4332226e5c3e986328600446c088",
+      "member": "official-c1f184aea6760ab5a742ac5c762965ebe41e4332226e5c3e986328600446c088.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/25b28a5601f0f620ba94aed87a7b4718bc3e317172ffb73f55c7aab59cc2feb8/device_kernel.cu",
+      "sha256": "2ccbad2714427fc43d0d8ef965d0a8cf4a3a1909827c3314d9cc2844067bc48c",
+      "member": "official-2ccbad2714427fc43d0d8ef965d0a8cf4a3a1909827c3314d9cc2844067bc48c.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/25b28a5601f0f620ba94aed87a7b4718bc3e317172ffb73f55c7aab59cc2feb8/host_kernel.cu",
+      "sha256": "75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2",
+      "member": "official-75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/626b1d183ce213394b2409ae8ac5068cb96967c027890c7c644b321de211fd30/device_kernel.cu",
+      "sha256": "7193574c2197cd37828ccbb9cafe40db796bc319acd2aa8f0ffa83522d3e412f",
+      "member": "official-7193574c2197cd37828ccbb9cafe40db796bc319acd2aa8f0ffa83522d3e412f.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/626b1d183ce213394b2409ae8ac5068cb96967c027890c7c644b321de211fd30/host_kernel.cu",
+      "sha256": "414212163fa5a8ac78111aa236fa6e74727b712d7becd666e270856c73c16b3e",
+      "member": "official-414212163fa5a8ac78111aa236fa6e74727b712d7becd666e270856c73c16b3e.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/b1cacc5b38b207961b6fddf6e853604d1f9a94eb84980335a2c35feea3b08de9/device_kernel.cu",
+      "sha256": "ca7d95c03b0442fdf937e604f4702d549b85a5e805b6a44efa9d03e225f8d908",
+      "member": "official-ca7d95c03b0442fdf937e604f4702d549b85a5e805b6a44efa9d03e225f8d908.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/b1cacc5b38b207961b6fddf6e853604d1f9a94eb84980335a2c35feea3b08de9/host_kernel.cu",
+      "sha256": "e9fdc64dc4d602519d5f7af3521122e67b4d89fa964b56be561f56f1e45bf3b8",
+      "member": "official-e9fdc64dc4d602519d5f7af3521122e67b4d89fa964b56be561f56f1e45bf3b8.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/f009a4a2cd33e575c11c8e564e67746b3edc66bf35de742e25e493ea24d08c10/device_kernel.cu",
+      "sha256": "66b9c06ea1f0b341eb539b9cc2e02a8090939784ab4ac98c96445f1d5025503b",
+      "member": "official-66b9c06ea1f0b341eb539b9cc2e02a8090939784ab4ac98c96445f1d5025503b.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/f009a4a2cd33e575c11c8e564e67746b3edc66bf35de742e25e493ea24d08c10/host_kernel.cu",
+      "sha256": "75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2",
+      "member": "official-75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/7e3494170d663e26359c8466665e458f7f3dc059a109602bbcde177f660a4e40/device_kernel.cu",
+      "sha256": "0b4bb5fe08abce72e44c96ac889a6b36543eb98fa1822d20dfe8f0b22e5cda28",
+      "member": "candidate-0b4bb5fe08abce72e44c96ac889a6b36543eb98fa1822d20dfe8f0b22e5cda28.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/7e3494170d663e26359c8466665e458f7f3dc059a109602bbcde177f660a4e40/host_kernel.cu",
+      "sha256": "c6b5e3ee63e98f08d4cd2eed19014e894f1037db82886a436b22e679b216450f",
+      "member": "candidate-c6b5e3ee63e98f08d4cd2eed19014e894f1037db82886a436b22e679b216450f.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/2a6b0a09ce9de9eaa139113d5df238ef999b3aa17f85ba949ded9a91c355318e/device_kernel.cu",
+      "sha256": "e964aba8cc985b568c4cf3294b7f79acf4d4f4444d1eaa0d583921bb7a308181",
+      "member": "candidate-e964aba8cc985b568c4cf3294b7f79acf4d4f4444d1eaa0d583921bb7a308181.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/2a6b0a09ce9de9eaa139113d5df238ef999b3aa17f85ba949ded9a91c355318e/host_kernel.cu",
+      "sha256": "05ccc3404c674a350cd6ea59544e04b91bfa0878c0dd0268b3e98f4dc68be7ba",
+      "member": "candidate-05ccc3404c674a350cd6ea59544e04b91bfa0878c0dd0268b3e98f4dc68be7ba.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/716925d5051b170cc82762cb672e49fae82d4ed07268e9d7d9068b4f63378bf2/device_kernel.cu",
+      "sha256": "b0c911421a55698f4e2eb552fdbdb11283a296fcbdc2906ec8032894706fce3f",
+      "member": "candidate-b0c911421a55698f4e2eb552fdbdb11283a296fcbdc2906ec8032894706fce3f.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/716925d5051b170cc82762cb672e49fae82d4ed07268e9d7d9068b4f63378bf2/host_kernel.cu",
+      "sha256": "c1f184aea6760ab5a742ac5c762965ebe41e4332226e5c3e986328600446c088",
+      "member": "candidate-c1f184aea6760ab5a742ac5c762965ebe41e4332226e5c3e986328600446c088.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/25b28a5601f0f620ba94aed87a7b4718bc3e317172ffb73f55c7aab59cc2feb8/device_kernel.cu",
+      "sha256": "2ccbad2714427fc43d0d8ef965d0a8cf4a3a1909827c3314d9cc2844067bc48c",
+      "member": "candidate-2ccbad2714427fc43d0d8ef965d0a8cf4a3a1909827c3314d9cc2844067bc48c.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/25b28a5601f0f620ba94aed87a7b4718bc3e317172ffb73f55c7aab59cc2feb8/host_kernel.cu",
+      "sha256": "75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2",
+      "member": "candidate-75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/626b1d183ce213394b2409ae8ac5068cb96967c027890c7c644b321de211fd30/device_kernel.cu",
+      "sha256": "7193574c2197cd37828ccbb9cafe40db796bc319acd2aa8f0ffa83522d3e412f",
+      "member": "candidate-7193574c2197cd37828ccbb9cafe40db796bc319acd2aa8f0ffa83522d3e412f.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/626b1d183ce213394b2409ae8ac5068cb96967c027890c7c644b321de211fd30/host_kernel.cu",
+      "sha256": "414212163fa5a8ac78111aa236fa6e74727b712d7becd666e270856c73c16b3e",
+      "member": "candidate-414212163fa5a8ac78111aa236fa6e74727b712d7becd666e270856c73c16b3e.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/b1cacc5b38b207961b6fddf6e853604d1f9a94eb84980335a2c35feea3b08de9/device_kernel.cu",
+      "sha256": "ca7d95c03b0442fdf937e604f4702d549b85a5e805b6a44efa9d03e225f8d908",
+      "member": "candidate-ca7d95c03b0442fdf937e604f4702d549b85a5e805b6a44efa9d03e225f8d908.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/b1cacc5b38b207961b6fddf6e853604d1f9a94eb84980335a2c35feea3b08de9/host_kernel.cu",
+      "sha256": "e9fdc64dc4d602519d5f7af3521122e67b4d89fa964b56be561f56f1e45bf3b8",
+      "member": "candidate-e9fdc64dc4d602519d5f7af3521122e67b4d89fa964b56be561f56f1e45bf3b8.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/f009a4a2cd33e575c11c8e564e67746b3edc66bf35de742e25e493ea24d08c10/device_kernel.cu",
+      "sha256": "66b9c06ea1f0b341eb539b9cc2e02a8090939784ab4ac98c96445f1d5025503b",
+      "member": "candidate-66b9c06ea1f0b341eb539b9cc2e02a8090939784ab4ac98c96445f1d5025503b.cu"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-source",
+      "source_path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/f009a4a2cd33e575c11c8e564e67746b3edc66bf35de742e25e493ea24d08c10/host_kernel.cu",
+      "sha256": "75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2",
+      "member": "candidate-75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2.cu"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b29b7d42dcce3d8efbfe6e0c2945fd33f65a6793af9761cd1d4490ca3b52b44e/kernel.cubin",
+      "sha256": "5482eaca1c2debdbe4ebf8be65c5e5d6a004ffe9f7a54319515adccf844595ef",
+      "member": "official-5482eaca1c2debdbe4ebf8be65c5e5d6a004ffe9f7a54319515adccf844595ef.cubin"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/2ad4153e58b9e31a2cfc2794f7bc087ce3febfb6b53cdfc0135aff660095cfe6/kernel.cubin",
+      "sha256": "fbfd155c385563e55f1acb6992415c5d25c279876b5247fb72c4cfaf7edd2458",
+      "member": "official-fbfd155c385563e55f1acb6992415c5d25c279876b5247fb72c4cfaf7edd2458.cubin"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/dcb6becf7059eab50b403d2947db70c0ef2e839dd22a207e918fd4a118c542a4/kernel.cubin",
+      "sha256": "79387107b70dfc2ffe0cf25916a561f3c998541e9b5fa057066ed40bd94223a0",
+      "member": "official-79387107b70dfc2ffe0cf25916a561f3c998541e9b5fa057066ed40bd94223a0.cubin"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b1ba400d9cd4f4b7f86bf5604b812d376dbef69abd1685016173c49693239cbd/kernel.cubin",
+      "sha256": "290428e630c6fbc3e744b777127d7cf5d0950c9280070ce52045c0c4a33e6a92",
+      "member": "official-290428e630c6fbc3e744b777127d7cf5d0950c9280070ce52045c0c4a33e6a92.cubin"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/0289d2da2d40cfdf675f4d67518f2c6112eca39e937470d3f59f35038b6ce465/kernel.cubin",
+      "sha256": "830962448c839b6501e540adc971f795bba15d5a2e4cb369cd1544855a733bad",
+      "member": "official-830962448c839b6501e540adc971f795bba15d5a2e4cb369cd1544855a733bad.cubin"
+    },
+    {
+      "arm": "official",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/7f7e15aab7f7b401b660cde494f8be54f2f7d487a9f707076833fcde031afe8d/kernel.cubin",
+      "sha256": "03063fd152ab0fda1546557f627e9cff5e4603fe6f9eb5b6f7da5ff7a50d455e",
+      "member": "official-03063fd152ab0fda1546557f627e9cff5e4603fe6f9eb5b6f7da5ff7a50d455e.cubin"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b29b7d42dcce3d8efbfe6e0c2945fd33f65a6793af9761cd1d4490ca3b52b44e/kernel.cubin",
+      "sha256": "46cd298541109721c1d962f1e896975f5c820e336f5854ac45439e8f52dc7504",
+      "member": "candidate-46cd298541109721c1d962f1e896975f5c820e336f5854ac45439e8f52dc7504.cubin"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/2ad4153e58b9e31a2cfc2794f7bc087ce3febfb6b53cdfc0135aff660095cfe6/kernel.cubin",
+      "sha256": "1ee96ac11775c33a9eb5baa2cb110eaefb7288f9ba3f39716e4fc4d74b40eff7",
+      "member": "candidate-1ee96ac11775c33a9eb5baa2cb110eaefb7288f9ba3f39716e4fc4d74b40eff7.cubin"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/dcb6becf7059eab50b403d2947db70c0ef2e839dd22a207e918fd4a118c542a4/kernel.cubin",
+      "sha256": "9e3557ffada4772d1279d964628812961503a0f31c11384f38cea12a354c28df",
+      "member": "candidate-9e3557ffada4772d1279d964628812961503a0f31c11384f38cea12a354c28df.cubin"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b1ba400d9cd4f4b7f86bf5604b812d376dbef69abd1685016173c49693239cbd/kernel.cubin",
+      "sha256": "a5a67d3c44dad580b2e009b1d8dfc1892c524aa030d5f7c140f2fa88ce3d805f",
+      "member": "candidate-a5a67d3c44dad580b2e009b1d8dfc1892c524aa030d5f7c140f2fa88ce3d805f.cubin"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/0289d2da2d40cfdf675f4d67518f2c6112eca39e937470d3f59f35038b6ce465/kernel.cubin",
+      "sha256": "2c16906dca4586fd75e6f5a03a2472917b7dfb737dd6df9a48c037dcf84d5be5",
+      "member": "candidate-2c16906dca4586fd75e6f5a03a2472917b7dfb737dd6df9a48c037dcf84d5be5.cubin"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/7f7e15aab7f7b401b660cde494f8be54f2f7d487a9f707076833fcde031afe8d/kernel.cubin",
+      "sha256": "aa6ce81522fe702d6af34f3eada2f93df3f6a4a02742ddc7223946139a21fae0",
+      "member": "candidate-aa6ce81522fe702d6af34f3eada2f93df3f6a4a02742ddc7223946139a21fae0.cubin"
+    },
+    {
+      "arm": "candidate",
+      "kind": "cuda-cubin",
+      "source_path": "kkref/jit/tilelang/0.1.15/cuda-binaries/8028f0a0241b3b39e8c48f659c09100938e096029a54c0a3bb3a998947928640/kernel.cubin",
+      "sha256": "d45f0336ebb67a86d227b44668f7926c831d9efa8b6ce666c89d07b150a4be47",
+      "member": "candidate-d45f0336ebb67a86d227b44668f7926c831d9efa8b6ce666c89d07b150a4be47.cubin"
+    }
+  ]
+}

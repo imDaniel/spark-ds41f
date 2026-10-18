@@ -1,0 +1,695 @@
+{
+  "arm": "candidate",
+  "module": "/opt/spark3/candidate/vllm/vllm/models/deepseek_v4_1/tilelang/mhc.py",
+  "mhc_source_sha256": "19e3f85d32ec917dc62839e564f494cfb44d1ebbb6d42008e2d213a1b789f23b",
+  "torch": "2.13.0+cu130",
+  "device": "NVIDIA GB10",
+  "scope": "isolated stock mHC correctness and diagnostic timings; no model TPS claim",
+  "cases": [
+    {
+      "case": "pre-world1-rows1",
+      "rows": 1,
+      "world": 1,
+      "mode": "pre",
+      "seed": 1011730,
+      "input_sha256": {
+        "residual": "0880acef5d92f33f4989b7093fe155ffa7289982b8ded97a72cbf777a361d5b3",
+        "writer": "71d02fd45b8e29b4b5ab17f0342ecabc525b61c7d26465280a0a31431fdd9caa",
+        "post": "77c45eacbc14eca43efd040d2c6c17663755ade661b812a21267603bdb88ec22",
+        "comb": "6bc4f6d9eeb68916763ef009dfb4bbd15144596696911c739a0e6768a0e97dd8",
+        "pre": "5b1ce58fb868b1cc006e2cfeb4e6f061b7de42a4619c813031fb4d5347a8b91c",
+        "fn": "a42a1d65175e5a98015647bd62ddcbcce4559181a0fc48e0594544c45221df86"
+      },
+      "output_sha256": [
+        "0880acef5d92f33f4989b7093fe155ffa7289982b8ded97a72cbf777a361d5b3",
+        "c096cb18d0ac0a6a91c27bbd660e55eed0803c463c680106280ed1cbacf5d312",
+        "826dfa1c53631f7b83efb8554c32d0ca9adce7a7d68649e7cec8487bf65ba2b7",
+        "f89dbbf1a432ea6d4c530e17d3c6a0cfc260046642d247a520ce9948509f508e",
+        "8c9f317f7f7462c3769c5a0ebf88fd42f62768b44ded3730a8939478f5e73f8d"
+      ],
+      "output_shapes": [
+        [
+          1,
+          4,
+          5120
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          4,
+          4
+        ],
+        [
+          1,
+          5120
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        11.555999755859375,
+        11.565759658813477,
+        12.142975807189941,
+        11.548576354980469,
+        11.535776138305664,
+        11.937727928161621,
+        11.76591968536377
+      ],
+      "median_us": 11.565759658813477
+    },
+    {
+      "case": "broadcast-world1-rows1",
+      "rows": 1,
+      "world": 1,
+      "mode": "broadcast",
+      "seed": 1021730,
+      "input_sha256": {
+        "residual": "5853d51f3ce0d57037ffb6830b23e4f5c3d4731900947935f5c4590a2118666b",
+        "writer": "292a81b193a8ceb4d3a5964e1e3adff6c1040b76a2c61034a3bc07a77e940334",
+        "post": "0c1eb12b774eca456d0560645ea76e28f303b5b3d368fbcdc2ab1b10b38f8e9a",
+        "comb": "53018c391331f6453ebb6142006d02385d42e5cfa8102a4a9447d85189da6cb5",
+        "pre": "6fd6a408a51e1f3e813b4ffc91617ab3158a2b8f972efdddadffee544c8b0336",
+        "fn": "a61da0d0a94b4b9264156c5ed2a9943cd1a07562f5312283ba2787ea46259341"
+      },
+      "output_sha256": [
+        "b2f1abaea7754d92bbd4e468f4bec85851b857fb8d0e118eb77aacd7f8014578",
+        "37818634bc2c60a637be83ffdccad383dd722c22695a2d5a916a4db8b066d16f",
+        "2be21196a0ca81561f7383d2965f0f87e212aea37c384c77cabc76581b692ba6",
+        "9e7ec9489d522572024586945a5afcf9b8dba7220ad9b832f1b787c7d0d2964b",
+        "eafedefe68c85c99d2bac50c0ad5e3e8b6850a76e2beda1507345666d8e45801"
+      ],
+      "output_shapes": [
+        [
+          1,
+          4,
+          5120
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          4,
+          4
+        ],
+        [
+          1,
+          5120
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        8.202495574951172,
+        8.19696044921875,
+        8.206879615783691,
+        8.197983741760254,
+        8.20304012298584,
+        8.196224212646484,
+        8.196672439575195
+      ],
+      "median_us": 8.197983741760254
+    },
+    {
+      "case": "post_pre-world1-rows1",
+      "rows": 1,
+      "world": 1,
+      "mode": "post_pre",
+      "seed": 1031730,
+      "input_sha256": {
+        "residual": "fd607d00ce4b8fac9ac9007aa5d3505694daab4610d933a7a7e7ba3ba3e67b5b",
+        "writer": "7cd04b6d51a52db62d8cc026fe80cf5636b8c8b44f9c884ea97d3161e3dbf989",
+        "post": "3f8abc52b63d8dafefee3d874261238e5887bba0f52c113de908ba4715fbd85d",
+        "comb": "070e93f0e46f7e4a0330ee42be01bc2efd4e1bdfb61e46227d8f0a8ce8e1d1d6",
+        "pre": "78fa6d620a6b8576570f57bb027c404dd5c0bfb7f2d527bdf9c3cf56412ba565",
+        "fn": "d713a054b5964f5be46e10872816925bf438981e71b554c88a3e39431c4da4ca"
+      },
+      "output_sha256": [
+        "5deb789597d6ebb868037c722af1b6aa6d0842f50cacdcb8fa414476046b084a",
+        "ed1cbabfdc0bce1623a9cc7fe182128220b4d971e9d028d9b60882f8bb6b7c11",
+        "5d611aa46e0e49e335fee8cf38075244a36a11dd7423b3dcde7dd06aae19d70b",
+        "bf755d6486c1b4ba2e358ab33b818ba64953d25edadb63e9edc42250d47ac2c8",
+        "8461273e28f1d84bccc59e9b07223f740372e66f30be41ca41ffcfe202a0fdc2"
+      ],
+      "output_shapes": [
+        [
+          1,
+          4,
+          5120
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          4,
+          4
+        ],
+        [
+          1,
+          5120
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        12.290335655212402,
+        12.286399841308594,
+        12.77843189239502,
+        12.768095970153809,
+        12.292256355285645,
+        12.770208358764648,
+        12.57369613647461
+      ],
+      "median_us": 12.57369613647461
+    },
+    {
+      "case": "post_pre-world4-rows1",
+      "rows": 1,
+      "world": 4,
+      "mode": "post_pre",
+      "seed": 4031730,
+      "input_sha256": {
+        "residual": "305261761c3563f2c437bcf0946eb48e7dfea56a18c957d04549c964adf1ebb3",
+        "writer": "38822081372375bd0806d070133e410e98613e41a78073aeb055527586a446cf",
+        "post": "1fe0d91a1bf1dacf679c6ef8fd336622b249577724ea4eee4ef4a3b261b67cec",
+        "comb": "bd354fbcc5a1521ad9ba46a5be9c3e44d29935cfc3eb698c39a88c7727f19495",
+        "pre": "5f8ed1a0f07809279972d5b9194c7a9420208fe571664ea6e53bda48b45d8163",
+        "fn": "909699681fc776ca7f0181b4fecf4ffb4b28dbfda0beaa34b0497fd3266f931b"
+      },
+      "output_sha256": [
+        "9df22a1f9c23e63b6e4d4e303fcf2b3f9b176339362ae4f4ce070d4d99fc867d",
+        "b8498236135e04b559d58caa5a737a32ae26d0164714c13bf08444fa4e36de4a",
+        "f0f98b26b967e6fd23bb2c3b619ecd021b7f3b55327d4a07a14ffc84dc7e8fdc",
+        "c49426909eb964632f6ae6a07a746ecab1aacddbce85a3e8457fbba0d9cd9a35",
+        "49182d0237716810c09979c6ebebccbde68dda46e5e918d2476cf6d0d4cba87f"
+      ],
+      "output_shapes": [
+        [
+          1,
+          4,
+          5120
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          4,
+          4
+        ],
+        [
+          1,
+          5120
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        12.291680335998535,
+        12.286111831665039,
+        12.814175605773926,
+        12.47817611694336,
+        12.592639923095703,
+        12.77455997467041,
+        12.286463737487793
+      ],
+      "median_us": 12.47817611694336
+    },
+    {
+      "case": "pre-world1-rows96",
+      "rows": 96,
+      "world": 1,
+      "mode": "pre",
+      "seed": 1011825,
+      "input_sha256": {
+        "residual": "52119772435c45b0813a17a850402e45a5ca1c49c2537dac013f1ced69df074c",
+        "writer": "df58477c5225c262b0c1b84227dd44ce95035cb1059dd274fa694d4841347ec1",
+        "post": "85fde83175611ba267f2f9bc56fb8e71988727ba52da629f0c1b02c7a7af1e62",
+        "comb": "19357e17a562b8fb921a4337e46c540f02653bb31b5f00b66f49791aa82d34a5",
+        "pre": "bbcfed5a1497153999b68a5539eac5bc12596b645c39661600f6d069cf716837",
+        "fn": "258b68986e7327d5ac430fbd152af26e471c3b8887c45c50f9a9d10ee0cf89e0"
+      },
+      "output_sha256": [
+        "52119772435c45b0813a17a850402e45a5ca1c49c2537dac013f1ced69df074c",
+        "0a048de238f957edededa73680b0e29e405b2ba54c7047856db8a69b76b70ea6",
+        "381307c5075d1acb99e1a926153da84013e0525ba606bd4c80d11e2aa41b0833",
+        "bde05843d98bb81b2532f84f75891f0a7df179e6a6711f613bafdbec9333138a",
+        "b1db04322e04b6860b4471a40b9558d48d91f09b9b2a4197034ac4c4686f9933"
+      ],
+      "output_shapes": [
+        [
+          96,
+          4,
+          5120
+        ],
+        [
+          96,
+          4
+        ],
+        [
+          96,
+          4,
+          4
+        ],
+        [
+          96,
+          5120
+        ],
+        [
+          96,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        32.54326248168945,
+        32.500160217285156,
+        32.608062744140625,
+        32.61004638671875,
+        32.522239685058594,
+        32.77811050415039,
+        32.35523223876953
+      ],
+      "median_us": 32.54326248168945
+    },
+    {
+      "case": "broadcast-world1-rows96",
+      "rows": 96,
+      "world": 1,
+      "mode": "broadcast",
+      "seed": 1021825,
+      "input_sha256": {
+        "residual": "dab3267083c3962961b07629752c7139b4afb36af3c9404c2fc67dc2e02fa665",
+        "writer": "c1063e95939d41ad0a5b1f7de51658b24ceaf8c1cb95655c4cbf91a69b9b64d4",
+        "post": "25e96ae476aa07b24e7c479fa0bc38ba531ba428989c90fddb2f7f5bbbb1e301",
+        "comb": "89de3e71051f473486fbe8c12d80827a62db055057f745e157b1fdea7ee3a16c",
+        "pre": "31f28a803851c79967f71b6342f61b4a6f566cb9ba30246f0dc4468f168e49ed",
+        "fn": "c6c666401c8570cb051998ebb6864a825c8a12f23043f934789c1c172820932c"
+      },
+      "output_sha256": [
+        "73046b6cd2c0351aa8f81ac377bca09b2c012fa9dd588a83dab2971e50df01ab",
+        "ce5e61e07e0d93c324cd9f7c32eb830f721bcec8aafe027d78c8b0513f00c444",
+        "24bf9b9df4d1c90960d59598a16869412ac180572ed3f394f668fac6b19c3bf4",
+        "70a27945583988fd4bf60ddace07a0834d48929ac522ca52e9ec79888481d17d",
+        "7e3337a9ae357fa892394adc517c40560b2723c4bc97d9560e7795cf548993b4"
+      ],
+      "output_shapes": [
+        [
+          96,
+          4,
+          5120
+        ],
+        [
+          96,
+          4
+        ],
+        [
+          96,
+          4,
+          4
+        ],
+        [
+          96,
+          5120
+        ],
+        [
+          96,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        21.13654327392578,
+        21.092384338378906,
+        21.14508819580078,
+        20.499008178710938,
+        21.136768341064453,
+        21.120128631591797,
+        20.500896453857422
+      ],
+      "median_us": 21.120128631591797
+    },
+    {
+      "case": "post_pre-world1-rows96",
+      "rows": 96,
+      "world": 1,
+      "mode": "post_pre",
+      "seed": 1031825,
+      "input_sha256": {
+        "residual": "6f58b9326e2c032049c11c8303f9514aa109149de2624568fc94e543cba7e730",
+        "writer": "ec15391b36a877950443bcb614ccfa963ebdf4a43a8b6bcc42d088cf4f64c561",
+        "post": "09b8d637c064fcf6e0d434423790d45a8933f5000b6aae09eede743a0b93bd13",
+        "comb": "ea1e3d4658bc8565b623c5896f130ffb49fd097e8b5bed3fc3e33d521cf1596b",
+        "pre": "cf37de34c871a74606cc6221d56f88ba002425f8cdad134908561e3b9c7652b3",
+        "fn": "5686e55490a55ac66d9b2ddd8c0387b87169fd8399e5f9d587b176adb36c202f"
+      },
+      "output_sha256": [
+        "a02be13fa31234c4bed3b822b2a8b615724014204a961e94479aeab1400080ff",
+        "2aba81350de784f1f8193e6fd7c9e9f9de69db95fd0196ceee1bf740e23b0cfb",
+        "7c0f6cfafd8e08084772fdcde7228456148222a36287322c855131593ecae7a9",
+        "0ddbaa37c37ec99653cc3b91a111e887633317e575ca7e2054f7a3d175dfbb5a",
+        "7f8d13a02cf8e7e0854aebdeab035aa0d5a365fc82f0500ce6ce1cc114665e28"
+      ],
+      "output_shapes": [
+        [
+          96,
+          4,
+          5120
+        ],
+        [
+          96,
+          4
+        ],
+        [
+          96,
+          4,
+          4
+        ],
+        [
+          96,
+          5120
+        ],
+        [
+          96,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        35.47999954223633,
+        35.455711364746094,
+        36.14134216308594,
+        35.46623992919922,
+        35.462303161621094,
+        34.817535400390625,
+        35.496734619140625
+      ],
+      "median_us": 35.46623992919922
+    },
+    {
+      "case": "post_pre-world4-rows96",
+      "rows": 96,
+      "world": 4,
+      "mode": "post_pre",
+      "seed": 4031825,
+      "input_sha256": {
+        "residual": "b666747a492215727fe1c7a4daa479e9f357674a4a64a2e806f8638909a46f5b",
+        "writer": "83d22d6e4634b432fc64d9eb9845397f66ec8b959da0337b095d9b63c89e2c5b",
+        "post": "abdc1404db0a5d441936ff2d3c9920092817b742531084a957bb6641b4fffe80",
+        "comb": "4c20c3536eb6f43da432f3daa8f3fbc5ebcc620feff3843ae7cca9a71845b833",
+        "pre": "cae21320926397b0ba82e7d7535421dd2df70ba1da5ab3c2a0135259e5310bee",
+        "fn": "025c19dd860aecca13b396980a73f1a3b90067251cb1021289d436bb43ac7e4e"
+      },
+      "output_sha256": [
+        "6e484edec3572e980c7996da7b6dc3a190b3954f1d98fd72c7074aeb8431aa10",
+        "9c551223318c2b55bd5297b5b9fcac47f27edd8464bcc2e62b02405b196945d2",
+        "942899d3149c6413d5f7e1a34a82d87139eb8960445c4c97ad542ad43081402a",
+        "840201eddf387e8600308ade11559a83b6d9b7a043fc4838b7ab78658252d94e",
+        "66263c259613699e65ece7ab5e889e8e770244213d427cc1031e380b7d8bd80b"
+      ],
+      "output_shapes": [
+        [
+          96,
+          4,
+          5120
+        ],
+        [
+          96,
+          4
+        ],
+        [
+          96,
+          4,
+          4
+        ],
+        [
+          96,
+          5120
+        ],
+        [
+          96,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        38.33955383300781,
+        39.06969451904297,
+        39.202720642089844,
+        39.13353729248047,
+        37.71843338012695,
+        38.44847869873047,
+        37.73276901245117
+      ],
+      "median_us": 38.44847869873047
+    },
+    {
+      "case": "pre-world1-rows8192",
+      "rows": 8192,
+      "world": 1,
+      "mode": "pre",
+      "seed": 1019921,
+      "input_sha256": {
+        "residual": "1dfccf593b591cf193b10f7f717b95601438e71ee0c998b2099edc00947791a0",
+        "writer": "f473018e1df2ece6be94a1e4708c47bb05bab826200e66520fbb7ab130259c98",
+        "post": "aa77815195a45446e5e4323e896777ab7a5d316d1da4a31244fb176e3816d0e4",
+        "comb": "3cad14880b807ec8e028971e71c2122f0539a748aeae278fbcca47595fa39839",
+        "pre": "485cd4d3dfd388f38a82854a8942b9da64ebffb0867ec9067310263f43bec1aa",
+        "fn": "7db3a58dc31155f494570d60168696b49948183697e85a48955fb5b182d649d8"
+      },
+      "output_sha256": [
+        "1dfccf593b591cf193b10f7f717b95601438e71ee0c998b2099edc00947791a0",
+        "e25bc99c0ced140c1f938f0d465870d7fad967c6941f040c74f1ad79bdc75a52",
+        "842097f63eac445c7efa000bdf0d2c0946a23d1b223220603562a46f23a32a6a",
+        "de89904257ded8a23d0ee67ef0124d831562b90f1cb22b457b0426b6026585a1",
+        "84e28ff27cf0d7475dcd6456febaa8f96ccfa7ddf95c11341e67f7b18227ddc0"
+      ],
+      "output_shapes": [
+        [
+          8192,
+          4,
+          5120
+        ],
+        [
+          8192,
+          4
+        ],
+        [
+          8192,
+          4,
+          4
+        ],
+        [
+          8192,
+          5120
+        ],
+        [
+          8192,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        3757.0492553710938,
+        3729.1958618164062,
+        3712.6190185546875,
+        3723.5418701171875,
+        3713.695068359375,
+        3731.2628173828125,
+        3715.6729125976562
+      ],
+      "median_us": 3723.5418701171875
+    },
+    {
+      "case": "broadcast-world1-rows8192",
+      "rows": 8192,
+      "world": 1,
+      "mode": "broadcast",
+      "seed": 1029921,
+      "input_sha256": {
+        "residual": "8d4f6c504c2e0d88570965ac68ad07764537d0ae13a1c2ede98c025b97a2e869",
+        "writer": "11fd5e82a929101f7a4ac5f6db560fd1d60a12d4758947e3f82c5a2ecddb20ea",
+        "post": "c4b6abfd3b89440011fc0242c6eae74fceb5dba2252e6886638640d0f6c0f049",
+        "comb": "b0a5f9170051a5ed58e53a43498459de3d84542397b9ae619693667f03f9efa5",
+        "pre": "cfee2c64432ccb00a90e730354fc16d2e8756fd4fe048e4319d647781ac1696d",
+        "fn": "c13fb8464a19f1ba52e6ae8fa73b30bbf8f77909f4fe90f6987cfaa24bfc3374"
+      },
+      "output_sha256": [
+        "f98a5966d2839a50205edbb6a8c8bfb7548b7ec2ff779667db537d983a396771",
+        "a245e8b3bbc94f452f00e8930df590ae0e5eec89bb17bd62598028d1b0323668",
+        "133625bac3688713f5ca3709ef7f9a8e5c1da3b7ef57ca7ce083989861dc4034",
+        "e1d21e211331b70a0d19317dc6a4bba54cd1351444b73f2449c265a977b74bb8",
+        "909a65d0a241cac9528904636ab1b5c1595834372c52d7a89d01f7e8e838ebc9"
+      ],
+      "output_shapes": [
+        [
+          8192,
+          4,
+          5120
+        ],
+        [
+          8192,
+          4
+        ],
+        [
+          8192,
+          4,
+          4
+        ],
+        [
+          8192,
+          5120
+        ],
+        [
+          8192,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        3435.4812622070312,
+        3394.3392944335938,
+        3377.646484375,
+        3377.955322265625,
+        3420.0747680664062,
+        3377.8900146484375,
+        3538.1906127929688
+      ],
+      "median_us": 3394.3392944335938
+    },
+    {
+      "case": "post_pre-world1-rows8192",
+      "rows": 8192,
+      "world": 1,
+      "mode": "post_pre",
+      "seed": 1039921,
+      "input_sha256": {
+        "residual": "49c416b38e07cd8fb77b1f58b1e3cf458a7b69a4646847dd0df1f198864e67ae",
+        "writer": "2e0a4e9f06d5a1aa5995d592a3accac4e9d175c2b7557ce0cbaa16512f693b99",
+        "post": "ce2821cfbc4a50644bcb620db717783c36c365dd33ee3e1a77a1e5766fb710bf",
+        "comb": "d0acef3d0891c95509438fe947f4a7493fbafe481d9887f7819896c892692b9b",
+        "pre": "8c2e86b2c1c8cd6a356f8a9c2a5a8f66d634842b8bc852a1ab641e75f548e244",
+        "fn": "4c07de2d23652031713dcaf72dafe9b2cc4f5d3559fbeec2dd7e668d4c569783"
+      },
+      "output_sha256": [
+        "713ac5e6d55c703aa8a9dfb8d23f7d4c67558f07d31fc961b2c72ba23563ca70",
+        "0948beb75ddfe3e3fba1212eacbd3b9c9fed9d51276e0e1ffb1eebf1339f09be",
+        "7abc2c74860e90240621fd8a4440e6d77b9421a42d4d2124e488229c848d999d",
+        "e9de5b5dadf19fd592cc2a8f377efd0a8c3aaf27b32a9dcde47c7e97ad5a37ba",
+        "413314ef3c8747c73d8496b0e6febcca2edfc5274917993e8597532543404ff9"
+      ],
+      "output_shapes": [
+        [
+          8192,
+          4,
+          5120
+        ],
+        [
+          8192,
+          4
+        ],
+        [
+          8192,
+          4,
+          4
+        ],
+        [
+          8192,
+          5120
+        ],
+        [
+          8192,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        4965.210876464844,
+        4918.057556152344,
+        5061.0296630859375,
+        4898.670654296875,
+        4902.4005126953125,
+        4910.1837158203125,
+        5138.2257080078125
+      ],
+      "median_us": 4918.057556152344
+    },
+    {
+      "case": "post_pre-world4-rows8192",
+      "rows": 8192,
+      "world": 4,
+      "mode": "post_pre",
+      "seed": 4039921,
+      "input_sha256": {
+        "residual": "c1eb86e18a94871fa6b6dec527194e7f126926953af09a546f2198e3570a8f4a",
+        "writer": "80b1081e4f06804a838d15e9646327a1d429bf5778df1f5850087544fcad5704",
+        "post": "0ee925ffa7a4f37a1db51d9603721b4ac7250df6600e97d4cd7a58cf7bf4ddad",
+        "comb": "0244c7ae13090462f947a76ea4608de4badbd2910fc484d8a22f1577363db0d9",
+        "pre": "99aa52f1f2a613de8a768107efcc84c7a4619403da25b51b9241cbf545e9a24a",
+        "fn": "473b97b4b3106546e2d28ccfd5af055d62b747fc73765b240beec1a581846aaa"
+      },
+      "output_sha256": [
+        "5616f53ab2995e166cdee42d191d80ae024aeeea21625c39b84d0c2e671d8d92",
+        "3dbe0a3f260b35bc66934345fb5787b625844bbcb1203eb8857d294ec5186cf7",
+        "677155bce3a24b0853d5f9f424caa7c3f3fdcf47ad084fc70bd47d439de5c21e",
+        "0c150ab9287feb35d94f3ee7800bef9412e96b88231bdf8adc5d5ed409c53406",
+        "da69664f89f1bb4a8776f78a293e5176328a30d91d0a2e4b7da557fc7c71aa85"
+      ],
+      "output_shapes": [
+        [
+          8192,
+          4,
+          5120
+        ],
+        [
+          8192,
+          4
+        ],
+        [
+          8192,
+          4,
+          4
+        ],
+        [
+          8192,
+          5120
+        ],
+        [
+          8192,
+          4
+        ]
+      ],
+      "graph_replays_bit_stable": true,
+      "cuda_graph_us": [
+        6064.964599609375,
+        6008.056640625,
+        6001.4849853515625,
+        6009.4549560546875,
+        6008.0877685546875,
+        6010.1129150390625,
+        6082.52685546875
+      ],
+      "median_us": 6009.4549560546875
+    }
+  ],
+  "seconds": 40.68814049300272
+}

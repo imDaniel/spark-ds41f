@@ -1,0 +1,84 @@
+{
+  "node": 1,
+  "generated_cuda_equal": 11,
+  "binary_equal": 0,
+  "rows": [
+    {
+      "source_sha256": "0b4bb5fe08abce72e44c96ac889a6b36543eb98fa1822d20dfe8f0b22e5cda28",
+      "kernel": "project",
+      "official_shared_object_sha256": "5b1d07a115d4ac4e426af82fc4532b0c21fe022d82263fc45ea7ed463b53536d",
+      "candidate_shared_object_sha256": "fc68e4c884298628283e765fc1f5ad9f58151775fb449a5577cbe52e4f02592d",
+      "binary_equal": false
+    },
+    {
+      "source_sha256": "c6b5e3ee63e98f08d4cd2eed19014e894f1037db82886a436b22e679b216450f",
+      "kernel": "project",
+      "official_shared_object_sha256": "5b1d07a115d4ac4e426af82fc4532b0c21fe022d82263fc45ea7ed463b53536d",
+      "candidate_shared_object_sha256": "fc68e4c884298628283e765fc1f5ad9f58151775fb449a5577cbe52e4f02592d",
+      "binary_equal": false
+    },
+    {
+      "source_sha256": "b0c911421a55698f4e2eb552fdbdb11283a296fcbdc2906ec8032894706fce3f",
+      "kernel": "project",
+      "official_shared_object_sha256": "6d9c10483fd64dab81455c992da849086e6bbc40ddd45cc7011dacd79aa7f1e4",
+      "candidate_shared_object_sha256": "bdf5776fdab7a5044a25a563852f629190a55b43f40a5a66a2b5746aed35340c",
+      "binary_equal": false
+    },
+    {
+      "source_sha256": "c1f184aea6760ab5a742ac5c762965ebe41e4332226e5c3e986328600446c088",
+      "kernel": "project",
+      "official_shared_object_sha256": "6d9c10483fd64dab81455c992da849086e6bbc40ddd45cc7011dacd79aa7f1e4",
+      "candidate_shared_object_sha256": "bdf5776fdab7a5044a25a563852f629190a55b43f40a5a66a2b5746aed35340c",
+      "binary_equal": false
+    },
+    {
+      "source_sha256": "2ccbad2714427fc43d0d8ef965d0a8cf4a3a1909827c3314d9cc2844067bc48c",
+      "kernel": "finalize",
+      "official_shared_object_sha256": "687d221f0c8a05896b61c52b6648bfdadf6892252f302d1e07b18d739cca33d2",
+      "candidate_shared_object_sha256": "eabac08d7ad6b14b4e52680af729160b57e4afdfcdacb84ddf70d3a1bfe23a41",
+      "binary_equal": false
+    },
+    {
+      "source_sha256": "75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2",
+      "kernel": "finalize",
+      "official_shared_object_sha256": "c90600402707d5caef883fd82c4100022087afe41ce3ed71d3c057b5d995cc87",
+      "candidate_shared_object_sha256": "1cbb8fd36e1e5ed0c26feb074c740277c3429a9cc635b7ae91d70c8dd4e9e039",
+      "binary_equal": false
+    },
+    {
+      "source_sha256": "7193574c2197cd37828ccbb9cafe40db796bc319acd2aa8f0ffa83522d3e412f",
+      "kernel": "project",
+      "official_shared_object_sha256": "52c25cb21d3c3b35f5e0ffc2918c84cd72e763488a202c8038939f00a342b604",
+      "candidate_shared_object_sha256": "b6ee344bc535370e3eebc6af6e4ab21d67c7ca970bb087e22069aeb420471d77",
+      "binary_equal": false
+    },
+    {
+      "source_sha256": "414212163fa5a8ac78111aa236fa6e74727b712d7becd666e270856c73c16b3e",
+      "kernel": "project",
+      "official_shared_object_sha256": "52c25cb21d3c3b35f5e0ffc2918c84cd72e763488a202c8038939f00a342b604",
+      "candidate_shared_object_sha256": "b6ee344bc535370e3eebc6af6e4ab21d67c7ca970bb087e22069aeb420471d77",
+      "binary_equal": false
+    },
+    {
+      "source_sha256": "ca7d95c03b0442fdf937e604f4702d549b85a5e805b6a44efa9d03e225f8d908",
+      "kernel": "project",
+      "official_shared_object_sha256": "7204113bc4b506f8d080d18801a98bf2cf57b75bff2135eccd1bb65c62a64fc3",
+      "candidate_shared_object_sha256": "3aa39528fe66c67ebbb04faa3d5e01cfcf6dc03a602c00b5193ebc757cebafe9",
+      "binary_equal": false
+    },
+    {
+      "source_sha256": "e9fdc64dc4d602519d5f7af3521122e67b4d89fa964b56be561f56f1e45bf3b8",
+      "kernel": "project",
+      "official_shared_object_sha256": "7204113bc4b506f8d080d18801a98bf2cf57b75bff2135eccd1bb65c62a64fc3",
+      "candidate_shared_object_sha256": "3aa39528fe66c67ebbb04faa3d5e01cfcf6dc03a602c00b5193ebc757cebafe9",
+      "binary_equal": false
+    },
+    {
+      "source_sha256": "66b9c06ea1f0b341eb539b9cc2e02a8090939784ab4ac98c96445f1d5025503b",
+      "kernel": "finalize",
+      "official_shared_object_sha256": "c90600402707d5caef883fd82c4100022087afe41ce3ed71d3c057b5d995cc87",
+      "candidate_shared_object_sha256": "1cbb8fd36e1e5ed0c26feb074c740277c3429a9cc635b7ae91d70c8dd4e9e039",
+      "binary_equal": false
+    }
+  ]
+}

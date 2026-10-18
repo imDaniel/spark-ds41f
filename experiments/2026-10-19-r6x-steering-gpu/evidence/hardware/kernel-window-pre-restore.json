@@ -1,0 +1,26 @@
+[
+  {
+    "node": 1,
+    "returncode": 0,
+    "fault_signatures": [],
+    "sha256": "932268077cd1712c159064e28f74c8209355b1e0109abc37712deaab0a7377a9"
+  },
+  {
+    "node": 2,
+    "returncode": 0,
+    "fault_signatures": [],
+    "sha256": "b9fe946fdb6647787b112eac0164b57dc09884cd8dc818b17f378169de3eaca6"
+  },
+  {
+    "node": 3,
+    "returncode": 0,
+    "fault_signatures": [],
+    "sha256": "500ce433423041f2418b00c5c336b5d0af03870d45ede8fd9570f0f3756672e4"
+  },
+  {
+    "node": 4,
+    "returncode": 0,
+    "fault_signatures": [],
+    "sha256": "8f8b09f5554e8900b26d0a298586cfed85edb53c60aa0fd172c4feccfb14fd4f"
+  }
+]

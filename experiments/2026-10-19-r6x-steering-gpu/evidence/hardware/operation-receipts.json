@@ -1,0 +1,292 @@
+[
+  {
+    "run_id": "candidate-loaded-active-engine-e110b81bd95a",
+    "arm": "candidate-loaded",
+    "phase": "active-engine",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-active-engine-e110b81bd95a",
+    "arm": "candidate-loaded",
+    "phase": "active-engine",
+    "returncode": 0,
+    "seconds": 245.11859440803528,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-bench-54c0cdf4e62a",
+    "arm": "candidate-loaded",
+    "phase": "bench",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-bench-54c0cdf4e62a",
+    "arm": "candidate-loaded",
+    "phase": "bench",
+    "returncode": 0,
+    "seconds": 1219.5071303844452,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-capacity-97df8a2e5aec",
+    "arm": "candidate-loaded",
+    "phase": "capacity",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-capacity-97df8a2e5aec",
+    "arm": "candidate-loaded",
+    "phase": "capacity",
+    "returncode": 0,
+    "seconds": 241.5691065788269,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-cold-s0.0-a195e8ca362e",
+    "arm": "candidate-loaded",
+    "driver_sha256": "d6ee5ae7a5a9b158b7fd877d085b499566093fbb77671598066f795cb9d1062e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-cold-s0.0-a195e8ca362e",
+    "arm": "candidate-loaded",
+    "returncode": 0,
+    "seconds": 59.65688109397888,
+    "driver_sha256": "d6ee5ae7a5a9b158b7fd877d085b499566093fbb77671598066f795cb9d1062e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-cold-s1.0-38741ed66022",
+    "arm": "candidate-loaded",
+    "driver_sha256": "d6ee5ae7a5a9b158b7fd877d085b499566093fbb77671598066f795cb9d1062e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-cold-s1.0-38741ed66022",
+    "arm": "candidate-loaded",
+    "returncode": 0,
+    "seconds": 84.68284177780151,
+    "driver_sha256": "d6ee5ae7a5a9b158b7fd877d085b499566093fbb77671598066f795cb9d1062e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-matched-traces-3b4c2f691f79",
+    "arm": "candidate-loaded",
+    "driver_sha256": "5e63b1212945b89af2a8030a985016c2424a255e766e3432ebfcbab5ac94369e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-matched-traces-3b4c2f691f79",
+    "arm": "candidate-loaded",
+    "returncode": 0,
+    "seconds": 89.30616331100464,
+    "driver_sha256": "5e63b1212945b89af2a8030a985016c2424a255e766e3432ebfcbab5ac94369e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-prefill-72328da07bd6",
+    "arm": "candidate-loaded",
+    "phase": "prefill",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-prefill-72328da07bd6",
+    "arm": "candidate-loaded",
+    "phase": "prefill",
+    "returncode": 0,
+    "seconds": 97.36819005012512,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-smoke-30d0da41ad79",
+    "arm": "candidate-loaded",
+    "phase": "smoke",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-smoke-30d0da41ad79",
+    "arm": "candidate-loaded",
+    "phase": "smoke",
+    "returncode": 0,
+    "seconds": 21.767498016357422,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-smoke-fd54a8cc3996",
+    "arm": "candidate-loaded",
+    "phase": "smoke",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-loaded-smoke-fd54a8cc3996",
+    "arm": "candidate-loaded",
+    "phase": "smoke",
+    "returncode": 0,
+    "seconds": 21.957345247268677,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-unloaded-bench-stock-174594048617",
+    "arm": "candidate-unloaded",
+    "phase": "bench-stock",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-unloaded-bench-stock-174594048617",
+    "arm": "candidate-unloaded",
+    "phase": "bench-stock",
+    "returncode": 0,
+    "seconds": 253.26335525512695,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-unloaded-matched-traces-a828f8216cc7",
+    "arm": "candidate-unloaded",
+    "driver_sha256": "5e63b1212945b89af2a8030a985016c2424a255e766e3432ebfcbab5ac94369e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-unloaded-matched-traces-a828f8216cc7",
+    "arm": "candidate-unloaded",
+    "returncode": 0,
+    "seconds": 58.8222930431366,
+    "driver_sha256": "5e63b1212945b89af2a8030a985016c2424a255e766e3432ebfcbab5ac94369e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-unloaded-smoke-bfb7cea843e0",
+    "arm": "candidate-unloaded",
+    "phase": "smoke",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "candidate-unloaded-smoke-bfb7cea843e0",
+    "arm": "candidate-unloaded",
+    "phase": "smoke",
+    "returncode": 0,
+    "seconds": 3.1740541458129883,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "consumer-cost-60a46e3d5371",
+    "returncode": 0,
+    "seconds": 20.44879913330078,
+    "driver_sha256": "01c534b74b6b6b08d094536796a719735bc21c07ff09f021fdac751d7fb75e41",
+    "measurement_complete": true
+  },
+  {
+    "run_id": "consumer-cost-83a3629b7f3b",
+    "returncode": 0,
+    "seconds": 22.68418836593628,
+    "driver_sha256": "9e4bafae783eb5e00609c84bf18468d5f5f46e85289e052677d759e94e2ef138",
+    "measurement_complete": true
+  },
+  {
+    "run_id": "official-bench-stock-992ba05a8454",
+    "arm": "official",
+    "phase": "bench-stock",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "official-bench-stock-992ba05a8454",
+    "arm": "official",
+    "phase": "bench-stock",
+    "returncode": 0,
+    "seconds": 261.1905858516693,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "official-cold-s0-5f90ddf6a832",
+    "arm": "official",
+    "driver_sha256": "d6ee5ae7a5a9b158b7fd877d085b499566093fbb77671598066f795cb9d1062e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "official-cold-s0-5f90ddf6a832",
+    "arm": "official",
+    "returncode": 0,
+    "seconds": 54.700592041015625,
+    "driver_sha256": "d6ee5ae7a5a9b158b7fd877d085b499566093fbb77671598066f795cb9d1062e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "official-engine-1dfc01e1f014",
+    "arm": "official",
+    "phase": "engine",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "official-engine-1dfc01e1f014",
+    "arm": "official",
+    "phase": "engine",
+    "returncode": 0,
+    "seconds": 34.77746772766113,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "official-matched-traces-55a2592322c7",
+    "arm": "official",
+    "driver_sha256": "5e63b1212945b89af2a8030a985016c2424a255e766e3432ebfcbab5ac94369e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "official-matched-traces-55a2592322c7",
+    "arm": "official",
+    "returncode": 0,
+    "seconds": 24.470178604125977,
+    "driver_sha256": "5e63b1212945b89af2a8030a985016c2424a255e766e3432ebfcbab5ac94369e",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "official-prefill-8d88a84aa360",
+    "arm": "official",
+    "phase": "prefill",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "official-prefill-8d88a84aa360",
+    "arm": "official",
+    "phase": "prefill",
+    "returncode": 0,
+    "seconds": 21.220787286758423,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "official-smoke-8a30ee48dbdd",
+    "arm": "official",
+    "phase": "smoke",
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  },
+  {
+    "run_id": "official-smoke-8a30ee48dbdd",
+    "arm": "official",
+    "phase": "smoke",
+    "returncode": 0,
+    "seconds": 2.931218385696411,
+    "source_sha256": "33306eb79833929b26a736f95280eeed42970718be39cb98e7347d6b916ebdd3",
+    "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b"
+  }
+]

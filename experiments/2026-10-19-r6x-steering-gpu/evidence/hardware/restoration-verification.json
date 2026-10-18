@@ -1,0 +1,55 @@
+{
+  "nodes": [
+    {
+      "node": "spark01",
+      "configuration_files": 62,
+      "all_configuration_sha256_unchanged": true,
+      "retained_repositories": 4,
+      "heads_and_status_unchanged": true,
+      "original_image_restored": true,
+      "args_env_mapping_mounts_unchanged": true,
+      "network_device_security_resource_flags_unchanged": true,
+      "qualification_container_absent": true
+    },
+    {
+      "node": "spark02",
+      "configuration_files": 58,
+      "all_configuration_sha256_unchanged": true,
+      "retained_repositories": 4,
+      "heads_and_status_unchanged": true,
+      "original_image_restored": true,
+      "args_env_mapping_mounts_unchanged": true,
+      "network_device_security_resource_flags_unchanged": true,
+      "qualification_container_absent": true
+    },
+    {
+      "node": "spark03",
+      "configuration_files": 58,
+      "all_configuration_sha256_unchanged": true,
+      "retained_repositories": 4,
+      "heads_and_status_unchanged": true,
+      "original_image_restored": true,
+      "args_env_mapping_mounts_unchanged": true,
+      "network_device_security_resource_flags_unchanged": true,
+      "qualification_container_absent": true
+    },
+    {
+      "node": "spark04",
+      "configuration_files": 58,
+      "all_configuration_sha256_unchanged": true,
+      "retained_repositories": 4,
+      "heads_and_status_unchanged": true,
+      "original_image_restored": true,
+      "args_env_mapping_mounts_unchanged": true,
+      "network_device_security_resource_flags_unchanged": true,
+      "qualification_container_absent": true
+    }
+  ],
+  "configuration_files_verified": 236,
+  "original_source_repositories_verified": 16,
+  "original_image": "sha256:a63259a196d82dae51016d487ed43093f2045261adcb41045cfe9c1be29f70d2",
+  "recipe_sha256": "51a34eebfdfb77a1d5be030b2432c83c622d67a63f77a8f61c9c2455f88af695",
+  "restored": true,
+  "environment_comparison": "all unique keys and values; list order ignored",
+  "mount_comparison": "exact bind multiset and unique destinations; order differences accepted only without overlapping destinations"
+}
