@@ -1,0 +1,10 @@
+preparing .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-b4b39bde
+vllm: reusing .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-b4b39bde/src/vllm
+b12x: prepared 69e5795e2141 (tree 1a647a311ca5)
+nccl: prepared eeacf1c6343f (tree 6af10aa730a6)
+tilelang: prepared a0e66d71fe76 (tree 222b895d04ee)
+tile_kernels: prepared edfa64d018bc (tree cb2fa41c8af2)
+sparknet: prepared 3bc8d10104a5 (tree f72599fa212e)
+cutlass: prepared v4.7.1 (cb4247394dd8)
+cutlass-dsl wheels: downloaded and verified
+build inputs ready: .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-b4b39bde (1 vLLM deletions)

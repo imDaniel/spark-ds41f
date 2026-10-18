@@ -61,6 +61,11 @@ manifest's `patch_head` commits exactly. Prepare refuses a head or tree that
 differs from the manifest. The patch-set fingerprint must also match the
 manifest, so a changed patch has to be recorded before it can be built.
 
+**Replay isolation:** newly prepared project checkouts set `maintenance.auto=false`
+and `gc.auto=0` in their own Git configuration before fetching or applying
+patches. This prevents background packing from overlapping the replay or final
+directory rename. Host/global Git settings and source identities are unchanged.
+
 **Reuse and repair:** re-running `prepare` reuses every verified part and
 rebuilds only what is missing or wrong. It writes `inputs.json` last, so an
 interrupted run is never mistaken for a complete one. `check` recomputes each

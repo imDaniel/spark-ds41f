@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "status": "passed-local-cpu-source-reproduction",
+  "deployment_base_commit": "11d31712a5821948f3cbfe14c0ae8419efb22a81",
+  "scope": "current r6v experiment baseline; continued development tracks original project",
+  "patches_modified": false,
+  "source_lock_modified": false,
+  "historical_manifests_modified": false,
+  "original_mac_failure_patches": [
+    "0154",
+    "0103"
+  ],
+  "macos_fixed": {
+    "status": "passed",
+    "environment": {
+      "os": "Darwin",
+      "machine": "arm64",
+      "python": "3.15.0",
+      "git": "git version 2.54.0 (Apple Git-157)"
+    },
+    "patch_count": 172,
+    "patchset_sha256": "00b1018e0078de4fc986554d9eccc8ed1e7f404e54268ba4e71054e03396c0c4",
+    "head": "c001cc4ed77bef686ddd006be0dd706b9c15d7b7",
+    "tree": "d11e9836e61bc2b763d6805d3324ec8fb5376360",
+    "project_problems": [],
+    "export_context_sha256": "398e3570245a35cce7d013ff02335dd4467bc78ce4aef764c60b4518dcc20170",
+    "connectivity_check_exit": 0,
+    "automatic_maintenance_children": 0
+  },
+  "linux_original": {
+    "status": "passed",
+    "environment": {
+      "os": "Linux",
+      "machine": "aarch64",
+      "python": "3.13.5",
+      "git": "git version 2.47.3"
+    },
+    "patch_count": 172,
+    "patchset_sha256": "00b1018e0078de4fc986554d9eccc8ed1e7f404e54268ba4e71054e03396c0c4",
+    "head": "c001cc4ed77bef686ddd006be0dd706b9c15d7b7",
+    "tree": "d11e9836e61bc2b763d6805d3324ec8fb5376360",
+    "project_problems": [],
+    "export_context_sha256": "398e3570245a35cce7d013ff02335dd4467bc78ce4aef764c60b4518dcc20170",
+    "seconds": 27.55
+  },
+  "linux_fixed": {
+    "status": "passed",
+    "environment": {
+      "os": "Linux",
+      "machine": "aarch64",
+      "python": "3.13.5",
+      "git": "git version 2.47.3"
+    },
+    "patch_count": 172,
+    "patchset_sha256": "00b1018e0078de4fc986554d9eccc8ed1e7f404e54268ba4e71054e03396c0c4",
+    "head": "c001cc4ed77bef686ddd006be0dd706b9c15d7b7",
+    "tree": "d11e9836e61bc2b763d6805d3324ec8fb5376360",
+    "project_problems": [],
+    "export_context_sha256": "398e3570245a35cce7d013ff02335dd4467bc78ce4aef764c60b4518dcc20170",
+    "seconds": 16.61
+  },
+  "cpu_regression_test": {
+    "status": "passed",
+    "tests_run": 5
+  },
+  "full_cpu_suite": {
+    "status": "passed",
+    "tests_run": 418,
+    "skipped": 5,
+    "fixture": "isolated-example-node-maps-with-original-recipe"
+  },
+  "full_build_prepare": "passed",
+  "build_check": "passed",
+  "image_built": false,
+  "gpu_tests_run": false,
+  "online_cluster_accessed": false,
+  "doctor": "passed",
+  "full_build_inputs": {
+    "status": "passed",
+    "full_prepare_exit": 0,
+    "build_check_exit": 0,
+    "contexts": {
+      "b12x-source": "a42c65154c19997d36a936f3207e7fe21bcc9f9f4a030a14051da87bf977a1e0",
+      "cutlass-dsl-wheels": "496e59ff2193588225f954ef627ca3f4ef3f6f6bf318b6a224f5f314dea6b636",
+      "cutlass-source": "89dc5848dfdba767fb96439661b6abb44f43ed5562c9f6723611df8accd8bb98",
+      "nccl-source": "c119b938f9cd1693a9178151470b02b35bb2e0bd0ae328c2b358413fd7923535",
+      "sparknet-source": "87dbf9719a1b56c30229967a84893d6bcd0b68dbae0d268d18e3468583c6a220",
+      "tile_kernels-source": "fd86c8544632250555b501dad30567f40eab6165c19cd6726ac8e019303c8a46",
+      "tilelang-source": "e9f424f5a4a557ab397b053413c56d43ed4732455201ebc385bc91ff30ca86cd",
+      "vllm-deletions": "4562cfd52de678814068665ecd7fdf96bb135cffd8f4f650ab61f40e9148d23c",
+      "vllm-source": "398e3570245a35cce7d013ff02335dd4467bc78ce4aef764c60b4518dcc20170"
+    },
+    "vllm_deletions": 1,
+    "projects": {
+      "vllm": {
+        "revision": "19f2c20ed4d64ae22bd009ceacadd85e2a81e354",
+        "patch_head": "c001cc4ed77bef686ddd006be0dd706b9c15d7b7",
+        "expected_tree": "d11e9836e61bc2b763d6805d3324ec8fb5376360",
+        "patchset_sha256": "00b1018e0078de4fc986554d9eccc8ed1e7f404e54268ba4e71054e03396c0c4"
+      },
+      "b12x": {
+        "revision": "236ddff04a5f5064084b46464800b70b34ec7d8c",
+        "patch_head": "69e5795e2141fbb5fa2b3af096d51e754939bb41",
+        "expected_tree": "1a647a311ca55d45070ab83d60668d9c8fb8886c",
+        "patchset_sha256": "3b0eb04a5870302937679badb436bfc9aa4afadd19333eb96d33148004ea1f09"
+      },
+      "nccl": {
+        "revision": "73cf112295c33aee2b895f329f592f2a9b4b0f97",
+        "patch_head": "eeacf1c6343f0499e4e7ab20ec7eecfb6f62eda6",
+        "expected_tree": "6af10aa730a64fcee8781d62340a9c9184e79469",
+        "patchset_sha256": "06f133b1709622d64b0ab87fc32f29d167f4617ca9386117596008d400a8d40c"
+      },
+      "tilelang": {
+        "revision": "b95ee4ffb52ae26e15619cad38c6f41e7e0a2b46",
+        "patch_head": "a0e66d71fe7617216f2de5d86c3b088595367387",
+        "expected_tree": "222b895d04ee6cd75179155d06e0c0d450636f51",
+        "patchset_sha256": "7d097972b85ae6817f2e7314ed3446f9d61d3e77691c2d0097dc18548d11ee07"
+      },
+      "tile_kernels": {
+        "revision": "66258df6175d2f630ffecb04c5ab66bff8a2ae6a",
+        "patch_head": "edfa64d018bc64006fcb07c95c32fa196363c0ae",
+        "expected_tree": "cb2fa41c8af290204c81c547ed678ebf957cca53",
+        "patchset_sha256": "3fed91bbd083d38b08de1bd7ebe25dbc7aec9d36f4e2b8f7adbfb497b128c22c"
+      },
+      "sparknet": {
+        "revision": "3bc8d10104a5012244a0424d7dfc1107a72eafab",
+        "patch_head": "3bc8d10104a5012244a0424d7dfc1107a72eafab",
+        "expected_tree": "f72599fa212e894d67ee114553e628ab05daf2da",
+        "patchset_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  }
+}
