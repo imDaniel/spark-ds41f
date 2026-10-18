@@ -1,0 +1,448 @@
+From b9da967440b1531008776e7f37297ff7851f8588 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 17:52:12 +0900
+Subject: [PATCH] Expose steering fields without silent request fallback
+
+Base: complete r6v author stack and downstream steering through 0186.
+Rationale: top-level steering fields were allowed as ignored extras, while
+nested-only admission differed on nulls, representable zeros and strength.
+Declare chat/completion fields and forward them through existing extra_args;
+retain nested input compatibility and reject conflicting duplicate values,
+unsupported request paths and beam search before dropping any selection.
+Canonicalize scale once to FP32 after strict [0, 4] input validation, validate
+named zero against the loaded capability, and report the failing parameter.
+Quality: projection arithmetic, cache salt and worker state are unchanged;
+strengths above one require the expanded GPU and serving qualification.
+Validation: 79 CPU contracts passed, 23 CUDA checks skipped on CPU; GPU
+fixtures now include scale four and actual chat/completion field forwarding.
+Upstream status: independent downstream experiment; not submitted upstream.
+---
+ .../models/test_deepseek_v4_1_steering_gpu.py |   8 ++
+ .../test_deepseek_v4_1_steering_request.py    | 102 +++++++++++++++++-
+ .../openai/chat_completion/protocol.py        |   8 +-
+ .../entrypoints/openai/completion/protocol.py |   8 +-
+ vllm/entrypoints/serve/engine/protocol.py     |  55 +++++++++-
+ vllm/models/deepseek_v4_1/steering/config.py  |   6 +-
+ vllm/models/deepseek_v4_1/steering/profile.py |   2 +-
+ vllm/models/deepseek_v4_1/steering/request.py |  42 ++++++--
+ 8 files changed, 209 insertions(+), 22 deletions(-)
+
+diff --git a/tests/models/test_deepseek_v4_1_steering_gpu.py b/tests/models/test_deepseek_v4_1_steering_gpu.py
+index 16d8ba384..f84babad5 100644
+--- a/tests/models/test_deepseek_v4_1_steering_gpu.py
++++ b/tests/models/test_deepseek_v4_1_steering_gpu.py
+@@ -37,6 +37,7 @@ def test_projection_fp64_oracle_and_stock_rows(kernels, rows, world):
+     direction = torch.randn(5120, device="cuda", generator=generator)
+     direction /= direction.double().norm().float()
+     scales = (torch.arange(rows, device="cuda") % 5).float() / 4
++    scales[-1] = 4.0
+     writer = source[0].clone() if world == 1 else rank_order_reference(source)
+     expected = project_reference(writer, direction, scales, 2.5, fp64=True)
+     actual = writer.clone()
+@@ -152,3 +153,10 @@ def test_openai_wire_boolean_is_not_coerced_into_a_dose():
+         )
+         assert valid.vllm_xargs["steering_scale"] == 0.5
+         assert valid.vllm_xargs["unrelated_plugin"] == 1
++        top_level = model(
++            model="test", **prompt, steering_profile="p", steering_scale=4
++        )
++        assert top_level.vllm_xargs == {"steering_profile": "p", "steering_scale": 4}
++        assert top_level.to_sampling_params(8, {}).extra_args == top_level.vllm_xargs
++        with pytest.raises(ValidationError, match="beam search"):
++            model(model="test", **prompt, steering_profile="p", use_beam_search=True)
+diff --git a/tests/models/test_deepseek_v4_1_steering_request.py b/tests/models/test_deepseek_v4_1_steering_request.py
+index 62fbc36fd..c35fce8bf 100644
+--- a/tests/models/test_deepseek_v4_1_steering_request.py
++++ b/tests/models/test_deepseek_v4_1_steering_request.py
+@@ -1,5 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import importlib.util
++from pathlib import Path
+ from types import SimpleNamespace
+ 
+ import pytest
+@@ -18,14 +20,13 @@ from ds41_steering_test.request import STOCK, parse_selection
+ @pytest.mark.parametrize(
+     "value",
+     [
+-        None,
+         True,
+         False,
+         "0.5",
+         float("nan"),
+         float("inf"),
+         -1e-100,
+-        1.00000000001,
++        4.00000000001,
+         10**500,
+     ],
+ )
+@@ -40,7 +41,17 @@ def test_scale_rejects_before_float32_rounding(tmp_path, value):
+ def test_named_default_zero_and_unknown(tmp_path):
+     p = valid_profile(tmp_path)
+     assert parse_selection(None, p) == STOCK
++    assert (
++        parse_selection({"steering_profile": None, "steering_scale": None}, p) == STOCK
++    )
+     assert parse_selection({"steering_profile": p.profile_id}, p).scale == 1
++    assert (
++        parse_selection(
++            {"steering_profile": p.profile_id, "steering_scale": None}, p
++        ).scale
++        == 1
++    )
++    assert parse_selection({"steering_profile": None, "steering_scale": 0}, p) == STOCK
+     for scale in [0, -0.0, 1e-100]:
+         assert (
+             parse_selection(
+@@ -49,10 +60,16 @@ def test_named_default_zero_and_unknown(tmp_path):
+             == STOCK
+         )
+     assert parse_selection({"steering_scale": 0}, None) == STOCK
++    assert parse_selection({"steering_scale": 1e-100}, None) == STOCK
++    assert (
++        parse_selection(
++            {"steering_profile": p.profile_id, "steering_scale": 4}, p
++        ).scale
++        == 4
++    )
+     for args in [
+         {"steering_scale": 0.1},
+         {"steering_profile": "bad", "steering_scale": 0},
+-        {"steering_profile": None, "steering_scale": 0},
+     ]:
+         with pytest.raises(ValueError):
+             parse_selection(args, p)
+@@ -90,7 +107,7 @@ def test_cache_identity_and_admission_do_not_mutate_caller(tmp_path):
+     [
+         {"steering_profile": "test-profile", "steering_scale": "0.5"},
+         {"steering_profile": "test-profile", "steering_scale": -0.01},
+-        {"steering_profile": "test-profile", "steering_scale": 1.01},
++        {"steering_profile": "test-profile", "steering_scale": 4.01},
+         {"steering_profile": "test-profile", "steering_scale": float("nan")},
+         {"steering_profile": "test-profile", "steering_scale": float("inf")},
+         {"steering_profile": "unknown", "steering_scale": 0},
+@@ -102,4 +119,79 @@ def test_admission_errors_keep_the_client_error_classification(tmp_path, args):
+ 
+     with pytest.raises(VLLMClientError) as caught:
+         admit(SimpleNamespace(extra_args=args), valid_profile(tmp_path), "caller")
+-    assert caught.value.parameter == "vllm_xargs"
++    assert caught.value.parameter in ("steering_profile", "steering_scale")
++
++
++@pytest.fixture(scope="module")
++def wire_request():
++    # Load the real wire base without importing FastAPI's serving initializer.
++    path = (
++        Path(__file__).resolve().parents[2]
++        / "vllm/entrypoints/serve/engine/protocol.py"
++    )
++    spec = importlib.util.spec_from_file_location("steering_wire_contract", path)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++
++    class Request(module.SteeringRequest):
++        use_beam_search: bool = False
++        vllm_xargs: dict[str, str | int | float | list[str | int | float]] | None = None
++
++    return Request
++
++
++def test_top_level_fields_reach_admission_and_roundtrip(wire_request, tmp_path):
++    profile = valid_profile(tmp_path)
++    original = {"unrelated_plugin": True}
++    request = wire_request(
++        steering_profile=profile.profile_id, steering_scale=2.5, vllm_xargs=original
++    )
++    assert original == {"unrelated_plugin": True}
++    selection = parse_selection(request.vllm_xargs, profile)
++    assert selection.scale == 2.5
++    assert (
++        wire_request.model_validate(request.model_dump()).vllm_xargs
++        == request.vllm_xargs
++    )
++    assert request.vllm_xargs["unrelated_plugin"] == 1
++    for key, value in (("steering_scale", 3), ("steering_profile", "other")):
++        with pytest.raises(ValueError, match="Conflicting"):
++            wire_request(
++                steering_profile=profile.profile_id,
++                steering_scale=2.5,
++                vllm_xargs={key: value},
++            )
++
++
++def test_wire_nulls_match_absence_without_coercing_non_numeric_values(
++    wire_request, tmp_path
++):
++    profile = valid_profile(tmp_path)
++    for body in (
++        {},
++        {"steering_profile": None, "steering_scale": None},
++        {"vllm_xargs": {"steering_profile": None, "steering_scale": None}},
++        {"steering_scale": 1e-50},
++    ):
++        assert parse_selection(wire_request(**body).vllm_xargs, None) == STOCK
++    request = wire_request(steering_profile=profile.profile_id, steering_scale=None)
++    assert parse_selection(request.vllm_xargs, profile).scale == 1
++    for value in (True, False, "0.5", [], {}):
++        with pytest.raises(ValueError):
++            wire_request(steering_profile=profile.profile_id, steering_scale=value)
++    for value in (True, False):
++        with pytest.raises(ValueError, match="steering_scale"):
++            wire_request(vllm_xargs={"steering_scale": value})
++
++
++def test_unqualified_request_paths_reject_instead_of_dropping_steering(wire_request):
++    with pytest.raises(ValueError, match="beam search"):
++        wire_request(use_beam_search=True, steering_profile="test-profile")
++    assert wire_request(use_beam_search=True).use_beam_search
++    base = wire_request.__bases__[0].__bases__[0]
++    for body in (
++        {"steering_profile": "test-profile"},
++        {"vllm_xargs": {"steering_scale": 0.5}},
++    ):
++        with pytest.raises(ValueError, match="not supported"):
++            base(**body)
+diff --git a/vllm/entrypoints/openai/chat_completion/protocol.py b/vllm/entrypoints/openai/chat_completion/protocol.py
+index 89ecef017..5ea092950 100644
+--- a/vllm/entrypoints/openai/chat_completion/protocol.py
++++ b/vllm/entrypoints/openai/chat_completion/protocol.py
+@@ -38,7 +38,11 @@ from vllm.entrypoints.generate.base.protocol import (
+     validate_structural_tag_response_format,
+     validate_structured_outputs_structural_tag,
+ )
+-from vllm.entrypoints.serve.engine.protocol import OpenAIBaseModel, UsageInfo
++from vllm.entrypoints.serve.engine.protocol import (
++    OpenAIBaseModel,
++    SteeringRequest,
++    UsageInfo,
++)
+ from vllm.exceptions import VLLMValidationError
+ from vllm.logger import init_logger
+ from vllm.logprobs import Logprob
+@@ -222,7 +226,7 @@ class ChatCompletionNamedToolChoiceParam(OpenAIBaseModel):
+         return normalize_tool_namespace(data)
+ 
+ 
+-class ChatCompletionRequest(OpenAIBaseModel):
++class ChatCompletionRequest(SteeringRequest):
+     # Ordered by official OpenAI API documentation
+     # https://platform.openai.com/docs/api-reference/chat/create
+     messages: list[ChatCompletionMessageParam]
+diff --git a/vllm/entrypoints/openai/completion/protocol.py b/vllm/entrypoints/openai/completion/protocol.py
+index bf0a94eea..70d91bea7 100644
+--- a/vllm/entrypoints/openai/completion/protocol.py
++++ b/vllm/entrypoints/openai/completion/protocol.py
+@@ -20,7 +20,11 @@ from vllm.entrypoints.generate.base.protocol import (
+     validate_structural_tag_response_format,
+     validate_structured_outputs_structural_tag,
+ )
+-from vllm.entrypoints.serve.engine.protocol import OpenAIBaseModel, UsageInfo
++from vllm.entrypoints.serve.engine.protocol import (
++    OpenAIBaseModel,
++    SteeringRequest,
++    UsageInfo,
++)
+ from vllm.exceptions import VLLMValidationError
+ from vllm.logger import init_logger
+ from vllm.logprobs import Logprob
+@@ -43,7 +47,7 @@ _INT64_MIN = -(2**63)
+ _INT64_MAX = 2**63 - 1
+ 
+ 
+-class CompletionRequest(OpenAIBaseModel):
++class CompletionRequest(SteeringRequest):
+     # Ordered by official OpenAI API documentation
+     # https://platform.openai.com/docs/api-reference/completions/create
+     model: str | None = None
+diff --git a/vllm/entrypoints/serve/engine/protocol.py b/vllm/entrypoints/serve/engine/protocol.py
+index cc875a943..d8dd76534 100644
+--- a/vllm/entrypoints/serve/engine/protocol.py
++++ b/vllm/entrypoints/serve/engine/protocol.py
+@@ -4,12 +4,15 @@
+ # Adapted from
+ # https://github.com/lm-sys/FastChat/blob/168ccc29d3f7edc50823016105c024fe2282732a/fastchat/protocol/openai_api_protocol.py
+ import time
+-from typing import ClassVar
++from typing import Any, ClassVar
+ 
+ from pydantic import (
+     BaseModel,
+     ConfigDict,
+     Field,
++    StrictFloat,
++    StrictInt,
++    StrictStr,
+     model_validator,
+ )
+ 
+@@ -44,6 +47,15 @@ class OpenAIBaseModel(BaseModel):
+     @model_validator(mode="wrap")
+     @classmethod
+     def __log_extra_fields__(cls, data, handler):
++        if isinstance(data, dict) and "steering_profile" not in cls.model_fields:
++            xargs = data.get("vllm_xargs")
++            sources = (data, xargs) if isinstance(xargs, dict) else (data,)
++            if any(
++                source.get(key) is not None
++                for source in sources
++                for key in ("steering_profile", "steering_scale")
++            ):
++                raise ValueError("Steering is not supported by this request type")
+         if isinstance(data, dict) and "vllm_xargs" in cls.model_fields:
+             xargs = data.get("vllm_xargs")
+             if isinstance(xargs, dict) and type(xargs.get("steering_scale")) is bool:
+@@ -80,6 +92,47 @@ class OpenAIBaseModel(BaseModel):
+         return result
+ 
+ 
++class SteeringRequest(OpenAIBaseModel):
++    steering_profile: StrictStr | None = Field(
++        default=None, description="Select the immutable profile loaded at startup."
++    )
++    steering_scale: StrictInt | StrictFloat | None = Field(
++        default=None,
++        description="Request strength in [0, 4]; a named profile defaults to 1.",
++    )
++
++    @model_validator(mode="before")
++    @classmethod
++    def _forward_steering_fields(cls, data: Any):
++        if not isinstance(data, dict):
++            return data
++        original = data.get("vllm_xargs")
++        if original is not None and not isinstance(original, dict):
++            return data
++        keys = ("steering_profile", "steering_scale")
++        if not any(key in data or key in (original or {}) for key in keys):
++            return data
++        extra = dict(original or {})
++        for key in keys:
++            value = data.get(key)
++            if value is not None:
++                if extra.get(key) is not None and extra[key] != value:
++                    raise ValueError(f"Conflicting {key} in request and vllm_xargs")
++                extra[key] = value
++            elif extra.get(key) is None:
++                extra.pop(key, None)
++        return {**data, "vllm_xargs": extra or None}
++
++    @model_validator(mode="after")
++    def _reject_unsupported_beam_search(self):
++        if getattr(self, "use_beam_search", False) and any(
++            (getattr(self, "vllm_xargs", None) or {}).get(key) is not None
++            for key in ("steering_profile", "steering_scale")
++        ):
++            raise ValueError("Steering with beam search is not supported")
++        return self
++
++
+ class ErrorInfo(OpenAIBaseModel):
+     message: str
+     type: str
+diff --git a/vllm/models/deepseek_v4_1/steering/config.py b/vllm/models/deepseek_v4_1/steering/config.py
+index e7b612fce..6aef17f71 100644
+--- a/vllm/models/deepseek_v4_1/steering/config.py
++++ b/vllm/models/deepseek_v4_1/steering/config.py
+@@ -88,12 +88,14 @@ def admit(sampling_params, profile, original_salt, *, resumable=False, session_i
+     try:
+         selection = parse_selection(sampling_params.extra_args, profile)
+     except ValueError as exc:
+-        raise VLLMValidationError(str(exc), parameter="vllm_xargs") from exc
++        raise VLLMValidationError(
++            str(exc), parameter=getattr(exc, "parameter", "steering_scale")
++        ) from exc
+     if selection.active and (resumable or session_id is not None):
+         raise VLLMValidationError(
+             "Steering identity changes require a new request; "
+             "resumable sessions are not qualified",
+-            parameter="vllm_xargs",
++            parameter="steering_profile",
+         )
+     if sampling_params.extra_args and (
+         "steering_profile" in sampling_params.extra_args
+diff --git a/vllm/models/deepseek_v4_1/steering/profile.py b/vllm/models/deepseek_v4_1/steering/profile.py
+index dfe54eb42..60304bf38 100644
+--- a/vllm/models/deepseek_v4_1/steering/profile.py
++++ b/vllm/models/deepseek_v4_1/steering/profile.py
+@@ -236,7 +236,7 @@ def load_profile(
+         raise ValueError("Unsupported steering operator version")
+     if (
+         not isinstance(m["profile_id"], str)
+-        or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,95}", m["profile_id"]) is None
++        or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", m["profile_id"]) is None
+     ):
+         raise ValueError("Invalid steering profile ID")
+     if (
+diff --git a/vllm/models/deepseek_v4_1/steering/request.py b/vllm/models/deepseek_v4_1/steering/request.py
+index 500ea6777..4c2b02ddb 100644
+--- a/vllm/models/deepseek_v4_1/steering/request.py
++++ b/vllm/models/deepseek_v4_1/steering/request.py
+@@ -5,6 +5,7 @@
+ from __future__ import annotations
+ 
+ import math
++import re
+ import struct
+ from dataclasses import dataclass
+ from typing import TYPE_CHECKING, Any
+@@ -30,26 +31,49 @@ class SteeringSelection:
+ STOCK = SteeringSelection()
+ 
+ 
++class SteeringRequestError(ValueError):
++    def __init__(self, message: str, parameter: str):
++        super().__init__(message)
++        self.parameter = parameter
++
++
+ def parse_selection(
+     extra_args: dict[str, Any] | None, profile: SteeringProfile | None
+ ) -> SteeringSelection:
+     args = extra_args or {}
+-    named, scaled = "steering_profile" in args, "steering_scale" in args
++    named = args.get("steering_profile") is not None
++    scaled = args.get("steering_scale") is not None
+     if not named and not scaled:
+         return STOCK
+     if named:
+         name = args["steering_profile"]
+-        if not isinstance(name, str) or profile is None or name != profile.profile_id:
+-            raise ValueError("steering_profile must name the profile loaded at startup")
+-    value = args["steering_scale"] if scaled else 1
++        if (
++            not isinstance(name, str)
++            or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", name) is None
++        ):
++            raise SteeringRequestError(
++                "steering_profile must be a profile name", "steering_profile"
++            )
++    value = args["steering_scale"] if scaled else (1 if named else 0)
+     if type(value) not in (int, float):
+-        raise ValueError("steering_scale must be a finite number in [0, 1]")
++        raise SteeringRequestError("steering_scale must be a number", "steering_scale")
+     # Validate before rounding: an out-of-range double must not round into range.
+-    if not 0 <= value <= 1 or not math.isfinite(value):
+-        raise ValueError("steering_scale must be a finite number in [0, 1]")
+-    if not named and value != 0:
+-        raise ValueError("A nonzero steering_scale requires steering_profile")
++    if not 0 <= value <= 4 or not math.isfinite(value):
++        raise SteeringRequestError(
++            "steering_scale must be finite and in [0, 4]", "steering_scale"
++        )
+     bits = struct.unpack("!I", struct.pack("!f", float(value)))[0] & 0x7FFFFFFF
++    if not named and bits != 0:
++        raise SteeringRequestError(
++            "steering_scale requires steering_profile", "steering_scale"
++        )
++    if named:
++        if profile is None:
++            raise SteeringRequestError(
++                "steering is not enabled on this server", "steering_profile"
++            )
++        if name != profile.profile_id:
++            raise SteeringRequestError("unknown steering_profile", "steering_profile")
+     if bits == 0:
+         return STOCK
+     assert profile is not None

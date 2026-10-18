@@ -25,6 +25,7 @@ CANDIDATE = "experiments/2026-10-03-tilelang-kernels"
 # Experiments that run the TileLang family and may therefore build its sources.
 TILELANG_EXPERIMENTS = (
     CANDIDATE,
+    "experiments/2026-10-18-request-steering/",
     "experiments/2026-10-03-packed-bf16-head/tilelang-tp4",
     "experiments/2026-10-03-tilelang-tp4-performance",
     "experiments/2026-10-04-tilelang-1m",

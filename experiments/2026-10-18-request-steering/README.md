@@ -1,10 +1,15 @@
 # DeepSeek 请求级 steering 实施计划
 
-状态：**规划草案，尚未实现、构建或部署候选运行时**。本次变更增加计划、实验基线身份与下游维护约定。首个目标是在 1017 官方权重上加载一个独立 attention profile，按请求调节强度；保留现有推理精度、图执行、上下文与多模态能力。
+状态：**已实现八个实验补丁，CPU/GPU 合约与四机 API 检查通过，100 条拒答对照已完成；未推广，等待维护者验收**。实现和验证状态以 [IMPLEMENTATION.md](IMPLEMENTATION.md) 为准。首个目标是在 1017 官方权重上加载一个独立 attention profile，按请求调节强度；保留现有推理精度、图执行、上下文与多模态能力。
 
 - [补丁拆分与文件清单](PATCHES.md)
 - [验证矩阵与交付条件](VALIDATION.md)
 - [本次实验基线身份](base.json)
+- [本轮 100 条拒答对照协议](EVALUATION.md)
+- [当前实现与验证状态](IMPLEMENTATION.md)
+- [首轮 100 条结果](RESULTS-100-20261018.md)
+- [追加 scale 1.2 结果](RESULTS-SCALE12-20261018.md)
+- [追加 scale 1.5 结果](RESULTS-SCALE15-20261018.md)
 
 ## 1. 基线与边界
 
@@ -16,9 +21,9 @@
 
 首版支持范围：DeepSeek V4.1 Flash 1017、TileLang、r6v 的 **V2 runner**、TP4 ring。原配置明确设置 `VLLM_USE_V2_MODEL_RUNNER=1`。未加载 profile 的其他模型、后端与拓扑须保持原路径；选中 profile 的 V1 runner、TP3、PP、DP、DBO 或 KV connector/offload 等未验收组合必须明确拒绝，不能静默降级或通过关闭功能规避问题。TP4 内部预填充 SP 属于首版必须支持的路径。
 
-首个 profile 名拟为 `heretic-1017-attn-v1`：层号为零起算的 2–39，方向宽度 5120，候选 layer alpha 为 2.5。仅对 attention WO-B writer 投影；FFN、shared/routed experts、LM head 和 draft 层无额外投影。旧版 checkpoint、dealign、nohmm、多 profile 组合与运行中热加载另立任务。
+首个 profile 名为 `heretic-1017-attn-v1`：层号为零起算的 2–39，方向宽度 5120，候选 layer alpha 为 2.5。仅对 attention WO-B writer 投影；FFN、shared/routed experts、LM head 和 draft 层无额外投影。旧版 checkpoint、dealign、nohmm、多 profile 组合与运行中热加载另立任务。
 
-**本计划不授权接触线上四机。** 不执行 SSH、sync、模型调用、GPU 实验、启停、重启、镜像加载或主机配置更改。未来单 GPU 和 TP4 验收是独立阶段，需要明确的设备与维护窗口授权；文档里的验证要求不是执行授权。
+原规划阶段只允许本地检查。所有者随后授权继续实施至完整验收，并允许在四机测试及按需停止其他服务；约束为保留全部现有配置，只新增 **Deepseek 1017 heretic test**，新目录硬链接官方 1017 权重并独立加载 profile。四机操作仍通过协调窗口及已发布的固定源码/镜像执行，不修改原权重和主机/网络策略；候选不自动推广。
 
 ## 2. 接入架构
 
@@ -39,7 +44,7 @@
 | 数据 | 既有接口 | 计划用法 |
 | --- | --- | --- |
 | 启动配置与编译身份 | `VllmConfig.additional_config` | 提供版本、profile 路径、声明的内容摘要与算子版本；既有 `compute_hash()` 已包含该字典 |
-| 请求选择 | `vllm_xargs` → `SamplingParams.extra_args` | 携带 profile 和 scale，不新增 OpenAI 顶层字段或 EngineCoreRequest 字段 |
+| 请求选择 | 顶层 `steering_profile/steering_scale` → `SamplingParams.extra_args` | 保留 `vllm_xargs` 兼容入口，不新增 EngineCoreRequest 字段 |
 | KV 前缀身份 | `EngineCoreRequest.cache_salt` | 在首次 block hash 前合成 steering namespace，并保留调用者原 salt |
 | 请求生命周期与行映射 | `DeepseekV41ModelState` | 在 `add_request/remove_request/prepare_inputs/prepare_dummy_inputs` 中维护状态 |
 | 模型参数 | `model_state.prepare_inputs()` 返回字典 | 通过显式可选 tensor 参数传递固定地址的 row scales，按 CED/SP 同步变换 |
@@ -50,24 +55,22 @@
 
 ## 3. 请求与数值契约
 
-拟采用已有请求扩展字段：
+请求直接使用顶层字段：
 
 ```json
 {
   "model": "deepseek-v4.1-flash",
   "messages": [{"role": "user", "content": "示例问题"}],
-  "vllm_xargs": {
-    "steering_profile": "heretic-1017-attn-v1",
-    "steering_scale": 0.6
-  }
+  "steering_profile": "heretic-1017-attn-v1",
+  "steering_scale": 0.6
 }
 ```
 
 - 省略两字段为 stock；命名 profile 省略 scale 时为 1；有效 profile 配 scale 0 为 stock。
-- 未命名的 scale 仅允许 0；未知 profile 即使 scale 0 也拒绝。未加载 profile 却命名请求时拒绝。
-- 首版 scale 范围为 `[0,1]`，先检查原始数值范围，再转 FP32；规范化负零，拒绝 bool、字符串、NaN、Infinity、溢出与不匹配身份。错误返回明确的请求错误。
+- 未命名的 scale 经 FP32 规范化后仅允许 0；未知 profile 即使 scale 0 也拒绝。未加载 profile 却命名请求时拒绝。
+- 请求 scale 范围为 `[0,4]`，先检查原始数值范围，再转 FP32；规范化负零，拒绝 bool、字符串、NaN、Infinity、溢出与不匹配身份。错误返回明确的请求错误。
 - 请求的有效 profile/scale 在其整个生成生命周期中固定；同一流式会话中改变选择应拒绝。新请求可以变更，但必须使用新 namespace 重算受影响的上下文。
-- 不在首版加入网关或 GLM 风格顶层字段适配；保留该适配为独立小变更。
+- `null` 与未填写一致；命名但 scale 为 `null` 时默认 1。兼容嵌套 `vllm_xargs`，两处冲突值明确拒绝。不支持的请求类型与 beam search 明确拒绝，避免选择被丢弃。
 
 单位方向 `d`、WO-B writer `y` 的目标算子为：
 
@@ -83,7 +86,7 @@ y' = y - (FP32(request_scale) * layer_alpha) * d * dot(d, y)
 
 用离线转换工具从固定来源的 `projected[2:40]` 生成单个 safetensors 文件，载荷为 `[38,5120]` FP32（778240 字节）。转换须验证源摘要、键、形状、有限性和单位范数；辅助均值不进入运行载荷。转换在隔离的本地环境进行，不在服务请求路径反序列化源文件。
 
-profile manifest 绑定基础模型 revision、可信权重清单摘要、tokenizer/实际模板身份、层计划、alpha、算子版本、方向摘要和来源/许可。加载器只接受已验证的本地 artifact，校验长度、类型、层序、重复层、有限值及 unit norm；启动不隐式联网下载。每 rank 在模型绑定、kernel preparation 和图捕获前加载同一身份。
+profile manifest 绑定基础模型 revision、可信权重清单摘要、tokenizer/实际模板身份、层计划、alpha、算子版本、方向摘要和来源/许可。加载器接受已验证的本地 artifact 或解包目录，校验长度、类型、层序、重复层、有限值及 unit norm；启动不隐式联网下载。每 rank 在模型绑定、kernel preparation 和图捕获前加载同一身份。
 
 每 worker 的方向和 scratch 在启动时分配；使用固定容量的请求强度及 token-row scale buffer。方向按层存储，scale 按请求/行更新，改变连续强度不分配新的方向槽位。不使用全局可变的“当前强度”。
 
@@ -99,8 +102,10 @@ profile manifest 绑定基础模型 revision、可信权重清单摘要、tokeni
 
 本项目采用独立的下游维护策略：本站定制在自己的 fork 中开发、评审和发布，上游更新经验证后纳入，使本站需求与上游的功能规划、维护范围及发布节奏保持独立。原作者仓库作为只读集成来源，默认不向其推送分支或发起补丁 PR；未来如有上游贡献需求，应另行明确范围并获得授权。保持小补丁是为了便于下游维护；若上游自行加入等价能力，可验证后采用并移除冗余本地补丁。
 
-## 6. 本次规划交付
+## 6. 初始规划与 P0 记录（历史阶段）
 
-本次新增本目录的计划与 `base.json`，并在 `AGENTS.md`、`CONTRIBUTING.md` 中明确下游维护约定；不创建空补丁、不可用的 `series` 或伪造候选 manifest，不修改正式 lock、recipe、Dockerfile、源码或 release gate。
+初始规划阶段新增本目录的计划与 `base.json`，并在 `AGENTS.md`、`CONTRIBUTING.md` 中明确下游维护约定；不创建空补丁、不可用的 `series` 或伪造候选 manifest，不修改正式 lock、recipe、Dockerfile、源码或 release gate。
 
-P0 的本地 CPU/源码复现已通过，构建工具修复独立见 [PR #2](https://github.com/imDaniel/spark-ds41f/pull/2)（提交 `9635927`，已合并至 `homelab/main`）。macOS 和 Linux 从空源码目录完整重放 172 个 vLLM 补丁，head/tree/patchset 与本轮身份完全一致，导出 context 摘要相同；macOS 完整构建输入准备、`build check`、静态 `doctor` 及 418 项 CPU 测试（5 项跳过）通过。原 0154 失败及本轮 0103 复现均保留；Git trace 显示后台自动 repack 的锁冲突和 pack 缺失，修复只在临时源码仓库内关闭自动维护。后续实现分支须包含该修复；这些结果不代表 steering、镜像、GPU 或 TP4 已通过验收。
+P0 的本地 CPU/源码复现已通过，构建工具修复独立见 [PR #2](https://github.com/imDaniel/spark-ds41f/pull/2)（提交 `9635927`，已合并至 `homelab/main`）。macOS 和 Linux 从空源码目录完整重放 172 个 vLLM 补丁，head/tree/patchset 与本轮身份完全一致，导出 context 摘要相同；macOS 完整构建输入准备、`build check`、静态 `doctor` 及 418 项 CPU 测试（5 项跳过）通过。原 0154 失败及本轮 0103 复现均保留；Git trace 显示后台自动 repack 的锁冲突和 pack 缺失，修复只在临时源码仓库内关闭自动维护。后续实现分支须包含该修复；这些 P0 结果本身不代表 steering、镜像、GPU 或 TP4 已通过验收；后续实现与实机验证另见 [IMPLEMENTATION.md](IMPLEMENTATION.md)。
+
+独立 profile 使用显式 attention 扩展格式 `gr8-steering-profile-v1+ds41-attention-v1`，封装单个 `directions` F32 tensor 和 exact-byte manifest。部署包包含 `steering/index.json`、`steering/NAME.safetensors` 及 `materialized/NAME/{manifest.json,directions.f32}`；只在启动显式配置后加载。`profile_path` 可为 artifact、materialized 目录或已验证本地模型发布目录内的 `hf:default/hf:NAME`，目录的 `profile_sha256` 约束 manifest 原始字节，其余约束完整 artifact。自行提取的方向记录数据集摘要；导入现有方向明确标记来源和转换工具摘要，未提供的提取数据集记录为 null。

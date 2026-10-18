@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "planning-only",
+  "status": "implemented-experimental-unqualified",
   "created_on": "2026-10-18",
   "development_policy": {
     "foundation": "original-spark-ds41f-project",
@@ -94,20 +94,24 @@
     "file_sha256": "87e81bffab36b046786eb7a3888c8d12c69ddef145235e363e0d4fb2c8fe31b4",
     "tensor": "projected",
     "slice": "[2:40]",
-    "runtime_artifact": "not-created"
+    "runtime_artifact": {
+      "format": "safetensors",
+      "sha256": "e43d59cc676964e30e6a89863537a1ccd8bb5d095a3f3beb684e6ae7ac90c403",
+      "bytes": 779480
+    }
   },
   "execution": {
-    "implemented_patch_count": 0,
-    "candidate_config_created": false,
-    "candidate_image_built": false,
+    "implemented_patch_count": 5,
+    "candidate_config_created": true,
+    "candidate_image_built": true,
     "gpu_tests_run": false,
-    "cluster_operations_authorized": false,
+    "cluster_operations_authorized": true,
     "weights_modified": false
   },
   "baseline_validation": {
     "local_example_doctor": "passed",
     "fresh_build_prepare_vllm": "passed-fresh-macos-and-local-linux-with-build-helper-fix",
-    "candidate_validation": "not-implemented",
+    "candidate_validation": "70 CPU contracts and real OpenAI schema CPU check passed; P4 synthetic GPU 21 cases and native prefix/CED/SP checks passed; P5 GPU and model startup retry pending",
     "existing_cpu_suite": {
       "status": "passed",
       "tests_run": 418,

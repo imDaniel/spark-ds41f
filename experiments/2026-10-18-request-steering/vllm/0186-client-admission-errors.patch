@@ -1,0 +1,91 @@
+From 360c466e874a03ef2d4ed5c344e669e354a3b965 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 17:14:03 +0900
+Subject: [PATCH] Classify steering admission failures as client request errors
+
+Base: replayed 1b1abe7a request steering candidate. Rationale: AsyncLLM wraps raw ValueError as EngineGenerateError, producing HTTP 500 for rejected doses. Translate only steering admission failures into the existing VLLMValidationError hierarchy with the reserved request parameter. Quality: invalid input remains rejected without scheduler submission; no projection, cache identity or graph changes. Validation: 77 CPU contracts pass, including seven client-error regressions; TP4 HTTP behavior will be retested in the immutable candidate. Upstream status: independent downstream experiment; no upstream submission.
+---
+ .../test_deepseek_v4_1_steering_request.py    | 24 ++++++++++++++++++-
+ vllm/models/deepseek_v4_1/steering/config.py  | 12 +++++++---
+ 2 files changed, 32 insertions(+), 4 deletions(-)
+
+diff --git a/tests/models/test_deepseek_v4_1_steering_request.py b/tests/models/test_deepseek_v4_1_steering_request.py
+index 77a861452..62fbc36fd 100644
+--- a/tests/models/test_deepseek_v4_1_steering_request.py
++++ b/tests/models/test_deepseek_v4_1_steering_request.py
+@@ -5,6 +5,7 @@ from types import SimpleNamespace
+ import pytest
+ 
+ from tests.models.steering_test_support import valid_profile
++from vllm.exceptions import VLLMValidationError
+ 
+ # The helper installs this isolated package before its contracts are imported.
+ # isort: off
+@@ -13,6 +14,7 @@ from ds41_steering_test.config import admit
+ from ds41_steering_test.request import STOCK, parse_selection
+ # isort: on
+ 
++
+ @pytest.mark.parametrize(
+     "value",
+     [
+@@ -77,7 +79,27 @@ def test_cache_identity_and_admission_do_not_mutate_caller(tmp_path):
+     c = parse_selection({**args, "steering_scale": 0.75}, p)
+     assert steering_cache_salt("caller", c) != salt
+     for kw in [{"resumable": True}, {"session_id": "existing"}]:
+-        with pytest.raises(ValueError):
++        with pytest.raises(VLLMValidationError):
+             admit(clone, p, "caller", **kw)
+     # Ordinary streamed HTTP responses do not set resumable/session_id.
+     assert admit(clone, p, "caller", resumable=False) == salt
++
++
++@pytest.mark.parametrize(
++    "args",
++    [
++        {"steering_profile": "test-profile", "steering_scale": "0.5"},
++        {"steering_profile": "test-profile", "steering_scale": -0.01},
++        {"steering_profile": "test-profile", "steering_scale": 1.01},
++        {"steering_profile": "test-profile", "steering_scale": float("nan")},
++        {"steering_profile": "test-profile", "steering_scale": float("inf")},
++        {"steering_profile": "unknown", "steering_scale": 0},
++        {"steering_scale": 0.5},
++    ],
++)
++def test_admission_errors_keep_the_client_error_classification(tmp_path, args):
++    from vllm.exceptions import VLLMClientError
++
++    with pytest.raises(VLLMClientError) as caught:
++        admit(SimpleNamespace(extra_args=args), valid_profile(tmp_path), "caller")
++    assert caught.value.parameter == "vllm_xargs"
+diff --git a/vllm/models/deepseek_v4_1/steering/config.py b/vllm/models/deepseek_v4_1/steering/config.py
+index 3de0b7522..e7b612fce 100644
+--- a/vllm/models/deepseek_v4_1/steering/config.py
++++ b/vllm/models/deepseek_v4_1/steering/config.py
+@@ -80,14 +80,20 @@ def load_configured_profile(vllm_config):
+ 
+ 
+ def admit(sampling_params, profile, original_salt, *, resumable=False, session_id=None):
++    from vllm.exceptions import VLLMValidationError
++
+     from .cache import steering_cache_salt
+     from .request import parse_selection
+ 
+-    selection = parse_selection(sampling_params.extra_args, profile)
++    try:
++        selection = parse_selection(sampling_params.extra_args, profile)
++    except ValueError as exc:
++        raise VLLMValidationError(str(exc), parameter="vllm_xargs") from exc
+     if selection.active and (resumable or session_id is not None):
+-        raise ValueError(
++        raise VLLMValidationError(
+             "Steering identity changes require a new request; "
+-            "resumable sessions are not qualified"
++            "resumable sessions are not qualified",
++            parameter="vllm_xargs",
+         )
+     if sampling_params.extra_args and (
+         "steering_profile" in sampling_params.extra_args
+-- 
+2.54.0 (Apple Git-157)
+

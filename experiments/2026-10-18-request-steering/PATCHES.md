@@ -1,6 +1,6 @@
 # 补丁拆分与文件清单
 
-以下是待实现的提交边界，不是已经存在的补丁。本轮以当前稳定版本 r6v 进行修改与验证，路径以其应用完整作者 series 后的 vLLM 源树为根；部署仓库路径另列。长期开发持续跟进原项目，r6v 不构成永久版本约束。编号暂定 0181–0187，集成上游更新时重新核对调用点、依赖和编号，以内容与依赖关系识别补丁。
+P1–P5 和请求错误分类修正已作为八个新增补丁实现，后续边界仍为实施计划；准确文件和状态见 [IMPLEMENTATION.md](IMPLEMENTATION.md)。本轮以当前稳定版本 r6v 进行修改与验证，路径以其应用完整作者 series 后的 vLLM 源树为根；部署仓库路径另列。长期开发持续跟进原项目，r6v 不构成永久版本约束。当前实现编号为 0181–0188；后续可选优化另分配编号，集成上游更新时重新核对调用点、依赖和编号，以内容与依赖关系识别补丁。
 
 ## P0 基线复现和修改预算
 
@@ -31,7 +31,7 @@
 
 **部署仓库新增：** `experiments/2026-10-18-request-steering/tools/convert-profile.py`，只在离线转换时使用源方向包。profile 数据不提交到 Git。
 
-本补丁不激活任何模型路径。请求范围 `[0,1]`，源方向的 alpha 2.5 与请求 scale 分开；记录 artifact/model/template/算子完整身份。验证损坏、长度、形状、重复层、NaN/Infinity、范数、摘要、错误 revision 和类型边界，覆盖零强度的所有合法/非法组合。单位范数的初始绝对容差为 `1e-5`，校验逻辑不能擅自归一化或修复坏 artifact。
+本补丁不激活任何模型路径。请求范围 `[0,4]`，源方向的 alpha 2.5 与请求 scale 分开；记录 artifact/model/template/算子完整身份。验证损坏、长度、形状、重复层、NaN/Infinity、范数、摘要、错误 revision 和类型边界，覆盖零强度的所有合法/非法组合。单位范数的初始绝对容差为 `1e-5`，校验逻辑不能擅自归一化或修复坏 artifact。
 
 ## P2 0182 request identity and cache isolation
 
@@ -47,7 +47,7 @@ namespace 必须包含模型/模板身份、算子版本、profile 内容与 sch
 
 需要测试相同 token 的 stock/非 stock/不同 scale、原用户 salt、streaming update、prefix hit、取消与恢复。新请求可带新强度；原请求中途换强度明确失败。未支持的 KV 传输/持久化模式在选中 profile 时拒绝。
 
-暂不修改 OpenAI `protocol.py`、`SamplingParams`、`EngineCoreRequest`、scheduler 或 `kv_cache_utils.py`。若 cache salt 不能覆盖某种实际缓存，补充独立身份传播补丁和测试，不能仅凭 salt 存在就宣称隔离成立。
+OpenAI 顶层字段由 0187 的共享 request 基类转发；不修改 `SamplingParams`、`EngineCoreRequest`、scheduler 或 `kv_cache_utils.py`。若 cache salt 不能覆盖某种实际缓存，补充独立身份传播补丁和测试，不能仅凭 salt 存在就宣称隔离成立。
 
 ## P3 0183 model state and fixed row controls
 
@@ -71,9 +71,8 @@ namespace 必须包含模型/模板身份、算子版本、profile 内容与 sch
 **新增：**
 
 - `vllm/models/deepseek_v4_1/steering/ops.py`：有 fake 实现与明确 mutation/alias 规则的 opaque custom op。
-- `vllm/models/deepseek_v4_1/tilelang/steering.py`：FP32 dot/projection，普通 writer 和 rank-order partials 的明确入口。
-- `tests/kernels/test_deepseek_v4_1_steering_projection.py`
-- `tests/models/test_deepseek_v4_1_steering_attention.py`
+- `vllm/models/deepseek_v4_1/steering/reference.py`：FP32/FP64 数值 oracle。独立投影 kernel 集中在 `steering/ops.py`，使用本轮原项目已有的 Triton warm-up registry，不增加 TileLang 主路径调用点。
+- `tests/models/test_deepseek_v4_1_steering_gpu.py`：writer/partials 数值、stock 行及 graph 重放；真实模型验收另列。
 
 先建立可独立校验的数值参考，允许原型额外 launch；不把原型作为推广候选。普通 writer 在其既有 BF16 边界后以 FP32 投影并转回 BF16；SP 的 `RankOrderParts` 先按原 rank 顺序 FP32 求和、在既有位置舍入，再应用相同算子。不得为了套用普通 Tensor kernel 改变求和顺序。
 
@@ -81,9 +80,9 @@ namespace 必须包含模型/模板身份、算子版本、profile 内容与 sch
 
 新 kernel 按既有 `declare_kernels()` / preparation registry 声明、编译和 warm-up，先于 freeze/capture；禁止首次 steered 请求触发 JIT。
 
-## P5 0185 speculative target and graph lifecycle
+## P5 0185 profiling lifecycle and raw request validation
 
-依赖 P4。主要增加端到端边界测试并审计实际 V2 DSpark 路径：
+依赖 P4。四机启动验证发现 memory profiling 的 dummy batch 也经过 `prepare_inputs()`，而其请求不登记；另在真实 OpenAI schema 验证中确认 raw bool 会被通用 extra-argument union 转成 int。现增加两个小调用点：`vllm/v1/worker/gpu/input_batch.py` 的显式 `is_dummy` 标记与 factory 赋值，以及 `vllm/entrypoints/serve/engine/protocol.py` 在通用 coercion 之前仅拒绝 steering_scale bool。新测试覆盖 dummy 不污染真实 slot、chat/completion 两类 API 及无关插件参数兼容性。继续审计实际 V2 DSpark 路径：
 
 - `vllm/models/deepseek_v4_1/nvidia/dspark.py`：draft block 复用 target layer 类时，不绑定 target profile、不额外投影。
 - `vllm/v1/worker/gpu/spec_decode/dspark/speculator.py`：target verify 行、拒绝 suffix、bonus token 和 draft scope 生命周期。
@@ -95,7 +94,11 @@ namespace 必须包含模型/模板身份、算子版本、profile 内容与 sch
 
 目标预填充、decode 和每个实际 verify token 都使用请求 scale；padding、未提交 suffix 的持久状态、draft block 均遵守各自作用域。drafter 接收改变后的 target 状态是预期行为，“不投影草稿”不等于草稿输出或接受率不变。FULL/PIECEWISE 图中混合 scale、交替顺序、取消后复用都要覆盖；不能通过 eager 模式宣称图兼容。
 
-## P6 0186 optional consume fusion
+## 后续修正 0186 client admission errors
+
+真实 API 检查发现 AsyncLLM 将原始 ValueError 包装为 EngineGenerateError，使无效强度返回 HTTP 500。仅在新增 steering/config.py 的 admission 边界转换为既有 VLLMValidationError，并标明错误的 steering 字段；不改通用异常分发或数值路径。CPU 回归覆盖类型、范围、非有限值、未知 profile 和缺失 profile，镜像端再验证真实 HTTP 400。
+
+## P6 optional consume fusion（待性能证据决定）
 
 仅在 P4/P5 数值参考稳定并有 GPU 剖析后实现，作为独立可回退补丁。主要候选文件是 `vllm/models/deepseek_v4_1/tilelang/mhc.py` 中 `post_pre/project_streams` 的 writer 消费路径。`tilelang/wo.py` 或 `attention.py` 只有需要传递明确绑定参数时才改；不改 sparknet/NCCL 算法。
 
@@ -103,7 +106,7 @@ namespace 必须包含模型/模板身份、算子版本、profile 内容与 sch
 
 新增同名 fusion fixture，覆盖 world=1/3/4 的合成 partials、各 row bucket、scratch 重用、publication/guard、stock 与 mixed rows。只有实测达到性能 gate 才接受；“没有新增 launch”本身不是性能证明。
 
-## P7 0187 candidate packaging and release gates
+## P7 candidate packaging and release gates
 
 实现阶段才在部署仓库增加：
 
@@ -116,3 +119,7 @@ namespace 必须包含模型/模板身份、算子版本、profile 内容与 sch
 修改 `config/release-tests.json`，逐个分类所有新增 vLLM test；在 `.github/workflows/validate.yml` 增加候选 patch replay、CPU 合约/行映射测试。GPU 检查使用单独显式调度，不启用任何生产 self-hosted runner。现有正式 recipe、lock、Dockerfile 和历史 baseline 保持原样；仅在现有 build context 无法承载时另评审 Docker 改动。
 
 每个 `.patch` 的说明都列明外部 base、作者 stack 的 parent、目的、数值/能力影响、测试与上游状态；本站补丁默认标记 `downstream-only; not submitted upstream`，不向原作者提交。新增文件及其必要调用一并进入可重放补丁，不能只提交 `.work` 中的修改。
+
+## 后续修正 0187–0188
+
+0187 在共享 wire 基类声明顶层请求字段，并由 chat/completion 两个请求类继承，转发至既有 extra_args；严格处理 null、FP32 零、[0,4]、128 字符名称和参数错误，兼容嵌套入口，拒绝冲突值和会丢弃选择的请求路径。0188 将离线 artifact/manifest/directions、导入来源和本地 bundle index 独立成模块；attention-only 算子保留，零 alpha 显式旁路。新增逻辑不进入 scheduler 或 draft 模型。

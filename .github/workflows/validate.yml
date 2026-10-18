@@ -84,6 +84,15 @@ jobs:
       - name: Apply the local series and check the recorded patch head and tree
         run: bin/spark build prepare --only "${{ matrix.source }}"
 
+  request-steering-stack:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Use the four-node example map for the isolated experiment
+        run: cp config/examples/nodes-ring4.json config/nodes-steering-example.local.json
+      - name: Replay and verify the experimental request-steering vLLM series
+        run: bin/spark --shape tp4-ring --cluster-config experiments/2026-10-18-request-steering/cluster.json build prepare --only vllm
+
   rocenante-ring4:
     runs-on: ubuntu-24.04
     steps:

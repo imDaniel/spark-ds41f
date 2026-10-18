@@ -1,6 +1,6 @@
 # 验证矩阵与交付条件
 
-所有 GPU、模型和集群检查均为未来验收要求。本次仅允许本地 CPU/源码与文档检查，不向线上四机发送请求。测试报告须区分 CPU 合约、单 GPU 数值/图检查、TP4 实机验收和持续运行观察。
+所有者已授权独立测试配置的 GPU、模型及四机验收；现有配置和官方权重保持原样。以下矩阵是通过要求，不是完成声明；当前成绩见 [IMPLEMENTATION.md](IMPLEMENTATION.md)。测试报告须区分 CPU 合约、单 GPU 数值/图检查、TP4 实机验收和持续运行观察。
 
 ## G0 基线和文档检查
 
@@ -12,13 +12,13 @@
 | 完整 `build prepare` / `build check` | macOS 通过 | 全部源码、递归 submodules、锁定 wheels 和 context 摘要核对；未构建镜像 |
 | 计划链接、base 身份、`git diff --check` | 通过 | 只证明本次文档交付的链接、身份和差异检查 |
 | CPU suite（含 P0 新增回归）| 通过：418 项，5 项跳过 | 隔离副本、完整运行；不代表 steering 已实现或 GPU 路径通过 |
-| steering patch replay / CUDA / TP4 | 未实现、未运行 | 不能用定向文件重建或原作者历史结果替代 |
+| steering patch replay / CUDA / TP4 | 持续验证中 | 各候选分别记录；当前成绩见 IMPLEMENTATION.md，不能沿用前一镜像结果 |
 
 G0 的本地基线重放阻断已解决，构建工具修复见 [PR #2](https://github.com/imDaniel/spark-ds41f/pull/2)（`9635927`，已合并至 `homelab/main`）；后续实现分支须包含该修复。macOS 原 helper 再次于 0103 失败，Linux 原 helper 通过；trace 捕获重复后台 repack、锁冲突和 pack 缺失，修复在新建临时源码仓库中设置 `maintenance.auto=false`、`gc.auto=0`。修复后的 macOS/Linux 完整重放与导出一致，macOS 无自动 maintenance 子进程，Git connectivity 检查通过。未证明 Git 内部具体缺陷，不宣称所有 macOS 版本有问题。Linux 检查使用本地 ARM64 容器，不是 GitHub CI。原始失败及诊断日志随独立修复保留；未改作者补丁、lock 或旧 manifest。未来 steering 候选仍须在干净树上重放并校验完整身份。
 
 CPU suite 的首次运行有 1 个 failure 和 5 个 error：临时修改 recipe 的 master 地址破坏 release-arm 相等断言，且缺少忽略的 ring4 节点文件。仅在隔离副本恢复原 recipe、用 `config/nodes.example.json` 与 `config/examples/nodes-ring4.json` 建立忽略的节点文件，并将示例 head 地址与 recipe 对齐后，相关 98 项及完整 417 项均重跑通过。没有改测试或正式配置；两次日志均保留在本地检查目录。
 
-实现后复用已有命令入口，候选配置文件实际存在且只读检查通过后才能使用；以下路径当前尚未创建：
+实现后复用已有命令入口，候选配置文件实际存在且只读检查通过后才能使用；候选入口如下：
 
 ```sh
 bin/spark --cluster-config experiments/2026-10-18-request-steering/cluster.json doctor
@@ -89,7 +89,7 @@ first-token logprobs/固定序列 KL、代码正确率、工具成功率和行�
 
 拟定推广门槛：B/C 相对 A、D 相对 C 的主要点均无可重复的 >3% 退化；性能区间有歧义则补测并保持候选，不能以噪声解释已复现的回退。profile 行为导致的输出长度差异另用 teacher-forced/固定工作量隔离，正常生成仍报告用户可见端到端成本。若保不住此目标，只交付可研究原型或重新讨论取舍，不自动放宽。
 
-有限窗口验收通过后，另行授权持续观察：至少 24 小时的代表性混合负载，记录控制状态、缓存、接受率和资源趋势；这只证明该观察窗口，不宣称长期稳定。当前既不创建监控任务，也不安排四机工作。
+有限窗口验收通过后，另行授权持续观察：至少 24 小时的代表性混合负载，记录控制状态、缓存、接受率和资源趋势；这只证明该观察窗口，不宣称长期稳定。持续观察的实际起止时间和负载另行记录；不以短样本代替。
 
 ## G5 推广、回退与上游同步
 
