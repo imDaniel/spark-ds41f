@@ -1,0 +1,1148 @@
+From 40a9174dc978d66998fdea00127960dd9bd16077 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 15:29:13 +0000
+Subject: [PATCH] Separate stock graph topology and fuse ordinary-writer
+ steering at mHC consume
+
+Base: vLLM 19f2c20ed4d6 with the complete 172-patch r6v author series
+and eight downstream steering patches through 0188 (eddd508799a2).
+Rationale: route scheduled stock identities before preparing controls. Use
+separate FULL graph keys and captures for optional-input topology, with
+per-route memory samples; non-stock PIECEWISE executes eagerly. Keep the
+stock Tensor/RankOrderParts path and mHC kernel ABI, with no row-control or
+projection launch on that route. Only active ordinary writers produce two
+compensated FP32 dot components; apply the update in the existing mHC fold.
+Retain the legacy nonzero SP projector: reading four rank parts again
+would increase large-prefill traffic. Declare both consumer variants before
+kernel freeze and retain the existing SP buffer, plus bounded dot storage.
+Quality: preserve the FP32 scale identity, API errors, cache namespace,
+attention-only scope, rank-order BF16 boundary and compensated formula.
+Do not extend the scale range or change weights, precision or capacities.
+Validation: 104 CPU contracts pass on macOS and local Linux CPU. Actual
+CUDA compilation, numerical replay and throughput require GPU validation;
+this local candidate does not claim zero extra active launches or a TPS gain.
+Upstream status: independent downstream experiment; not submitted upstream.
+
+Signed-off-by:  <>
+---
+ vllm/models/deepseek_v4_1/nvidia/model.py     |  38 +++-
+ .../deepseek_v4_1/nvidia/model_state.py       |  35 +++-
+ vllm/models/deepseek_v4_1/nvidia/vl_model.py  |   4 +
+ vllm/models/deepseek_v4_1/steering/consume.py |  40 ++++
+ vllm/models/deepseek_v4_1/steering/ops.py     | 134 +++++++++++-
+ vllm/models/deepseek_v4_1/steering/runtime.py | 111 +++++++++-
+ vllm/models/deepseek_v4_1/tilelang/mhc.py     | 198 ++++++++++++++++--
+ vllm/v1/worker/gpu/cudagraph_utils.py         |  56 ++++-
+ vllm/v1/worker/gpu/model_input_variant.py     |  51 +++++
+ vllm/v1/worker/gpu/model_runner.py            |  11 +
+ 10 files changed, 625 insertions(+), 53 deletions(-)
+ create mode 100644 vllm/models/deepseek_v4_1/steering/consume.py
+ create mode 100644 vllm/v1/worker/gpu/model_input_variant.py
+
+diff --git a/vllm/models/deepseek_v4_1/nvidia/model.py b/vllm/models/deepseek_v4_1/nvidia/model.py
+index 1af0e92c1..767967185 100644
+--- a/vllm/models/deepseek_v4_1/nvidia/model.py
++++ b/vllm/models/deepseek_v4_1/nvidia/model.py
+@@ -304,7 +304,9 @@ class DeepseekV4DecoderLayer(nn.Module):
+         engram_mask: torch.Tensor | None = None,
+         ced_indices: torch.Tensor | None = None,
+         sp_rows: sp_prefill.SPRows | None = None,
++        steering_active: bool = False,
+         steering_scales: torch.Tensor | None = None,
++        steering_dots: torch.Tensor | None = None,
+         steering_scratch: torch.Tensor | None = None,
+     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+         previous_output = x if residual is not None else None
+@@ -361,13 +363,15 @@ class DeepseekV4DecoderLayer(nn.Module):
+                 x = self.attn(positions, x, None, global_kv_ready=global_kv_ready)
+             if sp_rows.unreduced:
+                 x = sp_prefill.unreduced_parts(x)
+-        if self.steering_direction is not None:
+-            from ..steering.ops import apply_projection
++        steering: dict[str, typing.Any] = {}
++        if steering_active and self.steering_direction is not None:
++            from ..steering.ops import prepare_consumer
+ 
+-            x = apply_projection(
++            x, steering = prepare_consumer(
+                 x,
+                 self.steering_direction,
+                 steering_scales,
++                steering_dots,
+                 steering_scratch,
+                 self.steering_alpha,
+             )
+@@ -381,6 +385,7 @@ class DeepseekV4DecoderLayer(nn.Module):
+             self.hc_ffn_base,
+             self.ffn_norm.weight,
+             attn_pre,
++            **steering,
+         )
+         if sp_rows is None:
+             x = self.ffn(x, input_ids)
+@@ -520,6 +525,7 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+                     continue
+                 layer.steering_direction = self.steering_directions[row]
+                 layer.steering_alpha = alpha
++                layer.mhc.steering_enabled = True
+         # SP results stay unreduced for mHC to add (see sp_prefill).
+         self.prefill_sp_unreduced = (
+             bool(self.prefill_sp_min_rows) and sp_prefill.unreduced_enabled()
+@@ -677,9 +683,13 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+         from ..tilelang import collectives, prepare
+ 
+         if self.steering_profile is not None:
+-            from ..steering.ops import register_projection_warmups
++            from ..steering.ops import register_dot_warmups
+ 
+-            register_projection_warmups(self.config.hidden_size)
++            register_dot_warmups(self.config.hidden_size)
++            if self.prefill_sp_unreduced:
++                from ..steering.ops import register_projection_warmups
++
++                register_projection_warmups(self.config.hidden_size, worlds=(4,))
+ 
+         prepare.declare(
+             lambda: [*collectives.rank_order_sum_calls(), *l2_prefetch.kernel_calls()]
+@@ -697,9 +707,21 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+         inputs_embeds: torch.Tensor | None = None,
+         lookback_token_ids: torch.Tensor | None = None,
+         ced_indices: torch.Tensor | None = None,
++        steering_active: bool = False,
+         steering_scales: torch.Tensor | None = None,
++        steering_dots: torch.Tensor | None = None,
+         steering_scratch: torch.Tensor | None = None,
+     ) -> torch.Tensor | IntermediateTensors:
++        from ..steering.runtime import validate_model_inputs
++
++        validate_model_inputs(
++            self.steering_profile,
++            steering_active,
++            steering_scales,
++            steering_dots,
++            positions.shape[0],
++            scratch=steering_scratch,
++        )
+         sp = None
+         # With CED the encoder layers (before ced_decoder_start) still run on
+         # every row; SP covers them and hands full rows to the boundary layer.
+@@ -845,7 +867,9 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+                 engram_mask,
+                 ced_indices=boundary_indices,
+                 sp_rows=sp,
++                steering_active=steering_active,
+                 steering_scales=steering_scales,
++                steering_dots=steering_dots,
+                 steering_scratch=steering_scratch,
+             )
+             if boundary_indices is not None:
+@@ -1142,7 +1166,9 @@ class DeepseekV41LLMForCausalLM(UpstreamDeepseekV41LLMForCausalLM):
+         inputs_embeds: torch.Tensor | None = None,
+         lookback_token_ids: torch.Tensor | None = None,
+         ced_indices: torch.Tensor | None = None,
++        steering_active: bool = False,
+         steering_scales: torch.Tensor | None = None,
++        steering_dots: torch.Tensor | None = None,
+         steering_scratch: torch.Tensor | None = None,
+     ) -> torch.Tensor | IntermediateTensors:
+         hidden_states = self.model(
+@@ -1152,7 +1178,9 @@ class DeepseekV41LLMForCausalLM(UpstreamDeepseekV41LLMForCausalLM):
+             inputs_embeds,
+             lookback_token_ids=lookback_token_ids,
+             ced_indices=ced_indices,
++            steering_active=steering_active,
+             steering_scales=steering_scales,
++            steering_dots=steering_dots,
+             steering_scratch=steering_scratch,
+         )
+         return hidden_states
+diff --git a/vllm/models/deepseek_v4_1/nvidia/model_state.py b/vllm/models/deepseek_v4_1/nvidia/model_state.py
+index aea3836f6..6d097837a 100644
+--- a/vllm/models/deepseek_v4_1/nvidia/model_state.py
++++ b/vllm/models/deepseek_v4_1/nvidia/model_state.py
+@@ -121,7 +121,15 @@ class DeepseekV41ModelState(DefaultModelState):
+         if len(profiles) > 1:
+             raise ValueError("Multiple target steering profiles in one model")
+         self.steering = (
+-            SteeringRuntime(profiles[0], self.max_num_reqs, self.max_num_tokens, device)
++            SteeringRuntime(
++                profiles[0],
++                self.max_num_reqs,
++                self.max_num_tokens,
++                device,
++                sp_scratch=any(
++                    getattr(m, "prefill_sp_unreduced", False) for m in model.modules()
++                ),
++            )
+             if profiles
+             else None
+         )
+@@ -322,13 +330,31 @@ class DeepseekV41ModelState(DefaultModelState):
+                         value.decoder.routing_mask = routing_mask
+         return metadata
+ 
++    @property
++    def cudagraph_input_variants(self):
++        return (0, 1) if self.steering is not None else (0,)
++
++    def get_model_input_variant(self, req_ids, *, dummy=False):
++        return (
++            self.steering.input_variant(req_ids, dummy=dummy)
++            if self.steering is not None
++            else 0
++        )
++
++    def prepare_dummy_inputs_for_variant(self, num_reqs, num_tokens, variant):
++        inputs = self.prepare_dummy_inputs(num_reqs, num_tokens)
++        if self.steering is not None:
++            inputs.update(self.steering.dummy_inputs(num_tokens, variant))
++        elif variant:
++            raise ValueError("Non-stock graph without a loaded steering profile")
++        return inputs
++
+     def prepare_inputs(
+         self, input_batch: InputBatch, req_states: RequestState
+     ) -> dict[str, torch.Tensor | None]:
+         model_inputs = super().prepare_inputs(input_batch, req_states)
+         if self.steering is not None:
+-            model_inputs["steering_scales"] = self.steering.prepare(input_batch)
+-            model_inputs["steering_scratch"] = self.steering.scratch
++            model_inputs.update(self.steering.model_inputs(input_batch))
+         if self.ced_state is not None:
+             if self._ced_batch is not input_batch:
+                 self._stage_ced(input_batch)
+@@ -404,8 +430,7 @@ class DeepseekV41ModelState(DefaultModelState):
+     def prepare_dummy_inputs(self, num_reqs: int, num_tokens: int) -> dict[str, Any]:
+         model_inputs = super().prepare_dummy_inputs(num_reqs, num_tokens)
+         if self.steering is not None:
+-            model_inputs["steering_scales"] = self.steering.dummy(num_tokens)
+-            model_inputs["steering_scratch"] = self.steering.scratch
++            model_inputs.update(self.steering.dummy_inputs(num_tokens, 0))
+         if self.ced_state is not None:
+             # FULL descriptors may pad a short request far beyond128 rows.
+             # Capture their noncompact branch, regardless of dummy split;
+diff --git a/vllm/models/deepseek_v4_1/nvidia/vl_model.py b/vllm/models/deepseek_v4_1/nvidia/vl_model.py
+index ebeb7c749..243c2c6b3 100644
+--- a/vllm/models/deepseek_v4_1/nvidia/vl_model.py
++++ b/vllm/models/deepseek_v4_1/nvidia/vl_model.py
+@@ -159,7 +159,9 @@ class DeepseekV41ForCausalLM(UpstreamDeepseekV41ForCausalLM):
+         inputs_embeds: torch.Tensor | None = None,
+         lookback_token_ids: torch.Tensor | None = None,
+         ced_indices: torch.Tensor | None = None,
++        steering_active: bool = False,
+         steering_scales: torch.Tensor | None = None,
++        steering_dots: torch.Tensor | None = None,
+         steering_scratch: torch.Tensor | None = None,
+         **kwargs,
+     ) -> torch.Tensor:
+@@ -170,7 +172,9 @@ class DeepseekV41ForCausalLM(UpstreamDeepseekV41ForCausalLM):
+             inputs_embeds,
+             lookback_token_ids=lookback_token_ids,
+             ced_indices=ced_indices,
++            steering_active=steering_active,
+             steering_scales=steering_scales,
++            steering_dots=steering_dots,
+             steering_scratch=steering_scratch,
+         )
+ 
+diff --git a/vllm/models/deepseek_v4_1/steering/consume.py b/vllm/models/deepseek_v4_1/steering/consume.py
+new file mode 100644
+index 000000000..690526791
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/consume.py
+@@ -0,0 +1,40 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Projection update inside the existing mHC register fold.
++
++The dot producer and consumer use the same rank-order FP32 sum -> BF16 writer
++boundary. Explicit IEEE FP32 operations preserve the compensated writer math
++without changing the enclosing mHC kernel's compiler settings.
++"""
++
++from vllm.tilelang_utils import T
++
++
++@T.macro
++def project_columns(xv, direction, scales, dots, alpha, src, col, columns):
++    # This branch precedes every direction/dot load. Zero rows keep xv's bits,
++    # including signed zero and nonfinite stock values.
++    if scales[src] != 0.0 and alpha != 0.0:
++        dose = scales[src]
++        hi = dots[src, 0]
++        lo = dots[src, 1]
++        factor = T.ieee_mul(dose, alpha)
++        factor_lo = T.ieee_fmaf(dose, alpha, -factor)
++        for v in T.unroll(columns):
++            value = T.Cast(T.float32, xv[v])
++            d = direction[col + v]
++            if T.abs(hi) < T.float32(float("inf")):
++                coefficient = T.ieee_mul(factor, d)
++                coefficient_lo = T.ieee_add(
++                    T.ieee_fmaf(factor, d, -coefficient), T.ieee_mul(factor_lo, d)
++                )
++                correction = T.ieee_add(
++                    T.ieee_add(
++                        T.ieee_mul(coefficient, lo), T.ieee_mul(coefficient_lo, hi)
++                    ),
++                    T.ieee_mul(coefficient_lo, lo),
++                )
++                value = T.ieee_sub(T.ieee_fmaf(-coefficient, hi, value), correction)
++            else:
++                value = T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d), hi))
++            xv[v] = T.Cast(T.bfloat16, value)
+diff --git a/vllm/models/deepseek_v4_1/steering/ops.py b/vllm/models/deepseek_v4_1/steering/ops.py
+index 12172fe59..b1cc08ab9 100644
+--- a/vllm/models/deepseek_v4_1/steering/ops.py
++++ b/vllm/models/deepseek_v4_1/steering/ops.py
+@@ -96,8 +96,8 @@ _launcher = triton_kernel_dispatcher_with_warmup(warmup_inputs=_warmup_inputs)(
+ )
+ 
+ 
+-def register_projection_warmups(hidden):
+-    for world in (1, 4):
++def register_projection_warmups(hidden, worlds=(1, 4)):
++    for world in worlds:
+         for scales_aligned in (True, False):
+             _launcher.register_warmup(
+                 hidden=hidden, world=world, scales_aligned=scales_aligned
+@@ -177,3 +177,133 @@ def apply_projection(writer, direction, scales, scratch, alpha):
+         return output
+     project_writer(writer, direction, scales, alpha)
+     return writer
++
++
++@triton.jit(do_not_specialize=["part_stride"])
++def _dot_kernel(
++    source,
++    direction,
++    scales,
++    dots,
++    part_stride,
++    HIDDEN: tl.constexpr,
++    WORLD: tl.constexpr,
++    BLOCK: tl.constexpr,
++):
++    row = tl.program_id(0)
++    # Inactive rows do not read the writer, direction or dot workspace. The
++    # consumer takes the same branch before reading either component.
++    if tl.load(scales + row) != 0.0:
++        h = tl.arange(0, BLOCK)
++        value = tl.load(source + row * HIDDEN + h, h < HIDDEN, other=0).to(tl.float32)
++        for rank in tl.static_range(1, WORLD):
++            value = value + tl.load(
++                source + rank * part_stride + row * HIDDEN + h, h < HIDDEN, other=0
++            ).to(tl.float32)
++        value = value.to(tl.bfloat16).to(tl.float32)
++        d = tl.load(direction + h, h < HIDDEN, other=0).to(tl.float32)
++        product = value * d
++        residual = tl.fma(value, d, -product)
++        residual = tl.where(tl.abs(product) < float("inf"), residual, 0.0)
++        hi, lo = tl.reduce((product, residual), axis=0, combine_fn=_sum_pair)
++        tl.store(dots + row * 2, hi)
++        tl.store(dots + row * 2 + 1, lo)
++
++
++def _dot_warmup_inputs(*, hidden, world, scales_aligned):
++    return triton_warmup_inputs(
++        _dot_kernel,
++        TritonWarmupTensor(torch.bfloat16),
++        TritonWarmupTensor(torch.float32),
++        TritonWarmupTensor(torch.float32, aligned=scales_aligned),
++        TritonWarmupTensor(torch.float32),
++        128 * hidden if world != 1 else 0,
++        HIDDEN=hidden,
++        WORLD=world,
++        BLOCK=triton.next_power_of_2(hidden),
++        grid=(128,),
++        num_warps=8,
++        enable_fp_fusion=False,
++    )
++
++
++_dot_launcher = triton_kernel_dispatcher_with_warmup(warmup_inputs=_dot_warmup_inputs)(
++    _dot_kernel
++)
++
++
++def register_dot_warmups(hidden):
++    for world in (1,):
++        for aligned in (True, False):
++            _dot_launcher.register_warmup(
++                hidden=hidden, world=world, scales_aligned=aligned
++            )
++
++
++@torch.library.custom_op("ds41_steering::projection_dot", mutates_args=("dots",))
++def projection_dot(
++    source: torch.Tensor,
++    direction: torch.Tensor,
++    scales: torch.Tensor,
++    dots: torch.Tensor,
++) -> None:
++    world, rows, hidden = source.shape
++    if (
++        world not in (1, 4)
++        or source.dtype != torch.bfloat16
++        or direction.dtype != torch.float32
++        or scales.dtype != torch.float32
++        or dots.dtype != torch.float32
++        or direction.shape != (hidden,)
++        or scales.shape != (rows,)
++        or dots.shape != (rows, 2)
++        or any(not t.is_contiguous() for t in (source, direction, scales, dots))
++        or any(t.device != source.device for t in (direction, scales, dots))
++    ):
++        raise ValueError("Invalid steering dot tensor geometry/dtype/layout/device")
++    if rows:
++        _dot_launcher[(rows,)](
++            source,
++            direction,
++            scales,
++            dots,
++            source.stride(0) if world != 1 else 0,
++            HIDDEN=hidden,
++            WORLD=world,
++            BLOCK=triton.next_power_of_2(hidden),
++            num_warps=8,
++            enable_fp_fusion=False,
++        )
++
++
++@projection_dot.register_fake
++def _projection_dot_fake(source, direction, scales, dots):
++    return None
++
++
++def projection_dots(writer, direction, scales, dots):
++    if scales is None or dots is None:
++        raise ValueError("Active steering requires explicit row controls")
++    from vllm.models.deepseek_v4_1.tilelang.collectives import RankOrderParts
++
++    source = (
++        writer.packed if isinstance(writer, RankOrderParts) else writer.unsqueeze(0)
++    )
++    output = dots[: source.shape[1]]
++    projection_dot(source, direction, scales, output)
++    return output
++
++
++def prepare_consumer(writer, direction, scales, dots, scratch, alpha):
++    from vllm.models.deepseek_v4_1.tilelang.collectives import RankOrderParts
++
++    if isinstance(writer, RankOrderParts):
++        # 4H parts read + H write/read beats two reads of 4H for large SP
++        # batches. Keep that path until an SP fusion avoids the second read.
++        return apply_projection(writer, direction, scales, scratch, alpha), {}
++    return writer, {
++        "steering_direction": direction,
++        "steering_scales": scales,
++        "steering_dots": projection_dots(writer, direction, scales, dots),
++        "steering_alpha": alpha,
++    }
+diff --git a/vllm/models/deepseek_v4_1/steering/runtime.py b/vllm/models/deepseek_v4_1/steering/runtime.py
+index fb793332e..3908c5b25 100644
+--- a/vllm/models/deepseek_v4_1/steering/runtime.py
++++ b/vllm/models/deepseek_v4_1/steering/runtime.py
+@@ -8,14 +8,56 @@ from .request import parse_selection
+ from .rows import expand_rows
+ 
+ 
++def validate_model_inputs(profile, active, scales, dots, num_tokens, *, scratch=None):
++    if type(active) is not bool:
++        raise ValueError("Steering topology must be explicit")
++    if not active:
++        if scales is not None or dots is not None or scratch is not None:
++            raise ValueError("Stock steering topology cannot carry active controls")
++        return
++    if (
++        profile is None
++        or scales is None
++        or dots is None
++        or scales.shape != (num_tokens,)
++        or dots.ndim != 2
++        or dots.shape[0] < num_tokens
++        or dots.shape[1] != 2
++        or scales.dtype != torch.float32
++        or dots.dtype != torch.float32
++        or not scales.is_contiguous()
++        or not dots.is_contiguous()
++        or dots.device != scales.device
++        or (
++            scratch is not None
++            and (
++                scratch.ndim != 2
++                or scratch.shape[0] < num_tokens
++                or scratch.shape[1:] != (profile.hidden_size,)
++                or scratch.dtype != torch.bfloat16
++                or not scratch.is_contiguous()
++                or scratch.device != scales.device
++            )
++        )
++    ):
++        raise ValueError("Active steering topology requires explicit FP32 row controls")
++
++
+ class SteeringRuntime:
+-    def __init__(self, profile, max_reqs, max_tokens, device):
++    def __init__(self, profile, max_reqs, max_tokens, device, *, sp_scratch=True):
+         self.profile = profile
+         self.device = torch.device(device)
+         self.request_scales = torch.zeros(max_reqs, dtype=torch.float32, device=device)
+         self.row_scales = torch.zeros(max_tokens, dtype=torch.float32, device=device)
+-        self.scratch = torch.empty(
+-            (max_tokens, profile.hidden_size), dtype=torch.bfloat16, device=device
++        # Ordinary writers need only the compensated dot. Keep the legacy SP
++        # workspace: re-reading four parts would increase large-prefill traffic.
++        self.dots = torch.empty((max_tokens, 2), dtype=torch.float32, device=device)
++        self.scratch = (
++            torch.empty(
++                (max_tokens, profile.hidden_size), dtype=torch.bfloat16, device=device
++            )
++            if sp_scratch
++            else None
+         )
+         self.requests = {}
+         self.slots = {}
+@@ -45,28 +87,75 @@ class SteeringRuntime:
+         self.slots[slot] = req_id
+         # Lifecycle-only update, queued on the runner's current stream. There is
+         # no per-step CPU->GPU copy, pinned-host reuse race, or scale bank growth.
+-        self.request_scales[slot].fill_(selection.scale)
++        if selection.active:
++            self.request_scales[slot].fill_(selection.scale)
+ 
+     def remove_request(self, req_id):
+         old = self.requests.pop(req_id, None)
+         if old is not None:
+-            slot, _ = old
++            slot, selection = old
+             self.slots.pop(slot)
+-            self.request_scales[slot].zero_()
++            if selection.active:
++                self.request_scales[slot].zero_()
+ 
+-    def prepare(self, batch):
++    def input_variant(self, req_ids, *, dummy=False):
++        """Choose topology from the scheduled CPU identities, before SP slicing."""
++        if dummy:
++            return 0
++        selections = []
++        for req in req_ids:
++            if req not in self.requests:
++                raise ValueError("Steering batch contains an unregistered request")
++            selections.append(self.requests[req][1])
++        return int(any(selection.active for selection in selections))
++
++    def model_inputs(self, batch):
+         n = batch.num_tokens_after_padding
+         if getattr(batch, "is_dummy", False):
+-            return self.dummy(n)
+-        if n > self.row_scales.numel() or batch.num_reqs > self.request_scales.numel():
++            return self.dummy_inputs(n, 0)
++        self._validate_batch(batch)
++        if not self.input_variant(batch.req_ids):
++            return {"steering_active": False}
++        return {
++            "steering_active": True,
++            "steering_scales": self.prepare(batch),
++            "steering_dots": self.dots,
++            "steering_scratch": self.scratch,
++        }
++
++    def dummy_inputs(self, num_tokens, variant):
++        if variant not in (0, 1):
++            raise ValueError("Unknown steering model input variant")
++        if not 0 <= num_tokens <= self.row_scales.numel():
++            raise ValueError("Steering dummy batch exceeds controls")
++        if variant == 0:
++            return {"steering_active": False}
++        return {
++            "steering_active": True,
++            "steering_scales": self.dummy(num_tokens),
++            "steering_dots": self.dots,
++            "steering_scratch": self.scratch,
++        }
++
++    def _validate_batch(self, batch):
++        n = batch.num_tokens_after_padding
++        self.input_variant(batch.req_ids)
++        if not 0 <= n <= self.row_scales.numel() or not (
++            batch.num_reqs == len(batch.req_ids) == len(batch.idx_mapping_np)
++            and batch.num_reqs <= self.request_scales.numel()
++        ):
+             raise ValueError("Steering batch exceeds preallocated controls")
+-        if any(req not in self.requests for req in batch.req_ids):
+-            raise ValueError("Steering batch contains an unregistered request")
+         for req, slot in zip(batch.req_ids, batch.idx_mapping_np):
+             if self.requests[req][0] != int(slot):
+                 raise ValueError(
+                     "Steering request layout and runner slot mapping differ"
+                 )
++
++    def prepare(self, batch):
++        n = batch.num_tokens_after_padding
++        if getattr(batch, "is_dummy", False):
++            return self.dummy(n)
++        self._validate_batch(batch)
+         if self.device.type == "cuda":
+             from .row_kernel import fill_row_scales
+ 
+diff --git a/vllm/models/deepseek_v4_1/tilelang/mhc.py b/vllm/models/deepseek_v4_1/tilelang/mhc.py
+index ea229b519..d238757bb 100644
+--- a/vllm/models/deepseek_v4_1/tilelang/mhc.py
++++ b/vllm/models/deepseek_v4_1/tilelang/mhc.py
+@@ -1,5 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++# TileLang tensor declarations are runtime DSL annotations.
++# mypy: disable-error-code=valid-type
+ """DeepSeek-V4.1 lagged mHC on TileKernels (``--linear-backend tilelang``).
+ 
+ V4.1's hyper-connections keep four residual streams. Each sublayer's ``pre``
+@@ -33,15 +35,15 @@ that reading them once matters. Two TileLang kernels make each entry:
+ 
+ from functools import cache
+ 
+-import tilelang
+-import tilelang.language as T
+ import torch
+ from torch import nn
+ 
+ from vllm.distributed import get_tensor_model_parallel_world_size
+ from vllm.models.deepseek_v4_1 import sp_prefill
++from vllm.models.deepseek_v4_1.steering.consume import project_columns
+ from vllm.models.deepseek_v4_1.tilelang import prepare
+ from vllm.models.deepseek_v4_1.tilelang.collectives import RankOrderParts
++from vllm.tilelang_utils import T, tilelang
+ from vllm.v1.worker.workspace import (
+     current_workspace_manager,
+     retain_cuda_graph_capture_resource,
+@@ -66,6 +68,7 @@ def project_streams(
+     block_M: int = 16,
+     block_H: int = BLOCK_H,
+     world: int = 1,
++    steering: bool = False,
+ ):
+     """The streams' projection partials and their collapse, for one hidden block.
+ 
+@@ -92,6 +95,7 @@ def project_streams(
+     """
+     assert hidden_size % block_H == 0 and mode in ("pre", "post_pre", "broadcast")
+     assert 1 <= world <= 4 and (world == 1 or mode == "post_pre")
++    assert not steering or mode == "post_pre"
+     splits = hidden_size // block_H
+     streams = 1 if mode == "broadcast" else MULT
+     K = streams * hidden_size
+@@ -119,19 +123,23 @@ def project_streams(
+             F_mid[i, j] = middle
+             F_low[i, j] = rest - middle
+ 
+-    @T.prim_func
+-    def mhc_project_streams(
+-        X: T.Tensor((world, M, H), T.bfloat16),
+-        R: T.Tensor((M, MULT * H), T.bfloat16),
+-        post: T.Tensor((M, MULT), T.float32),
+-        comb: T.Tensor((M, MULT, MULT), T.float32),
+-        pre_in: T.Tensor((M, MULT), T.float32),
+-        Fn: T.Tensor((MIXES, K), T.float32),
+-        R_out: T.Tensor((M, MULT * H), T.bfloat16),
+-        P: T.Tensor((splits, M, 1, MIXES), T.float32),
+-        S: T.Tensor((splits, M, 1), T.float32),
+-        C: T.Tensor((M, H), T.bfloat16),
+-        Q: T.Tensor((splits, M), T.float32),
++    @T.macro
++    def project_body(
++        X,
++        R,
++        post,
++        comb,
++        pre_in,
++        Fn,
++        R_out,
++        P,
++        S,
++        C,
++        Q,
++        direction,
++        doses,
++        dots,
++        alpha,
+     ):
+         with T.Kernel(splits, T.ceildiv(M, block_M), threads=threads) as (sp, by):
+             h0 = sp * block_H
+@@ -182,6 +190,8 @@ def project_streams(
+                             av[v] = av[v] + T.Cast(T.float32, xv[v])
+                 for v in T.unroll(COLS):
+                     xv[v] = T.Cast(T.bfloat16, av[v])
++            if steering:
++                project_columns(xv, direction, doses, dots, alpha, src, h0 + c0, COLS)
+             if mode != "broadcast":
+                 for m in T.unroll(MULT):
+                     for v in T.vectorized(COLS):
+@@ -262,6 +272,64 @@ def project_streams(
+                 if by * block_M + i < M:
+                     P[sp, by * block_M + i, 0, j] = C_local[i, j]
+ 
++    if steering:
++
++        @T.prim_func
++        def mhc_project_streams(
++            X: T.Tensor((world, M, H), T.bfloat16),
++            R: T.Tensor((M, MULT * H), T.bfloat16),
++            post: T.Tensor((M, MULT), T.float32),
++            comb: T.Tensor((M, MULT, MULT), T.float32),
++            pre_in: T.Tensor((M, MULT), T.float32),
++            Fn: T.Tensor((MIXES, K), T.float32),
++            R_out: T.Tensor((M, MULT * H), T.bfloat16),
++            P: T.Tensor((splits, M, 1, MIXES), T.float32),
++            S: T.Tensor((splits, M, 1), T.float32),
++            C: T.Tensor((M, H), T.bfloat16),
++            Q: T.Tensor((splits, M), T.float32),
++            direction: T.Tensor((H,), T.float32),
++            doses: T.Tensor((M,), T.float32),
++            dots: T.Tensor((M, 2), T.float32),
++            alpha: T.float32,
++        ):
++            project_body(
++                X,
++                R,
++                post,
++                comb,
++                pre_in,
++                Fn,
++                R_out,
++                P,
++                S,
++                C,
++                Q,
++                direction,
++                doses,
++                dots,
++                alpha,
++            )
++    else:
++
++        @T.prim_func
++        def mhc_project_streams(
++            X: T.Tensor((world, M, H), T.bfloat16),
++            R: T.Tensor((M, MULT * H), T.bfloat16),
++            post: T.Tensor((M, MULT), T.float32),
++            comb: T.Tensor((M, MULT, MULT), T.float32),
++            pre_in: T.Tensor((M, MULT), T.float32),
++            Fn: T.Tensor((MIXES, K), T.float32),
++            R_out: T.Tensor((M, MULT * H), T.bfloat16),
++            P: T.Tensor((splits, M, 1, MIXES), T.float32),
++            S: T.Tensor((splits, M, 1), T.float32),
++            C: T.Tensor((M, H), T.bfloat16),
++            Q: T.Tensor((splits, M), T.float32),
++        ):
++            # The stock ABI and body have no steering buffers or operations.
++            project_body(
++                X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, Fn, Fn, Fn, 0.0
++            )
++
+     return mhc_project_streams
+ 
+ 
+@@ -387,9 +455,13 @@ def finalize(
+     return mhc_finalize
+ 
+ 
+-def _project_call(hidden: int, mode: str, world: int) -> prepare.TileLangCall:
++def _project_call(
++    hidden: int, mode: str, world: int, steering: bool = False
++) -> prepare.TileLangCall:
+     """The ``project_streams`` call of a sublayer entry."""
+-    return prepare.call(project_streams, hidden, mode, block_M=BLOCK_M, world=world)
++    return prepare.call(
++        project_streams, hidden, mode, block_M=BLOCK_M, world=world, steering=steering
++    )
+ 
+ 
+ def _finalize_call(
+@@ -405,8 +477,8 @@ def _make(call: prepare.TileLangCall):
+ 
+ 
+ @cache
+-def _project(hidden: int, mode: str, world: int):
+-    return _make(_project_call(hidden, mode, world))
++def _project(hidden: int, mode: str, world: int, steering: bool = False):
++    return _make(_project_call(hidden, mode, world, steering))
+ 
+ 
+ @cache
+@@ -442,6 +514,10 @@ def _mhc_pre(
+     previous_output: torch.Tensor | None = None,
+     previous_post: torch.Tensor | None = None,
+     previous_comb: torch.Tensor | None = None,
++    steering_direction: torch.Tensor | None = None,
++    steering_scales: torch.Tensor | None = None,
++    steering_dots: torch.Tensor | None = None,
++    steering_alpha: float = 0.0,
+ ) -> None:
+     tokens, hidden = int(residual.shape[0]), int(residual.shape[-1])
+     if tokens == 0:
+@@ -450,6 +526,8 @@ def _mhc_pre(
+     world = 1
+     # Unused operands of a mode take a buffer of the right shape; none is read.
+     if previous_output is not None:
++        if residual_out is None:
++            raise ValueError("mHC post_pre requires an output buffer")
+         # (T, H), or the ranks' unreduced partials of it, (world, T, H).
+         if previous_output.ndim == 3:
+             world = int(previous_output.shape[0])
+@@ -457,6 +535,8 @@ def _mhc_pre(
+         source, updated = residual.view(tokens, streams), residual_out
+         mix_post, mix_comb = previous_post, previous_comb
+     elif residual.ndim == 2:
++        if residual_out is None:
++            raise ValueError("mHC broadcast requires an output buffer")
+         mode, x, k = "broadcast", residual, hidden
+         source, updated = residual_out.view(tokens, streams), residual_out
+         mix_post, mix_comb = pre, comb
+@@ -473,7 +553,35 @@ def _mhc_pre(
+     )
+     retain_cuda_graph_capture_resource(scratch)
+     P, S, C, Q = scratch
+-    _project(hidden, mode, world)(
++    steering_args: tuple[torch.Tensor | float, ...] = ()
++    if steering_direction is not None:
++        if (
++            mode != "post_pre"
++            or steering_scales is None
++            or steering_dots is None
++            or steering_direction.shape != (hidden,)
++            or steering_scales.shape != (tokens,)
++            or steering_dots.shape != (tokens, 2)
++            or any(
++                t.dtype != torch.float32
++                or not t.is_contiguous()
++                or t.device != residual.device
++                for t in (steering_direction, steering_scales, steering_dots)
++            )
++        ):
++            raise ValueError("Invalid steering mHC consumer controls")
++        steering_args = (
++            steering_direction,
++            steering_scales,
++            steering_dots,
++            steering_alpha,
++        )
++    elif (
++        steering_scales is not None or steering_dots is not None or steering_alpha != 0
++    ):
++        raise ValueError("Steering mHC controls require a direction")
++    assert updated is not None
++    _project(hidden, mode, world, bool(steering_args))(
+         x if x.ndim == 3 else x.unsqueeze(0),
+         source,
+         mix_post,
+@@ -485,6 +593,7 @@ def _mhc_pre(
+         S,
+         C,
+         Q,
++        *steering_args,
+     )
+     _finalize(hidden, k, rms_eps, hc_eps, iterations)(
+         P, S, C, Q, scale, base, norm, post, comb, pre_out, y
+@@ -510,6 +619,10 @@ def _mhc_pre_fake(
+     previous_output=None,
+     previous_post=None,
+     previous_comb=None,
++    steering_direction=None,
++    steering_scales=None,
++    steering_dots=None,
++    steering_alpha=0.0,
+ ):
+     return None
+ 
+@@ -589,6 +702,15 @@ class TileKernelsMHC(nn.Module):
+         stream collapse, so that no forward (or CUDA graph capture) compiles."""
+         hidden = self.hidden_size
+         entries = self._entries()
++        steering_entries = (
++            [
++                (mode, world)
++                for mode, world in entries
++                if mode == "post_pre" and world == 1
++            ]
++            if getattr(self, "steering_enabled", False)
++            else []
++        )
+         # The broadcast entry projects one stream; the others all four.
+         widths = (hidden, MULT * hidden)
+         mix = (self.rms_eps, self.hc_eps, self.iterations)
+@@ -596,6 +718,10 @@ class TileKernelsMHC(nn.Module):
+         def calls() -> list[prepare.TileLangCall]:
+             return [
+                 *(_project_call(hidden, mode, world) for mode, world in entries),
++                *(
++                    _project_call(hidden, mode, world, True)
++                    for mode, world in steering_entries
++                ),
+                 *(_finalize_call(hidden, k, *mix) for k in widths),
+             ]
+ 
+@@ -603,6 +729,8 @@ class TileKernelsMHC(nn.Module):
+             # The forward's cached kernels, as its lookups name them.
+             for mode, world in entries:
+                 _project(hidden, mode, world)
++            for mode, world in steering_entries:
++                _project(hidden, mode, world, True)
+             for k in widths:
+                 _finalize(hidden, k, *mix)
+ 
+@@ -620,6 +748,10 @@ class TileKernelsMHC(nn.Module):
+         previous_output=None,
+         previous_post=None,
+         previous_comb=None,
++        steering_direction=None,
++        steering_scales=None,
++        steering_dots=None,
++        steering_alpha=0.0,
+     ):
+         tokens, device = int(residual.shape[0]), residual.device
+         if isinstance(previous_output, RankOrderParts):
+@@ -658,10 +790,30 @@ class TileKernelsMHC(nn.Module):
+             previous_output,
+             previous_post,
+             previous_comb,
++            steering_direction,
++            steering_scales,
++            steering_dots,
++            steering_alpha,
+         )
+         return residual if unchanged else residual_out, post, comb, y, pre_out
+ 
+-    def post_pre(self, x, residual, post, comb, fn, scale, base, norm, pre):
++    def post_pre(
++        self,
++        x,
++        residual,
++        post,
++        comb,
++        fn,
++        scale,
++        base,
++        norm,
++        pre,
++        *,
++        steering_direction=None,
++        steering_scales=None,
++        steering_dots=None,
++        steering_alpha=0.0,
++    ):
+         return self.pre(
+             residual,
+             fn,
+@@ -672,6 +824,10 @@ class TileKernelsMHC(nn.Module):
+             previous_output=x,
+             previous_post=post,
+             previous_comb=comb,
++            steering_direction=steering_direction,
++            steering_scales=steering_scales,
++            steering_dots=steering_dots,
++            steering_alpha=steering_alpha,
+         )
+ 
+     def post(self, x, residual, post, comb):
+diff --git a/vllm/v1/worker/gpu/cudagraph_utils.py b/vllm/v1/worker/gpu/cudagraph_utils.py
+index b4897e282..2fd122cdc 100644
+--- a/vllm/v1/worker/gpu/cudagraph_utils.py
++++ b/vllm/v1/worker/gpu/cudagraph_utils.py
+@@ -244,6 +244,8 @@ class BatchExecutionDescriptor:
+     exact_num_tokens: bool = False
+     # Number of microbatches the batch is split into (DBO). 1 means no splitting.
+     num_ubatches: int = 1
++    # Optional-input topology; strength values stay in persistent tensors.
++    model_input_variant: int = 0
+ 
+ 
+ def make_cudagraph_stats(
+@@ -859,7 +861,9 @@ class ModelCudaGraphManager(CudaGraphManager):
+         ubatch_runner: "UBatchRunner | None" = None,
+         specialize_full_decode: bool = False,
+         single_request_prefill_tokens: int = 0,
++        model_input_variants: tuple[int, ...] = (0,),
+     ):
++        self.model_input_variants = model_input_variants
+         super().__init__(
+             vllm_config,
+             device,
+@@ -876,6 +880,24 @@ class ModelCudaGraphManager(CudaGraphManager):
+         self.use_aux_hidden_state_outputs = False
+         self.intermediate_tensors: IntermediateTensors | None = None
+ 
++    def _init_candidates(self):
++        super()._init_candidates()
++        from .model_input_variant import expand_capture_variants
++
++        # Dispatch shapes stay stock. Only FULL graph capture/replay has the
++        # extra key; non-stock PIECEWISE requests deliberately execute eager.
++        if CUDAGraphMode.FULL in self._capture_descs:
++            self._capture_descs[CUDAGraphMode.FULL] = expand_capture_variants(
++                self._capture_descs[CUDAGraphMode.FULL], self.model_input_variants
++            )
++
++    def with_input_variant(self, desc, variant):
++        from .model_input_variant import select_input_variant
++
++        if variant not in self.model_input_variants:
++            raise ValueError("Model input variant was not declared before capture")
++        return select_input_variant(desc, variant)
++
+     def capture(
+         self,
+         model: nn.Module,
+@@ -952,10 +974,18 @@ class ModelCudaGraphManager(CudaGraphManager):
+                 else None
+             )
+ 
++            prepare_variant = getattr(
++                model_state, "prepare_dummy_inputs_for_variant", None
++            )
++            dummy_inputs = (
++                prepare_variant(num_reqs, num_tokens, desc.model_input_variant)
++                if prepare_variant is not None
++                else model_state.prepare_dummy_inputs(num_reqs, num_tokens)
++            )
+             model_inputs = {
+                 "input_ids": input_buffers.input_ids[:num_tokens],
+                 "positions": input_buffers.positions[:num_tokens],
+-                **model_state.prepare_dummy_inputs(num_reqs, num_tokens),
++                **dummy_inputs,
+             }
+             normalize_model_token_inputs(model, model_inputs)
+             if not self.is_first_pp_rank:
+@@ -1202,15 +1232,15 @@ def _measure_full_graph_memory(
+ def _profiling_full_descs(
+     descs: Sequence[BatchExecutionDescriptor],
+ ) -> list[BatchExecutionDescriptor]:
+-    """Select the FULL graphs captured while profiling, largest first.
++    """Select FULL profiling graphs per input variant, largest first.
+ 
+     The first sample also covers activations that smaller graphs reuse from
+     the pool. The next largest and the smallest graph then bound the
+     per-graph cost at both ends of the token range.
+     """
+-    if len(descs) <= _FULL_GRAPH_PROFILING_SAMPLES:
+-        return list(descs)
+-    return [*descs[: _FULL_GRAPH_PROFILING_SAMPLES - 1], descs[-1]]
++    from .model_input_variant import sample_capture_variants
++
++    return sample_capture_variants(descs, _FULL_GRAPH_PROFILING_SAMPLES)
+ 
+ 
+ def _profiling_cudagraph_managers(runner: "GPUModelRunner") -> list[CudaGraphManager]:
+@@ -1405,12 +1435,20 @@ def _extrapolate_full_graph_memory(
+     if not unsampled:
+         return estimate
+ 
+-    reference: dict[int, int] = {}
+-    for sample in mem_samples[1:]:
++    reference: dict[int, dict[int, int]] = {}
++    seen_variants: set[int] = set()
++    for sample in mem_samples:
++        variant = sample.desc.model_input_variant
++        if variant not in seen_variants:
++            seen_variants.add(variant)
++            continue
++        points_for_variant = reference.setdefault(variant, {})
+         num_tokens = sample.desc.num_tokens
+-        reference[num_tokens] = max(sample.cost, reference.get(num_tokens, 0))
+-    points = sorted(reference.items())
++        points_for_variant[num_tokens] = max(
++            sample.cost, points_for_variant.get(num_tokens, 0)
++        )
+     for desc in unsampled:
++        points = sorted(reference.get(desc.model_input_variant, {}).items())
+         cost = _interpolate_graph_cost(points, desc.num_tokens)
+         estimate += max(cost, _MIN_PER_GRAPH_BYTES)
+     return estimate
+diff --git a/vllm/v1/worker/gpu/model_input_variant.py b/vllm/v1/worker/gpu/model_input_variant.py
+new file mode 100644
+index 000000000..799f2409e
+--- /dev/null
++++ b/vllm/v1/worker/gpu/model_input_variant.py
+@@ -0,0 +1,51 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""CPU-only helpers for model optional-input CUDA graph topologies."""
++
++from __future__ import annotations
++
++from collections.abc import Sequence
++from dataclasses import replace
++from typing import TYPE_CHECKING
++
++if TYPE_CHECKING:
++    from .cudagraph_utils import BatchExecutionDescriptor
++
++
++def expand_capture_variants(
++    descs: Sequence[BatchExecutionDescriptor], variants: tuple[int, ...]
++) -> list[BatchExecutionDescriptor]:
++    if not variants or variants[0] != 0 or len(set(variants)) != len(variants):
++        raise ValueError("Model input variants must be unique, starting with stock (0)")
++    return [replace(desc, model_input_variant=v) for desc in descs for v in variants]
++
++
++def select_input_variant(
++    desc: BatchExecutionDescriptor, variant: int
++) -> BatchExecutionDescriptor:
++    if variant == desc.model_input_variant:
++        return desc
++    # Piecewise caches also key off optional arguments. Until their wrappers
++    # support this dimension, non-stock inputs run eager, never a stock graph.
++    mode = type(desc.cg_mode)
++    return replace(
++        desc,
++        model_input_variant=variant,
++        cg_mode=mode.NONE
++        if variant and desc.cg_mode == mode.PIECEWISE
++        else desc.cg_mode,
++    )
++
++
++def sample_capture_variants(
++    descs: Sequence[BatchExecutionDescriptor], count: int
++) -> list[BatchExecutionDescriptor]:
++    groups: dict[int, list[BatchExecutionDescriptor]] = {}
++    for desc in descs:
++        groups.setdefault(desc.model_input_variant, []).append(desc)
++    sampled: list[BatchExecutionDescriptor] = []
++    for group in groups.values():
++        sampled.extend(
++            group if len(group) <= count else [*group[: count - 1], group[-1]]
++        )
++    return sampled
+diff --git a/vllm/v1/worker/gpu/model_runner.py b/vllm/v1/worker/gpu/model_runner.py
+index 781c97821..72429b36d 100644
+--- a/vllm/v1/worker/gpu/model_runner.py
++++ b/vllm/v1/worker/gpu/model_runner.py
+@@ -829,6 +829,9 @@ class GPUModelRunner(LoRAModelRunnerMixin):
+             single_request_prefill_tokens=(
+                 self.model_state.single_request_prefill_cudagraph_tokens
+             ),
++            model_input_variants=getattr(
++                self.model_state, "cudagraph_input_variants", (0,)
++            ),
+         )
+         if self.cache_config.kv_sharing_fast_prefill and self.pcp_manager is None:
+             self.fast_prefill = FastPrefillHelper(
+@@ -2429,6 +2432,14 @@ class GPUModelRunner(LoRAModelRunnerMixin):
+             uniform_decode=uniform_tok_count == self.decode_query_len,
+         )
+ 
++        input_variant = getattr(self.model_state, "get_model_input_variant", None)
++        if input_variant is not None:
++            assert self.cudagraph_manager is not None
++            batch_desc = self.cudagraph_manager.with_input_variant(
++                batch_desc,
++                input_variant(scheduler_output.num_scheduled_tokens, dummy=dummy_run),
++            )
++
+         if batch_desc.num_tokens == 0:
+             # All DP ranks have zero tokens to run.
+             empty_output = self.kv_connector.no_forward(scheduler_output)

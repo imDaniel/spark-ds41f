@@ -1,0 +1,457 @@
+{
+  "capture_completeness": "passed",
+  "known_steering_event_gate": "passed",
+  "generic_copy_launch_sp_materialization": "not_evaluated",
+  "matched_unloaded_or_official_trace_control": "not_available",
+  "scope": "named row/dot/project kernels and steering custom ops only",
+  "traces": [
+    {
+      "node": 1,
+      "stage": "prefill",
+      "scale": 0,
+      "trace": "rank0-prefill-s0.json.gz",
+      "sha256": "a50811cc088efcbb1c2db77857227fe1b3cd9d2070576675b6021a5260994cf8",
+      "events": 88319,
+      "kernels": 4889,
+      "cpu_ops": 45577,
+      "cuda_graph_launches": 2,
+      "steering_kernels": {},
+      "steering_ops": {},
+      "event_categories": {
+        "user_annotation": 6,
+        "cpu_op": 45577,
+        "overhead": 1216,
+        "kernel": 4889,
+        "ac2g": 20755,
+        "cuda_runtime": 11699,
+        "gpu_memcpy": 267,
+        "cuda_driver": 3900,
+        "gpu_user_annotation": 7,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 1,
+      "stage": "prefill",
+      "scale": 1,
+      "trace": "rank0-prefill-s1.json.gz",
+      "sha256": "db9070e3bdc7974e396d46c0d0f8ceb57dfe7d15952ced949f7f687ad17a5b46",
+      "events": 89103,
+      "kernels": 4973,
+      "cpu_ops": 45982,
+      "cuda_graph_launches": 2,
+      "steering_kernels": {
+        "_row_scales_kernel": 2,
+        "_project_kernel": 18,
+        "_dot_kernel": 58
+      },
+      "steering_ops": {
+        "ds41_steering::project_parts": 18,
+        "ds41_steering::projection_dot": 58
+      },
+      "event_categories": {
+        "user_annotation": 6,
+        "cpu_op": 45982,
+        "cuda_runtime": 11707,
+        "ac2g": 20929,
+        "overhead": 1246,
+        "kernel": 4973,
+        "gpu_memcpy": 267,
+        "cuda_driver": 3982,
+        "gpu_user_annotation": 8,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 1,
+      "stage": "decode",
+      "scale": 0,
+      "trace": "rank0-decode-s0.json.gz",
+      "sha256": "133f75c80f6a7704891e48c400be94d0e5b9c1eafc4a556e81123af44875d7a7",
+      "events": 171786,
+      "kernels": 50233,
+      "cpu_ops": 40074,
+      "cuda_graph_launches": 74,
+      "steering_kernels": {},
+      "steering_ops": {},
+      "event_categories": {
+        "user_annotation": 51,
+        "cpu_op": 40074,
+        "overhead": 7,
+        "kernel": 50233,
+        "ac2g": 64840,
+        "cuda_runtime": 10755,
+        "gpu_memcpy": 514,
+        "cuda_driver": 3338,
+        "gpu_user_annotation": 1971,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 1,
+      "stage": "decode",
+      "scale": 1,
+      "trace": "rank0-decode-s1.json.gz",
+      "sha256": "117754d9ec3121257ba8b9c4edc53b7958cc0b82ae914fb8bcc9a14df5cede1d",
+      "events": 185835,
+      "kernels": 55387,
+      "cpu_ops": 42397,
+      "cuda_graph_launches": 80,
+      "steering_kernels": {
+        "_row_scales_kernel": 27,
+        "_dot_kernel": 1026
+      },
+      "steering_ops": {
+        "ds41_steering::projection_dot": 38
+      },
+      "event_categories": {
+        "user_annotation": 56,
+        "cpu_op": 42397,
+        "overhead": 7,
+        "kernel": 55387,
+        "ac2g": 70618,
+        "cuda_runtime": 11121,
+        "gpu_memcpy": 561,
+        "cuda_driver": 3549,
+        "gpu_user_annotation": 2136,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 2,
+      "stage": "prefill",
+      "scale": 0,
+      "trace": "rank1-prefill-s0.json.gz",
+      "sha256": "711c1d9157ef1f81a221f143cdd3612b599bf2bef34539d5b95acfcb43e3b931",
+      "events": 88339,
+      "kernels": 4889,
+      "cpu_ops": 45577,
+      "cuda_graph_launches": 2,
+      "steering_kernels": {},
+      "steering_ops": {},
+      "event_categories": {
+        "user_annotation": 6,
+        "cpu_op": 45577,
+        "overhead": 1234,
+        "kernel": 4889,
+        "ac2g": 20756,
+        "cuda_runtime": 11700,
+        "gpu_memcpy": 267,
+        "cuda_driver": 3900,
+        "gpu_user_annotation": 7,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 2,
+      "stage": "prefill",
+      "scale": 1,
+      "trace": "rank1-prefill-s1.json.gz",
+      "sha256": "ab0094c1478b5422e7a89b093dfa79e44067000eeed3575a5b18a451a4e82ebb",
+      "events": 89127,
+      "kernels": 4973,
+      "cpu_ops": 45982,
+      "cuda_graph_launches": 2,
+      "steering_kernels": {
+        "_row_scales_kernel": 2,
+        "_project_kernel": 18,
+        "_dot_kernel": 58
+      },
+      "steering_ops": {
+        "ds41_steering::project_parts": 18,
+        "ds41_steering::projection_dot": 58
+      },
+      "event_categories": {
+        "user_annotation": 6,
+        "cpu_op": 45982,
+        "overhead": 1268,
+        "kernel": 4973,
+        "ac2g": 20930,
+        "cuda_runtime": 11708,
+        "gpu_memcpy": 267,
+        "cuda_driver": 3982,
+        "gpu_user_annotation": 8,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 2,
+      "stage": "decode",
+      "scale": 0,
+      "trace": "rank1-decode-s0.json.gz",
+      "sha256": "3c31494593a6b8a0c3c9d2c206821090c596f00b856aaf78984308d816f5582e",
+      "events": 170414,
+      "kernels": 50233,
+      "cpu_ops": 40074,
+      "cuda_graph_launches": 74,
+      "steering_kernels": {},
+      "steering_ops": {},
+      "event_categories": {
+        "user_annotation": 51,
+        "cpu_op": 40074,
+        "overhead": 7,
+        "kernel": 50233,
+        "ac2g": 64154,
+        "cuda_runtime": 10069,
+        "gpu_memcpy": 514,
+        "cuda_driver": 3338,
+        "gpu_user_annotation": 1971,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 2,
+      "stage": "decode",
+      "scale": 1,
+      "trace": "rank1-decode-s1.json.gz",
+      "sha256": "a1efb33ce8cfee5f60367dc9cb83263d193b573b6775cb74dae2ff953edf7452",
+      "events": 184869,
+      "kernels": 55387,
+      "cpu_ops": 42397,
+      "cuda_graph_launches": 80,
+      "steering_kernels": {
+        "_row_scales_kernel": 27,
+        "_dot_kernel": 1026
+      },
+      "steering_ops": {
+        "ds41_steering::projection_dot": 38
+      },
+      "event_categories": {
+        "user_annotation": 56,
+        "cpu_op": 42397,
+        "cuda_runtime": 10638,
+        "ac2g": 70135,
+        "overhead": 7,
+        "kernel": 55387,
+        "cuda_driver": 3549,
+        "gpu_memcpy": 561,
+        "gpu_user_annotation": 2136,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 3,
+      "stage": "prefill",
+      "scale": 0,
+      "trace": "rank2-prefill-s0.json.gz",
+      "sha256": "e9b348c8f35e622d1ffa4fdaacff4cbb1bc31fb029321edfdd53d61749dc2867",
+      "events": 88353,
+      "kernels": 4889,
+      "cpu_ops": 45577,
+      "cuda_graph_launches": 2,
+      "steering_kernels": {},
+      "steering_ops": {},
+      "event_categories": {
+        "user_annotation": 6,
+        "cpu_op": 45577,
+        "overhead": 1258,
+        "kernel": 4889,
+        "ac2g": 20751,
+        "cuda_runtime": 11695,
+        "gpu_memcpy": 267,
+        "cuda_driver": 3900,
+        "gpu_user_annotation": 7,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 3,
+      "stage": "prefill",
+      "scale": 1,
+      "trace": "rank2-prefill-s1.json.gz",
+      "sha256": "3cfbb0bfaa9bfa7215f908e6421fea4956f054e0ba46d3e3d2f1791f0e85a7da",
+      "events": 89123,
+      "kernels": 4973,
+      "cpu_ops": 45982,
+      "cuda_graph_launches": 2,
+      "steering_kernels": {
+        "_row_scales_kernel": 2,
+        "_project_kernel": 18,
+        "_dot_kernel": 58
+      },
+      "steering_ops": {
+        "ds41_steering::project_parts": 18,
+        "ds41_steering::projection_dot": 58
+      },
+      "event_categories": {
+        "user_annotation": 6,
+        "cpu_op": 45982,
+        "overhead": 1274,
+        "kernel": 4973,
+        "ac2g": 20925,
+        "cuda_runtime": 11703,
+        "gpu_memcpy": 267,
+        "cuda_driver": 3982,
+        "gpu_user_annotation": 8,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 3,
+      "stage": "decode",
+      "scale": 0,
+      "trace": "rank2-decode-s0.json.gz",
+      "sha256": "d161c6aea3a1be9c90973e8c6008a7319fe0438ec9caa1b9233496fa35271e25",
+      "events": 169964,
+      "kernels": 50233,
+      "cpu_ops": 40074,
+      "cuda_graph_launches": 74,
+      "steering_kernels": {},
+      "steering_ops": {},
+      "event_categories": {
+        "user_annotation": 51,
+        "cpu_op": 40074,
+        "kernel": 50233,
+        "ac2g": 63929,
+        "overhead": 7,
+        "cuda_runtime": 9844,
+        "cuda_driver": 3338,
+        "gpu_memcpy": 514,
+        "gpu_user_annotation": 1971,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 3,
+      "stage": "decode",
+      "scale": 1,
+      "trace": "rank2-decode-s1.json.gz",
+      "sha256": "f5145804557f60689906d65e99282945311b42280d73ee7520ec125ab74c2bf3",
+      "events": 184953,
+      "kernels": 55387,
+      "cpu_ops": 42397,
+      "cuda_graph_launches": 80,
+      "steering_kernels": {
+        "_row_scales_kernel": 27,
+        "_dot_kernel": 1026
+      },
+      "steering_ops": {
+        "ds41_steering::projection_dot": 38
+      },
+      "event_categories": {
+        "user_annotation": 56,
+        "cpu_op": 42397,
+        "overhead": 7,
+        "kernel": 55387,
+        "ac2g": 70177,
+        "cuda_runtime": 10680,
+        "gpu_memcpy": 561,
+        "cuda_driver": 3549,
+        "gpu_user_annotation": 2136,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 4,
+      "stage": "prefill",
+      "scale": 0,
+      "trace": "rank3-prefill-s0.json.gz",
+      "sha256": "3b2925a07ff95c22d49027b26a2d095d69d0db3b1f70faa7adde86cf01e96ce1",
+      "events": 88346,
+      "kernels": 4889,
+      "cpu_ops": 45577,
+      "cuda_graph_launches": 2,
+      "steering_kernels": {},
+      "steering_ops": {},
+      "event_categories": {
+        "user_annotation": 6,
+        "cpu_op": 45577,
+        "overhead": 1261,
+        "kernel": 4889,
+        "ac2g": 20746,
+        "cuda_runtime": 11690,
+        "gpu_memcpy": 267,
+        "cuda_driver": 3900,
+        "gpu_user_annotation": 7,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 4,
+      "stage": "prefill",
+      "scale": 1,
+      "trace": "rank3-prefill-s1.json.gz",
+      "sha256": "66a979564cdbf677a6274267cc11ccf67acc16fa4dd962220f6e715911590998",
+      "events": 89113,
+      "kernels": 4973,
+      "cpu_ops": 45982,
+      "cuda_graph_launches": 2,
+      "steering_kernels": {
+        "_row_scales_kernel": 2,
+        "_project_kernel": 18,
+        "_dot_kernel": 58
+      },
+      "steering_ops": {
+        "ds41_steering::project_parts": 18,
+        "ds41_steering::projection_dot": 58
+      },
+      "event_categories": {
+        "user_annotation": 6,
+        "cpu_op": 45982,
+        "overhead": 1274,
+        "kernel": 4973,
+        "ac2g": 20920,
+        "cuda_runtime": 11698,
+        "gpu_memcpy": 267,
+        "cuda_driver": 3982,
+        "gpu_user_annotation": 8,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 4,
+      "stage": "decode",
+      "scale": 0,
+      "trace": "rank3-decode-s0.json.gz",
+      "sha256": "27aca0a8b50b52a4bacac0258d03fbcf89b87b5caa2eb108bb53f4b0de256e6c",
+      "events": 170644,
+      "kernels": 50233,
+      "cpu_ops": 40074,
+      "cuda_graph_launches": 74,
+      "steering_kernels": {},
+      "steering_ops": {},
+      "event_categories": {
+        "user_annotation": 51,
+        "cpu_op": 40074,
+        "overhead": 7,
+        "kernel": 50233,
+        "ac2g": 64269,
+        "cuda_runtime": 10184,
+        "gpu_memcpy": 514,
+        "cuda_driver": 3338,
+        "gpu_user_annotation": 1971,
+        "Trace": 1
+      }
+    },
+    {
+      "node": 4,
+      "stage": "decode",
+      "scale": 1,
+      "trace": "rank3-decode-s1.json.gz",
+      "sha256": "7e3f97806084bcdddd90d25df61df837a83f8536150531d62723c7dfe301360d",
+      "events": 184315,
+      "kernels": 55387,
+      "cpu_ops": 42397,
+      "cuda_graph_launches": 80,
+      "steering_kernels": {
+        "_dot_kernel": 1026,
+        "_row_scales_kernel": 27
+      },
+      "steering_ops": {
+        "ds41_steering::projection_dot": 38
+      },
+      "event_categories": {
+        "user_annotation": 56,
+        "cpu_op": 42397,
+        "kernel": 55387,
+        "ac2g": 69858,
+        "overhead": 7,
+        "cuda_runtime": 10361,
+        "cuda_driver": 3549,
+        "gpu_memcpy": 561,
+        "gpu_user_annotation": 2136,
+        "Trace": 1
+      }
+    }
+  ]
+}

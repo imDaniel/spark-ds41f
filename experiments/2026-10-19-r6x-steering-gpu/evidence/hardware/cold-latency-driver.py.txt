@@ -1,0 +1,83 @@
+"""Cold 4K C1/C4 first-token timing; separate from the warm-prefix load test."""
+import argparse
+import concurrent.futures
+import hashlib
+import importlib.util
+import json
+import statistics
+import sys
+import threading
+import time
+import uuid
+from pathlib import Path
+
+p = argparse.ArgumentParser()
+p.add_argument('--repo', type=Path, required=True)
+p.add_argument('--output-dir', type=Path, required=True)
+p.add_argument('--arm', choices=['official', 'candidate-unloaded', 'candidate-loaded'], required=True)
+p.add_argument('--scale', type=float, default=0)
+a = p.parse_args()
+assert a.arm == 'candidate-loaded' or a.scale == 0
+a.output_dir.mkdir(parents=True, exist_ok=False)
+sys.path.insert(0, str(a.repo))
+from servebench import client, prefill  # noqa: E402
+
+spec = importlib.util.spec_from_file_location('probe', a.repo / 'experiments/2026-10-19-steering-gpu/probe_model.py')
+probe = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(probe)
+probe.THERMAL_SOURCE = Path('/srv/ai-cluster/runtimes/steering-r6x-20261019/evidence/host-telemetry.jsonl')
+record = {'arm': a.arm, 'scale': a.scale, 'target_tokens': 4096, 'wave_count': 12,
+          'driver_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+          'thermal_start': probe.thermal_gate(), 'waves': [], 'passed': False}
+target = a.output_dir / 'cold-latency.json'
+
+
+def save():
+    target.write_text(json.dumps(record, indent=2))
+
+
+save()
+try:
+    for wave in range(-2, 12):
+        order = (1, 4) if wave % 2 == 0 else (4, 1)
+        for concurrency in order:
+            bodies = []
+            for i in range(concurrency):
+                text, counted = prefill.document(probe.BASE, 'deepseek-v4.1-flash', 4096, 1729 + max(wave, 0) * 4 + i, True)
+                body = {'model': 'deepseek-v4.1-flash', 'messages': [{'role': 'user', 'content': text + '\n\nSummarize the document in one sentence.'}],
+                        'max_tokens': 1, 'ignore_eos': True, 'temperature': 0, 'seed': 2048,
+                        'cache_salt': uuid.uuid4().hex, 'chat_template_kwargs': {'enable_thinking': False}}
+                if a.arm == 'candidate-loaded':
+                    body.update(steering_profile='heretic-1017-attn-v1', steering_scale=a.scale)
+                bodies.append((body, counted, hashlib.sha256(text.encode()).hexdigest()))
+            probe.reset()
+            barrier = threading.Barrier(concurrency)
+
+            def request(item):
+                body, counted, digest = item
+                barrier.wait(timeout=20)
+                result = client.stream_chat(probe.BASE, body, continuous_usage=True, timeout=180)
+                result.update(document_sha256=digest, counted_document_tokens=counted)
+                if result['first'] is not None:
+                    result['ttft_ms'] = (result['first'] - result['sent']) * 1000
+                return result
+
+            with concurrent.futures.ThreadPoolExecutor(concurrency) as pool:
+                samples = list(pool.map(request, bodies))
+            entry = {'wave': wave, 'concurrency': concurrency, 'warmup': wave < 0, 'samples': samples}
+            record['waves'].append(entry)
+            save()
+            assert all(s['error'] is None and s['first'] is not None and s['completion_tokens'] == 1
+                       and s['finish_reason'] == 'length' and s['counted_document_tokens'] > 0
+                       and abs(s['prompt_tokens'] - s['counted_document_tokens']) < 256 for s in samples), entry
+    record['summary'] = {}
+    for concurrency in (1, 4):
+        samples = [s['ttft_ms'] for wave in record['waves'] if wave['concurrency'] == concurrency
+                   and not wave['warmup'] for s in wave['samples']]
+        record['summary'][str(concurrency)] = {'requests': len(samples), 'mean_ms': statistics.mean(samples),
+            'median_ms': statistics.median(samples), 'p90_ms': sorted(samples)[(9 * len(samples) + 9) // 10 - 1]}
+    record['passed'] = True
+    save()
+    print(json.dumps(record['summary']), flush=True)
+finally:
+    save()

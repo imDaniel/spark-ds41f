@@ -1,0 +1,43 @@
+From 43608a373a5d1a062dbd754d37031fb5314deabc Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Mon, 19 Oct 2026 02:08:45 +0900
+Subject: [PATCH] Keep fused steering stores within TileLang branch regions
+
+Base: the 183-patch steering candidate at 75a3773b56a3.
+Rationale: the first SM121 run passed 25 existing GPU checks but failed
+all four fused-consumer graph cases during TileLang IR construction.
+The consumer rebound an immutable scalar inside both conditional regions
+and read it outside them. Store the BF16 result within each branch instead.
+Quality: retain the existing zero-row guard, explicit IEEE FP32 operation
+order, compensated correction and one BF16 conversion; no new buffer,
+projection call, graph topology or request/profile changes.
+Validation: 16 consumer host checks pass. The existing four SM12x graph
+cases reproduce the pre-fix compiler failure and remain the GPU regression
+gate for this patch. GPU qualification results are recorded separately.
+Upstream status: independent downstream experiment; not submitted upstream.
+
+Signed-off-by: Daniel <2660793+imDaniel@users.noreply.github.com>
+---
+ vllm/models/deepseek_v4_1/steering/consume.py | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/vllm/models/deepseek_v4_1/steering/consume.py b/vllm/models/deepseek_v4_1/steering/consume.py
+index 690526791..5d2cbdc26 100644
+--- a/vllm/models/deepseek_v4_1/steering/consume.py
++++ b/vllm/models/deepseek_v4_1/steering/consume.py
+@@ -34,7 +34,12 @@ def project_columns(xv, direction, scales, dots, alpha, src, col, columns):
+                     ),
+                     T.ieee_mul(coefficient_lo, lo),
+                 )
+-                value = T.ieee_sub(T.ieee_fmaf(-coefficient, hi, value), correction)
++                xv[v] = T.Cast(
++                    T.bfloat16,
++                    T.ieee_sub(T.ieee_fmaf(-coefficient, hi, value), correction),
++                )
+             else:
+-                value = T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d), hi))
+-            xv[v] = T.Cast(T.bfloat16, value)
++                xv[v] = T.Cast(
++                    T.bfloat16,
++                    T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d), hi)),
++                )

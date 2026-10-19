@@ -1,0 +1,292 @@
+{
+  "trace_cohorts_complete": true,
+  "total_traces": 32,
+  "unique_source_trace_sha256": 32,
+  "same_prompt_per_stage": true,
+  "manifests": {
+    "official": {
+      "run_id": "official-matched-traces-55a2592322c7",
+      "image": "sha256:fc6a9ef83dd1a741a32c2724263e9c05a2635dc8154784ffe0f9c36709018082",
+      "tree": "4d6851c8bb1397a55254ba88905a87d9785b98dc",
+      "archive_sha256": "f7b6390a7c86a409eb5242e74347245d3e0cc590176e8de2ffbf4d16e0f5a8c2",
+      "traces": 8
+    },
+    "candidate-loaded": {
+      "run_id": "candidate-loaded-matched-traces-3b4c2f691f79",
+      "image": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+      "tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4",
+      "archive_sha256": "1c50b87ec2738cdee8bf025421a90765fd512bc6f0cb8d5ecca5938ee3d037b4",
+      "traces": 16
+    },
+    "candidate-unloaded": {
+      "run_id": "candidate-unloaded-matched-traces-a828f8216cc7",
+      "image": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+      "tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4",
+      "archive_sha256": "967260d363541f2b23469586d5f8f93f0530d87ad072449772e30d015d5d7c29",
+      "traces": 8
+    }
+  },
+  "stock_comparisons": [
+    {
+      "arm": "candidate-loaded",
+      "node": 1,
+      "stage": "prefill",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "candidate_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "official_runtime_excess": {},
+      "candidate_runtime_excess": {}
+    },
+    {
+      "arm": "candidate-loaded",
+      "node": 2,
+      "stage": "prefill",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "candidate_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "official_runtime_excess": {},
+      "candidate_runtime_excess": {}
+    },
+    {
+      "arm": "candidate-loaded",
+      "node": 3,
+      "stage": "prefill",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "candidate_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "official_runtime_excess": {},
+      "candidate_runtime_excess": {
+        "cudaEventQuery": 2
+      }
+    },
+    {
+      "arm": "candidate-loaded",
+      "node": 4,
+      "stage": "prefill",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "candidate_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "official_runtime_excess": {
+        "cudaEventQuery": 1,
+        "cudaThreadExchangeStreamCaptureMode": 2
+      },
+      "candidate_runtime_excess": {}
+    },
+    {
+      "arm": "candidate-loaded",
+      "node": 1,
+      "stage": "decode",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "candidate_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "official_runtime_excess": {
+        "cudaEventQuery": 381
+      },
+      "candidate_runtime_excess": {}
+    },
+    {
+      "arm": "candidate-loaded",
+      "node": 2,
+      "stage": "decode",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "candidate_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "official_runtime_excess": {},
+      "candidate_runtime_excess": {
+        "cudaEventQuery": 491
+      }
+    },
+    {
+      "arm": "candidate-loaded",
+      "node": 3,
+      "stage": "decode",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "candidate_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "official_runtime_excess": {
+        "cudaEventQuery": 252
+      },
+      "candidate_runtime_excess": {}
+    },
+    {
+      "arm": "candidate-loaded",
+      "node": 4,
+      "stage": "decode",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "candidate_kernel_name_excess": {
+        "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(int, at::native::FillFunctor<float>, std::array<char*, 1ul>)": 1
+      },
+      "official_runtime_excess": {
+        "cudaEventQuery": 211
+      },
+      "candidate_runtime_excess": {
+        "cudaThreadExchangeStreamCaptureMode": 2
+      }
+    },
+    {
+      "arm": "candidate-unloaded",
+      "node": 1,
+      "stage": "prefill",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {},
+      "candidate_kernel_name_excess": {},
+      "official_runtime_excess": {},
+      "candidate_runtime_excess": {}
+    },
+    {
+      "arm": "candidate-unloaded",
+      "node": 2,
+      "stage": "prefill",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {},
+      "candidate_kernel_name_excess": {},
+      "official_runtime_excess": {
+        "cudaEventQuery": 3,
+        "cudaThreadExchangeStreamCaptureMode": 2
+      },
+      "candidate_runtime_excess": {}
+    },
+    {
+      "arm": "candidate-unloaded",
+      "node": 3,
+      "stage": "prefill",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {},
+      "candidate_kernel_name_excess": {},
+      "official_runtime_excess": {
+        "cudaEventQuery": 1,
+        "cudaThreadExchangeStreamCaptureMode": 2
+      },
+      "candidate_runtime_excess": {}
+    },
+    {
+      "arm": "candidate-unloaded",
+      "node": 4,
+      "stage": "prefill",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {},
+      "candidate_kernel_name_excess": {},
+      "official_runtime_excess": {},
+      "candidate_runtime_excess": {
+        "cudaEventQuery": 3,
+        "cudaThreadExchangeStreamCaptureMode": 2
+      }
+    },
+    {
+      "arm": "candidate-unloaded",
+      "node": 1,
+      "stage": "decode",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {},
+      "candidate_kernel_name_excess": {},
+      "official_runtime_excess": {},
+      "candidate_runtime_excess": {
+        "cudaEventQuery": 660,
+        "cudaThreadExchangeStreamCaptureMode": 4
+      }
+    },
+    {
+      "arm": "candidate-unloaded",
+      "node": 2,
+      "stage": "decode",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {},
+      "candidate_kernel_name_excess": {},
+      "official_runtime_excess": {
+        "cudaThreadExchangeStreamCaptureMode": 4
+      },
+      "candidate_runtime_excess": {
+        "cudaEventQuery": 1087
+      }
+    },
+    {
+      "arm": "candidate-unloaded",
+      "node": 3,
+      "stage": "decode",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {},
+      "candidate_kernel_name_excess": {},
+      "official_runtime_excess": {},
+      "candidate_runtime_excess": {
+        "cudaEventQuery": 171
+      }
+    },
+    {
+      "arm": "candidate-unloaded",
+      "node": 4,
+      "stage": "decode",
+      "gpu_kernel_total_equal": true,
+      "generic_copy_counts_equal": true,
+      "gpu_launch_and_nonpolling_runtime_counts_equal": true,
+      "official_kernel_name_excess": {},
+      "candidate_kernel_name_excess": {},
+      "official_runtime_excess": {
+        "cudaEventQuery": 1172
+      },
+      "candidate_runtime_excess": {}
+    }
+  ],
+  "known_steering_event_validation": "all individual captures validated by retained check_traces.validate_trace",
+  "scope": "Exact sampled 8K prefill and 64-token decode; source/code plus matched launches/copies support the stock route. Does not measure arbitrary internal memory transactions or all serving workloads."
+}

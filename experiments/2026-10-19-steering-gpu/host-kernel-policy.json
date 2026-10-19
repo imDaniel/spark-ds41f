@@ -1,0 +1,26 @@
+{
+  "purpose": "Promoted 64 KiB memory-saver host requirements and retained 4 KiB fallback. Serving profiles define their required running kernel.",
+  "fallback": "7.0.0-1019-nvidia",
+  "candidate": "7.0.0-1019-nvidia-64k",
+  "driver": "580.178.04",
+  "fan_signing_certificate": "/root/.local/share/dgx-spark-fan-control/keys/MOK.der",
+  "packages": {
+    "linux-tools-7.0.0-1019-nvidia-64k": "7.0.0-1019.19~24.04.2",
+    "linux-image-7.0.0-1019-nvidia-64k": "7.0.0-1019.19~24.04.2",
+    "linux-modules-7.0.0-1019-nvidia-64k": "7.0.0-1019.19~24.04.2",
+    "linux-headers-7.0.0-1019-nvidia-64k": "7.0.0-1019.19~24.04.2",
+    "linux-modules-nvidia-580-open-7.0.0-1019-nvidia-64k": "7.0.0-1019.19~24.04.2+2"
+  },
+  "default": "7.0.0-1019-nvidia-64k",
+  "memory_saver": {
+    "package": "dgx-spark-memory-saver",
+    "version": "0.2.0",
+    "repository": "https://github.com/christopherowen/dgx-spark-memory-saver.git",
+    "revision": "2dd6ef107616ef13f1c7f87817c07e5aabc9199e",
+    "srcversion": "34683B82C2D3339BBD2EEC9"
+  },
+  "site_compatibility": {
+    "memory_saver_commit": "36c30d246928e690da9ba54fa379d84919d7a9bd",
+    "comparison": "module-plus1-plus2-comparison.json"
+  }
+}

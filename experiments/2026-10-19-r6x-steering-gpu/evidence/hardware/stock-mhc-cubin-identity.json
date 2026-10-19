@@ -1,0 +1,84 @@
+{
+  "official": [
+    {
+      "kind": "project",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b29b7d42dcce3d8efbfe6e0c2945fd33f65a6793af9761cd1d4490ca3b52b44e/kernel.cubin",
+      "bytes": 286256,
+      "sha256": "5482eaca1c2debdbe4ebf8be65c5e5d6a004ffe9f7a54319515adccf844595ef"
+    },
+    {
+      "kind": "project",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/2ad4153e58b9e31a2cfc2794f7bc087ce3febfb6b53cdfc0135aff660095cfe6/kernel.cubin",
+      "bytes": 210160,
+      "sha256": "fbfd155c385563e55f1acb6992415c5d25c279876b5247fb72c4cfaf7edd2458"
+    },
+    {
+      "kind": "finalize",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/dcb6becf7059eab50b403d2947db70c0ef2e839dd22a207e918fd4a118c542a4/kernel.cubin",
+      "bytes": 75472,
+      "sha256": "79387107b70dfc2ffe0cf25916a561f3c998541e9b5fa057066ed40bd94223a0"
+    },
+    {
+      "kind": "project",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b1ba400d9cd4f4b7f86bf5604b812d376dbef69abd1685016173c49693239cbd/kernel.cubin",
+      "bytes": 86320,
+      "sha256": "290428e630c6fbc3e744b777127d7cf5d0950c9280070ce52045c0c4a33e6a92"
+    },
+    {
+      "kind": "project",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/0289d2da2d40cfdf675f4d67518f2c6112eca39e937470d3f59f35038b6ce465/kernel.cubin",
+      "bytes": 264288,
+      "sha256": "830962448c839b6501e540adc971f795bba15d5a2e4cb369cd1544855a733bad"
+    },
+    {
+      "kind": "finalize",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/7f7e15aab7f7b401b660cde494f8be54f2f7d487a9f707076833fcde031afe8d/kernel.cubin",
+      "bytes": 75472,
+      "sha256": "03063fd152ab0fda1546557f627e9cff5e4603fe6f9eb5b6f7da5ff7a50d455e"
+    }
+  ],
+  "candidate": [
+    {
+      "kind": "project",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b29b7d42dcce3d8efbfe6e0c2945fd33f65a6793af9761cd1d4490ca3b52b44e/kernel.cubin",
+      "bytes": 286256,
+      "sha256": "46cd298541109721c1d962f1e896975f5c820e336f5854ac45439e8f52dc7504"
+    },
+    {
+      "kind": "project",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/2ad4153e58b9e31a2cfc2794f7bc087ce3febfb6b53cdfc0135aff660095cfe6/kernel.cubin",
+      "bytes": 210160,
+      "sha256": "1ee96ac11775c33a9eb5baa2cb110eaefb7288f9ba3f39716e4fc4d74b40eff7"
+    },
+    {
+      "kind": "finalize",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/dcb6becf7059eab50b403d2947db70c0ef2e839dd22a207e918fd4a118c542a4/kernel.cubin",
+      "bytes": 75472,
+      "sha256": "9e3557ffada4772d1279d964628812961503a0f31c11384f38cea12a354c28df"
+    },
+    {
+      "kind": "project",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/b1ba400d9cd4f4b7f86bf5604b812d376dbef69abd1685016173c49693239cbd/kernel.cubin",
+      "bytes": 86320,
+      "sha256": "a5a67d3c44dad580b2e009b1d8dfc1892c524aa030d5f7c140f2fa88ce3d805f"
+    },
+    {
+      "kind": "project",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/0289d2da2d40cfdf675f4d67518f2c6112eca39e937470d3f59f35038b6ce465/kernel.cubin",
+      "bytes": 264288,
+      "sha256": "2c16906dca4586fd75e6f5a03a2472917b7dfb737dd6df9a48c037dcf84d5be5"
+    },
+    {
+      "kind": "finalize",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/7f7e15aab7f7b401b660cde494f8be54f2f7d487a9f707076833fcde031afe8d/kernel.cubin",
+      "bytes": 75472,
+      "sha256": "aa6ce81522fe702d6af34f3eada2f93df3f6a4a02742ddc7223946139a21fae0"
+    },
+    {
+      "kind": "project",
+      "path": "kkref/jit/tilelang/0.1.15/cuda-binaries/8028f0a0241b3b39e8c48f659c09100938e096029a54c0a3bb3a998947928640/kernel.cubin",
+      "bytes": 320688,
+      "sha256": "d45f0336ebb67a86d227b44668f7926c831d9efa8b6ce666c89d07b150a4be47"
+    }
+  ]
+}

@@ -93,7 +93,7 @@ jobs:
             echo patches=false >> "$GITHUB_OUTPUT"
           fi
           if [ "$EVENT" != pull_request ] || git diff --name-only HEAD^1 HEAD | grep -qE \
-              '^(experiments/2026-10-18-request-steering/|bin/spark$|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
+              '^(experiments/(2026-10-18-request-steering|2026-10-18-steering-consume|2026-10-19-r6x-steering|2026-10-19-r6x-steering-gpu)/|bin/spark$|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
             echo steering=true >> "$GITHUB_OUTPUT"
           else
             echo steering=false >> "$GITHUB_OUTPUT"
@@ -125,6 +125,58 @@ jobs:
         run: cp config/examples/nodes-ring4.json config/nodes-steering-example.local.json
       - name: Replay and verify all 180 experimental request-steering vLLM patches
         run: bin/spark --shape tp4-ring --cluster-config experiments/2026-10-18-request-steering/cluster.json build prepare --only vllm
+
+  # Keep the previous stack gate; validate the new candidate independently.
+  steering-consume-cpu:
+    needs: changes
+    if: needs.changes.outputs.steering == 'true' || needs.changes.outputs.patches == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Use the example site and isolated four-node map
+        run: |
+          scripts/example_site.py
+          cp config/examples/nodes-ring4.json config/nodes-steering-example.local.json
+      - name: Replay the complete optimized steering series and verify its identity
+        run: bin/spark --shape tp4-ring --cluster-config experiments/2026-10-18-steering-consume/cluster.json build prepare --only vllm
+      - name: Install the hash-pinned CPU gate dependencies
+        run: |
+          python3 -m venv .work/steering-cpu-venv
+          .work/steering-cpu-venv/bin/python -m pip install --require-hashes -r requirements/steering-cpu-linux.txt
+      - name: Execute CPU contracts on the verified prepared source
+        run: .work/steering-cpu-venv/bin/python scripts/check_steering_cpu.py --upstreams experiments/2026-10-18-steering-consume/upstreams.lock.json --report .work/steering-consume-cpu.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: steering-consume-cpu
+          path: .work/steering-consume-cpu.xml
+
+  # Keep both historical steering gates and qualify the r6x replay separately.
+  steering-r6x-cpu:
+    needs: changes
+    if: needs.changes.outputs.steering == 'true' || needs.changes.outputs.patches == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Use the example site and isolated four-node map
+        run: |
+          scripts/example_site.py
+          cp config/examples/nodes-ring4.json config/nodes-steering-r6x-example.local.json
+      - name: Validate the isolated r6x candidate recipe
+        run: bin/spark --shape tp4-ring --cluster-config experiments/2026-10-19-r6x-steering/cluster.json doctor
+      - name: Replay all 188 r6x and downstream patches and verify their identity
+        run: bin/spark --shape tp4-ring --cluster-config experiments/2026-10-19-r6x-steering/cluster.json build prepare --only vllm
+      - name: Install the hash-pinned CPU gate dependencies
+        run: |
+          python3 -m venv .work/steering-r6x-cpu-venv
+          .work/steering-r6x-cpu-venv/bin/python -m pip install --require-hashes -r requirements/steering-cpu-linux.txt
+      - name: Execute the complete pinned r6x CPU collection
+        run: .work/steering-r6x-cpu-venv/bin/python scripts/check_steering_cpu.py --upstreams experiments/2026-10-19-r6x-steering/upstreams.lock.json --cases experiments/2026-10-19-r6x-steering/cpu-cases.json --report .work/steering-r6x-cpu.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: steering-r6x-cpu
+          path: .work/steering-r6x-cpu.xml
 
   # Production applies this experiment's adaptive NCCL series.
   nccl-adaptive-plans:

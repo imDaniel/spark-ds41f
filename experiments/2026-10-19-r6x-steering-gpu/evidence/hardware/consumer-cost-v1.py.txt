@@ -1,0 +1,151 @@
+"""Isolate dynamic consumer cost with identical buffers and an output oracle.
+
+The preprojected writer is a measurement control, not a serving implementation.
+No model routing, communication or per-request control preparation is measured.
+"""
+import argparse
+import gc
+import hashlib
+import json
+import random
+import statistics
+import time
+from pathlib import Path
+from types import SimpleNamespace
+
+import torch
+from vllm.models.deepseek_v4_1.steering import consume, ops
+from vllm.models.deepseek_v4_1.tilelang import mhc
+
+p = argparse.ArgumentParser()
+p.add_argument('--output', type=Path, required=True)
+p.add_argument('--identity', type=Path, required=True)
+a = p.parse_args()
+assert not a.output.exists()
+identity = json.loads(a.identity.read_text())
+for name, module in [('ops', ops), ('consume', consume), ('mhc', mhc)]:
+    assert hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest() == identity[name]
+assert torch.cuda.get_device_capability() == (12, 1)
+record = dict(identity=identity, scope=__doc__, device=torch.cuda.get_device_name(),
+              torch=torch.__version__, cases=[], complete=False)
+begin = time.time()
+
+
+def save():
+    record['seconds'] = time.time() - begin
+    a.output.write_text(json.dumps(record, indent=2))
+
+
+def capture(call, repetitions):
+    stream = torch.cuda.Stream()
+    stream.wait_stream(torch.cuda.current_stream())
+    with torch.cuda.stream(stream):
+        for _ in range(3):
+            call()
+    torch.cuda.current_stream().wait_stream(stream)
+    torch.cuda.synchronize()
+    graph = torch.cuda.CUDAGraph()
+    with torch.cuda.graph(graph):
+        for _ in range(repetitions):
+            call()
+    graph.replay()
+    torch.cuda.synchronize()
+    return graph
+
+
+def elapsed(graph, repetitions):
+    start, end = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
+    start.record()
+    for _ in range(12):
+        graph.replay()
+    end.record()
+    end.synchronize()
+    return start.elapsed_time(end) * 1000 / (12 * repetitions)
+
+
+try:
+    for world, rows in [(1, n) for n in (1, 4, 6, 16, 96)] + [(4, n) for n in (64, 256, 2048)]:
+        h = 5120
+        g = torch.Generator(device='cuda').manual_seed(291019 + rows + world)
+        source = torch.randn(world, rows, h, device='cuda', dtype=torch.bfloat16, generator=g)
+        direction = torch.randn(h, device='cuda', generator=g)
+        direction /= direction.double().norm().float()
+        doses = torch.ones(rows, device='cuda')
+        dots = torch.empty(rows, 2, device='cuda')
+        # Preserve the rank-order FP32 sum -> BF16 boundary, with no reassociation.
+        writer = source[0].float()
+        for rank in range(1, world):
+            writer = writer + source[rank].float()
+        projected = writer.to(torch.bfloat16)
+        ops.project_writer(projected, direction, doses, 2.5)
+        active_writer = torch.empty(rows, h, device='cuda', dtype=torch.bfloat16)
+        residual = torch.randn(rows, 4*h, device='cuda', dtype=torch.bfloat16, generator=g)
+        post_in = torch.rand(rows, 4, device='cuda', generator=g)
+        comb_in = torch.rand(rows, 4, 4, device='cuda', generator=g)
+        pre_in = torch.rand(rows, 4, device='cuda', generator=g)
+        fn = torch.randn(24, 4*h, device='cuda', generator=g) / (4*h)**0.5
+        residual_out = torch.empty_like(residual)
+        P = torch.empty(40, rows, 1, 24, device='cuda')
+        S = torch.empty(40, rows, 1, device='cuda')
+        C = torch.empty(rows, h, device='cuda', dtype=torch.bfloat16)
+        Q = torch.empty(40, rows, device='cuda')
+        scale = torch.ones(3, device='cuda')
+        base = torch.zeros(24, device='cuda')
+        norm = torch.ones(h, device='cuda', dtype=torch.bfloat16)
+        post_out, comb_out, pre_out = torch.empty_like(post_in), torch.empty_like(comb_in), torch.empty_like(pre_in)
+        y = torch.empty_like(C)
+        outputs = (residual_out, post_out, comb_out, pre_out, y)
+        layer = mhc.TileKernelsMHC(SimpleNamespace(hc_mult=4, hidden_size=h, rms_norm_eps=1e-6, hc_eps=1e-6, hc_sinkhorn_iters=20))
+        layer.steering_enabled = True
+        layer._entries = lambda: [('post_pre', 1), ('post_pre', 4)]
+        layer.declare_kernels()
+        finalize = mhc._finalize(h, 4*h, 1e-6, 1e-6, 20)
+
+        def invoke(mode):
+            extra = ()
+            if mode == 'stock':
+                x, w = source, world
+            elif mode == 'preprojected-stock':
+                x, w = projected.unsqueeze(0), 1
+            elif world == 4:
+                ops.project_parts(source, direction, doses, active_writer, 2.5)
+                x, w = active_writer.unsqueeze(0), 1
+            else:
+                ops.projection_dot(source, direction, doses, dots)
+                x, w = source, 1
+                extra = (direction, doses, dots, 2.5)
+            mhc._project(h, 'post_pre', w, bool(extra))(x, residual, post_in, comb_in, pre_in, fn,
+                residual_out, P, S, C, Q, *extra)
+            finalize(P, S, C, Q, scale, base, norm, post_out, comb_out, pre_out, y)
+
+        invoke('preprojected-stock')
+        expected = [t.clone() for t in outputs]
+        invoke('active')
+        torch.cuda.synchronize()
+        for actual, reference in zip(outputs, expected):
+            assert torch.equal(actual.view(torch.uint8), reference.view(torch.uint8)), 'Active output differs from projected stock'
+        repetitions = 16
+        graphs = {mode: capture(lambda mode=mode: invoke(mode), repetitions)
+                  for mode in ('stock', 'preprojected-stock', 'active')}
+        graphs['active'].replay()
+        torch.cuda.synchronize()
+        assert all(torch.equal(t.view(torch.uint8), e.view(torch.uint8)) for t, e in zip(outputs, expected))
+        case = dict(world=world, rows=rows, seed=291019+rows+world, identical_projected_stock_bits=True,
+                    repetitions=repetitions, replays_per_window=12, samples=[])
+        record['cases'].append(case)
+        rng = random.Random(100+rows+world)
+        order = list(graphs)
+        for window in range(11):
+            rng.shuffle(order)
+            for mode in order:
+                case['samples'].append(dict(window=window, mode=mode, us=elapsed(graphs[mode], repetitions)))
+        case['median_us'] = {mode: statistics.median(s['us'] for s in case['samples'] if s['mode']==mode) for mode in graphs}
+        case['dynamic_cost_us'] = case['median_us']['active'] - case['median_us']['preprojected-stock']
+        print(json.dumps({k: case[k] for k in ('world', 'rows', 'median_us', 'dynamic_cost_us')}), flush=True)
+        save()
+        del graphs, expected, outputs, source, writer, projected, active_writer, residual, residual_out, P, S, C, Q, y
+        gc.collect()
+        torch.cuda.empty_cache()
+    record['complete'] = True
+finally:
+    save()

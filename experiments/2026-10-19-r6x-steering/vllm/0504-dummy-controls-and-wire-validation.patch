@@ -1,0 +1,169 @@
+From bf6a4f1bd70927a556765a18d07bda3f51174bbc Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 16:41:52 +0900
+Subject: [PATCH] Separate profiling controls and validate raw steering
+ booleans
+
+Replay baseline: r6x author head 7316c7f9fae1bc4a0b7ab1848de0db4143eec5d2 and preceding
+0500-series downstream patches. The original base and validation entries
+below are historical provenance; r6x qualification is recorded separately.
+
+Base: f12d86dd93543fa335d821aab75f93b6889db712 replayed steering runtime. Rationale: the real V2 memory profile uses unregistered dummy requests through prepare_inputs; mark make_dummy batches explicitly and use zero controls without weakening live-request ownership. Reject wire booleans before the generic OpenAI extra-argument union coerces them into integers. Quality: live controls survive profiling and unrelated extra args keep their existing behavior. Validation: 70 CPU contracts pass; two integration regressions added for native InputBatch and chat/completion protocol. Synthetic numerical and graph gates passed on the previous runtime. Upstream status: independent downstream experiment; no upstream submission.
+---
+ .../models/test_deepseek_v4_1_steering_gpu.py | 55 +++++++++++++++++++
+ .../test_deepseek_v4_1_steering_state.py      | 22 ++++++++
+ vllm/entrypoints/serve/engine/protocol.py     |  4 ++
+ vllm/models/deepseek_v4_1/steering/runtime.py |  2 +
+ vllm/v1/worker/gpu/input_batch.py             |  4 ++
+ 5 files changed, 87 insertions(+)
+
+diff --git a/tests/models/test_deepseek_v4_1_steering_gpu.py b/tests/models/test_deepseek_v4_1_steering_gpu.py
+index f1dd145e5..16d8ba384 100644
+--- a/tests/models/test_deepseek_v4_1_steering_gpu.py
++++ b/tests/models/test_deepseek_v4_1_steering_gpu.py
+@@ -97,3 +97,58 @@ def test_rows_graph_replay_reuses_controls_and_output(kernels):
+         expected = project_reference(source, direction, expected_scales, 2.5)
+         torch.testing.assert_close(writer, expected, rtol=0.016, atol=0.0001)
+         assert pointers == [t.data_ptr() for t in (writer, requests, rows)]
++
++
++def test_native_dummy_batch_does_not_own_real_slots(kernels):
++    from types import SimpleNamespace
++
++    from vllm.models.deepseek_v4_1.steering.runtime import SteeringRuntime
++    from vllm.v1.worker.gpu.input_batch import InputBatch, InputBuffers
++
++    runtime = SteeringRuntime(
++        SimpleNamespace(profile_id="p", identity="a" * 64, hidden_size=5120),
++        4,
++        32,
++        "cuda",
++    )
++    runtime.add_request(0, "live", {"steering_profile": "p", "steering_scale": 0.75})
++    batch = InputBatch.make_dummy(1, 16, InputBuffers(4, 32, torch.device("cuda")))
++    assert batch.is_dummy
++    assert not runtime.prepare(batch).any()
++    batch.is_dummy = False
++    batch.is_padding.fill_(False)
++    batch.req_ids = ["live"]
++    assert (runtime.prepare(batch) == 0.75).all()
++    batch.req_ids = ["_dummy_req_0"]
++    with pytest.raises(ValueError, match="unregistered"):
++        runtime.prepare(batch)
++
++
++def test_openai_wire_boolean_is_not_coerced_into_a_dose():
++    from pydantic import ValidationError
++
++    from vllm.entrypoints.openai.chat_completion.protocol import ChatCompletionRequest
++    from vllm.entrypoints.openai.completion.protocol import CompletionRequest
++
++    for model, prompt in (
++        (ChatCompletionRequest, {"messages": [{"role": "user", "content": "hi"}]}),
++        (CompletionRequest, {"prompt": "hi"}),
++    ):
++        for value in (True, False):
++            with pytest.raises(ValidationError, match="steering_scale"):
++                model(
++                    model="test",
++                    **prompt,
++                    vllm_xargs={"steering_profile": "p", "steering_scale": value},
++                )
++        valid = model(
++            model="test",
++            **prompt,
++            vllm_xargs={
++                "steering_profile": "p",
++                "steering_scale": 0.5,
++                "unrelated_plugin": True,
++            },
++        )
++        assert valid.vllm_xargs["steering_scale"] == 0.5
++        assert valid.vllm_xargs["unrelated_plugin"] == 1
+diff --git a/tests/models/test_deepseek_v4_1_steering_state.py b/tests/models/test_deepseek_v4_1_steering_state.py
+index 8844f99d1..453f55350 100644
+--- a/tests/models/test_deepseek_v4_1_steering_state.py
++++ b/tests/models/test_deepseek_v4_1_steering_state.py
+@@ -13,6 +13,7 @@ from tests.models.steering_test_support import valid_profile
+ from ds41_steering_test.runtime import SteeringRuntime
+ # isort: on
+ 
++
+ def test_fixed_buffers_cancel_reuse_and_many_scales(tmp_path):
+     p = valid_profile(tmp_path)
+     state = SteeringRuntime(p, 4, 16, "cpu")
+@@ -63,3 +64,24 @@ def test_stream_update_same_identity_and_reject_change(tmp_path):
+     assert not state.dummy(8).any()
+     with pytest.raises(ValueError):
+         state.dummy(17)
++
++
++def test_profiling_dummy_is_explicit_and_preserves_live_request(tmp_path):
++    profile = valid_profile(tmp_path)
++    state = SteeringRuntime(profile, 4, 16, "cpu")
++    state.add_request(0, "live", {"steering_profile": profile.profile_id})
++    dummy = SimpleNamespace(num_tokens_after_padding=8, is_dummy=True)
++    state.row_scales.fill_(1)
++    assert not state.prepare(dummy).any()
++    assert state.request_scales[0] == 1
++    assert list(state.requests) == ["live"]
++    # Unknown real requests must still fail, even during an otherwise idle batch.
++    with pytest.raises(ValueError, match="unregistered"):
++        state.prepare(
++            SimpleNamespace(
++                num_tokens_after_padding=8,
++                num_reqs=1,
++                req_ids=["_dummy_req_0"],
++                is_dummy=False,
++            )
++        )
+diff --git a/vllm/entrypoints/serve/engine/protocol.py b/vllm/entrypoints/serve/engine/protocol.py
+index 704d6b245..cc875a943 100644
+--- a/vllm/entrypoints/serve/engine/protocol.py
++++ b/vllm/entrypoints/serve/engine/protocol.py
+@@ -44,6 +44,10 @@ class OpenAIBaseModel(BaseModel):
+     @model_validator(mode="wrap")
+     @classmethod
+     def __log_extra_fields__(cls, data, handler):
++        if isinstance(data, dict) and "vllm_xargs" in cls.model_fields:
++            xargs = data.get("vllm_xargs")
++            if isinstance(xargs, dict) and type(xargs.get("steering_scale")) is bool:
++                raise ValueError("steering_scale must be a number, not a boolean")
+         result = handler(data)
+         if not isinstance(data, dict):
+             return result
+diff --git a/vllm/models/deepseek_v4_1/steering/runtime.py b/vllm/models/deepseek_v4_1/steering/runtime.py
+index 52b80debb..fb793332e 100644
+--- a/vllm/models/deepseek_v4_1/steering/runtime.py
++++ b/vllm/models/deepseek_v4_1/steering/runtime.py
+@@ -56,6 +56,8 @@ class SteeringRuntime:
+ 
+     def prepare(self, batch):
+         n = batch.num_tokens_after_padding
++        if getattr(batch, "is_dummy", False):
++            return self.dummy(n)
+         if n > self.row_scales.numel() or batch.num_reqs > self.request_scales.numel():
+             raise ValueError("Steering batch exceeds preallocated controls")
+         if any(req not in self.requests for req in batch.req_ids):
+diff --git a/vllm/v1/worker/gpu/input_batch.py b/vllm/v1/worker/gpu/input_batch.py
+index d08801444..20c6dbfe3 100644
+--- a/vllm/v1/worker/gpu/input_batch.py
++++ b/vllm/v1/worker/gpu/input_batch.py
+@@ -137,6 +137,9 @@ class InputBatch:
+     # replay, not for the dummy sequence lengths.
+     cudagraph_capture: bool = False
+ 
++    # Profiling and graph preparation do not register real request state.
++    is_dummy: bool = False
++
+     @classmethod
+     def make_dummy(
+         cls,
+@@ -197,6 +200,7 @@ class InputBatch:
+         # num_scheduled_tokens.
+         seq_lens_cpu_upper_bound = torch.from_numpy(num_scheduled_tokens.copy())
+         return cls(
++            is_dummy=True,
+             req_ids=req_ids,
+             num_reqs=num_reqs,
+             num_reqs_after_padding=num_reqs,

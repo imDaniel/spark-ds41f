@@ -1,0 +1,563 @@
+{
+  "identity": {
+    "ops": "d539205a087213fea9faf1c4ceff7db520db458eea91b1075e66d80fbb72cb27",
+    "consume": "917dc0646dd5573c6d5d27314f7e08c58a2041f588bd0a8a1d9e2618096d17db",
+    "mhc": "19e3f85d32ec917dc62839e564f494cfb44d1ebbb6d42008e2d213a1b789f23b",
+    "source_tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4",
+    "image": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+    "source_head": "ebb44766d6f04d3a9272b712778d7f2fa2cec1fd"
+  },
+  "scope": "Isolate dynamic consumer cost with identical buffers and an output oracle.\n\nThe preprojected writer is a measurement control, not a serving implementation.\nNo model routing, communication or per-request control preparation is measured.\n",
+  "device": "NVIDIA GB10",
+  "torch": "2.13.0+cu130",
+  "cases": [
+    {
+      "world": 4,
+      "rows": 64,
+      "seed": 291087,
+      "identical_projected_stock_bits": true,
+      "preprojected_stock_world": 4,
+      "repetitions": 16,
+      "replays_per_window": 12,
+      "samples": [
+        {
+          "window": 0,
+          "mode": "preprojected-stock",
+          "us": 27.661000688870747
+        },
+        {
+          "window": 0,
+          "mode": "stock",
+          "us": 27.620000143845875
+        },
+        {
+          "window": 0,
+          "mode": "active",
+          "us": 31.288998822371166
+        },
+        {
+          "window": 1,
+          "mode": "preprojected-stock",
+          "us": 27.5301660100619
+        },
+        {
+          "window": 1,
+          "mode": "stock",
+          "us": 29.07700091600418
+        },
+        {
+          "window": 1,
+          "mode": "active",
+          "us": 31.602665781974792
+        },
+        {
+          "window": 2,
+          "mode": "active",
+          "us": 31.249500811100006
+        },
+        {
+          "window": 2,
+          "mode": "preprojected-stock",
+          "us": 27.707666158676147
+        },
+        {
+          "window": 2,
+          "mode": "stock",
+          "us": 29.048000772794087
+        },
+        {
+          "window": 3,
+          "mode": "preprojected-stock",
+          "us": 27.535999814669292
+        },
+        {
+          "window": 3,
+          "mode": "stock",
+          "us": 27.579332391421
+        },
+        {
+          "window": 3,
+          "mode": "active",
+          "us": 33.09566775957743
+        },
+        {
+          "window": 4,
+          "mode": "active",
+          "us": 31.73299878835678
+        },
+        {
+          "window": 4,
+          "mode": "stock",
+          "us": 27.589499950408936
+        },
+        {
+          "window": 4,
+          "mode": "preprojected-stock",
+          "us": 27.855833371480305
+        },
+        {
+          "window": 5,
+          "mode": "stock",
+          "us": 29.68299885590871
+        },
+        {
+          "window": 5,
+          "mode": "active",
+          "us": 31.46183242400487
+        },
+        {
+          "window": 5,
+          "mode": "preprojected-stock",
+          "us": 27.716500063737232
+        },
+        {
+          "window": 6,
+          "mode": "stock",
+          "us": 28.91099949677785
+        },
+        {
+          "window": 6,
+          "mode": "active",
+          "us": 32.26133435964584
+        },
+        {
+          "window": 6,
+          "mode": "preprojected-stock",
+          "us": 27.714165548483532
+        },
+        {
+          "window": 7,
+          "mode": "active",
+          "us": 31.436167657375336
+        },
+        {
+          "window": 7,
+          "mode": "preprojected-stock",
+          "us": 27.697833875815075
+        },
+        {
+          "window": 7,
+          "mode": "stock",
+          "us": 27.77116745710373
+        },
+        {
+          "window": 8,
+          "mode": "active",
+          "us": 31.4491664369901
+        },
+        {
+          "window": 8,
+          "mode": "stock",
+          "us": 28.953333695729572
+        },
+        {
+          "window": 8,
+          "mode": "preprojected-stock",
+          "us": 28.359167277812958
+        },
+        {
+          "window": 9,
+          "mode": "active",
+          "us": 31.481499473253887
+        },
+        {
+          "window": 9,
+          "mode": "preprojected-stock",
+          "us": 27.722999453544617
+        },
+        {
+          "window": 9,
+          "mode": "stock",
+          "us": 29.58333243926366
+        },
+        {
+          "window": 10,
+          "mode": "preprojected-stock",
+          "us": 27.69566575686137
+        },
+        {
+          "window": 10,
+          "mode": "active",
+          "us": 31.4518337448438
+        },
+        {
+          "window": 10,
+          "mode": "stock",
+          "us": 28.834665815035503
+        }
+      ],
+      "median_us": {
+        "stock": 28.91099949677785,
+        "preprojected-stock": 27.707666158676147,
+        "active": 31.46183242400487
+      },
+      "dynamic_cost_us": 3.754166265328724
+    },
+    {
+      "world": 4,
+      "rows": 256,
+      "seed": 291279,
+      "identical_projected_stock_bits": true,
+      "preprojected_stock_world": 4,
+      "repetitions": 16,
+      "replays_per_window": 12,
+      "samples": [
+        {
+          "window": 0,
+          "mode": "active",
+          "us": 206.0829997062683
+        },
+        {
+          "window": 0,
+          "mode": "preprojected-stock",
+          "us": 186.23965978622437
+        },
+        {
+          "window": 0,
+          "mode": "stock",
+          "us": 174.81533686319986
+        },
+        {
+          "window": 1,
+          "mode": "preprojected-stock",
+          "us": 181.51366710662842
+        },
+        {
+          "window": 1,
+          "mode": "stock",
+          "us": 172.66366879145303
+        },
+        {
+          "window": 1,
+          "mode": "active",
+          "us": 207.39883184432983
+        },
+        {
+          "window": 2,
+          "mode": "stock",
+          "us": 172.6569930712382
+        },
+        {
+          "window": 2,
+          "mode": "active",
+          "us": 201.39567057291666
+        },
+        {
+          "window": 2,
+          "mode": "preprojected-stock",
+          "us": 177.61884133021036
+        },
+        {
+          "window": 3,
+          "mode": "active",
+          "us": 206.11149072647095
+        },
+        {
+          "window": 3,
+          "mode": "stock",
+          "us": 172.7095047632853
+        },
+        {
+          "window": 3,
+          "mode": "preprojected-stock",
+          "us": 177.63266960779825
+        },
+        {
+          "window": 4,
+          "mode": "stock",
+          "us": 172.80715703964233
+        },
+        {
+          "window": 4,
+          "mode": "preprojected-stock",
+          "us": 177.70282427469888
+        },
+        {
+          "window": 4,
+          "mode": "active",
+          "us": 201.30850871404013
+        },
+        {
+          "window": 5,
+          "mode": "preprojected-stock",
+          "us": 182.16649691263834
+        },
+        {
+          "window": 5,
+          "mode": "active",
+          "us": 201.467494169871
+        },
+        {
+          "window": 5,
+          "mode": "stock",
+          "us": 172.85799980163574
+        },
+        {
+          "window": 6,
+          "mode": "preprojected-stock",
+          "us": 177.5671641031901
+        },
+        {
+          "window": 6,
+          "mode": "stock",
+          "us": 174.241840839386
+        },
+        {
+          "window": 6,
+          "mode": "active",
+          "us": 201.27866665522257
+        },
+        {
+          "window": 7,
+          "mode": "active",
+          "us": 201.55233144760132
+        },
+        {
+          "window": 7,
+          "mode": "stock",
+          "us": 172.86149660746256
+        },
+        {
+          "window": 7,
+          "mode": "preprojected-stock",
+          "us": 177.77933677037558
+        },
+        {
+          "window": 8,
+          "mode": "active",
+          "us": 201.3344963391622
+        },
+        {
+          "window": 8,
+          "mode": "preprojected-stock",
+          "us": 177.49849955240884
+        },
+        {
+          "window": 8,
+          "mode": "stock",
+          "us": 172.88833856582642
+        },
+        {
+          "window": 9,
+          "mode": "preprojected-stock",
+          "us": 177.7256727218628
+        },
+        {
+          "window": 9,
+          "mode": "active",
+          "us": 201.37333869934082
+        },
+        {
+          "window": 9,
+          "mode": "stock",
+          "us": 178.05232604344687
+        },
+        {
+          "window": 10,
+          "mode": "preprojected-stock",
+          "us": 177.77633666992188
+        },
+        {
+          "window": 10,
+          "mode": "stock",
+          "us": 173.73716831207275
+        },
+        {
+          "window": 10,
+          "mode": "active",
+          "us": 201.34182771046957
+        }
+      ],
+      "median_us": {
+        "stock": 172.86149660746256,
+        "preprojected-stock": 177.7256727218628,
+        "active": 201.39567057291666
+      },
+      "dynamic_cost_us": 23.669997851053864
+    },
+    {
+      "world": 4,
+      "rows": 2048,
+      "seed": 293071,
+      "identical_projected_stock_bits": true,
+      "preprojected_stock_world": 4,
+      "repetitions": 16,
+      "replays_per_window": 12,
+      "samples": [
+        {
+          "window": 0,
+          "mode": "active",
+          "us": 1643.847147623698
+        },
+        {
+          "window": 0,
+          "mode": "stock",
+          "us": 1472.6559321085613
+        },
+        {
+          "window": 0,
+          "mode": "preprojected-stock",
+          "us": 1465.0146166483562
+        },
+        {
+          "window": 1,
+          "mode": "preprojected-stock",
+          "us": 1461.8967374165852
+        },
+        {
+          "window": 1,
+          "mode": "active",
+          "us": 1644.2721684773762
+        },
+        {
+          "window": 1,
+          "mode": "stock",
+          "us": 1541.5407816569011
+        },
+        {
+          "window": 2,
+          "mode": "preprojected-stock",
+          "us": 1461.5963300069172
+        },
+        {
+          "window": 2,
+          "mode": "active",
+          "us": 1639.0927632649739
+        },
+        {
+          "window": 2,
+          "mode": "stock",
+          "us": 1454.5027414957683
+        },
+        {
+          "window": 3,
+          "mode": "preprojected-stock",
+          "us": 1453.957239786784
+        },
+        {
+          "window": 3,
+          "mode": "active",
+          "us": 1644.0003712972004
+        },
+        {
+          "window": 3,
+          "mode": "stock",
+          "us": 1471.0671106974285
+        },
+        {
+          "window": 4,
+          "mode": "stock",
+          "us": 1457.0357004801433
+        },
+        {
+          "window": 4,
+          "mode": "preprojected-stock",
+          "us": 1454.3162981669109
+        },
+        {
+          "window": 4,
+          "mode": "active",
+          "us": 1640.1453018188477
+        },
+        {
+          "window": 5,
+          "mode": "stock",
+          "us": 1464.8102124532063
+        },
+        {
+          "window": 5,
+          "mode": "active",
+          "us": 1642.2322591145833
+        },
+        {
+          "window": 5,
+          "mode": "preprojected-stock",
+          "us": 1459.1466585795085
+        },
+        {
+          "window": 6,
+          "mode": "stock",
+          "us": 1454.0294011433919
+        },
+        {
+          "window": 6,
+          "mode": "active",
+          "us": 1644.2901293436687
+        },
+        {
+          "window": 6,
+          "mode": "preprojected-stock",
+          "us": 1454.3695449829102
+        },
+        {
+          "window": 7,
+          "mode": "preprojected-stock",
+          "us": 1454.458236694336
+        },
+        {
+          "window": 7,
+          "mode": "stock",
+          "us": 1520.5130577087402
+        },
+        {
+          "window": 7,
+          "mode": "active",
+          "us": 1664.0647252400715
+        },
+        {
+          "window": 8,
+          "mode": "preprojected-stock",
+          "us": 1454.313596089681
+        },
+        {
+          "window": 8,
+          "mode": "stock",
+          "us": 1454.3307622273762
+        },
+        {
+          "window": 8,
+          "mode": "active",
+          "us": 1640.0987307230632
+        },
+        {
+          "window": 9,
+          "mode": "preprojected-stock",
+          "us": 1454.6667734781902
+        },
+        {
+          "window": 9,
+          "mode": "stock",
+          "us": 1455.5511474609375
+        },
+        {
+          "window": 9,
+          "mode": "active",
+          "us": 1640.491008758545
+        },
+        {
+          "window": 10,
+          "mode": "preprojected-stock",
+          "us": 1453.717867533366
+        },
+        {
+          "window": 10,
+          "mode": "stock",
+          "us": 1455.439567565918
+        },
+        {
+          "window": 10,
+          "mode": "active",
+          "us": 1639.870007832845
+        }
+      ],
+      "median_us": {
+        "stock": 1457.0357004801433,
+        "preprojected-stock": 1454.458236694336,
+        "active": 1642.2322591145833
+      },
+      "dynamic_cost_us": 187.77402242024732
+    }
+  ],
+  "complete": true,
+  "seconds": 14.18362832069397
+}

@@ -1,0 +1,9 @@
+# CPU contract gate, Python 3.12 on Linux x86_64. No serving/CUDA install.
+# Regenerate with uv pip compile --python-version 3.12 --python-platform
+# x86_64-unknown-linux-gnu --generate-hashes --emit-index-url
+numpy==2.5.4
+pydantic==2.14.1
+pytest==9.1.1
+regex==2026.9.29
+safetensors==0.8.0
+torch @ https://download-r2.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl#sha256=5a6363570c753812540a05eb82380e329469cbe668643e88111414c12627711f

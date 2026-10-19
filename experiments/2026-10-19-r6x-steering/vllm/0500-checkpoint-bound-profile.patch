@@ -1,0 +1,589 @@
+From 6276cfb3c1eae99ce5b4624bfa46ff265e54ca2e Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 15:43:50 +0900
+Subject: [PATCH] Add bounded checkpoint-bound steering profiles
+
+Replay baseline: r6x author head 7316c7f9fae1bc4a0b7ab1848de0db4143eec5d2 and preceding
+0500-series downstream patches. The original base and validation entries
+below are historical provenance; r6x qualification is recorded separately.
+
+Base: c001cc4ed77bef686ddd006be0dd706b9c15d7b7 (r6v author series). Rationale: small content-addressed safetensors profiles without weight mutation or serving-time pickle. Quality: validates provenance and unit directions; output changes only after later projection integration. Validation: CPU artifact and replica identity contract tests. Upstream status: independent downstream experiment; no upstream submission.
+---
+ tests/models/steering_test_support.py         |  59 ++++
+ .../test_deepseek_v4_1_steering_identity.py   |  48 +++
+ .../test_deepseek_v4_1_steering_profile.py    | 109 ++++++
+ .../models/deepseek_v4_1/steering/__init__.py |   3 +
+ vllm/models/deepseek_v4_1/steering/profile.py | 317 ++++++++++++++++++
+ 5 files changed, 536 insertions(+)
+ create mode 100644 tests/models/steering_test_support.py
+ create mode 100644 tests/models/test_deepseek_v4_1_steering_identity.py
+ create mode 100644 tests/models/test_deepseek_v4_1_steering_profile.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/__init__.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/profile.py
+
+diff --git a/tests/models/steering_test_support.py b/tests/models/steering_test_support.py
+new file mode 100644
+index 000000000..4b2226c5d
+--- /dev/null
++++ b/tests/models/steering_test_support.py
+@@ -0,0 +1,59 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Load CPU contracts without importing the CUDA model package initializer."""
++
++import hashlib
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++import numpy as np
++from safetensors.numpy import save
++
++ROOT = Path(__file__).resolve().parents[2]
++PACKAGE = ROOT / "vllm/models/deepseek_v4_1/steering"
++if "ds41_steering_test" not in sys.modules:
++    spec = importlib.util.spec_from_file_location(
++        "ds41_steering_test",
++        PACKAGE / "__init__.py",
++        submodule_search_locations=[str(PACKAGE)],
++    )
++    module = importlib.util.module_from_spec(spec)
++    sys.modules[spec.name] = module
++    spec.loader.exec_module(module)
++
++from ds41_steering_test.profile import OPERATOR_VERSION, load_profile  # noqa: E402
++
++
++def make_profile(
++    tmp_path, *, changes=None, directions=None, suffix="", dtype="float32"
++):
++    if directions is None:
++        directions = np.eye(8, dtype=dtype)[2:4]
++    metadata = {
++        "schema_version": 1,
++        "operator_version": OPERATOR_VERSION,
++        "profile_id": "test-profile",
++        "model_revision": "a" * 40,
++        "model_identity": "b" * 64,
++        "template_identity": "c" * 64,
++        "layers": [2, 3],
++        "alphas": [2.5, 2.5],
++        "hidden_size": 8,
++        "num_hidden_layers": 6,
++        "directions_sha256": hashlib.sha256(directions.tobytes()).hexdigest(),
++        "source": {"license": "synthetic-test", "revision": "d" * 40},
++    }
++    metadata.update(changes or {})
++    data = save(
++        {"directions": directions}, metadata={"ds41_steering": json.dumps(metadata)}
++    )
++    path = tmp_path / ("profile" + suffix + ".safetensors")
++    path.write_bytes(data)
++    digest = hashlib.sha256(data).hexdigest()
++    return path, digest
++
++
++def valid_profile(tmp_path):
++    return load_profile(*make_profile(tmp_path))
+diff --git a/tests/models/test_deepseek_v4_1_steering_identity.py b/tests/models/test_deepseek_v4_1_steering_identity.py
+new file mode 100644
+index 000000000..c993911cf
+--- /dev/null
++++ b/tests/models/test_deepseek_v4_1_steering_identity.py
+@@ -0,0 +1,48 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import json
++
++import pytest
++
++from tests.models import steering_test_support  # noqa: F401
++
++# The helper installs this isolated package before its contracts are imported.
++# isort: off
++from ds41_steering_test.profile import model_identity
++# isort: on
++
++def test_checkpoint_identity_binds_content_not_replica_metadata(tmp_path):
++    """Replicas share cache identity; a single changed weight digest does not."""
++    for name in ("config.json", "tokenizer.json", "tokenizer_config.json"):
++        (tmp_path / name).write_text("{}")
++    (tmp_path / "model.safetensors.index.json").write_text(
++        json.dumps({"weight_map": {"layer.weight": "model-00001.safetensors"}})
++    )
++    inventory = {
++        "schema_version": 1,
++        "algorithm": "sha256",
++        "coverage": "complete",
++        "files": {
++            "model-00001.safetensors": {
++                "size": 100,
++                "sha256": "a" * 64,
++                "file_identity": [1, 2, 100],
++            }
++        },
++    }
++    path = tmp_path / "model-file-hashes.json"
++    path.write_text(json.dumps(inventory))
++    first = model_identity(tmp_path)
++    inventory.update(
++        hostname="another-rank", timestamp_utc="later", root_directory="/other"
++    )
++    inventory["files"]["model-00001.safetensors"]["file_identity"] = [2, 3, 100]
++    path.write_text(json.dumps(inventory))
++    assert first == model_identity(tmp_path)
++    inventory["files"]["model-00001.safetensors"]["sha256"] = "b" * 64
++    path.write_text(json.dumps(inventory))
++    assert first != model_identity(tmp_path)
++    del inventory["files"]["model-00001.safetensors"]
++    path.write_text(json.dumps(inventory))
++    with pytest.raises(ValueError, match="missing"):
++        model_identity(tmp_path)
+diff --git a/tests/models/test_deepseek_v4_1_steering_profile.py b/tests/models/test_deepseek_v4_1_steering_profile.py
+new file mode 100644
+index 000000000..bf0b402df
+--- /dev/null
++++ b/tests/models/test_deepseek_v4_1_steering_profile.py
+@@ -0,0 +1,109 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import hashlib
++import json
++import struct
++
++import numpy as np
++import pytest
++
++from tests.models.steering_test_support import make_profile
++
++# The helper installs this isolated package before its contracts are imported.
++# isort: off
++from ds41_steering_test.profile import load_profile
++# isort: on
++
++def test_profile_identity_and_readonly_payload(tmp_path):
++    path, digest = make_profile(tmp_path)
++    p = load_profile(
++        path,
++        digest,
++        expected_model_identity="b" * 64,
++        expected_template_identity="c" * 64,
++    )
++    assert p.layers == (2, 3) and p.hidden_size == 8
++    assert p.directions.dtype == np.float32
++    assert not p.directions.flags.writeable
++    assert len(p.identity) == 64
++    with pytest.raises(ValueError):
++        load_profile(path, digest, expected_model_identity="e" * 64)
++    with pytest.raises(ValueError):
++        load_profile(path, digest, expected_template_identity="e" * 64)
++    p2 = load_profile(
++        *make_profile(tmp_path, changes={"alphas": [1.0, 2.5]}, suffix="2")
++    )
++    assert p2.schedule_sha256 != p.schedule_sha256
++    assert p2.identity != p.identity
++
++
++@pytest.mark.parametrize(
++    "changes",
++    [
++        {"schema_version": True},
++        {"schema_version": 2},
++        {"operator_version": "unknown"},
++        {"profile_id": "../bad"},
++        {"model_revision": "wrong"},
++        {"model_identity": "bad"},
++        {"template_identity": None},
++        {"layers": []},
++        {"layers": [2, 2]},
++        {"layers": [3, 2]},
++        {"layers": [True, 3]},
++        {"layers": [-1, 3]},
++        {"layers": [2, 6]},
++        {"alphas": [2.5]},
++        {"alphas": [True, 2.5]},
++        {"alphas": [float("nan"), 2.5]},
++        {"alphas": [float("inf"), 2.5]},
++        {"alphas": [0, 2.5]},
++        {"alphas": [17, 2.5]},
++        {"hidden_size": True},
++        {"num_hidden_layers": 257},
++        {"directions_sha256": "0" * 64},
++        {"source": {}},
++        {"unexpected": 1},
++    ],
++)
++def test_invalid_metadata(tmp_path, changes):
++    with pytest.raises(ValueError):
++        load_profile(*make_profile(tmp_path, changes=changes))
++
++
++@pytest.mark.parametrize("mode", ["zero", "nonunit", "nan", "inf", "shape", "dtype"])
++def test_invalid_directions(tmp_path, mode):
++    d = np.eye(8, dtype=np.float32)[2:4].copy()
++    if mode == "zero":
++        d[0] = 0
++    if mode == "nonunit":
++        d[0] *= 2
++    if mode == "nan":
++        d[0, 0] = np.nan
++    if mode == "inf":
++        d[0, 0] = np.inf
++    if mode == "shape":
++        d = d[:, :4]
++    if mode == "dtype":
++        d = d.astype(np.float16)
++    with pytest.raises(ValueError):
++        load_profile(*make_profile(tmp_path, directions=d))
++
++
++def test_corrupt_truncated_trailing_and_duplicate_header(tmp_path):
++    path, digest = make_profile(tmp_path)
++    original = path.read_bytes()
++    path.write_bytes(original[:-1])
++    with pytest.raises(ValueError):
++        load_profile(path, digest)
++    data = original + b"extra"
++    path.write_bytes(data)
++    with pytest.raises(ValueError):
++        load_profile(path, hashlib.sha256(data).hexdigest())
++    size = struct.unpack("<Q", original[:8])[0]
++    header = json.loads(original[8 : 8 + size])
++    text = json.dumps(header)[:-1] + ',"directions":{}}'
++    data = struct.pack("<Q", len(text)) + text.encode() + original[8 + size :]
++    path.write_bytes(data)
++    with pytest.raises(ValueError, match="Duplicate"):
++        load_profile(path, hashlib.sha256(data).hexdigest())
+diff --git a/vllm/models/deepseek_v4_1/steering/__init__.py b/vllm/models/deepseek_v4_1/steering/__init__.py
+new file mode 100644
+index 000000000..9588ec638
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/__init__.py
+@@ -0,0 +1,3 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Explicit DeepSeek V4.1 attention steering contracts and execution."""
+diff --git a/vllm/models/deepseek_v4_1/steering/profile.py b/vllm/models/deepseek_v4_1/steering/profile.py
+new file mode 100644
+index 000000000..dfe54eb42
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/profile.py
+@@ -0,0 +1,317 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Bounded, local-only profile loading. This module never loads pickle files."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import math
++import re
++import struct
++from dataclasses import dataclass
++from pathlib import Path
++from typing import Any
++
++SCHEMA_VERSION = 1
++OPERATOR_VERSION = "attn-writer-project-bf16-rank-order-v1"
++MAX_PROFILE_BYTES = 32 * 1024 * 1024
++MAX_HEADER_BYTES = 64 * 1024
++MAX_LAYERS = 256
++MAX_HIDDEN = 32768
++NORM_ATOL = 1e-5
++IDENTITY_FILES = (
++    "config.json",
++    "model.safetensors.index.json",
++    "tokenizer.json",
++    "tokenizer_config.json",
++    "chat_template.jinja",
++)
++
++
++def canonical_json(value: Any) -> bytes:
++    return json.dumps(
++        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
++    ).encode("ascii")
++
++
++def content_hash(value: Any) -> str:
++    return hashlib.sha256(canonical_json(value)).hexdigest()
++
++
++def _unique_object(pairs):
++    result = {}
++    for key, value in pairs:
++        if key in result:
++            raise ValueError(f"Duplicate JSON key: {key}")
++        result[key] = value
++    return result
++
++
++def sha256_file(path: Path) -> str:
++    h = hashlib.sha256()
++    with path.open("rb") as f:
++        for chunk in iter(lambda: f.read(1024 * 1024), b""):
++            h.update(chunk)
++    return h.hexdigest()
++
++
++def model_identity(model_path: str | Path) -> str:
++    """Bind local checkpoint index, trusted weights inventory and tokenizer bytes.
++
++    Weight payload verification belongs to artifact preparation; never hash the
++    full checkpoint in each worker's startup. The trusted inventory is itself
++    bound here and the deployment verifier checks every hardlink against it.
++    """
++    root = Path(model_path)
++    if not root.is_dir():
++        raise ValueError("Steering requires a verified local model directory")
++    files = {
++        name: sha256_file(root / name)
++        for name in IDENTITY_FILES
++        if (root / name).is_file()
++    }
++    required = {
++        "config.json",
++        "model.safetensors.index.json",
++        "tokenizer.json",
++        "tokenizer_config.json",
++    }
++    if not required <= files.keys():
++        raise ValueError(
++            "Steering model is missing identity files or trusted weight inventory"
++        )
++    inventory_path = root / "model-file-hashes.json"
++    if not inventory_path.is_file():
++        raise ValueError("Steering model needs a trusted weight inventory")
++    inventory = json.loads(
++        inventory_path.read_bytes(), object_pairs_hook=_unique_object
++    )
++    if (
++        not isinstance(inventory, dict)
++        or inventory.get("schema_version") != 1
++        or inventory.get("algorithm") != "sha256"
++        or inventory.get("coverage") != "complete"
++        or not isinstance(inventory.get("files"), dict)
++    ):
++        raise ValueError("Invalid trusted weight inventory")
++    index = json.loads(
++        (root / "model.safetensors.index.json").read_bytes(),
++        object_pairs_hook=_unique_object,
++    )
++    shards = sorted(set(index["weight_map"].values()))
++    weights = {}
++    for name in shards:
++        if not isinstance(name, str) or Path(name).name != name:
++            raise ValueError("Invalid checkpoint shard name")
++        entry = inventory["files"].get(name)
++        if (
++            not isinstance(entry, dict)
++            or type(entry.get("size")) is not int
++            or entry["size"] <= 0
++        ):
++            raise ValueError("Checkpoint shard missing from trusted inventory")
++        weights[name] = {
++            "size": entry["size"],
++            "sha256": _digest(entry.get("sha256"), "weight"),
++        }
++    if not weights:
++        raise ValueError("Empty trusted weight inventory")
++    # Hostname, timestamp and inode identities differ between replicas. Bind
++    # verified content only so the same checkpoint has one identity on all ranks.
++    files["weight_inventory"] = content_hash(weights)
++    return content_hash(files)
++
++
++def template_identity(model_path: str | Path) -> str:
++    root = Path(model_path)
++    vllm_root = Path(__file__).resolve().parents[3]
++    files = {
++        name: sha256_file(vllm_root / name)
++        for name in (
++            "tokenizers/deepseek_v41.py",
++            "tokenizers/deepseek_v41_encoding.py",
++            "renderers/deepseek_v41.py",
++        )
++    }
++    for name in ("tokenizer.json", "tokenizer_config.json", "chat_template.jinja"):
++        if (root / name).is_file():
++            files["model/" + name] = sha256_file(root / name)
++    return content_hash(files)
++
++
++def _digest(value: Any, name: str) -> str:
++    if not isinstance(value, str) or re.fullmatch("[0-9a-f]{64}", value) is None:
++        raise ValueError(f"Invalid {name} SHA-256")
++    return value
++
++
++@dataclass(frozen=True)
++class SteeringProfile:
++    profile_id: str
++    model_revision: str
++    model_identity: str
++    template_identity: str
++    operator_version: str
++    layers: tuple[int, ...]
++    alphas: tuple[float, ...]
++    hidden_size: int
++    num_hidden_layers: int
++    artifact_sha256: str
++    schedule_sha256: str
++    directions: Any
++
++    @property
++    def identity(self) -> str:
++        return content_hash(
++            {
++                "schema": SCHEMA_VERSION,
++                "profile": self.profile_id,
++                "artifact": self.artifact_sha256,
++                "model": self.model_identity,
++                "model_revision": self.model_revision,
++                "template": self.template_identity,
++                "operator": self.operator_version,
++                "schedule": self.schedule_sha256,
++            }
++        )
++
++
++def load_profile(
++    path: str | Path,
++    expected_sha256: str,
++    *,
++    expected_model_identity: str | None = None,
++    expected_template_identity: str | None = None,
++) -> SteeringProfile:
++    import numpy as np
++    from safetensors.numpy import load
++
++    _digest(expected_sha256, "profile")
++    path = Path(path)
++    if not path.is_file() or not 8 < path.stat().st_size <= MAX_PROFILE_BYTES:
++        raise ValueError("Steering profile is missing, truncated or too large")
++    with path.open("rb") as f:
++        data = f.read(MAX_PROFILE_BYTES + 1)
++    if (
++        len(data) > MAX_PROFILE_BYTES
++        or hashlib.sha256(data).hexdigest() != expected_sha256
++    ):
++        raise ValueError("Steering profile SHA-256 mismatch")
++    header_size = struct.unpack("<Q", data[:8])[0]
++    if not 0 < header_size <= MAX_HEADER_BYTES or 8 + header_size >= len(data):
++        raise ValueError("Invalid steering safetensors header length")
++    header = json.loads(data[8 : 8 + header_size], object_pairs_hook=_unique_object)
++    if not isinstance(header, dict) or set(header) != {"__metadata__", "directions"}:
++        raise ValueError("Profile must contain only metadata and directions")
++    if (
++        not isinstance(header["__metadata__"], dict)
++        or set(header["__metadata__"]) != {"ds41_steering"}
++        or not isinstance(header["__metadata__"]["ds41_steering"], str)
++    ):
++        raise ValueError("Invalid steering metadata")
++    metadata = json.loads(
++        header["__metadata__"]["ds41_steering"], object_pairs_hook=_unique_object
++    )
++    required = {
++        "schema_version",
++        "operator_version",
++        "profile_id",
++        "model_revision",
++        "model_identity",
++        "template_identity",
++        "layers",
++        "alphas",
++        "hidden_size",
++        "num_hidden_layers",
++        "directions_sha256",
++        "source",
++    }
++    if not isinstance(metadata, dict) or set(metadata) != required:
++        raise ValueError("Invalid steering profile schema")
++    m = metadata
++    if type(m["schema_version"]) is not int or m["schema_version"] != SCHEMA_VERSION:
++        raise ValueError("Unsupported steering schema")
++    if m["operator_version"] != OPERATOR_VERSION:
++        raise ValueError("Unsupported steering operator version")
++    if (
++        not isinstance(m["profile_id"], str)
++        or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,95}", m["profile_id"]) is None
++    ):
++        raise ValueError("Invalid steering profile ID")
++    if (
++        not isinstance(m["model_revision"], str)
++        or re.fullmatch("[0-9a-f]{40}", m["model_revision"]) is None
++    ):
++        raise ValueError("Invalid model revision")
++    for key in ("model_identity", "template_identity", "directions_sha256"):
++        _digest(m[key], key)
++    if (
++        expected_model_identity is not None
++        and m["model_identity"] != expected_model_identity
++    ):
++        raise ValueError("Steering profile targets different model bytes")
++    if (
++        expected_template_identity is not None
++        and m["template_identity"] != expected_template_identity
++    ):
++        raise ValueError("Steering profile targets a different tokenizer/template")
++    hidden, count = m["hidden_size"], m["num_hidden_layers"]
++    if type(hidden) is not int or not 0 < hidden <= MAX_HIDDEN:
++        raise ValueError("Invalid steering hidden size")
++    if type(count) is not int or not 0 < count <= MAX_LAYERS:
++        raise ValueError("Invalid steering layer count")
++    layers, alphas = m["layers"], m["alphas"]
++    if (
++        not isinstance(layers, list)
++        or not layers
++        or any(type(x) is not int or not 0 <= x < count for x in layers)
++        or layers != sorted(set(layers))
++    ):
++        raise ValueError("Steering layers must be sorted, distinct target layers")
++    if (
++        not isinstance(alphas, list)
++        or len(alphas) != len(layers)
++        or any(
++            type(a) not in (int, float) or not math.isfinite(a) or not 0 < a <= 16
++            for a in alphas
++        )
++    ):
++        raise ValueError("Invalid steering layer alphas")
++    if not isinstance(m["source"], dict) or not m["source"].get("license"):
++        raise ValueError("Profile source and license must be recorded")
++    descriptor = header["directions"]
++    if (
++        not isinstance(descriptor, dict)
++        or descriptor.get("dtype") != "F32"
++        or descriptor.get("shape") != [len(layers), hidden]
++        or descriptor.get("data_offsets") != [0, len(layers) * hidden * 4]
++        or len(data) != 8 + header_size + len(layers) * hidden * 4
++    ):
++        raise ValueError("Invalid directions layout or trailing profile data")
++    directions = load(data)["directions"]
++    if directions.dtype != np.dtype("float32") or not np.isfinite(directions).all():
++        raise ValueError("Directions must be finite float32")
++    if hashlib.sha256(directions.tobytes()).hexdigest() != m["directions_sha256"]:
++        raise ValueError("Direction payload SHA-256 mismatch")
++    norms = np.linalg.norm(directions.astype(np.float64), axis=1)
++    if not np.all(np.abs(norms - 1) <= NORM_ATOL):
++        raise ValueError("Steering directions must already have unit norm")
++    directions.flags.writeable = False
++    schedule = content_hash(
++        {"layers": layers, "alphas": alphas, "operator": OPERATOR_VERSION}
++    )
++    return SteeringProfile(
++        m["profile_id"],
++        m["model_revision"],
++        m["model_identity"],
++        m["template_identity"],
++        OPERATOR_VERSION,
++        tuple(layers),
++        tuple(float(a) for a in alphas),
++        hidden,
++        count,
++        expected_sha256,
++        schedule,
++        directions,
++    )

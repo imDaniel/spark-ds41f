@@ -1,0 +1,15 @@
+{
+  "hold_absent": true,
+  "owned_processes": [
+    {
+      "pid": 3200254,
+      "alive": false,
+      "command": null
+    },
+    {
+      "pid": 3228491,
+      "alive": false,
+      "command": null
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "official": [
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/7e3494170d663e26359c8466665e458f7f3dc059a109602bbcde177f660a4e40/device_kernel.cu",
+      "sha256": "0b4bb5fe08abce72e44c96ac889a6b36543eb98fa1822d20dfe8f0b22e5cda28",
+      "bytes": 16462,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/7e3494170d663e26359c8466665e458f7f3dc059a109602bbcde177f660a4e40/host_kernel.cu",
+      "sha256": "c6b5e3ee63e98f08d4cd2eed19014e894f1037db82886a436b22e679b216450f",
+      "bytes": 67101,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/716925d5051b170cc82762cb672e49fae82d4ed07268e9d7d9068b4f63378bf2/device_kernel.cu",
+      "sha256": "b0c911421a55698f4e2eb552fdbdb11283a296fcbdc2906ec8032894706fce3f",
+      "bytes": 19410,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/716925d5051b170cc82762cb672e49fae82d4ed07268e9d7d9068b4f63378bf2/host_kernel.cu",
+      "sha256": "c1f184aea6760ab5a742ac5c762965ebe41e4332226e5c3e986328600446c088",
+      "bytes": 68560,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/25b28a5601f0f620ba94aed87a7b4718bc3e317172ffb73f55c7aab59cc2feb8/device_kernel.cu",
+      "sha256": "2ccbad2714427fc43d0d8ef965d0a8cf4a3a1909827c3314d9cc2844067bc48c",
+      "bytes": 5653,
+      "kernel": "finalize"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/25b28a5601f0f620ba94aed87a7b4718bc3e317172ffb73f55c7aab59cc2feb8/host_kernel.cu",
+      "sha256": "75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2",
+      "bytes": 62583,
+      "kernel": "finalize"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/626b1d183ce213394b2409ae8ac5068cb96967c027890c7c644b321de211fd30/device_kernel.cu",
+      "sha256": "7193574c2197cd37828ccbb9cafe40db796bc319acd2aa8f0ffa83522d3e412f",
+      "bytes": 16357,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/626b1d183ce213394b2409ae8ac5068cb96967c027890c7c644b321de211fd30/host_kernel.cu",
+      "sha256": "414212163fa5a8ac78111aa236fa6e74727b712d7becd666e270856c73c16b3e",
+      "bytes": 73069,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/b1cacc5b38b207961b6fddf6e853604d1f9a94eb84980335a2c35feea3b08de9/device_kernel.cu",
+      "sha256": "ca7d95c03b0442fdf937e604f4702d549b85a5e805b6a44efa9d03e225f8d908",
+      "bytes": 18909,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/b1cacc5b38b207961b6fddf6e853604d1f9a94eb84980335a2c35feea3b08de9/host_kernel.cu",
+      "sha256": "e9fdc64dc4d602519d5f7af3521122e67b4d89fa964b56be561f56f1e45bf3b8",
+      "bytes": 68178,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/f009a4a2cd33e575c11c8e564e67746b3edc66bf35de742e25e493ea24d08c10/device_kernel.cu",
+      "sha256": "66b9c06ea1f0b341eb539b9cc2e02a8090939784ab4ac98c96445f1d5025503b",
+      "bytes": 5653,
+      "kernel": "finalize"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/f009a4a2cd33e575c11c8e564e67746b3edc66bf35de742e25e493ea24d08c10/host_kernel.cu",
+      "sha256": "75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2",
+      "bytes": 62583,
+      "kernel": "finalize"
+    }
+  ],
+  "candidate": [
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/7e3494170d663e26359c8466665e458f7f3dc059a109602bbcde177f660a4e40/device_kernel.cu",
+      "sha256": "0b4bb5fe08abce72e44c96ac889a6b36543eb98fa1822d20dfe8f0b22e5cda28",
+      "bytes": 16462,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/7e3494170d663e26359c8466665e458f7f3dc059a109602bbcde177f660a4e40/host_kernel.cu",
+      "sha256": "c6b5e3ee63e98f08d4cd2eed19014e894f1037db82886a436b22e679b216450f",
+      "bytes": 67101,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/2a6b0a09ce9de9eaa139113d5df238ef999b3aa17f85ba949ded9a91c355318e/device_kernel.cu",
+      "sha256": "e964aba8cc985b568c4cf3294b7f79acf4d4f4444d1eaa0d583921bb7a308181",
+      "bytes": 23712,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/2a6b0a09ce9de9eaa139113d5df238ef999b3aa17f85ba949ded9a91c355318e/host_kernel.cu",
+      "sha256": "05ccc3404c674a350cd6ea59544e04b91bfa0878c0dd0268b3e98f4dc68be7ba",
+      "bytes": 83923,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/716925d5051b170cc82762cb672e49fae82d4ed07268e9d7d9068b4f63378bf2/device_kernel.cu",
+      "sha256": "b0c911421a55698f4e2eb552fdbdb11283a296fcbdc2906ec8032894706fce3f",
+      "bytes": 19410,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/716925d5051b170cc82762cb672e49fae82d4ed07268e9d7d9068b4f63378bf2/host_kernel.cu",
+      "sha256": "c1f184aea6760ab5a742ac5c762965ebe41e4332226e5c3e986328600446c088",
+      "bytes": 68560,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/25b28a5601f0f620ba94aed87a7b4718bc3e317172ffb73f55c7aab59cc2feb8/device_kernel.cu",
+      "sha256": "2ccbad2714427fc43d0d8ef965d0a8cf4a3a1909827c3314d9cc2844067bc48c",
+      "bytes": 5653,
+      "kernel": "finalize"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/25b28a5601f0f620ba94aed87a7b4718bc3e317172ffb73f55c7aab59cc2feb8/host_kernel.cu",
+      "sha256": "75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2",
+      "bytes": 62583,
+      "kernel": "finalize"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/626b1d183ce213394b2409ae8ac5068cb96967c027890c7c644b321de211fd30/device_kernel.cu",
+      "sha256": "7193574c2197cd37828ccbb9cafe40db796bc319acd2aa8f0ffa83522d3e412f",
+      "bytes": 16357,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/626b1d183ce213394b2409ae8ac5068cb96967c027890c7c644b321de211fd30/host_kernel.cu",
+      "sha256": "414212163fa5a8ac78111aa236fa6e74727b712d7becd666e270856c73c16b3e",
+      "bytes": 73069,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/b1cacc5b38b207961b6fddf6e853604d1f9a94eb84980335a2c35feea3b08de9/device_kernel.cu",
+      "sha256": "ca7d95c03b0442fdf937e604f4702d549b85a5e805b6a44efa9d03e225f8d908",
+      "bytes": 18909,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/b1cacc5b38b207961b6fddf6e853604d1f9a94eb84980335a2c35feea3b08de9/host_kernel.cu",
+      "sha256": "e9fdc64dc4d602519d5f7af3521122e67b4d89fa964b56be561f56f1e45bf3b8",
+      "bytes": 68178,
+      "kernel": "project"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/f009a4a2cd33e575c11c8e564e67746b3edc66bf35de742e25e493ea24d08c10/device_kernel.cu",
+      "sha256": "66b9c06ea1f0b341eb539b9cc2e02a8090939784ab4ac98c96445f1d5025503b",
+      "bytes": 5653,
+      "kernel": "finalize"
+    },
+    {
+      "path": "kkref/jit/tilelang/0.1.15/linux-aarch64/kernels/f009a4a2cd33e575c11c8e564e67746b3edc66bf35de742e25e493ea24d08c10/host_kernel.cu",
+      "sha256": "75c612222945ebbd7e94d7960e7a17bbb468a2f95cd6e5ff41a908b812ba08d2",
+      "bytes": 62583,
+      "kernel": "finalize"
+    }
+  ]
+}

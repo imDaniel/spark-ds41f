@@ -1,0 +1,637 @@
+{
+  "evidence/hardware/api/candidate-loaded-active-engine-e110b81bd95a/evidence/candidate-loaded-active-engine.json": {
+    "path": "evidence/hardware/api/candidate-loaded-active-engine-e110b81bd95a/evidence/candidate-loaded-active-engine.json.gz",
+    "uncompressed_sha256": "ce3b12df9ad3d4686de62ec668381a8ee3ee3d76ed76e152a87a5806597acd63",
+    "compressed_sha256": "c2ae0c6b5f3fea1c6316a43a60b18f34be27eed725d076207eb6c70dfe9e24ed"
+  },
+  "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-0-s0-c1-1792376889392879387.json": {
+    "path": "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-0-s0-c1-1792376889392879387.json.gz",
+    "uncompressed_sha256": "e3c2102d3f31d83a94afdb7e1bdb38c0580adabf134933c2d9235514a0091e9a",
+    "compressed_sha256": "d49a29ea4c1ac58220f7be97b2eac6e568a969d4d33a05d92f4c762c8ef9a38d"
+  },
+  "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-1-s0-c4-1792377038300938181.json": {
+    "path": "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-1-s0-c4-1792377038300938181.json.gz",
+    "uncompressed_sha256": "5c0b6919490cab64bf820210b41c51088e39c796433c933d9f25f7b6891987da",
+    "compressed_sha256": "375fa4acc96fa940f9baffcfa3f392e4d4617fbc975c716e0a617e89b8c6813a"
+  },
+  "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-2-s1-c1-1792377199922950891.json": {
+    "path": "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-2-s1-c1-1792377199922950891.json.gz",
+    "uncompressed_sha256": "170673c2a4fdbe8c9bb39991ae5e0f0ae45d34deedb0097a1755047bb4d9d9cf",
+    "compressed_sha256": "4e35ef0ee21a16755259922eb875ae0be1fd6b262055c626490e4463603b0d99"
+  },
+  "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-3-s1-c4-1792377351911916523.json": {
+    "path": "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-3-s1-c4-1792377351911916523.json.gz",
+    "uncompressed_sha256": "d0f36afb14539dc4ac7bc44aded24053524bf7b6362426cdb56f5e2bee482ca7",
+    "compressed_sha256": "1ee7f80232ea86e157daa51d8fd33b4896ab7561d9944c3a3792773c5c6b178c"
+  },
+  "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-4-s4-c1-1792377514768600685.json": {
+    "path": "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-4-s4-c1-1792377514768600685.json.gz",
+    "uncompressed_sha256": "18bfe88808f15e9161c808aed90ae3b1461dfad924e6ea72ef77fd8d6d0ddfd9",
+    "compressed_sha256": "2cb15d19e05f9f85cf32b7a8b541e98c1ee353e921b18d73f1f10884521c6c15"
+  },
+  "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-5-s4-c4-1792377666666615860.json": {
+    "path": "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-5-s4-c4-1792377666666615860.json.gz",
+    "uncompressed_sha256": "dc567805303ff3eb89c2258688b67e1d26b6761687a8d57b2518b701444739e5",
+    "compressed_sha256": "6be630cb087ed9625074230638d3b2abeb35435943e79e1005a6181d11d838bb"
+  },
+  "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-6-s0-c1-1792377828122363229.json": {
+    "path": "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-6-s0-c1-1792377828122363229.json.gz",
+    "uncompressed_sha256": "4d42e677402837853f512635308009fdd0af167caa6199de7d041b0f20f38657",
+    "compressed_sha256": "cbe368c032af40ea3e7fda5d1e84150285c775a6efd6f952ff0a78d2e1cb3c85"
+  },
+  "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-7-s0-c4-1792377982183948301.json": {
+    "path": "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-7-s0-c4-1792377982183948301.json.gz",
+    "uncompressed_sha256": "172d7094815bbacfecdc98a8af3b65df19f156c721b3e19abd582129e58eb689",
+    "compressed_sha256": "8abbe21cda28ed31dcc54a31bf860c6fe5d61445e3e14b3cf807613bd503edce"
+  },
+  "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench.json": {
+    "path": "evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench.json.gz",
+    "uncompressed_sha256": "cfeac0e35bc565ab4ab32b92e0bdc54431dc07cae105c39747da68a7abe4b127",
+    "compressed_sha256": "8e793e760cde9bc918266eacf4eeb275c3e95411feac5509ef37afa30ed278e3"
+  },
+  "evidence/hardware/api/candidate-loaded-capacity-97df8a2e5aec/evidence/candidate-loaded-capacity.json": {
+    "path": "evidence/hardware/api/candidate-loaded-capacity-97df8a2e5aec/evidence/candidate-loaded-capacity.json.gz",
+    "uncompressed_sha256": "7ae3facea1d0ebe747bc8becb4be4d29520bef5dca8dbfcdbbe3611970c16bcb",
+    "compressed_sha256": "786332dd2b7c58446382cc021d2e100427859afacd70f840a67c9740443d51c2"
+  },
+  "evidence/hardware/api/candidate-loaded-prefill-72328da07bd6/evidence/candidate-loaded-prefill.json": {
+    "path": "evidence/hardware/api/candidate-loaded-prefill-72328da07bd6/evidence/candidate-loaded-prefill.json.gz",
+    "uncompressed_sha256": "aab5be4bed849db02b14d48499426a68810e36edc8652b7fb12495ce78b7766e",
+    "compressed_sha256": "540c87cc023e443c6726b5e700e190e220ac3d28dc55219da96653934a0c8ea5"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/candidate-loaded-smoke.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/candidate-loaded-smoke.json.gz",
+    "uncompressed_sha256": "5d21c2fe09040a671eb7769aec90274afe101e0b567de30764b4ee4c184899bb",
+    "compressed_sha256": "eabe789e5da93d87cb8dde5f34cd7241d6d58f8743af97a6ec7f8861fb3f9cfb"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/05ce2e4019d44ad4a78fd1610bc6072c.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/05ce2e4019d44ad4a78fd1610bc6072c.json.gz",
+    "uncompressed_sha256": "68d2499744dfc68ade2ee95be4d7c42f5eb08b1055fbcfc9557c5a91c8e8979a",
+    "compressed_sha256": "ce4dec487ea732385f610606b734e8180f35c5d09e314db8441f44e6deb51561"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/2360d6f9be084c4f9e94cdab4b0c5cec.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/2360d6f9be084c4f9e94cdab4b0c5cec.json.gz",
+    "uncompressed_sha256": "5f3e7fa9a4c16c870c15bb37220dbdff28ef64c5445ff9f36190d34f2364865f",
+    "compressed_sha256": "7855b5ce94c7000615be8f86568fb6e69580cc618f615c7285158429defdbf3f"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/245b59fcf58848ee9123bf0915a32409.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/245b59fcf58848ee9123bf0915a32409.json.gz",
+    "uncompressed_sha256": "f2d90b258321f26f85e7bff0d2172c9f2ac69731f67d8b333dbde38f47179c20",
+    "compressed_sha256": "abb962c5cd35450c28d2b5d1fd4aedfd28af7c7a9b903f8698aff8dbd6bd8a75"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/2a0fd342fcf546ab9283192f49202966.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/2a0fd342fcf546ab9283192f49202966.json.gz",
+    "uncompressed_sha256": "9badb0950d069f829daae2e671bc1aa97e5081c0675a36f9ad23893f4cc9ac2f",
+    "compressed_sha256": "22d48871bffc8601659acf77263de8dbe0cb2e094658f1cc64ea445a8dc4ccb8"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/2a7bbb323ba44915b6abaaa5e6912d7b.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/2a7bbb323ba44915b6abaaa5e6912d7b.json.gz",
+    "uncompressed_sha256": "79c91a606890edcd62a9ea6c43f07ab67a2438a56d5bad3fd1effbc6f23eb891",
+    "compressed_sha256": "7014cea685cd0b183ce1153fd5c9ea4a9ac378af3829de46b32f4c935f54a0f6"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/2e1b6c7a7f1640ac8ec0caa92cea9b25.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/2e1b6c7a7f1640ac8ec0caa92cea9b25.json.gz",
+    "uncompressed_sha256": "9f9e74bf8e5db17b54f4727f885f66f1a44c02a8bac694d405dca318f3b4ce89",
+    "compressed_sha256": "1d2107da670fa5f8e38433b5e6312e6460683016f90f34c741fb405a306d05c6"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/319bd7ee429c47d18c8e62b92cae8bd3.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/319bd7ee429c47d18c8e62b92cae8bd3.json.gz",
+    "uncompressed_sha256": "d19c051bdc5d517fc587a3c2d75704048c30cb18b4e7bdcd0726d0a571af2055",
+    "compressed_sha256": "dce3ef8187d03b76e836010f05e5e8afc119a21e780b1cff627e519c5476a898"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/420e3b07bf9643d29b535c8d203b5568.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/420e3b07bf9643d29b535c8d203b5568.json.gz",
+    "uncompressed_sha256": "e18c10046fe9c0d4fe279c3a963a1e491ad3e9ce6fb61a945a5a3b0df84d6e89",
+    "compressed_sha256": "03607e9486431d7f2c1c67ccf7c9456481b721baeab96ce6f7715f7e3f4be8cc"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/482f094ac307487180028f53c13d1bb7.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/482f094ac307487180028f53c13d1bb7.json.gz",
+    "uncompressed_sha256": "cc7f4bd201edc7ed26c1a5ce2263df41e7e5795c19c753e2524096e14ade74bf",
+    "compressed_sha256": "6e0fea0db071807c805f9ae9ad28bc09c2bf27371f641f18f7a9f1d7f90784e7"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/5e1b0b9288074e99bd643caf7e3ffeec.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/5e1b0b9288074e99bd643caf7e3ffeec.json.gz",
+    "uncompressed_sha256": "44a95627c7bdaa07d9b3a77f934a6dbeda758a8ec639e1ec1067f02598ec77ce",
+    "compressed_sha256": "fad6fc3430c4531f84134078f12cee90029d8a9c5ac8be1fcba6700d61eed889"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/5eb518f705ba417686c3ee9ca3cca66f.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/5eb518f705ba417686c3ee9ca3cca66f.json.gz",
+    "uncompressed_sha256": "d5e5d098f9261525bffa613837d71a241d53cfc3189890c3e1e18c56cd98cf88",
+    "compressed_sha256": "83016d46d7b3464bb37e3d6ac54a5718f49a04d596d71064193506d3360ef987"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/64c634132ecd4ad88770001031695766.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/64c634132ecd4ad88770001031695766.json.gz",
+    "uncompressed_sha256": "aba677a7d2b8dbdd73548bdde03bfff2e5bde6b1197aecceda7509638c83c767",
+    "compressed_sha256": "2f26a3c26170256ac8c06c7533158eb4c92c9f7a0187c92906a2114574896903"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/67e5ef7ab64447cc860af60afcfe4295.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/67e5ef7ab64447cc860af60afcfe4295.json.gz",
+    "uncompressed_sha256": "a7db5e6e55df495a912dbc6af8ec7bd118d96826db0c8c3f869a0a75af5b2984",
+    "compressed_sha256": "9bda0579d214c4d873d1bc54afa1cb8c02a5b627e478c70e5b8ac258e71cdc02"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/6fa62a1c30f64d64b31b40b156dc9217.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/6fa62a1c30f64d64b31b40b156dc9217.json.gz",
+    "uncompressed_sha256": "ccd127b1b1f249cac260a6613b0552265d82cf80eb726c639c8d8d8dcd2789c1",
+    "compressed_sha256": "387157b69ad9981622dd0d3de66b5ed42adfe52c020ce02fbd16d556d47ad9be"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/72b22e4552f24fbdaa8f5e625e6e0d93.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/72b22e4552f24fbdaa8f5e625e6e0d93.json.gz",
+    "uncompressed_sha256": "abb989696fb1ce99cce0ebc54a82c8da6cbc604d418281e16c1a1f2be09820a1",
+    "compressed_sha256": "88b835286739742b6e6a186970b14fc15d6bf965a3ee815646c9eaa0bc00f2c8"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/7d7772f2fec1457eabb67b102fae7a58.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/7d7772f2fec1457eabb67b102fae7a58.json.gz",
+    "uncompressed_sha256": "311af77257d6a02376efc057624179b55afd2777cc996f683f1a895b90175dd1",
+    "compressed_sha256": "9410e196cd6dc6a8da3cf780dda6aae2c0030b0b049a3b998c6beef9852994ef"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/943c057ecbad48789fd4de980a3c0fa5.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/943c057ecbad48789fd4de980a3c0fa5.json.gz",
+    "uncompressed_sha256": "e0a443194439a201bd1ea0ac155857415d13ac20bf31e9970d8676c590221de8",
+    "compressed_sha256": "52b738f5640bea8e19206eea2de59a7513bd16590329a7f1bdd98e3c2712c868"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/c325920f56504b6d8dad25d2f2ff6e98.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/c325920f56504b6d8dad25d2f2ff6e98.json.gz",
+    "uncompressed_sha256": "6ab5354fb372a9bca56bf889c1f23bd209b3cf0bd78ba27f0a4c75d8786ae9ac",
+    "compressed_sha256": "f074f6af8729092e06c79d1fdbc6ce23c450f3626ab706d9a0ff6ea1c6dbeec1"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/d627de8bfaa14eebbf657909309f1b36.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/d627de8bfaa14eebbf657909309f1b36.json.gz",
+    "uncompressed_sha256": "37ec9ff48aa25098372e1fc999ed9b26f397b6eeb4768cc81e8ec359eec981d0",
+    "compressed_sha256": "68bc1905b324ae1a77602d3c873025e8729bd549a110658612fa643dfa8abe3f"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/daf66345adf84dc0882be61c5a9ab588.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/daf66345adf84dc0882be61c5a9ab588.json.gz",
+    "uncompressed_sha256": "b085d79200724e5d556548d03f3b4498c09acce6ad450d77b91a2298fa649874",
+    "compressed_sha256": "cf9d7fb8cc62dc96717a14e355808e8a273ad9322bd2b8db49715fe9f4b2d292"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/de56c37e75f041b9809b21927cf41b30.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/de56c37e75f041b9809b21927cf41b30.json.gz",
+    "uncompressed_sha256": "1d3efd9da456e0d26e699a4b09e8fcfc860a42763e2b517b0b65d2da699c885f",
+    "compressed_sha256": "d083adc1b70db6c3998a0cd5e12d0c1e1f5e302302370950679f80a0a5039b9b"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/de9c84b5a0d24f00b1132b7edda5f8a9.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/de9c84b5a0d24f00b1132b7edda5f8a9.json.gz",
+    "uncompressed_sha256": "41d7542d85b2a601591087707f024609c4836c8ca4164f0365c199e78e95e055",
+    "compressed_sha256": "7ff7c4b456111be35df72170a6a1b9cd4b48a74f79947447ac5f7d83cee1c108"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/ee34e5ad8d24472d876a1f15f2eb89cc.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/ee34e5ad8d24472d876a1f15f2eb89cc.json.gz",
+    "uncompressed_sha256": "ffe452a53310a6881480054ad3051d7bf0ee7722482889986464c875a10d9d5a",
+    "compressed_sha256": "9c45bd4d49c123bd974dd263db943cab234a4048bb7f9d97fc6a9429a3157fbc"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/f5ba5cac5bbd4cc395053abe5ea0979e.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/f5ba5cac5bbd4cc395053abe5ea0979e.json.gz",
+    "uncompressed_sha256": "65093a4d7ac794c2f95b4d2dee074e570b43b84250b4fb1a36b612ef2669bfde",
+    "compressed_sha256": "b3cbe6805fccc833cbdd5e1cffc141ddfe98f2b0b07adb34bb4cebc9f19ea5eb"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/fea2bbefc42f43438edd690b3364da8f.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-30d0da41ad79/evidence/raw-completions/fea2bbefc42f43438edd690b3364da8f.json.gz",
+    "uncompressed_sha256": "590d766fc8e7a6cbc8768c488fb47a6a68953f9bbd8119f872a96689b35b9118",
+    "compressed_sha256": "a0b442608e8e6226aa26ee6a5cd2516d142b0c5570883866b9c4b56a57aa0668"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/candidate-loaded-smoke.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/candidate-loaded-smoke.json.gz",
+    "uncompressed_sha256": "f0e127b4b25694a7a1120c034161368b7434b7f53220fda1bf89a342151730af",
+    "compressed_sha256": "5f21e25f8a82449e9cb186640e83db0c7f96631397e7713959042f6c5c67ee2c"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/036ff4d9758f43099d397d73e3111819.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/036ff4d9758f43099d397d73e3111819.json.gz",
+    "uncompressed_sha256": "61ba676a49f0662e8cb51a90705fecc8f0ceffe86e19087867552a06a7bc6744",
+    "compressed_sha256": "8d0be22f2f53b4af4523dee088701e0ef69a3c047aed56333428ccc834d159db"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/2dca0a82be1b48fbbf8bed03a9565ac7.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/2dca0a82be1b48fbbf8bed03a9565ac7.json.gz",
+    "uncompressed_sha256": "aa1c10afd33e29b366f2b7388166ae0d26e5bc02e2443787dd18ae0e02b25105",
+    "compressed_sha256": "4479ced073014484f72985d8ee3b612d3a63e351bf7cd0a8990911ffeba44287"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/2f3242e6ed924ecabb68866eda7f3fc7.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/2f3242e6ed924ecabb68866eda7f3fc7.json.gz",
+    "uncompressed_sha256": "18a077a5046d55cd0d36279db18fb8a95d9c91cf14004e665e725d7ffc250302",
+    "compressed_sha256": "5a2ecd4688f11861abc654c622bd741b866bceb1493c4cb85b6b587b763a5bd0"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/3994838370ea46498811038dea97cc9f.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/3994838370ea46498811038dea97cc9f.json.gz",
+    "uncompressed_sha256": "675b16a3b1cbea83a1acfa3492132ecfda2c8f4c1fa26be9fe87b50158a49f7d",
+    "compressed_sha256": "cbf82b1ec19b85308f909e1c15600b1264a1f03d27446a4997f75db24ec0672a"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/39be6aeaa724457195347b00a3a7d915.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/39be6aeaa724457195347b00a3a7d915.json.gz",
+    "uncompressed_sha256": "64eede5d84fb6d7c3bc95a974c0b77fb511dd771e8fc2e258e278d0b48459c7d",
+    "compressed_sha256": "02c331ebe946e9791a78d7ad163bec2c55faa8911879c065f3b28dc90f8e0c4f"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/3d62845699ae4f68983b87fede4799ef.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/3d62845699ae4f68983b87fede4799ef.json.gz",
+    "uncompressed_sha256": "b9fa45908f3d1f0e7f9b3628826d18d7faf5907881ad37a69c123fc3bf09372c",
+    "compressed_sha256": "69d455e9b1217539b3417700cb313eb1181f07b35e973e656f271d47732fc4ee"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/48b88b7146a8432cb928b8c4a35d830d.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/48b88b7146a8432cb928b8c4a35d830d.json.gz",
+    "uncompressed_sha256": "4488335536a8a2daa1dfa804b14b7bb647406b63283bbcefdd748f3a7a2c8e7f",
+    "compressed_sha256": "3532625369b3b086bd46019480071781f85babe9298b590de860765a74b82f99"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/527bfbe0db2d49aeaa2d27419ff64c1c.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/527bfbe0db2d49aeaa2d27419ff64c1c.json.gz",
+    "uncompressed_sha256": "a6a6befb69b842e139541c06618973bef3c5e7adbb32dc90458de52f60a1f682",
+    "compressed_sha256": "64479fa06de9dc70871aba3f376c4c4dd87181325ed502013bbe0d190f5da268"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/55de4150079e4107a744697f6ae6ea1a.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/55de4150079e4107a744697f6ae6ea1a.json.gz",
+    "uncompressed_sha256": "183bed57a64927058d0ce46f6ec1e52217542c7ba6dc3ff5bb9344325b5d73a7",
+    "compressed_sha256": "c167b4b53c5007a17ec403140d1236dc71773f1a57c5306e3bfc42fe73532667"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/585ed63903584cc3927a30a12a195066.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/585ed63903584cc3927a30a12a195066.json.gz",
+    "uncompressed_sha256": "b9da60cc45f48b06ed40d2657ee54248c0d81213b7c6dc169e5925a8c8bf5136",
+    "compressed_sha256": "43c93bb0f81b38baa9d66915a76d6a4b31d19efac6b02418d345e78273017e14"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/587de622952b4c6a905bf85b5eb85f04.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/587de622952b4c6a905bf85b5eb85f04.json.gz",
+    "uncompressed_sha256": "849e61a6a83e9e8544f5f92f4e6d641ca2870977e449a8f679b5c3860ca6e79f",
+    "compressed_sha256": "a2722959f033ffaa72dfbd57d24f2901be6009623e82758b5c591e3a6b82ce89"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/76be7192e0ed44ca93e6e3333aa9c009.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/76be7192e0ed44ca93e6e3333aa9c009.json.gz",
+    "uncompressed_sha256": "bb8ac1db3cfae53031c04a896175e3cd52a7cf90e75f5a04fdbacf87e1f2ff01",
+    "compressed_sha256": "85892be2b882c5a711243fe73b86ac76dae7bcdeddb7130168fea3fd143d4f66"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/8434606fb50b4332b48d214b352f457f.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/8434606fb50b4332b48d214b352f457f.json.gz",
+    "uncompressed_sha256": "3b5b8ad29f02b51cbeaf9b9b547de23e4b9ba1445cf61bf913b24a3dd5f92d04",
+    "compressed_sha256": "7a80dbd67347a7a70ceb272beafa56c3072d848fa38d984e1530c66ed1faf746"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/8a162f7729284e9e9ee8618572c58731.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/8a162f7729284e9e9ee8618572c58731.json.gz",
+    "uncompressed_sha256": "450b3e2fc058ba37b54664e4b9227a673472298e5bb408e6b06f0db7a0fea9f9",
+    "compressed_sha256": "d216e07d82c3b679c1eb84ad6bd4ed373e77365a536d15b683f78cc68611b6ea"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/8f0668239cab4401b19821edc1158a0a.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/8f0668239cab4401b19821edc1158a0a.json.gz",
+    "uncompressed_sha256": "52b39429b677f8af73517136de6161bf6d8b44f2ee6eef85a7fb8015c003dffe",
+    "compressed_sha256": "35047465cd3ecba5a2c992d2b040c1c9bbaa58be385039bdd1e5734eaaf5ee43"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/a6acd25360b148f990f2b3d94e9c9843.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/a6acd25360b148f990f2b3d94e9c9843.json.gz",
+    "uncompressed_sha256": "057186ce0b1a928441312555fdf8fb80e1f841f942cc5b656f90c284dde77d9f",
+    "compressed_sha256": "1f6b53da555a6c1af66ce619a216fb03506d2573767c2577615a85a5c2c04d17"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/ab096af167314f7fad325cc849834ba3.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/ab096af167314f7fad325cc849834ba3.json.gz",
+    "uncompressed_sha256": "f4a017a4855d650cc99fb95e675eb1dda052d15aac9329faabfc79deb7b1e5b9",
+    "compressed_sha256": "35a18f28c8d35ed1c48497585a9ec0425c3218922ed03bb3ca8f511b6fb6ec50"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/b2ac389e5f944408a9e2bdaf7ebcd075.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/b2ac389e5f944408a9e2bdaf7ebcd075.json.gz",
+    "uncompressed_sha256": "823cca0b831a43d4661e9c49e8f38e91de5e9c384e0f55a91c10c62a1386f693",
+    "compressed_sha256": "7a3b7ba8b22e35c7a3d781ad0ba2255de1de1982d658acbe394ad459f1049e71"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/b663162d43c94f3b9ea2f0ef4e60b265.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/b663162d43c94f3b9ea2f0ef4e60b265.json.gz",
+    "uncompressed_sha256": "617f63c550068ab35c9276fe4a8765ee8c0568c5a80167f62a9c421b530a5884",
+    "compressed_sha256": "c1c9ab3ef3a36ecd59d3e2b06ab61de5a2ae012b21d9d3b396fac15057e2714e"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/be3d106c4a394ee0acc3e2451172654f.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/be3d106c4a394ee0acc3e2451172654f.json.gz",
+    "uncompressed_sha256": "327d7dc4cd2306e7863cba03464248beb22895940d433d77e313b97ba23cf5f0",
+    "compressed_sha256": "61efc6961658ac3e6b1364da53ddd48e6ff6c420a50b93e9a7e6039f1c60d2ad"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/cc43ffa9103147b48e67032ceca07afa.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/cc43ffa9103147b48e67032ceca07afa.json.gz",
+    "uncompressed_sha256": "9e2c57d789ced7d119cb6cf463fc2760b2d14803277848c4cc02a34f4e19e56a",
+    "compressed_sha256": "2ea8eeeb0d8ddf0ff063a52621d2c1d929543748c671539244c215a895886d3d"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/d5537613ec14466293372ff8a5739475.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/d5537613ec14466293372ff8a5739475.json.gz",
+    "uncompressed_sha256": "5d9edaa557f82b0b3c81c269343d78aecaf815cbbaf8a957d34a9753c764c6a5",
+    "compressed_sha256": "0cfba5215251c610e64dcc060814fd005de65acef37f99e94df881466a3afda7"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/d902e44613804b5eafc7c2c6e6b6f33d.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/d902e44613804b5eafc7c2c6e6b6f33d.json.gz",
+    "uncompressed_sha256": "17b9876f5379a44f2d3b46e7c08477e32323244c46c258b052a497bf0a515bee",
+    "compressed_sha256": "b630439d98d82dd0485788bf2ba69a0ec92c76f81e399d7db387f33e36e046c2"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/e2736d185a7a43679d8e7053718726c1.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/e2736d185a7a43679d8e7053718726c1.json.gz",
+    "uncompressed_sha256": "099e808921cdbd5170894da03db8a1be5e92e53e43e223eaee5b37253d465a9d",
+    "compressed_sha256": "6f906cdd43a5291602cafde5dadc6b43b792dae9801d1b3c4eee028a21aef93f"
+  },
+  "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/e9de7053d6fd45a99e7721014c799bbf.json": {
+    "path": "evidence/hardware/api/candidate-loaded-smoke-fd54a8cc3996/evidence/raw-completions/e9de7053d6fd45a99e7721014c799bbf.json.gz",
+    "uncompressed_sha256": "9815fb178282618da4ba99bb5bea7c96ae5384ffd1bb19047d70f72027210d9c",
+    "compressed_sha256": "86860888c9ad7910f5cc97af6cc9f3f60d3b1b01727cec37c0d56fc33ad7cbce"
+  },
+  "evidence/hardware/api/candidate-unloaded-bench-stock-174594048617/evidence/candidate-unloaded-bench-stock-load-0-s0-c1-1792378985870707564.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-bench-stock-174594048617/evidence/candidate-unloaded-bench-stock-load-0-s0-c1-1792378985870707564.json.gz",
+    "uncompressed_sha256": "6f5fb554239c321932a650e2fe6038154d6b63a98a062396a1b48ddadb7c067b",
+    "compressed_sha256": "76593e79e1f7a08941f77b8b7b67974489c46ea7ead31c63f43c3065856e17ee"
+  },
+  "evidence/hardware/api/candidate-unloaded-bench-stock-174594048617/evidence/candidate-unloaded-bench-stock-load-1-s0-c4-1792379127070145836.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-bench-stock-174594048617/evidence/candidate-unloaded-bench-stock-load-1-s0-c4-1792379127070145836.json.gz",
+    "uncompressed_sha256": "3f645ae815af34a7d51bb46264555cc9bbeb6dae1081df8123310a628aa31924",
+    "compressed_sha256": "1949dfb0070acdeea30405753bfbe13c165ad403afed940c1beda6fc5d0dbda1"
+  },
+  "evidence/hardware/api/candidate-unloaded-bench-stock-174594048617/evidence/candidate-unloaded-bench-stock.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-bench-stock-174594048617/evidence/candidate-unloaded-bench-stock.json.gz",
+    "uncompressed_sha256": "e58a35686d5796c8d2d811e42bf0ff9517f0003d234aba0aa35f7e7aa8beed5f",
+    "compressed_sha256": "44f31e140326c47fcada81c4c2e94dc47044e94f9d0cf3ea354b0babcd292a01"
+  },
+  "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/candidate-unloaded-smoke.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/candidate-unloaded-smoke.json.gz",
+    "uncompressed_sha256": "b00f977495b5e390af947351cea7d1a7ce726fcafc789aae24baa21ea433b29d",
+    "compressed_sha256": "f1f4604a62817d4ef332b24aad5171901a38f913c6d6b93ec4956ced0fb0857d"
+  },
+  "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/007e1ec9fd484fb5905f0b2dbfbf580d.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/007e1ec9fd484fb5905f0b2dbfbf580d.json.gz",
+    "uncompressed_sha256": "63316799b79b011913aff07b7ac240535ec727ee82a1e8e37be9999856089ed9",
+    "compressed_sha256": "8f921e82b8b0bcb81c19196c78affece35d4c8672b955631bbcb03f0e0f85a70"
+  },
+  "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/0ccb758ddeb74243894ac09a0f44174b.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/0ccb758ddeb74243894ac09a0f44174b.json.gz",
+    "uncompressed_sha256": "1129ea1e8f8a3a11d7142a09e252c6674a45b4fee1b74529111d8c03b84918a1",
+    "compressed_sha256": "3c684fb6c645a6bf18ec7c6b70a929944d7533fc3c7266e52235d0f981e110bf"
+  },
+  "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/0eda6705c27b447796283cd65a8a5076.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/0eda6705c27b447796283cd65a8a5076.json.gz",
+    "uncompressed_sha256": "c7ca7b30c6381ae96ceb77c463928e0d78bc4aa5406463ad04d3fbb368ba51d2",
+    "compressed_sha256": "e063827d8256957b3b8a24e9afd97668a488fb78effa8db085aefefc47b0e053"
+  },
+  "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/368d5cf1461b408da826e1a766a2ab14.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/368d5cf1461b408da826e1a766a2ab14.json.gz",
+    "uncompressed_sha256": "57023099c26d447112cbadd29765a69c849cdc9989f40d69177c0af8c5a687f3",
+    "compressed_sha256": "eae64b7bd3a6b015177f110444d22affc0e5d3ee14d9a781ed83d9e6864eae9a"
+  },
+  "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/39deaa01e1e14c5baf3dcfbf511e4610.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/39deaa01e1e14c5baf3dcfbf511e4610.json.gz",
+    "uncompressed_sha256": "6ea65cab65e86b1b2e569d9cad9e478e6e6cb6baf20de6ee9173bd7994d4f731",
+    "compressed_sha256": "5702943755caa4b7ea29d158859c1785c8d5002676418f5e9f4497f400468e71"
+  },
+  "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/c15a00a0f5fa4e398506e77950e4fb3a.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/c15a00a0f5fa4e398506e77950e4fb3a.json.gz",
+    "uncompressed_sha256": "94628044e22c17a64cc6f0c6bba3be4be4b1ae087dc3c18f051e20f07dd71641",
+    "compressed_sha256": "3075e61cd475283f99401fbdeb4d30afc96372e517edd72045829736c7ca3354"
+  },
+  "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/d6e24e6ce9ee4e8f9c799e6b88a8d7ac.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/d6e24e6ce9ee4e8f9c799e6b88a8d7ac.json.gz",
+    "uncompressed_sha256": "cf69c30edc5c47c1e4efaba8e47311fbf72acf1e336e5ff23099e0385423b84b",
+    "compressed_sha256": "ce4a23ae725e9873201b17d5485e7a6508af50b552156356e4d5c5b8d774b005"
+  },
+  "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/da12a6ab321043faac8fb521cad6d531.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/da12a6ab321043faac8fb521cad6d531.json.gz",
+    "uncompressed_sha256": "b52f9afa20a7e3f65f97b2035be1cbb450864acc6aa003ab83d2194ee9799ea3",
+    "compressed_sha256": "e6c0be969969ddf9c8fd1865a436db5b3004a960dd80495b15518ca700c38da1"
+  },
+  "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/f5d6f459d9b84dea9f6a21da81884bfc.json": {
+    "path": "evidence/hardware/api/candidate-unloaded-smoke-bfb7cea843e0/evidence/raw-completions/f5d6f459d9b84dea9f6a21da81884bfc.json.gz",
+    "uncompressed_sha256": "4f87599c2beb9023f6a6fc13068416ab1e891fed600f181a8415e27ca4a3e8a1",
+    "compressed_sha256": "5188f62aeb209953264f879441f1f38a30a68a05075a968e49ec42bc4a32fe96"
+  },
+  "evidence/hardware/api/official-bench-stock-992ba05a8454/evidence/official-bench-stock-load-0-s0-c1-1792375119062498695.json": {
+    "path": "evidence/hardware/api/official-bench-stock-992ba05a8454/evidence/official-bench-stock-load-0-s0-c1-1792375119062498695.json.gz",
+    "uncompressed_sha256": "e5a552f0b34bb5e2a5cc8cdc9b46b0e0f42796f5d8574587be3f4333e8b49057",
+    "compressed_sha256": "6eaee5eebf81f2badc1154a3fb4b8a26f1ecdd38ab2f98cc07e8f7259aa429d3"
+  },
+  "evidence/hardware/api/official-bench-stock-992ba05a8454/evidence/official-bench-stock-load-1-s0-c4-1792375267891672024.json": {
+    "path": "evidence/hardware/api/official-bench-stock-992ba05a8454/evidence/official-bench-stock-load-1-s0-c4-1792375267891672024.json.gz",
+    "uncompressed_sha256": "cd57269f96e7f700904cffb4f95c5c73d75014bb5c092cf3d510122d7040507d",
+    "compressed_sha256": "bab3065f5a71420cce67d3b65f28dd37a4d69d19bb2ca187b9598963e6aa7133"
+  },
+  "evidence/hardware/api/official-bench-stock-992ba05a8454/evidence/official-bench-stock.json": {
+    "path": "evidence/hardware/api/official-bench-stock-992ba05a8454/evidence/official-bench-stock.json.gz",
+    "uncompressed_sha256": "df65a930c42c67a508492df0d76d748c2ea597483e01e18c5b98513e8631b548",
+    "compressed_sha256": "7a85db80c5d74345651bcbe656f24e40760fc905f8cb3df31eeccfb50265e011"
+  },
+  "evidence/hardware/api/official-engine-1dfc01e1f014/evidence/official-engine.json": {
+    "path": "evidence/hardware/api/official-engine-1dfc01e1f014/evidence/official-engine.json.gz",
+    "uncompressed_sha256": "74c234ab14aef679af8485390b8487deb00de995bfaeba52918e167305c3b966",
+    "compressed_sha256": "13e3adff5e5658ad58ff313dd56807eaca4572cc26d73b8a5d3ad1fd390718ba"
+  },
+  "evidence/hardware/api/official-prefill-8d88a84aa360/evidence/official-prefill.json": {
+    "path": "evidence/hardware/api/official-prefill-8d88a84aa360/evidence/official-prefill.json.gz",
+    "uncompressed_sha256": "5cd6d3f47362090eb8ac6a1fb06a9a64302a11974b4ed9401c1d7fce65b4e0bf",
+    "compressed_sha256": "9ae044ab2fe02f070ccefe308a696b55d50aaa7dc101f6c6b3a39eba068335dd"
+  },
+  "evidence/hardware/api/official-smoke-8a30ee48dbdd/evidence/official-smoke.json": {
+    "path": "evidence/hardware/api/official-smoke-8a30ee48dbdd/evidence/official-smoke.json.gz",
+    "uncompressed_sha256": "459005717f039906c2f7e7a30996246194fef149b0fcf6e759f8c37260a50508",
+    "compressed_sha256": "ea57c2d91136a41453fece8eed4cdd0e5fa56e074f87d993ef2ee87020030334"
+  },
+  "evidence/hardware/api/official-smoke-8a30ee48dbdd/evidence/raw-completions/5afaff143c7d45c69f66a1e22eb489ad.json": {
+    "path": "evidence/hardware/api/official-smoke-8a30ee48dbdd/evidence/raw-completions/5afaff143c7d45c69f66a1e22eb489ad.json.gz",
+    "uncompressed_sha256": "71f686fb490d24048821369e8982d57e4c679163e7ff2ca2779910352caf74c7",
+    "compressed_sha256": "246b1c11523974e44f61375ff8bfb076dc1cb6cac5d6e45b5636c689f325f93c"
+  },
+  "evidence/hardware/api/official-smoke-8a30ee48dbdd/evidence/raw-completions/80026e13aa584fa9acfab35343ef2a75.json": {
+    "path": "evidence/hardware/api/official-smoke-8a30ee48dbdd/evidence/raw-completions/80026e13aa584fa9acfab35343ef2a75.json.gz",
+    "uncompressed_sha256": "083369dc4d760f42f2f2ba2ecd3751ba3bc2d4a1c84dcd02ded8ef9a08a6b941",
+    "compressed_sha256": "813d2882ee45f8effddf6ea9f005554ecd364926ebe4c9cb425377292170a93c"
+  },
+  "evidence/hardware/api/official-smoke-8a30ee48dbdd/evidence/raw-completions/8d63024c5b1b4411bf6e35800d9c569a.json": {
+    "path": "evidence/hardware/api/official-smoke-8a30ee48dbdd/evidence/raw-completions/8d63024c5b1b4411bf6e35800d9c569a.json.gz",
+    "uncompressed_sha256": "2e57d5ea4981286c5f877809238a4adf71f6238d96cc84393715176ac0e34648",
+    "compressed_sha256": "bdac97599f9ec9ef243c2087a873faf208bea0a40fd02f03a0c065f4aa0dbe9b"
+  },
+  "evidence/hardware/receipts/candidate-loaded-active-engine-e110b81bd95a-input.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-active-engine-e110b81bd95a-input.json.gz",
+    "uncompressed_sha256": "e2f898258210b2a3ffa71c59aa36c78cfc4471008e2f8aa73a26ef788143bd7c",
+    "compressed_sha256": "ca34c115ce7ab83526fa482415788223596d58381c3614834aa25f6330893e38"
+  },
+  "evidence/hardware/receipts/candidate-loaded-active-engine-e110b81bd95a-status.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-active-engine-e110b81bd95a-status.json.gz",
+    "uncompressed_sha256": "684068675c496221d5a32ab2966d5a4f403cd1aa35d1816061d520efbd1fac8d",
+    "compressed_sha256": "7f925e4ec4e6f3e47678fbcb2dc31d1eeba75aa5ba6f6f3a37b4f6887293e48f"
+  },
+  "evidence/hardware/receipts/candidate-loaded-bench-54c0cdf4e62a-input.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-bench-54c0cdf4e62a-input.json.gz",
+    "uncompressed_sha256": "729720985cd2042cb69d547771dfe17f1859c1a9ca8b3fe9dbf82ca7a23b14df",
+    "compressed_sha256": "0e30cee8522f4a1679b0968aeb62e143bff4e6ada65e69d16e577be1e0a6867f"
+  },
+  "evidence/hardware/receipts/candidate-loaded-bench-54c0cdf4e62a-status.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-bench-54c0cdf4e62a-status.json.gz",
+    "uncompressed_sha256": "d4cc922b1b9fb53f7b5a16890dbca4924de26a942c24e045c928cd595c27e15b",
+    "compressed_sha256": "a389aff3a3d7180a7862f700efc4d129aca0f639dcf36b553e2f8bce01fc3581"
+  },
+  "evidence/hardware/receipts/candidate-loaded-capacity-97df8a2e5aec-input.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-capacity-97df8a2e5aec-input.json.gz",
+    "uncompressed_sha256": "081e71dc8c1c9a3a209378018c8ef138914275aa6c48d67abc33b123ab2a57e8",
+    "compressed_sha256": "6c8e57625d0eb5422ede5dd6c3a5451467cd4cc00ae4931c77912c7a0b035de8"
+  },
+  "evidence/hardware/receipts/candidate-loaded-capacity-97df8a2e5aec-status.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-capacity-97df8a2e5aec-status.json.gz",
+    "uncompressed_sha256": "a02f3e5df7b12698d948b9b50a6bd069056b381f75ad1570e2e99dfe2fd41726",
+    "compressed_sha256": "4b40599971ae24a8e19e3ed970dd29cc4306627bcd7e4aa0b19f6e3d93e30f21"
+  },
+  "evidence/hardware/receipts/candidate-loaded-cold-s0.0-a195e8ca362e-input.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-cold-s0.0-a195e8ca362e-input.json.gz",
+    "uncompressed_sha256": "c2721a5dfc59811757b609e1c424baa769c5f88b2d2a3f8db7085942eed36550",
+    "compressed_sha256": "b3fb0ead3a17ea758f2d7e4a1fb7a5d236ccc1377b9c0debc22dc03fdd467528"
+  },
+  "evidence/hardware/receipts/candidate-loaded-cold-s0.0-a195e8ca362e-status.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-cold-s0.0-a195e8ca362e-status.json.gz",
+    "uncompressed_sha256": "f90d1deafb641bf99f594c401f88eaf682d499f3ec947a444802c4e2696bebe3",
+    "compressed_sha256": "2f3a64dbea2e4d2eff76951d7ef6ee9fc48eb19a5800c3fa13802d71cf68661b"
+  },
+  "evidence/hardware/receipts/candidate-loaded-cold-s1.0-38741ed66022-input.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-cold-s1.0-38741ed66022-input.json.gz",
+    "uncompressed_sha256": "157c35b7f927c65dc58775845356b4719ed8313abf49e39534617585c14457b4",
+    "compressed_sha256": "68a7103883e9c83ccf6a53f1776c2e759afa0fb49011af09d8b87378b89e7a42"
+  },
+  "evidence/hardware/receipts/candidate-loaded-cold-s1.0-38741ed66022-status.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-cold-s1.0-38741ed66022-status.json.gz",
+    "uncompressed_sha256": "41feec63433cd5de9ba804d98deff451afb5bfc8b3aaef2f61362713268bbbe4",
+    "compressed_sha256": "aeb125921a2bb492ea9c5b2768d1bd03d17121325d8a7438b5576c6db67e217b"
+  },
+  "evidence/hardware/receipts/candidate-loaded-matched-traces-3b4c2f691f79-input.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-matched-traces-3b4c2f691f79-input.json.gz",
+    "uncompressed_sha256": "d615912d8446ef24152ef688a013e98ab98902e6543c1dcc652a7b2d37d771d9",
+    "compressed_sha256": "2c730dbfa6108b3fdc4a8d5b98b39c50f5756f7cc10619521ef19ad3c64bd536"
+  },
+  "evidence/hardware/receipts/candidate-loaded-matched-traces-3b4c2f691f79-status.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-matched-traces-3b4c2f691f79-status.json.gz",
+    "uncompressed_sha256": "794572d0b06796a5ad91cb8a751758bf0c4d6fcc7d537920e6908a0732368758",
+    "compressed_sha256": "c933d32600e725ecc3f3bc9139cc424b4b0ab91c2fb83c372ccf61347b25edf9"
+  },
+  "evidence/hardware/receipts/candidate-loaded-prefill-72328da07bd6-input.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-prefill-72328da07bd6-input.json.gz",
+    "uncompressed_sha256": "06b296235e8409d70f0a360412abd07b1bb5a1da572b50788b7d41aba6e9d672",
+    "compressed_sha256": "f430a2d2210ff8fe80a963dc2348ed8f45c3c5c323484d298fe6111961c7a012"
+  },
+  "evidence/hardware/receipts/candidate-loaded-prefill-72328da07bd6-status.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-prefill-72328da07bd6-status.json.gz",
+    "uncompressed_sha256": "bb18e2dd16bb4125c479e8c57782dce370f17281aad9819342684e1957dc37b6",
+    "compressed_sha256": "2641ee193a04a8963d791e0e90c9ea98d5336738592972bb7a705f6d6ab45cbf"
+  },
+  "evidence/hardware/receipts/candidate-loaded-smoke-30d0da41ad79-input.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-smoke-30d0da41ad79-input.json.gz",
+    "uncompressed_sha256": "5b00eb573eeb13ae5b7c902ce03fb3f8522e6fce19c995a19cd1bc130f174cfb",
+    "compressed_sha256": "377d6bd71933e2eef527e3682e78b26e8a447be5875db84e35edb5c9bffdc240"
+  },
+  "evidence/hardware/receipts/candidate-loaded-smoke-30d0da41ad79-status.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-smoke-30d0da41ad79-status.json.gz",
+    "uncompressed_sha256": "4c3bbadede909074cc9e2e5f4c16cae914a72da14f43a51ea294e5f5dbdab383",
+    "compressed_sha256": "cc2fc0eaa77eb107b139af08b8069e14926216f71fcce2388920c513e58280c6"
+  },
+  "evidence/hardware/receipts/candidate-loaded-smoke-fd54a8cc3996-input.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-smoke-fd54a8cc3996-input.json.gz",
+    "uncompressed_sha256": "0e7d26047961249d37b8bc2f01a56dbb9b6db3b829226048b9ed2508e599c7fe",
+    "compressed_sha256": "116786894c49947177a08f5ec043ea2948ce73ff2c021c5a3101e6a18dd33948"
+  },
+  "evidence/hardware/receipts/candidate-loaded-smoke-fd54a8cc3996-status.json": {
+    "path": "evidence/hardware/receipts/candidate-loaded-smoke-fd54a8cc3996-status.json.gz",
+    "uncompressed_sha256": "4739757327ecb3baf2fa18175fa78e6d952121557f1e5bc264003f64ef89bb94",
+    "compressed_sha256": "1930313896ca52d47ddfd5410aa766012fe184942fd254c8ac38bb3c284d582c"
+  },
+  "evidence/hardware/receipts/candidate-unloaded-bench-stock-174594048617-input.json": {
+    "path": "evidence/hardware/receipts/candidate-unloaded-bench-stock-174594048617-input.json.gz",
+    "uncompressed_sha256": "0e704dde193a26ba521d97b5a122f6ce45857ab1f8734b10463b0636258c49e8",
+    "compressed_sha256": "2106448f9b390b8ce333e4d9a4f494ea4b1a05e61eeab729c7615f46e12b8b9b"
+  },
+  "evidence/hardware/receipts/candidate-unloaded-bench-stock-174594048617-status.json": {
+    "path": "evidence/hardware/receipts/candidate-unloaded-bench-stock-174594048617-status.json.gz",
+    "uncompressed_sha256": "d3b815ad46269baae2502fb4b0ea29622311982bdf8f95448728a9dc1ea9d711",
+    "compressed_sha256": "9d5ab8ebc6d33ad1a1ae1546e60c0af101f926b33066737d2acee468062c0899"
+  },
+  "evidence/hardware/receipts/candidate-unloaded-matched-traces-a828f8216cc7-input.json": {
+    "path": "evidence/hardware/receipts/candidate-unloaded-matched-traces-a828f8216cc7-input.json.gz",
+    "uncompressed_sha256": "3cf91f85f054ac2f3af9c4a28c61036d78a63b31da65075103e0680f7a029670",
+    "compressed_sha256": "3d2adb6f2f9681eebc35095822cbeafa37609758d1c1449b4d17784facbf145b"
+  },
+  "evidence/hardware/receipts/candidate-unloaded-matched-traces-a828f8216cc7-status.json": {
+    "path": "evidence/hardware/receipts/candidate-unloaded-matched-traces-a828f8216cc7-status.json.gz",
+    "uncompressed_sha256": "dec094dc61ab17be067e0f4c00e526204f6998a1c83a8fe663e3931368c58eaa",
+    "compressed_sha256": "e9499723cd570b2839b79d367f4312a04aa2d875bb8e7073beab82e1535b80fa"
+  },
+  "evidence/hardware/receipts/candidate-unloaded-smoke-bfb7cea843e0-input.json": {
+    "path": "evidence/hardware/receipts/candidate-unloaded-smoke-bfb7cea843e0-input.json.gz",
+    "uncompressed_sha256": "68edbdaeeb11f0e55d4930bcda70a12214afcc5cc2ed7591317c6904f4f29633",
+    "compressed_sha256": "739229ad281197480771071494905e23306ea3c9b6cf9ebfe44c2be91cd46eff"
+  },
+  "evidence/hardware/receipts/candidate-unloaded-smoke-bfb7cea843e0-status.json": {
+    "path": "evidence/hardware/receipts/candidate-unloaded-smoke-bfb7cea843e0-status.json.gz",
+    "uncompressed_sha256": "ee64199987e28c6740a52b023cc178d9ebbab0042bd0cb27c468150606c514bf",
+    "compressed_sha256": "fc089c270654eee70f4b44c7000c90bf722efa739275021a4eb37beb754ec45f"
+  },
+  "evidence/hardware/receipts/consumer-cost-60a46e3d5371-status.json": {
+    "path": "evidence/hardware/receipts/consumer-cost-60a46e3d5371-status.json.gz",
+    "uncompressed_sha256": "f8223d6b924db95248cf2bdef7337a6e55de0e22ba3d29c9a6370ac7fb138ffb",
+    "compressed_sha256": "eaf65f32caac1b72722bcd84dc0e3009b53e4c04b5ef44af01c69973ec98cc0e"
+  },
+  "evidence/hardware/receipts/consumer-cost-83a3629b7f3b-status.json": {
+    "path": "evidence/hardware/receipts/consumer-cost-83a3629b7f3b-status.json.gz",
+    "uncompressed_sha256": "7c09f2c27165c5223484a0e8b9823d916318e5aa381f243883b356b69531d83a",
+    "compressed_sha256": "8d67ef26230b57c20aa3b13670f612c461af6f3dfb6c18c3eff62ef4e43dd35e"
+  },
+  "evidence/hardware/receipts/official-bench-stock-992ba05a8454-input.json": {
+    "path": "evidence/hardware/receipts/official-bench-stock-992ba05a8454-input.json.gz",
+    "uncompressed_sha256": "0df035ac092451a4388d3149bbfd667e1021aaaa01c7798d43be924a953386fa",
+    "compressed_sha256": "2b2a08145309d4a82a99bc86bf69f30fd97af45b13b1102e97d02df952a7c88c"
+  },
+  "evidence/hardware/receipts/official-bench-stock-992ba05a8454-status.json": {
+    "path": "evidence/hardware/receipts/official-bench-stock-992ba05a8454-status.json.gz",
+    "uncompressed_sha256": "2859e472aaf2a6dbc7c1fd3dea124be68be89e5ab602a8c70c5f24a5a7374492",
+    "compressed_sha256": "bedba679256ed2ebbd446ad76f05442e4a224829cf179b28f0fff637a63af976"
+  },
+  "evidence/hardware/receipts/official-cold-s0-5f90ddf6a832-input.json": {
+    "path": "evidence/hardware/receipts/official-cold-s0-5f90ddf6a832-input.json.gz",
+    "uncompressed_sha256": "72adfc5808de6bbab5a272a773231dd97ead7a6f9ff1615aaf204f170b0db008",
+    "compressed_sha256": "772e7031779c343dfe32ba2c615b376701cd11f3b5771abe12cdae6a78f6f786"
+  },
+  "evidence/hardware/receipts/official-cold-s0-5f90ddf6a832-status.json": {
+    "path": "evidence/hardware/receipts/official-cold-s0-5f90ddf6a832-status.json.gz",
+    "uncompressed_sha256": "f8d2fcfd19d8a2e5f154a0643c20ab72cf3a279ad92870835a8c5ad20028285d",
+    "compressed_sha256": "dbd55e90fd3dee117ddd1ccd2ff1be072c600b3f34f98b0b75e9486b02e57910"
+  },
+  "evidence/hardware/receipts/official-engine-1dfc01e1f014-input.json": {
+    "path": "evidence/hardware/receipts/official-engine-1dfc01e1f014-input.json.gz",
+    "uncompressed_sha256": "7d74d43c17c83e6b52836cb0185ca43b16d8174d86f025edb0245ea61378f363",
+    "compressed_sha256": "a3240f0f5106df6828e8f1d9212d8401e283ef45a199f0164aecbac5de84b7f6"
+  },
+  "evidence/hardware/receipts/official-engine-1dfc01e1f014-status.json": {
+    "path": "evidence/hardware/receipts/official-engine-1dfc01e1f014-status.json.gz",
+    "uncompressed_sha256": "7797f1d98edd05325a25a2b9355707dcea0251710016957cac303832f00a4c5b",
+    "compressed_sha256": "c934f24ffc8a81f0fbc164f3ae3d3a20cead42b854e95374d712b30ad583d67f"
+  },
+  "evidence/hardware/receipts/official-matched-traces-55a2592322c7-input.json": {
+    "path": "evidence/hardware/receipts/official-matched-traces-55a2592322c7-input.json.gz",
+    "uncompressed_sha256": "4b5bee207548e746d54061352cab57a903a5d4e0282031197c87dce1890b4e42",
+    "compressed_sha256": "7aa4a26c78d6084b159b57fc5986040826b21b82438392c1dc1806fe8c4b7970"
+  },
+  "evidence/hardware/receipts/official-matched-traces-55a2592322c7-status.json": {
+    "path": "evidence/hardware/receipts/official-matched-traces-55a2592322c7-status.json.gz",
+    "uncompressed_sha256": "a5e99f77e7ab72bc6be160af84aebeef8e840c854e1972eff2737bd2f42ccb5d",
+    "compressed_sha256": "be3ad386a1562a11c8dc9dac0e4c89604d0dacefb9824e3c3c9ced6894b4da09"
+  },
+  "evidence/hardware/receipts/official-prefill-8d88a84aa360-input.json": {
+    "path": "evidence/hardware/receipts/official-prefill-8d88a84aa360-input.json.gz",
+    "uncompressed_sha256": "716955202ab54ae5edd5160a0f6b2b8631dde3cdc2d689d8dcc059ca906b458c",
+    "compressed_sha256": "4161084c9a794e33dc972c9712187eb3b8a326169ce70c54c35eb5e288f411bd"
+  },
+  "evidence/hardware/receipts/official-prefill-8d88a84aa360-status.json": {
+    "path": "evidence/hardware/receipts/official-prefill-8d88a84aa360-status.json.gz",
+    "uncompressed_sha256": "eab85a8030e6afb78d73bf1dbea16c03f76f8e5257889b5852c08f44d6e939c4",
+    "compressed_sha256": "355a01843e84731adcc8b97b567e2c45af82adaed524dedb2f60f31a47363085"
+  },
+  "evidence/hardware/receipts/official-smoke-8a30ee48dbdd-input.json": {
+    "path": "evidence/hardware/receipts/official-smoke-8a30ee48dbdd-input.json.gz",
+    "uncompressed_sha256": "1db4e04338788fba7dc79d52370d665f61cd559058f36ab7b194c15af929c1f8",
+    "compressed_sha256": "74a596efa937169dbb68d2e99d352229ecde1686f66b13d408142300ef5e9d03"
+  },
+  "evidence/hardware/receipts/official-smoke-8a30ee48dbdd-status.json": {
+    "path": "evidence/hardware/receipts/official-smoke-8a30ee48dbdd-status.json.gz",
+    "uncompressed_sha256": "7b36408c37325d31e773291e38bbf9e2f88f3a622f174019143251c50fdc3b5a",
+    "compressed_sha256": "936da478181961ba27a6f437ce4c191fe70a041dcfa36a1065166a9b622b93bc"
+  },
+  "evidence/hardware/cold/candidate-loaded-cold-s0.0-a195e8ca362e/cold-latency.json": {
+    "path": "evidence/hardware/cold/candidate-loaded-cold-s0.0-a195e8ca362e/cold-latency.json.gz",
+    "uncompressed_sha256": "29cb19bd96c872a733681aed221e4dec5fca115aa7b3ada58fdb1e70aee11db9",
+    "compressed_sha256": "188a386318f9817cf94e481aff3d7097d928df739b7e18586258cb09bacb80df"
+  },
+  "evidence/hardware/cold/candidate-loaded-cold-s1.0-38741ed66022/cold-latency.json": {
+    "path": "evidence/hardware/cold/candidate-loaded-cold-s1.0-38741ed66022/cold-latency.json.gz",
+    "uncompressed_sha256": "8537edf9f5e87c9991aaff1924bee95886f2bbec8067a0aa21c3e6f72e683f07",
+    "compressed_sha256": "77f9ed7050fac7b604c84c224555ade1e332866cbe6b9bb1c517953859ade2e0"
+  },
+  "evidence/hardware/cold/official-cold-s0-5f90ddf6a832/cold-latency.json": {
+    "path": "evidence/hardware/cold/official-cold-s0-5f90ddf6a832/cold-latency.json.gz",
+    "uncompressed_sha256": "cce372789c367e92f47992b8da5afea2223b05fe40bf9a3f2e29b9909558d05f",
+    "compressed_sha256": "f9c5b37be24aa142b91a9160d26bd78ea654659d8788784a778aa2441a00669e"
+  }
+}

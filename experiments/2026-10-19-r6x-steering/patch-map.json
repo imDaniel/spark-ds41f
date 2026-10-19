@@ -1,0 +1,111 @@
+{
+  "upstream_head": "7316c7f9fae1bc4a0b7ab1848de0db4143eec5d2",
+  "preview_commit": "1cc2919578e912240809e924c387f4038e25d2ab",
+  "replayed_head": "ebb44766d6f04d3a9272b712778d7f2fa2cec1fd",
+  "expected_tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4",
+  "source_diff_unchanged_by_export": true,
+  "patch_count": 188,
+  "upstream_patch_count": 176,
+  "downstream_patch_count": 12,
+  "mapping": [
+    {
+      "old_patch": "experiments/2026-10-18-request-steering/vllm/0181-checkpoint-bound-profile.patch",
+      "old_patch_sha256": "2048ca5ab74b300471b95595b22ffb0afa45d6a483079a517a91a8835f6e31f7",
+      "preview_commit": "6276cfb3c1eae99ce5b4624bfa46ff265e54ca2e",
+      "new_patch": "0500-checkpoint-bound-profile.patch",
+      "new_patch_sha256": "8ea485b48627be4efca55afc4ac997b7d4795b596647ef9a641acb1107ef8952",
+      "replayed_commit": "669efafa322d4e25fd112223223fd114518575cc"
+    },
+    {
+      "old_patch": "experiments/2026-10-18-request-steering/vllm/0182-request-contract-and-cache-identity.patch",
+      "old_patch_sha256": "075b5fb269da9943c554c95a65f2412ec01e66e2bc5331108f711056e10348b3",
+      "preview_commit": "cdbde0ff933ca444881cbefff50b1fe7ffa71ae9",
+      "new_patch": "0501-request-contract-and-cache-identity.patch",
+      "new_patch_sha256": "698fdcb4f71d052c2e55884e7c6487e5aa005f4e7f4f50c0562869aed16bb6fa",
+      "replayed_commit": "12f4d94dc6c58e6ea4e1b337c10bfc9ebf3ae7cf"
+    },
+    {
+      "old_patch": "experiments/2026-10-18-request-steering/vllm/0183-v2-request-control-data.patch",
+      "old_patch_sha256": "adf4d7ea1c57165e7ac0a7f11c88ff29ced426831e88903d18b93c0eb4f928c7",
+      "preview_commit": "3a0186d6670b0db5b2dec37f7c3ec9416ad5bece",
+      "new_patch": "0502-v2-request-control-data.patch",
+      "new_patch_sha256": "951b5f4144448a0207cc3bd47d09cd8cf4e53086d4b27e2e191f13b4a98ab83c",
+      "replayed_commit": "a9d8e25c2312d0fdc2b32f78b68bcc74d0409af7"
+    },
+    {
+      "old_patch": "experiments/2026-10-18-request-steering/vllm/0184-target-writer-projection.patch",
+      "old_patch_sha256": "2d041e35d3b003aa28383ad420abbdaab41bf7906a05622db578ec22f0184b33",
+      "preview_commit": "6f6572e509ecc4832d43f92f43f95511358631ba",
+      "new_patch": "0503-target-writer-projection.patch",
+      "new_patch_sha256": "ec60018cc51b34657dbdb489420776cc28437da6e9eec6195c2ea86f445546c1",
+      "replayed_commit": "7277d3bdcc6497b1ca5a129e0a5c7b0b309b71bb"
+    },
+    {
+      "old_patch": "experiments/2026-10-18-request-steering/vllm/0185-dummy-controls-and-wire-validation.patch",
+      "old_patch_sha256": "426ca30d92e3cb4650c65134d6d46b93c1d7c8e6e6f5a0099af939d4d53f0d5d",
+      "preview_commit": "bf6a4f1bd70927a556765a18d07bda3f51174bbc",
+      "new_patch": "0504-dummy-controls-and-wire-validation.patch",
+      "new_patch_sha256": "98e1d45d71fca8d97a6fa94a5025f453b2f4ca77e2f694d72801087f32e4a9a6",
+      "replayed_commit": "64b3cae8f32dc2450de71d8975b9fecd31f7249e"
+    },
+    {
+      "old_patch": "experiments/2026-10-18-request-steering/vllm/0186-client-admission-errors.patch",
+      "old_patch_sha256": "9f89fd4a669afbf2338bca6a3f2a150a79e0106d59ffb0a3d3f8e85952f451e4",
+      "preview_commit": "6b14dc7f1420667cf6b83a55d777e8f8c0f7f7cf",
+      "new_patch": "0505-client-admission-errors.patch",
+      "new_patch_sha256": "16a3c76ac1cb27771cf21c6f052b0faf8829f79c123a6fa2d6336c7d537255fa",
+      "replayed_commit": "e5f87fe64dd4ebe64756ee2afb6f940ee73aeda6"
+    },
+    {
+      "old_patch": "experiments/2026-10-18-request-steering/vllm/0187-top-level-request-contract.patch",
+      "old_patch_sha256": "3069c918d319339c50ddee54e2faa29e12ab0aa433b18c534e2c5d9da8523fb1",
+      "preview_commit": "c2af43501e28f58958cf2ee5d68a17bd5ac4c271",
+      "new_patch": "0506-top-level-request-contract.patch",
+      "new_patch_sha256": "ce82a58d9aa24d30a1cecb15e59bbd9c444f426937357e32c384c1897efe31ad",
+      "replayed_commit": "a28f31e4f1d496536f7911ab34d04bb00cc05817"
+    },
+    {
+      "old_patch": "experiments/2026-10-18-request-steering/vllm/0188-profile-artifact-and-provenance.patch",
+      "old_patch_sha256": "8ca7816ccc91897f0eaf25c7785899f5e9f171d9f7d9b3f3c81051235415ef26",
+      "preview_commit": "ac7426bf1605520511605d353643c99dd66a6a1a",
+      "new_patch": "0507-profile-artifact-and-provenance.patch",
+      "new_patch_sha256": "7ace00f4e4a3a5986dc1ef0af3a446142073d983deb100bfe4dc7d9232d7c3b2",
+      "replayed_commit": "973440cf7f2fe4825342efcaddc069ae38224fce"
+    },
+    {
+      "old_patch": "experiments/2026-10-18-steering-consume/vllm/0189-stock-route-and-consumer-fusion.patch",
+      "old_patch_sha256": "05f78e16399d18a564e3c260f5b268ab768c0d85c1877c3a195053ea063fa13d",
+      "preview_commit": "bb75e1ca408956cf3550f14b65897c7c274f4de9",
+      "new_patch": "0508-stock-route-and-consumer-fusion.patch",
+      "new_patch_sha256": "88f186724b2271a632851402a46e669c7c5f8eac772a985fcae6cbb38c3cdedf",
+      "replayed_commit": "08080de2135364e4afde71441470f946c5599518"
+    },
+    {
+      "old_patch": "experiments/2026-10-18-steering-consume/vllm/0190-stock-and-consume-validation.patch",
+      "old_patch_sha256": "cd21982bafdaf9cdb4595dc4f104694a3df154df7b04df63cdf6f9ade9ee0aac",
+      "preview_commit": "e2e16e51cf6fce8518553b2718e53fde64120266",
+      "new_patch": "0509-stock-and-consume-validation.patch",
+      "new_patch_sha256": "36759c5befe0b390cac923217b0bca3d3f36f00557ae65808747766ed04db0a7",
+      "replayed_commit": "2478a8257f0884084d83c0b26369c07fcfcc1b70"
+    },
+    {
+      "old_patch": "experiments/2026-10-18-steering-consume/vllm/0191-preserve-manager-less-profiling.patch",
+      "old_patch_sha256": "cd04d05dab2e4a18d1878bdcb1ef43e8005aa521c56977b6e92b92f4d31ff049",
+      "preview_commit": "e865219d8ba875fcee3d017ff73e9ba28218cb42",
+      "new_patch": "0510-preserve-manager-less-profiling.patch",
+      "new_patch_sha256": "2c5f5c074c765dc897d70973769f3ed29589e7ffea109e42413f9e43e8cb65a7",
+      "replayed_commit": "8cc0898068885baf1a8d76f1d873264a652d4c5d"
+    },
+    {
+      "old_patch": "experiments/2026-10-18-steering-consume/vllm/0192-consumer-region-stores.patch",
+      "old_patch_sha256": "3c69600109e9c3d00fa16eb4cb686df38fff7c4553ab1597911b64a37103ce9c",
+      "preview_commit": "1cc2919578e912240809e924c387f4038e25d2ab",
+      "new_patch": "0511-consumer-region-stores.patch",
+      "new_patch_sha256": "b5a99b83dce751ae0b15575ac93412022247115455dcf5f52483defd765332fe",
+      "replayed_commit": "ebb44766d6f04d3a9272b712778d7f2fa2cec1fd"
+    }
+  ],
+  "previous_component_head": "43608a373a5d1a062dbd754d37031fb5314deabc",
+  "previous_component_tree": "efcbb1ef861a59d22bace43e998067de9c1708de",
+  "previous_upstream_author_head": "c001cc4ed77bef686ddd006be0dd706b9c15d7b7"
+}

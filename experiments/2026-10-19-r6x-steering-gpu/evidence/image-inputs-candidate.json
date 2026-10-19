@@ -1,0 +1,33 @@
+{
+  "arm": "candidate",
+  "head": "ebb44766d6f04d3a9272b712778d7f2fa2cec1fd",
+  "tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4",
+  "parent": "sha256:a63259a196d82dae51016d487ed43093f2045261adcb41045cfe9c1be29f70d2",
+  "tag": "deepseek-v4.1-flash:r6x-candidate-ebb44766-20261019",
+  "source_archive_sha256": "cf7a8d69d16511d756050cac7b6a758d0eb25f0883efbe4b2fae8306e431c403",
+  "changed_files": [
+    "tests/kernels/moe/test_deepseek_v41_tilelang_moe.py",
+    "tests/model_executor/test_b12x_warmup.py",
+    "tests/models/test_deepseek_v4_1_steering_consume.py",
+    "tests/models/test_deepseek_v4_1_steering_gpu.py",
+    "tests/models/test_deepseek_v4_1_steering_state.py",
+    "tests/test_config.py",
+    "tests/v1/spec_decode/test_adaptive_verification.py",
+    "tests/v1/worker/test_mixed_warmup_gate.py",
+    "vllm/config/speculative.py",
+    "vllm/model_executor/layers/fused_moe/tilelang.py",
+    "vllm/models/deepseek_v4_1/nvidia/model.py",
+    "vllm/models/deepseek_v4_1/nvidia/model_state.py",
+    "vllm/models/deepseek_v4_1/nvidia/vl_model.py",
+    "vllm/models/deepseek_v4_1/steering/consume.py",
+    "vllm/models/deepseek_v4_1/steering/ops.py",
+    "vllm/models/deepseek_v4_1/steering/runtime.py",
+    "vllm/models/deepseek_v4_1/tilelang/gemm.py",
+    "vllm/models/deepseek_v4_1/tilelang/mhc.py",
+    "vllm/models/deepseek_v4_1/tilelang/moe.py",
+    "vllm/v1/worker/gpu/cudagraph_utils.py",
+    "vllm/v1/worker/gpu/model_input_variant.py",
+    "vllm/v1/worker/gpu/model_runner.py",
+    "vllm/v1/worker/gpu/spec_decode/adaptive_verification.py"
+  ]
+}

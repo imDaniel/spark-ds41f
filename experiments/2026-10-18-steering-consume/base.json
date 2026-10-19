@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "status": "gpu-evidence-recorded-unpromoted",
+  "created_on": "2026-10-19",
+  "work_started_on": "2026-10-18",
+  "deployment_base": "38e3b4f6ea0beb8625289394b347ab8f74f7b868",
+  "source_base": "19f2c20ed4d64ae22bd009ceacadd85e2a81e354",
+  "parent_patch_head": "eddd508799a2508f12114b36fbd20cf478f045e9",
+  "parent_expected_tree": "5de1eabc3f19b3f646796ef802cbf26a181661a6",
+  "author_patch_count": 172,
+  "inherited_steering_patch_count": 8,
+  "optimization_patch_count": 4,
+  "total_patch_count": 184,
+  "patch_head": "43608a373a5d1a062dbd754d37031fb5314deabc",
+  "expected_tree": "efcbb1ef861a59d22bace43e998067de9c1708de",
+  "patchset_sha256": "d2ddb717e32b0ad21528afc045dbb76abbfa28dde38f104b50d09536f7b919e5",
+  "profile_id": "heretic-1017-attn-v1",
+  "profile_alpha": 2.5,
+  "request_scale_range": [
+    0,
+    4
+  ],
+  "scope": "attention",
+  "image_built": true,
+  "gpu_tests_run": true,
+  "four_node_operations_run": true,
+  "weights_modified": false,
+  "performance_measured": true,
+  "validation": "VALIDATION.md",
+  "validation_results": {
+    "prepared_macos_cpu": {
+      "passed": 108,
+      "skipped": 0,
+      "external_pytest_selection_isolated": true,
+      "tree": "efcbb1ef861a59d22bace43e998067de9c1708de"
+    },
+    "prepared_linux_cpu": {
+      "passed": 108,
+      "skipped": 0,
+      "pinned_collection_verified": true
+    },
+    "vllm_replay": {
+      "patches": 184,
+      "new_patches": 4,
+      "head_tree_patchset_verified": true
+    },
+    "full_build_inputs": "passed-with-verified-reuse-of-unchanged-inputs",
+    "build_check": "passed",
+    "candidate_doctor": "passed",
+    "release_test_classification": {
+      "selected": 122,
+      "gate": 65,
+      "excluded": 57,
+      "problems": 0
+    },
+    "github_actions": "validate workflow enabled after disabled_fork discovery; remote result tracked by PR #4 SHA, not included in local results",
+    "full_vllm_precommit": "not fully green: 9 inherited mypy diagnostics and inherited CUDA API lint; no new mypy errors",
+    "gpu_and_performance": "29 GPU cases, four-rank loaded/unloaded startup/graphs, independent official/parent comparisons, all-rank stock traces and exact 1M request passed; results in ../2026-10-19-steering-gpu/results.json; not promoted",
+    "deployment_cpu_suite": {
+      "tests": 438,
+      "status": "passed-isolated-example-site",
+      "skipped": 0,
+      "scope": "e428679 Actions deployment suite, including legacy diagnostic batch compatibility"
+    },
+    "runtime_contract_guard": "sizing, serve args, model and profile equal parent; name/image/cache isolated",
+    "initial_profile_regression": {
+      "cases": 4,
+      "before_fix": "failed-at-manager-assert",
+      "after_fix": "passed-to-eager-forward",
+      "gpu_startup_qualified": true,
+      "distinct_runner_paths": 2,
+      "explicit_kv_budget_worker_branches_covered": false,
+      "scope": "loaded/unloaded runner profile chain; KV fixture values do not exercise worker budget branches",
+      "gpu_budget_scope": "real startup with explicit 10.5 GiB KV budget, loaded and unloaded; default-budget worker branch not separately qualified",
+      "gpu_default_budget_branch_verified": false
+    },
+    "partial_collection_regression": {
+      "executed": 1,
+      "expected": 108,
+      "rejected": true
+    },
+    "gate_status_negative_regression": {
+      "complete_pinned_cases": 108,
+      "independent_status_guards": [
+        "failures",
+        "errors",
+        "skipped",
+        "zero-tests"
+      ],
+      "status_guard_removal_detected": true
+    },
+    "gpu_first_run": {
+      "tree": "c035b638c729a0beb24e7deccc29e7c4e0fa9eec",
+      "passed": 25,
+      "failed": 4,
+      "cause": "TileLang immutable value escapes conditional region; consumer-only store fix appended as 0192"
+    },
+    "prior_cpu_tree": "c035b638c729a0beb24e7deccc29e7c4e0fa9eec",
+    "gpu_current": {
+      "tree": "efcbb1ef861a59d22bace43e998067de9c1708de",
+      "passed": 29,
+      "failed": 0,
+      "image": "sha256:6bfca1ba83e22bd6ed3933fa8837f25131bbbb791ad6e6d7c4c0587977ad597f"
+    },
+    "independent_stock_mhc": {
+      "cases": 12,
+      "stock_bits_equal": true,
+      "whole_model_scope": "canonical API observations for three 64-token prompts and a 1/0/4/0/1 sequence; not hidden-state tensor bytes",
+      "whole_model_api_observations_verified": true
+    },
+    "prepared_arm_image_cpu": {
+      "tree": "efcbb1ef861a59d22bace43e998067de9c1708de",
+      "passed": 108,
+      "skipped": 0,
+      "pinned_collection_verified": true
+    },
+    "real_request_correctness": {
+      "loaded_unloaded_stock_bits_equal": true,
+      "active_zero_active": true,
+      "default_scale_one": true,
+      "mixed_decode": true,
+      "cancel_and_slot_reuse": true,
+      "mixed_long_sp_ced_prefill": true,
+      "all_rank_ooms": 0,
+      "all_rank_allocation_retries": 0
+    },
+    "trace_stock_path": {
+      "ranks": 4,
+      "stages": [
+        "prefill",
+        "decode"
+      ],
+      "row_kernels": 0,
+      "dot_kernels": 0,
+      "projection_kernels": 0,
+      "steering_custom_ops": 0
+    },
+    "exact_1m_request": {
+      "input_tokens": 1048568,
+      "output_tokens": 8,
+      "total_tokens": 1048576,
+      "scale": 1,
+      "passed": true,
+      "post_request_stock_bits_equal": true
+    },
+    "independent_reference_results": "../2026-10-19-steering-gpu/results.json",
+    "evidence_tooling": "strict completion and trace event gates, unique run dirs, unique/fresh thermal nodes; existing receipts rechecked without GPU",
+    "performance_acceptance": "throughput close in short warm-document runs; C4 TTFT mean +6.30%, p90 +36.15% unexplained; not all-metric or +-1 percent acceptance",
+    "evidence_tooling_cpu_checks": {
+      "regressions": 25,
+      "deployment_suite": 463,
+      "skipped": 0,
+      "scope": "isolated staged-tree export; no runtime changes or new GPU execution"
+    }
+  }
+}

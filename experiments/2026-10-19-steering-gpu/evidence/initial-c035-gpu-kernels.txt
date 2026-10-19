@@ -1,0 +1,897 @@
+.........................FFFF                                            [100%]
+=================================== FAILURES ===================================
+_________ test_fused_consumer_graph_matches_independent_projection[3] __________
+tests/models/test_deepseek_v4_1_steering_gpu.py:234: in test_fused_consumer_graph_matches_independent_projection
+    layer.declare_kernels()
+vllm/models/deepseek_v4_1/tilelang/mhc.py:737: in declare_kernels
+    prepare.declare(calls, bind=bind, warm=lambda: _warm_post_and_collapse(hidden))
+vllm/models/deepseek_v4_1/tilelang/prepare.py:118: in declare
+    tilelang.prepare(list(calls()))
+/usr/local/lib/python3.12/dist-packages/tilelang/jit/__init__.py:624: in prepare
+    pending[(id(impl), key)] = (impl, key, impl.get_tir(*args, **kwargs))
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/jit/__init__.py:388: in get_tir
+    tir = self.func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1719: in __call__
+    return self.get_tir(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1711: in get_tir
+    self.p1_cache[bound.p1_key] = self._build_tir_template(**bound.compile_kwargs)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1679: in _build_tir_template
+    return TirTemplate.from_lazy_style(self.orig_func.__name__, self.orig_func(*args, **kwargs))
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/tilelang/mhc.py:277: in project_streams
+    @T.prim_func
+     ^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1800: in prim_func
+    return impl(func) if func is not None else impl
+           ^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1798: in impl
+    raise e
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1791: in impl
+    ir_gen.gen(builder)(**annot)
+vllm/models/deepseek_v4_1/tilelang/mhc.py:295: in mhc_project_streams
+    project_body(
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1065: in __call__
+    res = self.ir_gen.gen(builder)(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/tilelang/mhc.py:194: in project_body
+    project_columns(xv, direction, doses, dots, alpha, src, h0 + c0, COLS)
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1065: in __call__
+    res = self.ir_gen.gen(builder)(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/steering/consume.py:40: in project_columns
+    xv[v] = T.Cast(T.bfloat16, value)
+                               ^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:910: in rval
+    raise RuntimeError(
+E   RuntimeError: Immutable variable `value` is used outside its defining region!
+E   variable `value` is defined in frame: script.ir_builder.tirx.IfFrame(stmts=(), condition=T.fabs(hi) < T.float32("inf"), then_stmts=(factor = T.float32()
+E   d = T.float32()
+E   coefficient: T.float32 = T.ieee_mul(factor, d, "rn"), factor = T.float32()
+E   d = T.float32()
+E   coefficient = T.float32()
+E   factor_lo = T.float32()
+E   coefficient_lo: T.float32 = T.ieee_add(T.ieee_fmaf(factor, d, coefficient * T.float32(-1.0), "rn"), T.ieee_mul(factor_lo, d, "rn"), "rn"), coefficient = T.float32()
+E   lo = T.float32()
+E   coefficient_lo = T.float32()
+E   hi = T.float32()
+E   correction: T.float32 = T.ieee_add(T.ieee_add(T.ieee_mul(coefficient, lo, "rn"), T.ieee_mul(coefficient_lo, hi, "rn"), "rn"), T.ieee_mul(coefficient_lo, lo, "rn"), "rn"), coefficient = T.float32()
+E   hi = T.float32()
+E   value = T.float32()
+E   correction = T.float32()
+E   value_1: T.float32 = T.ieee_sub(T.ieee_fmaf(coefficient * T.float32(-1.0), hi, value, "rn"), correction, "rn")), else_stmts=(value = T.float32()
+E   factor = T.float32()
+E   d = T.float32()
+E   hi = T.float32()
+E   value_1: T.float32 = T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d, "rn"), hi, "rn"), "rn"),)), current frames: [script.ir_builder.tirx.PrimFuncFrame(stmts=(), name="mhc_project_streams", args=(X_handle, R_handle, post_handle, comb_handle, pre_in_handle, Fn_handle, R_out_handle, P_handle, S_handle, C_handle, Q_handle, direction_handle, doses_handle, dots_handle, alpha), is_private=False, ret_type=None, buffer_map={X_handle: X, R_handle: R_1, post_handle: post, comb_handle: comb, pre_in_handle: pre_in, Fn_handle: Fn, R_out_handle: R_out, P_handle: P, S_handle: S, C_handle: C, Q_handle: Q, direction_handle: direction, doses_handle: doses, dots_handle: dots}, attrs={}, env_threads={}, root_alloc_buffers=()), <tilelang.language.eager.builder.MacroFrame object at 0xe5288d074590>, tl.KernelLaunchFrame(stmts=(), frames=(script.ir_builder.tirx.ForFrame(stmts=(), vars=(bx,), doms=(I.Range(0, 40),)), script.ir_builder.tirx.ForFrame(stmts=(), vars=(by,), doms=(ir.Range(0x497158f0),)), script.ir_builder.tirx.ForFrame(stmts=(), vars=(tx, ty, tz), doms=(I.Range(0, 1), I.Range(0, 1), I.Range(0, 1))), script.ir_builder.tirx.SSBlockFrame(stmts=(bx = T.int32()
+E   h0: T.int32 = bx * 128, tx = T.int32()
+E   row: T.int32 = tx // 8, tx = T.int32()
+E   c0: T.int32 = tx % 8 * 16, by = T.int32()
+E   row = T.int32()
+E   token: T.int32 = by * 16 + row, token = T.int32()
+E   M = T.int32()
+E   src: T.int32 = T.min(token, M - 1), C_local = T.Buffer((16, 32), scope="local.fragment")
+E   T.fill(T.region(C_local[0, 0], 2, 16, 32), 0), for i in T.parallel(8):
+E       for j in T.parallel(128):
+E           F_shared = T.Buffer((32, 128), scope="shared.dyn")
+E           F_shared[24 + i, j] = T.float32(0.0)
+E           F_mid = T.Buffer((32, 128), scope="shared.dyn")
+E           F_mid[24 + i, j] = T.float32(0.0)
+E           F_low = T.Buffer((32, 128), scope="shared.dyn")
+E           F_low[24 + i, j] = T.float32(0.0), for k in T.unroll(4):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       pre_in = T.Buffer((M, 4), strides=(4, 1))
+E       src = T.int32()
+E       coef[k] = pre_in[src, k], for k in T.unroll(4):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       post = T.Buffer((M, 4), strides=(4, 1))
+E       src = T.int32()
+E       coef[4 + k] = post[src, k], for k in T.unroll(16):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       comb = T.Buffer((M, 4, 4), strides=(16, 4, 1))
+E       src = T.int32()
+E       coef[8 + k] = comb[src, k // 4, k % 4], for v in T.vectorized(16):
+E       xv = T.Buffer((16,), "bfloat16", scope="local")
+E       M = T.int32()
+E       X = T.Buffer((1, M, 5120), "bfloat16", strides=(5120 * M, 5120, 1))
+E       src = T.int32()
+E       h0 = T.int32()
+E       c0 = T.int32()
+E       xv[v] = X[0, src, h0 + c0 + v], h0 = T.int32()
+E   c0 = T.int32()
+E   col: T.int32 = h0 + c0), name="tilelang_root", iter_vars=(), reads=(), writes=(), init=None, alloc_buffers=(A_shared, F_shared, F_mid, F_low, C_local, xv, rv, nv, av, sq, col, coef, red), match_buffers=(), annotations={"tl.launch_threads": (128, 1, 1)}, iter_values=(), predicate=None, no_realize=False)), grid_vars=(bx, by), grid_extents=(40, (M + 16 - 1) // 16), thread_vars=(tx, ty, tz), thread_extents=(128, 1, 1)), <tilelang.language.eager.builder.MacroFrame object at 0xe5288d0745c0>, script.ir_builder.tirx.IfFrame(stmts=(), condition=doses[src] != T.float32(0.0) and alpha != T.float32(0.0), then_stmts=None, else_stmts=None), script.ir_builder.tirx.ThenFrame(stmts=(M = T.int32()
+E   doses = T.Buffer((M,), strides=(1,))
+E   src = T.int32()
+E   dose: T.float32 = doses[src], M = T.int32()
+E   dots = T.Buffer((M, 2), strides=(2, 1))
+E   src = T.int32()
+E   hi: T.float32 = dots[src, 0], M = T.int32()
+E   dots = T.Buffer((M, 2), strides=(2, 1))
+E   src = T.int32()
+E   lo: T.float32 = dots[src, 1], dose = T.float32()
+E   alpha = T.float32()
+E   factor: T.float32 = T.ieee_mul(dose, alpha, "rn"), dose = T.float32()
+E   alpha = T.float32()
+E   factor = T.float32()
+E   factor_lo: T.float32 = T.ieee_fmaf(dose, alpha, factor * T.float32(-1.0), "rn"))), script.ir_builder.tirx.ForFrame(stmts=(xv = T.Buffer((16,), "bfloat16", scope="local")
+E   v = T.int32()
+E   value: T.float32 = T.Cast("float32", xv[v]), direction = T.Buffer((5120,), strides=(1,))
+E   col = T.int32()
+E   v = T.int32()
+E   d: T.float32 = direction[col + v], hi = T.float32()
+E   factor = T.float32()
+E   d = T.float32()
+E   value = T.float32()
+E   if T.fabs(hi) < T.float32("inf"):
+E       coefficient: T.float32 = T.ieee_mul(factor, d, "rn")
+E       factor_lo = T.float32()
+E       coefficient_lo: T.float32 = T.ieee_add(T.ieee_fmaf(factor, d, coefficient * T.float32(-1.0), "rn"), T.ieee_mul(factor_lo, d, "rn"), "rn")
+E       lo = T.float32()
+E       correction: T.float32 = T.ieee_add(T.ieee_add(T.ieee_mul(coefficient, lo, "rn"), T.ieee_mul(coefficient_lo, hi, "rn"), "rn"), T.ieee_mul(coefficient_lo, lo, "rn"), "rn")
+E       value = T.float32()
+E       value_1: T.float32 = T.ieee_sub(T.ieee_fmaf(coefficient * T.float32(-1.0), hi, value, "rn"), correction, "rn")
+E   else:
+E       value_1: T.float32 = T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d, "rn"), hi, "rn"), "rn")), vars=(v,), doms=(I.Range(0, 16),))].
+----------------------------- Captured stdout call -----------------------------
+2026-10-18 17:05:54  [TileLang:tilelang.language.eager.builder:CRITICAL] (builder.py:1797): Failed to build prim_func from mhc_project_streams
+args={'X': X, 'R': R_1, 'post': post, 'comb': comb, 'pre_in': pre_in, 'Fn': Fn, 'R_out': R_out, 'P': P, 'S': S, 'C': C, 'Q': Q, 'direction': direction, 'doses': doses, 'dots': dots, 'alpha': alpha}
+source=def make_closure(project_body):
+
+    def mhc_project_streams(__tb):
+        __tb_fl = '/opt/spark3/candidate/vllm/vllm/models/deepseek_v4_1/tilelang/mhc.py'
+        __tb_fn = 'mhc_project_streams'
+        __tb.set_fileline(__tb_fl, 278, __tb_fn)
+
+        def mhc_project_streams(X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, direction, doses, dots, alpha, **__kwargs):
+            __tb.set_fileline(__tb_fl, 279, __tb_fn)
+            X = __tb.arg('X', X)
+            __tb.set_fileline(__tb_fl, 280, __tb_fn)
+            R = __tb.arg('R', R)
+            __tb.set_fileline(__tb_fl, 281, __tb_fn)
+            post = __tb.arg('post', post)
+            __tb.set_fileline(__tb_fl, 282, __tb_fn)
+            comb = __tb.arg('comb', comb)
+            __tb.set_fileline(__tb_fl, 283, __tb_fn)
+            pre_in = __tb.arg('pre_in', pre_in)
+            __tb.set_fileline(__tb_fl, 284, __tb_fn)
+            Fn = __tb.arg('Fn', Fn)
+            __tb.set_fileline(__tb_fl, 285, __tb_fn)
+            R_out = __tb.arg('R_out', R_out)
+            __tb.set_fileline(__tb_fl, 286, __tb_fn)
+            P = __tb.arg('P', P)
+            __tb.set_fileline(__tb_fl, 287, __tb_fn)
+            S = __tb.arg('S', S)
+            __tb.set_fileline(__tb_fl, 288, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 289, __tb_fn)
+            Q = __tb.arg('Q', Q)
+            __tb.set_fileline(__tb_fl, 290, __tb_fn)
+            direction = __tb.arg('direction', direction)
+            __tb.set_fileline(__tb_fl, 291, __tb_fn)
+            doses = __tb.arg('doses', doses)
+            __tb.set_fileline(__tb_fl, 292, __tb_fn)
+            dots = __tb.arg('dots', dots)
+            __tb.set_fileline(__tb_fl, 293, __tb_fn)
+            alpha = __tb.arg('alpha', alpha)
+            __tb.set_fileline(__tb_fl, 295, __tb_fn)
+            __tb.eval(__tb.resolve_call(__tb.rval('project_body', project_body))(__tb.rval('X', X), __tb.rval('R', R), __tb.rval('post', post), __tb.rval('comb', comb), __tb.rval('pre_in', pre_in), __tb.rval('Fn', Fn), __tb.rval('R_out', R_out), __tb.rval('P', P), __tb.rval('S', S), __tb.rval('C', C), __tb.rval('Q', Q), __tb.rval('direction', direction), __tb.rval('doses', doses), __tb.rval('dots', dots), __tb.rval('alpha', alpha)))
+        return mhc_project_streams
+    return mhc_project_streams
+----------------------------- Captured stderr call -----------------------------
+[17:05:53] /workspace/tilelang/3rdparty/tvm/src/tirx/script/printer/expr.cc:75: Warning: Didn't find variable definition for: M
+[17:05:54] /workspace/tilelang/3rdparty/tvm/src/script/printer/ir/./../utils.h:53: Warning: TVMScript printer falls back to the basic address printer with the error:
+Variable is not defined in the environment: M
+_________ test_fused_consumer_graph_matches_independent_projection[16] _________
+tests/models/test_deepseek_v4_1_steering_gpu.py:234: in test_fused_consumer_graph_matches_independent_projection
+    layer.declare_kernels()
+vllm/models/deepseek_v4_1/tilelang/mhc.py:737: in declare_kernels
+    prepare.declare(calls, bind=bind, warm=lambda: _warm_post_and_collapse(hidden))
+vllm/models/deepseek_v4_1/tilelang/prepare.py:118: in declare
+    tilelang.prepare(list(calls()))
+/usr/local/lib/python3.12/dist-packages/tilelang/jit/__init__.py:624: in prepare
+    pending[(id(impl), key)] = (impl, key, impl.get_tir(*args, **kwargs))
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/jit/__init__.py:388: in get_tir
+    tir = self.func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1719: in __call__
+    return self.get_tir(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1711: in get_tir
+    self.p1_cache[bound.p1_key] = self._build_tir_template(**bound.compile_kwargs)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1679: in _build_tir_template
+    return TirTemplate.from_lazy_style(self.orig_func.__name__, self.orig_func(*args, **kwargs))
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/tilelang/mhc.py:277: in project_streams
+    @T.prim_func
+     ^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1800: in prim_func
+    return impl(func) if func is not None else impl
+           ^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1798: in impl
+    raise e
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1791: in impl
+    ir_gen.gen(builder)(**annot)
+vllm/models/deepseek_v4_1/tilelang/mhc.py:295: in mhc_project_streams
+    project_body(
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1065: in __call__
+    res = self.ir_gen.gen(builder)(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/tilelang/mhc.py:194: in project_body
+    project_columns(xv, direction, doses, dots, alpha, src, h0 + c0, COLS)
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1065: in __call__
+    res = self.ir_gen.gen(builder)(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/steering/consume.py:40: in project_columns
+    xv[v] = T.Cast(T.bfloat16, value)
+                               ^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:910: in rval
+    raise RuntimeError(
+E   RuntimeError: Immutable variable `value` is used outside its defining region!
+E   variable `value` is defined in frame: script.ir_builder.tirx.IfFrame(stmts=(), condition=T.fabs(hi) < T.float32("inf"), then_stmts=(factor = T.float32()
+E   d = T.float32()
+E   coefficient: T.float32 = T.ieee_mul(factor, d, "rn"), factor = T.float32()
+E   d = T.float32()
+E   coefficient = T.float32()
+E   factor_lo = T.float32()
+E   coefficient_lo: T.float32 = T.ieee_add(T.ieee_fmaf(factor, d, coefficient * T.float32(-1.0), "rn"), T.ieee_mul(factor_lo, d, "rn"), "rn"), coefficient = T.float32()
+E   lo = T.float32()
+E   coefficient_lo = T.float32()
+E   hi = T.float32()
+E   correction: T.float32 = T.ieee_add(T.ieee_add(T.ieee_mul(coefficient, lo, "rn"), T.ieee_mul(coefficient_lo, hi, "rn"), "rn"), T.ieee_mul(coefficient_lo, lo, "rn"), "rn"), coefficient = T.float32()
+E   hi = T.float32()
+E   value = T.float32()
+E   correction = T.float32()
+E   value_1: T.float32 = T.ieee_sub(T.ieee_fmaf(coefficient * T.float32(-1.0), hi, value, "rn"), correction, "rn")), else_stmts=(value = T.float32()
+E   factor = T.float32()
+E   d = T.float32()
+E   hi = T.float32()
+E   value_1: T.float32 = T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d, "rn"), hi, "rn"), "rn"),)), current frames: [script.ir_builder.tirx.PrimFuncFrame(stmts=(), name="mhc_project_streams", args=(X_handle, R_handle, post_handle, comb_handle, pre_in_handle, Fn_handle, R_out_handle, P_handle, S_handle, C_handle, Q_handle, direction_handle, doses_handle, dots_handle, alpha), is_private=False, ret_type=None, buffer_map={X_handle: X, R_handle: R_1, post_handle: post, comb_handle: comb, pre_in_handle: pre_in, Fn_handle: Fn, R_out_handle: R_out, P_handle: P, S_handle: S, C_handle: C, Q_handle: Q, direction_handle: direction, doses_handle: doses, dots_handle: dots}, attrs={}, env_threads={}, root_alloc_buffers=()), <tilelang.language.eager.builder.MacroFrame object at 0xe528c6fa4680>, tl.KernelLaunchFrame(stmts=(), frames=(script.ir_builder.tirx.ForFrame(stmts=(), vars=(bx,), doms=(I.Range(0, 40),)), script.ir_builder.tirx.ForFrame(stmts=(), vars=(by,), doms=(ir.Range(0x494515c0),)), script.ir_builder.tirx.ForFrame(stmts=(), vars=(tx, ty, tz), doms=(I.Range(0, 1), I.Range(0, 1), I.Range(0, 1))), script.ir_builder.tirx.SSBlockFrame(stmts=(bx = T.int32()
+E   h0: T.int32 = bx * 128, tx = T.int32()
+E   row: T.int32 = tx // 8, tx = T.int32()
+E   c0: T.int32 = tx % 8 * 16, by = T.int32()
+E   row = T.int32()
+E   token: T.int32 = by * 16 + row, token = T.int32()
+E   M = T.int32()
+E   src: T.int32 = T.min(token, M - 1), C_local = T.Buffer((16, 32), scope="local.fragment")
+E   T.fill(T.region(C_local[0, 0], 2, 16, 32), 0), for i in T.parallel(8):
+E       for j in T.parallel(128):
+E           F_shared = T.Buffer((32, 128), scope="shared.dyn")
+E           F_shared[24 + i, j] = T.float32(0.0)
+E           F_mid = T.Buffer((32, 128), scope="shared.dyn")
+E           F_mid[24 + i, j] = T.float32(0.0)
+E           F_low = T.Buffer((32, 128), scope="shared.dyn")
+E           F_low[24 + i, j] = T.float32(0.0), for k in T.unroll(4):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       pre_in = T.Buffer((M, 4), strides=(4, 1))
+E       src = T.int32()
+E       coef[k] = pre_in[src, k], for k in T.unroll(4):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       post = T.Buffer((M, 4), strides=(4, 1))
+E       src = T.int32()
+E       coef[4 + k] = post[src, k], for k in T.unroll(16):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       comb = T.Buffer((M, 4, 4), strides=(16, 4, 1))
+E       src = T.int32()
+E       coef[8 + k] = comb[src, k // 4, k % 4], for v in T.vectorized(16):
+E       xv = T.Buffer((16,), "bfloat16", scope="local")
+E       M = T.int32()
+E       X = T.Buffer((1, M, 5120), "bfloat16", strides=(5120 * M, 5120, 1))
+E       src = T.int32()
+E       h0 = T.int32()
+E       c0 = T.int32()
+E       xv[v] = X[0, src, h0 + c0 + v], h0 = T.int32()
+E   c0 = T.int32()
+E   col: T.int32 = h0 + c0), name="tilelang_root", iter_vars=(), reads=(), writes=(), init=None, alloc_buffers=(A_shared, F_shared, F_mid, F_low, C_local, xv, rv, nv, av, sq, col, coef, red), match_buffers=(), annotations={"tl.launch_threads": (128, 1, 1)}, iter_values=(), predicate=None, no_realize=False)), grid_vars=(bx, by), grid_extents=(40, (M + 16 - 1) // 16), thread_vars=(tx, ty, tz), thread_extents=(128, 1, 1)), <tilelang.language.eager.builder.MacroFrame object at 0xe5288ce7cce0>, script.ir_builder.tirx.IfFrame(stmts=(), condition=doses[src] != T.float32(0.0) and alpha != T.float32(0.0), then_stmts=None, else_stmts=None), script.ir_builder.tirx.ThenFrame(stmts=(M = T.int32()
+E   doses = T.Buffer((M,), strides=(1,))
+E   src = T.int32()
+E   dose: T.float32 = doses[src], M = T.int32()
+E   dots = T.Buffer((M, 2), strides=(2, 1))
+E   src = T.int32()
+E   hi: T.float32 = dots[src, 0], M = T.int32()
+E   dots = T.Buffer((M, 2), strides=(2, 1))
+E   src = T.int32()
+E   lo: T.float32 = dots[src, 1], dose = T.float32()
+E   alpha = T.float32()
+E   factor: T.float32 = T.ieee_mul(dose, alpha, "rn"), dose = T.float32()
+E   alpha = T.float32()
+E   factor = T.float32()
+E   factor_lo: T.float32 = T.ieee_fmaf(dose, alpha, factor * T.float32(-1.0), "rn"))), script.ir_builder.tirx.ForFrame(stmts=(xv = T.Buffer((16,), "bfloat16", scope="local")
+E   v = T.int32()
+E   value: T.float32 = T.Cast("float32", xv[v]), direction = T.Buffer((5120,), strides=(1,))
+E   col = T.int32()
+E   v = T.int32()
+E   d: T.float32 = direction[col + v], hi = T.float32()
+E   factor = T.float32()
+E   d = T.float32()
+E   value = T.float32()
+E   if T.fabs(hi) < T.float32("inf"):
+E       coefficient: T.float32 = T.ieee_mul(factor, d, "rn")
+E       factor_lo = T.float32()
+E       coefficient_lo: T.float32 = T.ieee_add(T.ieee_fmaf(factor, d, coefficient * T.float32(-1.0), "rn"), T.ieee_mul(factor_lo, d, "rn"), "rn")
+E       lo = T.float32()
+E       correction: T.float32 = T.ieee_add(T.ieee_add(T.ieee_mul(coefficient, lo, "rn"), T.ieee_mul(coefficient_lo, hi, "rn"), "rn"), T.ieee_mul(coefficient_lo, lo, "rn"), "rn")
+E       value = T.float32()
+E       value_1: T.float32 = T.ieee_sub(T.ieee_fmaf(coefficient * T.float32(-1.0), hi, value, "rn"), correction, "rn")
+E   else:
+E       value_1: T.float32 = T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d, "rn"), hi, "rn"), "rn")), vars=(v,), doms=(I.Range(0, 16),))].
+----------------------------- Captured stdout call -----------------------------
+2026-10-18 17:05:54  [TileLang:tilelang.language.eager.builder:CRITICAL] (builder.py:1797): Failed to build prim_func from mhc_project_streams
+args={'X': X, 'R': R_1, 'post': post, 'comb': comb, 'pre_in': pre_in, 'Fn': Fn, 'R_out': R_out, 'P': P, 'S': S, 'C': C, 'Q': Q, 'direction': direction, 'doses': doses, 'dots': dots, 'alpha': alpha}
+source=def make_closure(project_body):
+
+    def mhc_project_streams(__tb):
+        __tb_fl = '/opt/spark3/candidate/vllm/vllm/models/deepseek_v4_1/tilelang/mhc.py'
+        __tb_fn = 'mhc_project_streams'
+        __tb.set_fileline(__tb_fl, 278, __tb_fn)
+
+        def mhc_project_streams(X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, direction, doses, dots, alpha, **__kwargs):
+            __tb.set_fileline(__tb_fl, 279, __tb_fn)
+            X = __tb.arg('X', X)
+            __tb.set_fileline(__tb_fl, 280, __tb_fn)
+            R = __tb.arg('R', R)
+            __tb.set_fileline(__tb_fl, 281, __tb_fn)
+            post = __tb.arg('post', post)
+            __tb.set_fileline(__tb_fl, 282, __tb_fn)
+            comb = __tb.arg('comb', comb)
+            __tb.set_fileline(__tb_fl, 283, __tb_fn)
+            pre_in = __tb.arg('pre_in', pre_in)
+            __tb.set_fileline(__tb_fl, 284, __tb_fn)
+            Fn = __tb.arg('Fn', Fn)
+            __tb.set_fileline(__tb_fl, 285, __tb_fn)
+            R_out = __tb.arg('R_out', R_out)
+            __tb.set_fileline(__tb_fl, 286, __tb_fn)
+            P = __tb.arg('P', P)
+            __tb.set_fileline(__tb_fl, 287, __tb_fn)
+            S = __tb.arg('S', S)
+            __tb.set_fileline(__tb_fl, 288, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 289, __tb_fn)
+            Q = __tb.arg('Q', Q)
+            __tb.set_fileline(__tb_fl, 290, __tb_fn)
+            direction = __tb.arg('direction', direction)
+            __tb.set_fileline(__tb_fl, 291, __tb_fn)
+            doses = __tb.arg('doses', doses)
+            __tb.set_fileline(__tb_fl, 292, __tb_fn)
+            dots = __tb.arg('dots', dots)
+            __tb.set_fileline(__tb_fl, 293, __tb_fn)
+            alpha = __tb.arg('alpha', alpha)
+            __tb.set_fileline(__tb_fl, 295, __tb_fn)
+            __tb.eval(__tb.resolve_call(__tb.rval('project_body', project_body))(__tb.rval('X', X), __tb.rval('R', R), __tb.rval('post', post), __tb.rval('comb', comb), __tb.rval('pre_in', pre_in), __tb.rval('Fn', Fn), __tb.rval('R_out', R_out), __tb.rval('P', P), __tb.rval('S', S), __tb.rval('C', C), __tb.rval('Q', Q), __tb.rval('direction', direction), __tb.rval('doses', doses), __tb.rval('dots', dots), __tb.rval('alpha', alpha)))
+        return mhc_project_streams
+    return mhc_project_streams
+----------------------------- Captured stderr call -----------------------------
+[17:05:54] /workspace/tilelang/3rdparty/tvm/src/tirx/script/printer/expr.cc:75: Warning: Didn't find variable definition for: M
+[17:05:54] /workspace/tilelang/3rdparty/tvm/src/script/printer/ir/./../utils.h:53: Warning: TVMScript printer falls back to the basic address printer with the error:
+Variable is not defined in the environment: M
+------------------------------ Captured log call -------------------------------
+CRITICAL tilelang.language.eager.builder:builder.py:1797 Failed to build prim_func from mhc_project_streams
+args={'X': X, 'R': R_1, 'post': post, 'comb': comb, 'pre_in': pre_in, 'Fn': Fn, 'R_out': R_out, 'P': P, 'S': S, 'C': C, 'Q': Q, 'direction': direction, 'doses': doses, 'dots': dots, 'alpha': alpha}
+source=def make_closure(project_body):
+
+    def mhc_project_streams(__tb):
+        __tb_fl = '/opt/spark3/candidate/vllm/vllm/models/deepseek_v4_1/tilelang/mhc.py'
+        __tb_fn = 'mhc_project_streams'
+        __tb.set_fileline(__tb_fl, 278, __tb_fn)
+
+        def mhc_project_streams(X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, direction, doses, dots, alpha, **__kwargs):
+            __tb.set_fileline(__tb_fl, 279, __tb_fn)
+            X = __tb.arg('X', X)
+            __tb.set_fileline(__tb_fl, 280, __tb_fn)
+            R = __tb.arg('R', R)
+            __tb.set_fileline(__tb_fl, 281, __tb_fn)
+            post = __tb.arg('post', post)
+            __tb.set_fileline(__tb_fl, 282, __tb_fn)
+            comb = __tb.arg('comb', comb)
+            __tb.set_fileline(__tb_fl, 283, __tb_fn)
+            pre_in = __tb.arg('pre_in', pre_in)
+            __tb.set_fileline(__tb_fl, 284, __tb_fn)
+            Fn = __tb.arg('Fn', Fn)
+            __tb.set_fileline(__tb_fl, 285, __tb_fn)
+            R_out = __tb.arg('R_out', R_out)
+            __tb.set_fileline(__tb_fl, 286, __tb_fn)
+            P = __tb.arg('P', P)
+            __tb.set_fileline(__tb_fl, 287, __tb_fn)
+            S = __tb.arg('S', S)
+            __tb.set_fileline(__tb_fl, 288, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 289, __tb_fn)
+            Q = __tb.arg('Q', Q)
+            __tb.set_fileline(__tb_fl, 290, __tb_fn)
+            direction = __tb.arg('direction', direction)
+            __tb.set_fileline(__tb_fl, 291, __tb_fn)
+            doses = __tb.arg('doses', doses)
+            __tb.set_fileline(__tb_fl, 292, __tb_fn)
+            dots = __tb.arg('dots', dots)
+            __tb.set_fileline(__tb_fl, 293, __tb_fn)
+            alpha = __tb.arg('alpha', alpha)
+            __tb.set_fileline(__tb_fl, 295, __tb_fn)
+            __tb.eval(__tb.resolve_call(__tb.rval('project_body', project_body))(__tb.rval('X', X), __tb.rval('R', R), __tb.rval('post', post), __tb.rval('comb', comb), __tb.rval('pre_in', pre_in), __tb.rval('Fn', Fn), __tb.rval('R_out', R_out), __tb.rval('P', P), __tb.rval('S', S), __tb.rval('C', C), __tb.rval('Q', Q), __tb.rval('direction', direction), __tb.rval('doses', doses), __tb.rval('dots', dots), __tb.rval('alpha', alpha)))
+        return mhc_project_streams
+    return mhc_project_streams
+_________ test_fused_consumer_graph_matches_independent_projection[96] _________
+tests/models/test_deepseek_v4_1_steering_gpu.py:234: in test_fused_consumer_graph_matches_independent_projection
+    layer.declare_kernels()
+vllm/models/deepseek_v4_1/tilelang/mhc.py:737: in declare_kernels
+    prepare.declare(calls, bind=bind, warm=lambda: _warm_post_and_collapse(hidden))
+vllm/models/deepseek_v4_1/tilelang/prepare.py:118: in declare
+    tilelang.prepare(list(calls()))
+/usr/local/lib/python3.12/dist-packages/tilelang/jit/__init__.py:624: in prepare
+    pending[(id(impl), key)] = (impl, key, impl.get_tir(*args, **kwargs))
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/jit/__init__.py:388: in get_tir
+    tir = self.func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1719: in __call__
+    return self.get_tir(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1711: in get_tir
+    self.p1_cache[bound.p1_key] = self._build_tir_template(**bound.compile_kwargs)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1679: in _build_tir_template
+    return TirTemplate.from_lazy_style(self.orig_func.__name__, self.orig_func(*args, **kwargs))
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/tilelang/mhc.py:277: in project_streams
+    @T.prim_func
+     ^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1800: in prim_func
+    return impl(func) if func is not None else impl
+           ^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1798: in impl
+    raise e
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1791: in impl
+    ir_gen.gen(builder)(**annot)
+vllm/models/deepseek_v4_1/tilelang/mhc.py:295: in mhc_project_streams
+    project_body(
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1065: in __call__
+    res = self.ir_gen.gen(builder)(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/tilelang/mhc.py:194: in project_body
+    project_columns(xv, direction, doses, dots, alpha, src, h0 + c0, COLS)
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1065: in __call__
+    res = self.ir_gen.gen(builder)(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/steering/consume.py:40: in project_columns
+    xv[v] = T.Cast(T.bfloat16, value)
+                               ^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:910: in rval
+    raise RuntimeError(
+E   RuntimeError: Immutable variable `value` is used outside its defining region!
+E   variable `value` is defined in frame: script.ir_builder.tirx.IfFrame(stmts=(), condition=T.fabs(hi) < T.float32("inf"), then_stmts=(factor = T.float32()
+E   d = T.float32()
+E   coefficient: T.float32 = T.ieee_mul(factor, d, "rn"), factor = T.float32()
+E   d = T.float32()
+E   coefficient = T.float32()
+E   factor_lo = T.float32()
+E   coefficient_lo: T.float32 = T.ieee_add(T.ieee_fmaf(factor, d, coefficient * T.float32(-1.0), "rn"), T.ieee_mul(factor_lo, d, "rn"), "rn"), coefficient = T.float32()
+E   lo = T.float32()
+E   coefficient_lo = T.float32()
+E   hi = T.float32()
+E   correction: T.float32 = T.ieee_add(T.ieee_add(T.ieee_mul(coefficient, lo, "rn"), T.ieee_mul(coefficient_lo, hi, "rn"), "rn"), T.ieee_mul(coefficient_lo, lo, "rn"), "rn"), coefficient = T.float32()
+E   hi = T.float32()
+E   value = T.float32()
+E   correction = T.float32()
+E   value_1: T.float32 = T.ieee_sub(T.ieee_fmaf(coefficient * T.float32(-1.0), hi, value, "rn"), correction, "rn")), else_stmts=(value = T.float32()
+E   factor = T.float32()
+E   d = T.float32()
+E   hi = T.float32()
+E   value_1: T.float32 = T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d, "rn"), hi, "rn"), "rn"),)), current frames: [script.ir_builder.tirx.PrimFuncFrame(stmts=(), name="mhc_project_streams", args=(X_handle, R_handle, post_handle, comb_handle, pre_in_handle, Fn_handle, R_out_handle, P_handle, S_handle, C_handle, Q_handle, direction_handle, doses_handle, dots_handle, alpha), is_private=False, ret_type=None, buffer_map={X_handle: X, R_handle: R_1, post_handle: post, comb_handle: comb, pre_in_handle: pre_in, Fn_handle: Fn, R_out_handle: R_out, P_handle: P, S_handle: S, C_handle: C, Q_handle: Q, direction_handle: direction, doses_handle: doses, dots_handle: dots}, attrs={}, env_threads={}, root_alloc_buffers=()), <tilelang.language.eager.builder.MacroFrame object at 0xe5288ce9bec0>, tl.KernelLaunchFrame(stmts=(), frames=(script.ir_builder.tirx.ForFrame(stmts=(), vars=(bx,), doms=(I.Range(0, 40),)), script.ir_builder.tirx.ForFrame(stmts=(), vars=(by,), doms=(ir.Range(0x498df0d0),)), script.ir_builder.tirx.ForFrame(stmts=(), vars=(tx, ty, tz), doms=(I.Range(0, 1), I.Range(0, 1), I.Range(0, 1))), script.ir_builder.tirx.SSBlockFrame(stmts=(bx = T.int32()
+E   h0: T.int32 = bx * 128, tx = T.int32()
+E   row: T.int32 = tx // 8, tx = T.int32()
+E   c0: T.int32 = tx % 8 * 16, by = T.int32()
+E   row = T.int32()
+E   token: T.int32 = by * 16 + row, token = T.int32()
+E   M = T.int32()
+E   src: T.int32 = T.min(token, M - 1), C_local = T.Buffer((16, 32), scope="local.fragment")
+E   T.fill(T.region(C_local[0, 0], 2, 16, 32), 0), for i in T.parallel(8):
+E       for j in T.parallel(128):
+E           F_shared = T.Buffer((32, 128), scope="shared.dyn")
+E           F_shared[24 + i, j] = T.float32(0.0)
+E           F_mid = T.Buffer((32, 128), scope="shared.dyn")
+E           F_mid[24 + i, j] = T.float32(0.0)
+E           F_low = T.Buffer((32, 128), scope="shared.dyn")
+E           F_low[24 + i, j] = T.float32(0.0), for k in T.unroll(4):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       pre_in = T.Buffer((M, 4), strides=(4, 1))
+E       src = T.int32()
+E       coef[k] = pre_in[src, k], for k in T.unroll(4):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       post = T.Buffer((M, 4), strides=(4, 1))
+E       src = T.int32()
+E       coef[4 + k] = post[src, k], for k in T.unroll(16):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       comb = T.Buffer((M, 4, 4), strides=(16, 4, 1))
+E       src = T.int32()
+E       coef[8 + k] = comb[src, k // 4, k % 4], for v in T.vectorized(16):
+E       xv = T.Buffer((16,), "bfloat16", scope="local")
+E       M = T.int32()
+E       X = T.Buffer((1, M, 5120), "bfloat16", strides=(5120 * M, 5120, 1))
+E       src = T.int32()
+E       h0 = T.int32()
+E       c0 = T.int32()
+E       xv[v] = X[0, src, h0 + c0 + v], h0 = T.int32()
+E   c0 = T.int32()
+E   col: T.int32 = h0 + c0), name="tilelang_root", iter_vars=(), reads=(), writes=(), init=None, alloc_buffers=(A_shared, F_shared, F_mid, F_low, C_local, xv, rv, nv, av, sq, col, coef, red), match_buffers=(), annotations={"tl.launch_threads": (128, 1, 1)}, iter_values=(), predicate=None, no_realize=False)), grid_vars=(bx, by), grid_extents=(40, (M + 16 - 1) // 16), thread_vars=(tx, ty, tz), thread_extents=(128, 1, 1)), <tilelang.language.eager.builder.MacroFrame object at 0xe5288ce7d700>, script.ir_builder.tirx.IfFrame(stmts=(), condition=doses[src] != T.float32(0.0) and alpha != T.float32(0.0), then_stmts=None, else_stmts=None), script.ir_builder.tirx.ThenFrame(stmts=(M = T.int32()
+E   doses = T.Buffer((M,), strides=(1,))
+E   src = T.int32()
+E   dose: T.float32 = doses[src], M = T.int32()
+E   dots = T.Buffer((M, 2), strides=(2, 1))
+E   src = T.int32()
+E   hi: T.float32 = dots[src, 0], M = T.int32()
+E   dots = T.Buffer((M, 2), strides=(2, 1))
+E   src = T.int32()
+E   lo: T.float32 = dots[src, 1], dose = T.float32()
+E   alpha = T.float32()
+E   factor: T.float32 = T.ieee_mul(dose, alpha, "rn"), dose = T.float32()
+E   alpha = T.float32()
+E   factor = T.float32()
+E   factor_lo: T.float32 = T.ieee_fmaf(dose, alpha, factor * T.float32(-1.0), "rn"))), script.ir_builder.tirx.ForFrame(stmts=(xv = T.Buffer((16,), "bfloat16", scope="local")
+E   v = T.int32()
+E   value: T.float32 = T.Cast("float32", xv[v]), direction = T.Buffer((5120,), strides=(1,))
+E   col = T.int32()
+E   v = T.int32()
+E   d: T.float32 = direction[col + v], hi = T.float32()
+E   factor = T.float32()
+E   d = T.float32()
+E   value = T.float32()
+E   if T.fabs(hi) < T.float32("inf"):
+E       coefficient: T.float32 = T.ieee_mul(factor, d, "rn")
+E       factor_lo = T.float32()
+E       coefficient_lo: T.float32 = T.ieee_add(T.ieee_fmaf(factor, d, coefficient * T.float32(-1.0), "rn"), T.ieee_mul(factor_lo, d, "rn"), "rn")
+E       lo = T.float32()
+E       correction: T.float32 = T.ieee_add(T.ieee_add(T.ieee_mul(coefficient, lo, "rn"), T.ieee_mul(coefficient_lo, hi, "rn"), "rn"), T.ieee_mul(coefficient_lo, lo, "rn"), "rn")
+E       value = T.float32()
+E       value_1: T.float32 = T.ieee_sub(T.ieee_fmaf(coefficient * T.float32(-1.0), hi, value, "rn"), correction, "rn")
+E   else:
+E       value_1: T.float32 = T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d, "rn"), hi, "rn"), "rn")), vars=(v,), doms=(I.Range(0, 16),))].
+----------------------------- Captured stdout call -----------------------------
+2026-10-18 17:05:54  [TileLang:tilelang.language.eager.builder:CRITICAL] (builder.py:1797): Failed to build prim_func from mhc_project_streams
+args={'X': X, 'R': R_1, 'post': post, 'comb': comb, 'pre_in': pre_in, 'Fn': Fn, 'R_out': R_out, 'P': P, 'S': S, 'C': C, 'Q': Q, 'direction': direction, 'doses': doses, 'dots': dots, 'alpha': alpha}
+source=def make_closure(project_body):
+
+    def mhc_project_streams(__tb):
+        __tb_fl = '/opt/spark3/candidate/vllm/vllm/models/deepseek_v4_1/tilelang/mhc.py'
+        __tb_fn = 'mhc_project_streams'
+        __tb.set_fileline(__tb_fl, 278, __tb_fn)
+
+        def mhc_project_streams(X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, direction, doses, dots, alpha, **__kwargs):
+            __tb.set_fileline(__tb_fl, 279, __tb_fn)
+            X = __tb.arg('X', X)
+            __tb.set_fileline(__tb_fl, 280, __tb_fn)
+            R = __tb.arg('R', R)
+            __tb.set_fileline(__tb_fl, 281, __tb_fn)
+            post = __tb.arg('post', post)
+            __tb.set_fileline(__tb_fl, 282, __tb_fn)
+            comb = __tb.arg('comb', comb)
+            __tb.set_fileline(__tb_fl, 283, __tb_fn)
+            pre_in = __tb.arg('pre_in', pre_in)
+            __tb.set_fileline(__tb_fl, 284, __tb_fn)
+            Fn = __tb.arg('Fn', Fn)
+            __tb.set_fileline(__tb_fl, 285, __tb_fn)
+            R_out = __tb.arg('R_out', R_out)
+            __tb.set_fileline(__tb_fl, 286, __tb_fn)
+            P = __tb.arg('P', P)
+            __tb.set_fileline(__tb_fl, 287, __tb_fn)
+            S = __tb.arg('S', S)
+            __tb.set_fileline(__tb_fl, 288, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 289, __tb_fn)
+            Q = __tb.arg('Q', Q)
+            __tb.set_fileline(__tb_fl, 290, __tb_fn)
+            direction = __tb.arg('direction', direction)
+            __tb.set_fileline(__tb_fl, 291, __tb_fn)
+            doses = __tb.arg('doses', doses)
+            __tb.set_fileline(__tb_fl, 292, __tb_fn)
+            dots = __tb.arg('dots', dots)
+            __tb.set_fileline(__tb_fl, 293, __tb_fn)
+            alpha = __tb.arg('alpha', alpha)
+            __tb.set_fileline(__tb_fl, 295, __tb_fn)
+            __tb.eval(__tb.resolve_call(__tb.rval('project_body', project_body))(__tb.rval('X', X), __tb.rval('R', R), __tb.rval('post', post), __tb.rval('comb', comb), __tb.rval('pre_in', pre_in), __tb.rval('Fn', Fn), __tb.rval('R_out', R_out), __tb.rval('P', P), __tb.rval('S', S), __tb.rval('C', C), __tb.rval('Q', Q), __tb.rval('direction', direction), __tb.rval('doses', doses), __tb.rval('dots', dots), __tb.rval('alpha', alpha)))
+        return mhc_project_streams
+    return mhc_project_streams
+----------------------------- Captured stderr call -----------------------------
+[17:05:54] /workspace/tilelang/3rdparty/tvm/src/tirx/script/printer/expr.cc:75: Warning: Didn't find variable definition for: M
+[17:05:54] /workspace/tilelang/3rdparty/tvm/src/script/printer/ir/./../utils.h:53: Warning: TVMScript printer falls back to the basic address printer with the error:
+Variable is not defined in the environment: M
+------------------------------ Captured log call -------------------------------
+CRITICAL tilelang.language.eager.builder:builder.py:1797 Failed to build prim_func from mhc_project_streams
+args={'X': X, 'R': R_1, 'post': post, 'comb': comb, 'pre_in': pre_in, 'Fn': Fn, 'R_out': R_out, 'P': P, 'S': S, 'C': C, 'Q': Q, 'direction': direction, 'doses': doses, 'dots': dots, 'alpha': alpha}
+source=def make_closure(project_body):
+
+    def mhc_project_streams(__tb):
+        __tb_fl = '/opt/spark3/candidate/vllm/vllm/models/deepseek_v4_1/tilelang/mhc.py'
+        __tb_fn = 'mhc_project_streams'
+        __tb.set_fileline(__tb_fl, 278, __tb_fn)
+
+        def mhc_project_streams(X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, direction, doses, dots, alpha, **__kwargs):
+            __tb.set_fileline(__tb_fl, 279, __tb_fn)
+            X = __tb.arg('X', X)
+            __tb.set_fileline(__tb_fl, 280, __tb_fn)
+            R = __tb.arg('R', R)
+            __tb.set_fileline(__tb_fl, 281, __tb_fn)
+            post = __tb.arg('post', post)
+            __tb.set_fileline(__tb_fl, 282, __tb_fn)
+            comb = __tb.arg('comb', comb)
+            __tb.set_fileline(__tb_fl, 283, __tb_fn)
+            pre_in = __tb.arg('pre_in', pre_in)
+            __tb.set_fileline(__tb_fl, 284, __tb_fn)
+            Fn = __tb.arg('Fn', Fn)
+            __tb.set_fileline(__tb_fl, 285, __tb_fn)
+            R_out = __tb.arg('R_out', R_out)
+            __tb.set_fileline(__tb_fl, 286, __tb_fn)
+            P = __tb.arg('P', P)
+            __tb.set_fileline(__tb_fl, 287, __tb_fn)
+            S = __tb.arg('S', S)
+            __tb.set_fileline(__tb_fl, 288, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 289, __tb_fn)
+            Q = __tb.arg('Q', Q)
+            __tb.set_fileline(__tb_fl, 290, __tb_fn)
+            direction = __tb.arg('direction', direction)
+            __tb.set_fileline(__tb_fl, 291, __tb_fn)
+            doses = __tb.arg('doses', doses)
+            __tb.set_fileline(__tb_fl, 292, __tb_fn)
+            dots = __tb.arg('dots', dots)
+            __tb.set_fileline(__tb_fl, 293, __tb_fn)
+            alpha = __tb.arg('alpha', alpha)
+            __tb.set_fileline(__tb_fl, 295, __tb_fn)
+            __tb.eval(__tb.resolve_call(__tb.rval('project_body', project_body))(__tb.rval('X', X), __tb.rval('R', R), __tb.rval('post', post), __tb.rval('comb', comb), __tb.rval('pre_in', pre_in), __tb.rval('Fn', Fn), __tb.rval('R_out', R_out), __tb.rval('P', P), __tb.rval('S', S), __tb.rval('C', C), __tb.rval('Q', Q), __tb.rval('direction', direction), __tb.rval('doses', doses), __tb.rval('dots', dots), __tb.rval('alpha', alpha)))
+        return mhc_project_streams
+    return mhc_project_streams
+________ test_fused_consumer_graph_matches_independent_projection[129] _________
+tests/models/test_deepseek_v4_1_steering_gpu.py:234: in test_fused_consumer_graph_matches_independent_projection
+    layer.declare_kernels()
+vllm/models/deepseek_v4_1/tilelang/mhc.py:737: in declare_kernels
+    prepare.declare(calls, bind=bind, warm=lambda: _warm_post_and_collapse(hidden))
+vllm/models/deepseek_v4_1/tilelang/prepare.py:118: in declare
+    tilelang.prepare(list(calls()))
+/usr/local/lib/python3.12/dist-packages/tilelang/jit/__init__.py:624: in prepare
+    pending[(id(impl), key)] = (impl, key, impl.get_tir(*args, **kwargs))
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/jit/__init__.py:388: in get_tir
+    tir = self.func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1719: in __call__
+    return self.get_tir(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1711: in get_tir
+    self.p1_cache[bound.p1_key] = self._build_tir_template(**bound.compile_kwargs)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1679: in _build_tir_template
+    return TirTemplate.from_lazy_style(self.orig_func.__name__, self.orig_func(*args, **kwargs))
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/tilelang/mhc.py:277: in project_streams
+    @T.prim_func
+     ^^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1800: in prim_func
+    return impl(func) if func is not None else impl
+           ^^^^^^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1798: in impl
+    raise e
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1791: in impl
+    ir_gen.gen(builder)(**annot)
+vllm/models/deepseek_v4_1/tilelang/mhc.py:295: in mhc_project_streams
+    project_body(
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1065: in __call__
+    res = self.ir_gen.gen(builder)(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/tilelang/mhc.py:194: in project_body
+    project_columns(xv, direction, doses, dots, alpha, src, h0 + c0, COLS)
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:1065: in __call__
+    res = self.ir_gen.gen(builder)(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+vllm/models/deepseek_v4_1/steering/consume.py:40: in project_columns
+    xv[v] = T.Cast(T.bfloat16, value)
+                               ^^^^^
+/usr/local/lib/python3.12/dist-packages/tilelang/language/eager/builder.py:910: in rval
+    raise RuntimeError(
+E   RuntimeError: Immutable variable `value` is used outside its defining region!
+E   variable `value` is defined in frame: script.ir_builder.tirx.IfFrame(stmts=(), condition=T.fabs(hi) < T.float32("inf"), then_stmts=(factor = T.float32()
+E   d = T.float32()
+E   coefficient: T.float32 = T.ieee_mul(factor, d, "rn"), factor = T.float32()
+E   d = T.float32()
+E   coefficient = T.float32()
+E   factor_lo = T.float32()
+E   coefficient_lo: T.float32 = T.ieee_add(T.ieee_fmaf(factor, d, coefficient * T.float32(-1.0), "rn"), T.ieee_mul(factor_lo, d, "rn"), "rn"), coefficient = T.float32()
+E   lo = T.float32()
+E   coefficient_lo = T.float32()
+E   hi = T.float32()
+E   correction: T.float32 = T.ieee_add(T.ieee_add(T.ieee_mul(coefficient, lo, "rn"), T.ieee_mul(coefficient_lo, hi, "rn"), "rn"), T.ieee_mul(coefficient_lo, lo, "rn"), "rn"), coefficient = T.float32()
+E   hi = T.float32()
+E   value = T.float32()
+E   correction = T.float32()
+E   value_1: T.float32 = T.ieee_sub(T.ieee_fmaf(coefficient * T.float32(-1.0), hi, value, "rn"), correction, "rn")), else_stmts=(value = T.float32()
+E   factor = T.float32()
+E   d = T.float32()
+E   hi = T.float32()
+E   value_1: T.float32 = T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d, "rn"), hi, "rn"), "rn"),)), current frames: [script.ir_builder.tirx.PrimFuncFrame(stmts=(), name="mhc_project_streams", args=(X_handle, R_handle, post_handle, comb_handle, pre_in_handle, Fn_handle, R_out_handle, P_handle, S_handle, C_handle, Q_handle, direction_handle, doses_handle, dots_handle, alpha), is_private=False, ret_type=None, buffer_map={X_handle: X, R_handle: R_1, post_handle: post, comb_handle: comb, pre_in_handle: pre_in, Fn_handle: Fn, R_out_handle: R_out, P_handle: P, S_handle: S, C_handle: C, Q_handle: Q, direction_handle: direction, doses_handle: doses, dots_handle: dots}, attrs={}, env_threads={}, root_alloc_buffers=()), <tilelang.language.eager.builder.MacroFrame object at 0xe5288ce9a1b0>, tl.KernelLaunchFrame(stmts=(), frames=(script.ir_builder.tirx.ForFrame(stmts=(), vars=(bx,), doms=(I.Range(0, 40),)), script.ir_builder.tirx.ForFrame(stmts=(), vars=(by,), doms=(ir.Range(0x498df150),)), script.ir_builder.tirx.ForFrame(stmts=(), vars=(tx, ty, tz), doms=(I.Range(0, 1), I.Range(0, 1), I.Range(0, 1))), script.ir_builder.tirx.SSBlockFrame(stmts=(bx = T.int32()
+E   h0: T.int32 = bx * 128, tx = T.int32()
+E   row: T.int32 = tx // 8, tx = T.int32()
+E   c0: T.int32 = tx % 8 * 16, by = T.int32()
+E   row = T.int32()
+E   token: T.int32 = by * 16 + row, token = T.int32()
+E   M = T.int32()
+E   src: T.int32 = T.min(token, M - 1), C_local = T.Buffer((16, 32), scope="local.fragment")
+E   T.fill(T.region(C_local[0, 0], 2, 16, 32), 0), for i in T.parallel(8):
+E       for j in T.parallel(128):
+E           F_shared = T.Buffer((32, 128), scope="shared.dyn")
+E           F_shared[24 + i, j] = T.float32(0.0)
+E           F_mid = T.Buffer((32, 128), scope="shared.dyn")
+E           F_mid[24 + i, j] = T.float32(0.0)
+E           F_low = T.Buffer((32, 128), scope="shared.dyn")
+E           F_low[24 + i, j] = T.float32(0.0), for k in T.unroll(4):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       pre_in = T.Buffer((M, 4), strides=(4, 1))
+E       src = T.int32()
+E       coef[k] = pre_in[src, k], for k in T.unroll(4):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       post = T.Buffer((M, 4), strides=(4, 1))
+E       src = T.int32()
+E       coef[4 + k] = post[src, k], for k in T.unroll(16):
+E       coef = T.Buffer((24,), scope="local")
+E       M = T.int32()
+E       comb = T.Buffer((M, 4, 4), strides=(16, 4, 1))
+E       src = T.int32()
+E       coef[8 + k] = comb[src, k // 4, k % 4], for v in T.vectorized(16):
+E       xv = T.Buffer((16,), "bfloat16", scope="local")
+E       M = T.int32()
+E       X = T.Buffer((1, M, 5120), "bfloat16", strides=(5120 * M, 5120, 1))
+E       src = T.int32()
+E       h0 = T.int32()
+E       c0 = T.int32()
+E       xv[v] = X[0, src, h0 + c0 + v], h0 = T.int32()
+E   c0 = T.int32()
+E   col: T.int32 = h0 + c0), name="tilelang_root", iter_vars=(), reads=(), writes=(), init=None, alloc_buffers=(A_shared, F_shared, F_mid, F_low, C_local, xv, rv, nv, av, sq, col, coef, red), match_buffers=(), annotations={"tl.launch_threads": (128, 1, 1)}, iter_values=(), predicate=None, no_realize=False)), grid_vars=(bx, by), grid_extents=(40, (M + 16 - 1) // 16), thread_vars=(tx, ty, tz), thread_extents=(128, 1, 1)), <tilelang.language.eager.builder.MacroFrame object at 0xe5288d074080>, script.ir_builder.tirx.IfFrame(stmts=(), condition=doses[src] != T.float32(0.0) and alpha != T.float32(0.0), then_stmts=None, else_stmts=None), script.ir_builder.tirx.ThenFrame(stmts=(M = T.int32()
+E   doses = T.Buffer((M,), strides=(1,))
+E   src = T.int32()
+E   dose: T.float32 = doses[src], M = T.int32()
+E   dots = T.Buffer((M, 2), strides=(2, 1))
+E   src = T.int32()
+E   hi: T.float32 = dots[src, 0], M = T.int32()
+E   dots = T.Buffer((M, 2), strides=(2, 1))
+E   src = T.int32()
+E   lo: T.float32 = dots[src, 1], dose = T.float32()
+E   alpha = T.float32()
+E   factor: T.float32 = T.ieee_mul(dose, alpha, "rn"), dose = T.float32()
+E   alpha = T.float32()
+E   factor = T.float32()
+E   factor_lo: T.float32 = T.ieee_fmaf(dose, alpha, factor * T.float32(-1.0), "rn"))), script.ir_builder.tirx.ForFrame(stmts=(xv = T.Buffer((16,), "bfloat16", scope="local")
+E   v = T.int32()
+E   value: T.float32 = T.Cast("float32", xv[v]), direction = T.Buffer((5120,), strides=(1,))
+E   col = T.int32()
+E   v = T.int32()
+E   d: T.float32 = direction[col + v], hi = T.float32()
+E   factor = T.float32()
+E   d = T.float32()
+E   value = T.float32()
+E   if T.fabs(hi) < T.float32("inf"):
+E       coefficient: T.float32 = T.ieee_mul(factor, d, "rn")
+E       factor_lo = T.float32()
+E       coefficient_lo: T.float32 = T.ieee_add(T.ieee_fmaf(factor, d, coefficient * T.float32(-1.0), "rn"), T.ieee_mul(factor_lo, d, "rn"), "rn")
+E       lo = T.float32()
+E       correction: T.float32 = T.ieee_add(T.ieee_add(T.ieee_mul(coefficient, lo, "rn"), T.ieee_mul(coefficient_lo, hi, "rn"), "rn"), T.ieee_mul(coefficient_lo, lo, "rn"), "rn")
+E       value = T.float32()
+E       value_1: T.float32 = T.ieee_sub(T.ieee_fmaf(coefficient * T.float32(-1.0), hi, value, "rn"), correction, "rn")
+E   else:
+E       value_1: T.float32 = T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d, "rn"), hi, "rn"), "rn")), vars=(v,), doms=(I.Range(0, 16),))].
+----------------------------- Captured stdout call -----------------------------
+2026-10-18 17:05:54  [TileLang:tilelang.language.eager.builder:CRITICAL] (builder.py:1797): Failed to build prim_func from mhc_project_streams
+args={'X': X, 'R': R_1, 'post': post, 'comb': comb, 'pre_in': pre_in, 'Fn': Fn, 'R_out': R_out, 'P': P, 'S': S, 'C': C, 'Q': Q, 'direction': direction, 'doses': doses, 'dots': dots, 'alpha': alpha}
+source=def make_closure(project_body):
+
+    def mhc_project_streams(__tb):
+        __tb_fl = '/opt/spark3/candidate/vllm/vllm/models/deepseek_v4_1/tilelang/mhc.py'
+        __tb_fn = 'mhc_project_streams'
+        __tb.set_fileline(__tb_fl, 278, __tb_fn)
+
+        def mhc_project_streams(X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, direction, doses, dots, alpha, **__kwargs):
+            __tb.set_fileline(__tb_fl, 279, __tb_fn)
+            X = __tb.arg('X', X)
+            __tb.set_fileline(__tb_fl, 280, __tb_fn)
+            R = __tb.arg('R', R)
+            __tb.set_fileline(__tb_fl, 281, __tb_fn)
+            post = __tb.arg('post', post)
+            __tb.set_fileline(__tb_fl, 282, __tb_fn)
+            comb = __tb.arg('comb', comb)
+            __tb.set_fileline(__tb_fl, 283, __tb_fn)
+            pre_in = __tb.arg('pre_in', pre_in)
+            __tb.set_fileline(__tb_fl, 284, __tb_fn)
+            Fn = __tb.arg('Fn', Fn)
+            __tb.set_fileline(__tb_fl, 285, __tb_fn)
+            R_out = __tb.arg('R_out', R_out)
+            __tb.set_fileline(__tb_fl, 286, __tb_fn)
+            P = __tb.arg('P', P)
+            __tb.set_fileline(__tb_fl, 287, __tb_fn)
+            S = __tb.arg('S', S)
+            __tb.set_fileline(__tb_fl, 288, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 289, __tb_fn)
+            Q = __tb.arg('Q', Q)
+            __tb.set_fileline(__tb_fl, 290, __tb_fn)
+            direction = __tb.arg('direction', direction)
+            __tb.set_fileline(__tb_fl, 291, __tb_fn)
+            doses = __tb.arg('doses', doses)
+            __tb.set_fileline(__tb_fl, 292, __tb_fn)
+            dots = __tb.arg('dots', dots)
+            __tb.set_fileline(__tb_fl, 293, __tb_fn)
+            alpha = __tb.arg('alpha', alpha)
+            __tb.set_fileline(__tb_fl, 295, __tb_fn)
+            __tb.eval(__tb.resolve_call(__tb.rval('project_body', project_body))(__tb.rval('X', X), __tb.rval('R', R), __tb.rval('post', post), __tb.rval('comb', comb), __tb.rval('pre_in', pre_in), __tb.rval('Fn', Fn), __tb.rval('R_out', R_out), __tb.rval('P', P), __tb.rval('S', S), __tb.rval('C', C), __tb.rval('Q', Q), __tb.rval('direction', direction), __tb.rval('doses', doses), __tb.rval('dots', dots), __tb.rval('alpha', alpha)))
+        return mhc_project_streams
+    return mhc_project_streams
+----------------------------- Captured stderr call -----------------------------
+[17:05:54] /workspace/tilelang/3rdparty/tvm/src/tirx/script/printer/expr.cc:75: Warning: Didn't find variable definition for: M
+[17:05:54] /workspace/tilelang/3rdparty/tvm/src/script/printer/ir/./../utils.h:53: Warning: TVMScript printer falls back to the basic address printer with the error:
+Variable is not defined in the environment: M
+------------------------------ Captured log call -------------------------------
+CRITICAL tilelang.language.eager.builder:builder.py:1797 Failed to build prim_func from mhc_project_streams
+args={'X': X, 'R': R_1, 'post': post, 'comb': comb, 'pre_in': pre_in, 'Fn': Fn, 'R_out': R_out, 'P': P, 'S': S, 'C': C, 'Q': Q, 'direction': direction, 'doses': doses, 'dots': dots, 'alpha': alpha}
+source=def make_closure(project_body):
+
+    def mhc_project_streams(__tb):
+        __tb_fl = '/opt/spark3/candidate/vllm/vllm/models/deepseek_v4_1/tilelang/mhc.py'
+        __tb_fn = 'mhc_project_streams'
+        __tb.set_fileline(__tb_fl, 278, __tb_fn)
+
+        def mhc_project_streams(X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, direction, doses, dots, alpha, **__kwargs):
+            __tb.set_fileline(__tb_fl, 279, __tb_fn)
+            X = __tb.arg('X', X)
+            __tb.set_fileline(__tb_fl, 280, __tb_fn)
+            R = __tb.arg('R', R)
+            __tb.set_fileline(__tb_fl, 281, __tb_fn)
+            post = __tb.arg('post', post)
+            __tb.set_fileline(__tb_fl, 282, __tb_fn)
+            comb = __tb.arg('comb', comb)
+            __tb.set_fileline(__tb_fl, 283, __tb_fn)
+            pre_in = __tb.arg('pre_in', pre_in)
+            __tb.set_fileline(__tb_fl, 284, __tb_fn)
+            Fn = __tb.arg('Fn', Fn)
+            __tb.set_fileline(__tb_fl, 285, __tb_fn)
+            R_out = __tb.arg('R_out', R_out)
+            __tb.set_fileline(__tb_fl, 286, __tb_fn)
+            P = __tb.arg('P', P)
+            __tb.set_fileline(__tb_fl, 287, __tb_fn)
+            S = __tb.arg('S', S)
+            __tb.set_fileline(__tb_fl, 288, __tb_fn)
+            C = __tb.arg('C', C)
+            __tb.set_fileline(__tb_fl, 289, __tb_fn)
+            Q = __tb.arg('Q', Q)
+            __tb.set_fileline(__tb_fl, 290, __tb_fn)
+            direction = __tb.arg('direction', direction)
+            __tb.set_fileline(__tb_fl, 291, __tb_fn)
+            doses = __tb.arg('doses', doses)
+            __tb.set_fileline(__tb_fl, 292, __tb_fn)
+            dots = __tb.arg('dots', dots)
+            __tb.set_fileline(__tb_fl, 293, __tb_fn)
+            alpha = __tb.arg('alpha', alpha)
+            __tb.set_fileline(__tb_fl, 295, __tb_fn)
+            __tb.eval(__tb.resolve_call(__tb.rval('project_body', project_body))(__tb.rval('X', X), __tb.rval('R', R), __tb.rval('post', post), __tb.rval('comb', comb), __tb.rval('pre_in', pre_in), __tb.rval('Fn', Fn), __tb.rval('R_out', R_out), __tb.rval('P', P), __tb.rval('S', S), __tb.rval('C', C), __tb.rval('Q', Q), __tb.rval('direction', direction), __tb.rval('doses', doses), __tb.rval('dots', dots), __tb.rval('alpha', alpha)))
+        return mhc_project_streams
+    return mhc_project_streams
+=============================== warnings summary ===============================
+tests/models/test_deepseek_v4_1_steering_gpu.py: 14 warnings
+  /usr/local/lib/python3.12/dist-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/models/test_deepseek_v4_1_steering_gpu.py::test_fused_consumer_graph_matches_independent_projection[3]
+FAILED tests/models/test_deepseek_v4_1_steering_gpu.py::test_fused_consumer_graph_matches_independent_projection[16]
+FAILED tests/models/test_deepseek_v4_1_steering_gpu.py::test_fused_consumer_graph_matches_independent_projection[96]
+FAILED tests/models/test_deepseek_v4_1_steering_gpu.py::test_fused_consumer_graph_matches_independent_projection[129]
+4 failed, 25 passed, 14 warnings in 9.64s

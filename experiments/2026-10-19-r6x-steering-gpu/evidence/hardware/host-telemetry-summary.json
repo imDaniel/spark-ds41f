@@ -1,0 +1,46 @@
+{
+  "page_size_bytes": 65536,
+  "scope": "entire monitored maintenance window, including starts/stops/restoration; temperatures are host thermal zones, not continuous GPU readings",
+  "nodes": [
+    {
+      "node": 1,
+      "first_time": 1792373686.5504336,
+      "last_time": 1792379748.9544075,
+      "samples": 1117,
+      "min_host_mem_available_bytes": 19186909184,
+      "max_host_thermal_zone_c": 87.3,
+      "swap_in_pages_delta": 1,
+      "swap_out_pages_delta": 16
+    },
+    {
+      "node": 2,
+      "first_time": 1792373687.0841198,
+      "last_time": 1792379749.310773,
+      "samples": 1117,
+      "min_host_mem_available_bytes": 22558539776,
+      "max_host_thermal_zone_c": 88.9,
+      "swap_in_pages_delta": 0,
+      "swap_out_pages_delta": 0
+    },
+    {
+      "node": 3,
+      "first_time": 1792373687.0565531,
+      "last_time": 1792379749.3078628,
+      "samples": 1117,
+      "min_host_mem_available_bytes": 22236037120,
+      "max_host_thermal_zone_c": 84.7,
+      "swap_in_pages_delta": 0,
+      "swap_out_pages_delta": 0
+    },
+    {
+      "node": 4,
+      "first_time": 1792373687.0068243,
+      "last_time": 1792379749.3146265,
+      "samples": 1117,
+      "min_host_mem_available_bytes": 21464154112,
+      "max_host_thermal_zone_c": 87.7,
+      "swap_in_pages_delta": 0,
+      "swap_out_pages_delta": 0
+    }
+  ]
+}

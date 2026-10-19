@@ -1,0 +1,685 @@
+From b9d59d9d2f8f0f8a1564486c4e082ed1b85d5466 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 15:31:49 +0000
+Subject: [PATCH] Cover stock routing and fused-consumer host and CUDA
+ contracts
+
+Base: downstream steering stock-route and mHC-consumer optimization.
+Rationale: execute the real ModelState and mHC host hooks on CPU with only
+compiler/device imports substituted, then check the real consumer formula
+against an FP64 oracle. Cover active residents outside the scheduled batch,
+mixed rows, malformed controls, cancel/slot reuse, dummy capture identity,
+FULL replay keys and per-route memory samples. Keep CUDA registration out
+of the CPU fixture so GPU tests can import the actual operators afterwards.
+Add SM12x tests of actual TileLang consume against the independent writer
+projector across 101 dose updates in one graph, including zero-dose rows.
+Quality: tests preserve strict stock bits and the existing numerical gate.
+Validation: 104 CPU checks pass on macOS and local Linux CPU. The four
+new SM12x cases and the existing GPU/serving checks are not executed in
+this local-only work; CPU tests do not qualify CUDA kernels or throughput.
+Upstream status: independent downstream experiment; not submitted upstream.
+
+Signed-off-by:  <>
+---
+ .../test_deepseek_v4_1_steering_consume.py    | 413 ++++++++++++++++++
+ .../models/test_deepseek_v4_1_steering_gpu.py |  96 ++++
+ .../test_deepseek_v4_1_steering_state.py      |  97 +++-
+ 3 files changed, 603 insertions(+), 3 deletions(-)
+ create mode 100644 tests/models/test_deepseek_v4_1_steering_consume.py
+
+diff --git a/tests/models/test_deepseek_v4_1_steering_consume.py b/tests/models/test_deepseek_v4_1_steering_consume.py
+new file mode 100644
+index 000000000..ef5db1e6b
+--- /dev/null
++++ b/tests/models/test_deepseek_v4_1_steering_consume.py
+@@ -0,0 +1,413 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Execute host hooks and the consumer formula on CPU; no CUDA qualification."""
++
++import ctypes
++import importlib.util
++import sys
++from dataclasses import dataclass
++from enum import Enum
++from types import ModuleType, SimpleNamespace
++
++import numpy as np
++import pytest
++import torch
++
++from tests.models.steering_test_support import ROOT, valid_profile
++
++# The helper installs the isolated contracts package before this import.
++# isort: off
++from ds41_steering_test.runtime import SteeringRuntime
++# isort: on
++
++
++def load(name, relative_path):
++    spec = importlib.util.spec_from_file_location(name, ROOT / relative_path)
++    assert spec is not None and spec.loader is not None
++    module = importlib.util.module_from_spec(spec)
++    sys.modules[name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++@pytest.fixture(scope="module")
++def variants():
++    return load("input_variant_cpu", "vllm/v1/worker/gpu/model_input_variant.py")
++
++
++class Mode(Enum):
++    NONE = 0
++    PIECEWISE = 1
++    FULL = 2
++
++
++@dataclass(frozen=True)
++class Descriptor:
++    cg_mode: Mode
++    num_tokens: int
++    model_input_variant: int = 0
++
++
++def test_capture_replay_keys_and_memory_samples_include_both_routes(variants):
++    original = [Descriptor(Mode.FULL, n) for n in (96, 64, 32, 16, 8, 1)]
++    expanded = variants.expand_capture_variants(original, (0, 1))
++    assert len(set(expanded)) == 2 * len(original)
++    captured = {desc: object() for desc in expanded}
++    for desc in original:
++        stock = variants.select_input_variant(desc, 0)
++        active = variants.select_input_variant(desc, 1)
++        assert captured[stock] is not captured[active]
++    samples = variants.sample_capture_variants(expanded, 3)
++    assert [(d.num_tokens, d.model_input_variant) for d in samples] == [
++        (96, 0),
++        (64, 0),
++        (1, 0),
++        (96, 1),
++        (64, 1),
++        (1, 1),
++    ]
++    assert (
++        variants.select_input_variant(Descriptor(Mode.PIECEWISE, 16), 1).cg_mode
++        == Mode.NONE
++    )
++    assert (
++        variants.select_input_variant(Descriptor(Mode.PIECEWISE, 16), 0).cg_mode
++        == Mode.PIECEWISE
++    )
++    for invalid in ((), (1,), (0, 1, 1)):
++        with pytest.raises(ValueError):
++            variants.expand_capture_variants(original, invalid)
++
++
++def install(monkeypatch, name, **attributes):
++    module = ModuleType(name)
++    module.__dict__.update(attributes)
++    monkeypatch.setitem(sys.modules, name, module)
++    return module
++
++
++@pytest.fixture(scope="module")
++def host_modules():
++    # Substitute only the CUDA/compiler imports. The runner hooks, mHC Python
++    # consumer execute their actual source bodies. Bypass custom-op registration
++    # so this CPU fixture cannot replace/conflict with the real CUDA operators.
++    with pytest.MonkeyPatch.context() as mp:
++
++        def custom_op(*args, **kwargs):
++            def decorate(function):
++                function.register_fake = lambda fake: fake
++                return function
++
++            return decorate
++
++        mp.setattr(torch.library, "custom_op", custom_op)
++        T = install(mp, "tilelang.language", macro=lambda f: f)
++        tilelang = install(
++            mp,
++            "tilelang",
++            language=T,
++            jit=lambda **kw: lambda f: f,
++            PassConfigKey=SimpleNamespace(
++                TL_DISABLE_WARP_SPECIALIZED=1, TL_DISABLE_VECTORIZE_256=2
++            ),
++        )
++        install(mp, "vllm.tilelang_utils", T=T, tilelang=tilelang)
++        install(mp, "vllm.distributed", get_tensor_model_parallel_world_size=lambda: 4)
++        sp = SimpleNamespace(unreduced_enabled=lambda: True)
++        install(mp, "vllm.models.deepseek_v4_1", sp_prefill=sp)
++        install(
++            mp,
++            "vllm.models.deepseek_v4_1.tilelang",
++            prepare=SimpleNamespace(TileLangCall=tuple),
++        )
++
++        class Parts:
++            def __init__(self, packed):
++                self.packed = packed
++                self.shape = packed.shape[1:]
++
++            def sum(self):
++                pytest.fail("The fused consumer must retain rank-order parts")
++
++        install(
++            mp, "vllm.models.deepseek_v4_1.tilelang.collectives", RankOrderParts=Parts
++        )
++        consume = load("consume_cpu", "vllm/models/deepseek_v4_1/steering/consume.py")
++        install(
++            mp,
++            "vllm.models.deepseek_v4_1.steering.consume",
++            project_columns=consume.project_columns,
++        )
++        workspace = SimpleNamespace(
++            get_simultaneous=lambda *specs: tuple(
++                torch.empty(shape, dtype=dtype) for shape, dtype in specs
++            )
++        )
++        install(
++            mp,
++            "vllm.v1.worker.workspace",
++            current_workspace_manager=lambda: workspace,
++            retain_cuda_graph_capture_resource=lambda value: None,
++        )
++        mhc = load("mhc_cpu", "vllm/models/deepseek_v4_1/tilelang/mhc.py")
++        calls = []
++        mp.setattr(
++            mhc, "_project", lambda *key: lambda *args: calls.append((key, args))
++        )
++        mp.setattr(mhc, "_finalize", lambda *key: lambda *args: None)
++        # ModelState preparation must propagate route selection to both real
++        # execution and capture without clearing the stock controls.
++        install(
++            mp,
++            "vllm.compilation.breakable_cudagraph",
++            is_breakable_cudagraph_enabled=lambda: False,
++        )
++        install(mp, "vllm.config", VllmConfig=object)
++        install(mp, "vllm.config.compilation", CUDAGraphMode=Mode)
++        helper = SimpleNamespace(register_warmup=lambda **kw: None)
++        install(
++            mp,
++            "vllm.model_executor.warmup.jit_warmup_triton_helper",
++            TritonWarmupTensor=object,
++            triton_warmup_inputs=lambda *a, **kw: {},
++            triton_kernel_dispatcher_with_warmup=lambda **kw: lambda f: helper,
++        )
++
++        def jit(function=None, **kwargs):
++            return function if function is not None else lambda f: f
++
++        install(
++            mp,
++            "vllm.triton_utils",
++            tl=SimpleNamespace(constexpr=object),
++            triton=SimpleNamespace(
++                jit=jit, next_power_of_2=lambda n: 1 << (n - 1).bit_length()
++            ),
++        )
++        install(
++            mp,
++            "vllm.models.deepseek_v4_1.ced",
++            CED_WINDOW=16,
++            CEDState=object,
++            ced_decoder_start=lambda config: None,
++            gather_rows=lambda x, rows: x[rows],
++        )
++        install(
++            mp, "vllm.models.deepseek_v4_1.sparse_mla", DeepseekV41B12xMetadata=object
++        )
++        for name, symbol in (
++            ("vllm.v1.core.sched.output", "NewRequestData"),
++            ("vllm.v1.kv_cache_interface", "KVCacheConfig"),
++            ("vllm.v1.worker.gpu.input_batch", "InputBatch"),
++            ("vllm.v1.worker.gpu.mm.encoder_cache", "EncoderCache"),
++            ("vllm.v1.worker.gpu.states", "RequestState"),
++            ("vllm.v1.worker.utils", "AttentionGroup"),
++        ):
++            install(mp, name, **{symbol: object})
++
++        class Default:
++            def prepare_inputs(self, batch, requests):
++                return {"base": True}
++
++            def prepare_dummy_inputs(self, num_reqs, num_tokens):
++                return {"base": True}
++
++        install(
++            mp, "vllm.v1.worker.gpu.model_states.default", DefaultModelState=Default
++        )
++        state = load("state_cpu", "vllm/models/deepseek_v4_1/nvidia/model_state.py")
++        ops = load("ops_cpu", "vllm/models/deepseek_v4_1/steering/ops.py")
++        yield SimpleNamespace(
++            T=T,
++            consume=consume,
++            mhc=mhc,
++            calls=calls,
++            Parts=Parts,
++            state=state.DeepseekV41ModelState,
++            ops=ops,
++        )
++
++
++def test_actual_dot_binding_and_sp_fallback_do_not_materialize_twice(
++    host_modules, monkeypatch
++):
++    h = host_modules
++    launched = []
++
++    class Launcher:
++        def __getitem__(self, grid):
++            return lambda *args, **kw: launched.append((grid, args, kw))
++
++    monkeypatch.setattr(h.ops, "_dot_launcher", Launcher())
++    writer = torch.zeros(3, 128, dtype=torch.bfloat16)
++    direction, scales, dots = torch.zeros(128), torch.ones(3), torch.zeros(8, 2)
++    scratch = torch.empty(8, 128, dtype=torch.bfloat16)
++    result, controls = h.ops.prepare_consumer(
++        writer, direction, scales, dots, scratch, 2.5
++    )
++    assert result is writer and len(launched) == 1
++    assert controls["steering_dots"].data_ptr() == dots.data_ptr()
++    assert controls["steering_dots"].shape == (3, 2)
++    assert launched[0][0] == (3,) and launched[0][1][0].data_ptr() == writer.data_ptr()
++    legacy_calls = []
++    monkeypatch.setattr(h.ops, "project_parts", lambda *args: legacy_calls.append(args))
++    packed = torch.zeros(4, 3, 128, dtype=torch.bfloat16)
++    result, controls = h.ops.prepare_consumer(
++        h.Parts(packed), direction, scales, dots, scratch, 2.5
++    )
++    assert controls == {} and len(launched) == 1 and len(legacy_calls) == 1
++    assert result.data_ptr() == scratch.data_ptr() and result.shape == writer.shape
++    assert legacy_calls[0][0] is packed
++    with pytest.raises(ValueError, match="geometry"):
++        h.ops.projection_dot(writer.unsqueeze(0), direction, scales, dots)
++    with pytest.raises(ValueError, match="explicit row controls"):
++        h.ops.prepare_consumer(h.Parts(packed), direction, None, dots, scratch, 2.5)
++
++
++def test_actual_model_state_real_dummy_and_capture_hooks(host_modules, tmp_path):
++    h = host_modules
++    state = h.state.__new__(h.state)
++    state.steering = SteeringRuntime(valid_profile(tmp_path), 4, 16, "cpu")
++    state.ced_state = state.lookback_token_ids = None
++    state.disk_engram_models = ()
++    state.steering.add_request(0, "r", None)
++    batch = SimpleNamespace(
++        num_tokens_after_padding=8,
++        num_reqs=1,
++        req_ids=["r"],
++        idx_mapping_np=np.array([0]),
++    )
++    state.steering.row_scales.fill_(31)
++    assert state.prepare_inputs(batch, None) == {"base": True, "steering_active": False}
++    assert state.cudagraph_input_variants == (0, 1)
++    assert state.get_model_input_variant(["r"]) == 0
++    assert state.prepare_dummy_inputs_for_variant(1, 8, 0)["steering_active"] is False
++    assert (state.steering.row_scales == 31).all()
++    capture = state.prepare_dummy_inputs_for_variant(1, 8, 1)
++    assert capture["steering_active"] and not capture["steering_scales"].any()
++    state.steering.remove_request("r")
++    state.steering.add_request(
++        0, "r", {"steering_profile": "test-profile", "steering_scale": 1.5}
++    )
++    batch.query_start_loc = torch.tensor([0, 3])
++    batch.is_padding = torch.tensor([False] * 3 + [True] * 5)
++    assert state.get_model_input_variant(["r"]) == 1
++    real = state.prepare_inputs(batch, None)
++    assert real["steering_active"]
++    assert real["steering_scales"].tolist() == [1.5] * 3 + [0] * 5
++    state.steering = None
++    assert state.cudagraph_input_variants == (0,)
++    with pytest.raises(ValueError):
++        state.prepare_dummy_inputs_for_variant(1, 8, 1)
++
++
++@pytest.mark.parametrize("world", [1, 4])
++def test_actual_mhc_keeps_original_writer_and_stock_kernel_abi(host_modules, world):
++    h = host_modules
++    layer = h.mhc.TileKernelsMHC(
++        SimpleNamespace(
++            hc_mult=4,
++            hidden_size=128,
++            rms_norm_eps=1e-6,
++            hc_eps=1e-6,
++            hc_sinkhorn_iters=2,
++        )
++    )
++    residual = torch.zeros(3, 4, 128, dtype=torch.bfloat16)
++    writer = torch.zeros((3, 128) if world == 1 else (4, 3, 128), dtype=torch.bfloat16)
++    source = writer if world == 1 else h.Parts(writer)
++    post, comb, pre = torch.zeros(3, 4), torch.zeros(3, 4, 4), torch.zeros(3, 4)
++    args = (
++        source,
++        residual,
++        post,
++        comb,
++        torch.zeros(24, 512),
++        torch.zeros(3),
++        torch.zeros(24),
++        torch.ones(128, dtype=torch.bfloat16),
++        pre,
++    )
++    h.calls.clear()
++    layer.post_pre(*args)
++    key, inputs = h.calls[-1]
++    assert key == (128, "post_pre", world, False) and len(inputs) == 11
++    assert inputs[0].data_ptr() == writer.data_ptr()
++    direction, scales, dots = torch.zeros(128), torch.ones(3), torch.zeros(3, 2)
++    layer.post_pre(
++        *args,
++        steering_direction=direction,
++        steering_scales=scales,
++        steering_dots=dots,
++        steering_alpha=2.5,
++    )
++    key, inputs = h.calls[-1]
++    assert key == (128, "post_pre", world, True) and len(inputs) == 15
++    assert inputs[0].data_ptr() == writer.data_ptr()
++    assert inputs[-4] is direction and inputs[-3] is scales and inputs[-2] is dots
++    with pytest.raises(ValueError, match="controls require a direction"):
++        layer.post_pre(*args, steering_scales=scales)
++
++
++@pytest.mark.parametrize("dose", [0, 0.25, 0.5, 0.75, 1, 2, 4])
++def test_actual_consumer_formula_matches_fp64_and_skips_zero_loads(host_modules, dose):
++    h = host_modules
++    fma = ctypes.CDLL(None).fmaf
++    fma.argtypes, fma.restype = [ctypes.c_float] * 3, ctypes.c_float
++    T = h.T
++    T.float32, T.bfloat16 = np.float32, torch.bfloat16
++    T.unroll, T.abs = range, abs
++    T.Cast = lambda dtype, x: (
++        float(torch.tensor(float(x), dtype=dtype))
++        if dtype is torch.bfloat16
++        else np.float32(x)
++    )
++    T.ieee_add = lambda a, b: np.float32(np.float32(a) + np.float32(b))
++    T.ieee_sub = lambda a, b: np.float32(np.float32(a) - np.float32(b))
++    T.ieee_mul = lambda a, b: np.float32(np.float32(a) * np.float32(b))
++    T.ieee_fmaf = lambda a, b, c: np.float32(fma(float(a), float(b), float(c)))
++    gen = torch.Generator().manual_seed(1729)
++    original = torch.randn(128, generator=gen, dtype=torch.bfloat16)
++    direction = torch.randn(128, generator=gen).numpy()
++    direction /= np.linalg.norm(direction.astype(np.float64))
++    scalar = original.double().numpy() @ direction.astype(np.float64)
++    hi = np.float32(scalar)
++    dots = np.array([[hi, np.float32(scalar - float(hi))]])
++    actual = original.float().numpy().copy()
++    if dose == 0:
++        actual[:3] = [-0.0, np.nan, np.inf]
++        before = actual.view(np.uint32).copy()
++
++        class Unreadable:
++            def __getitem__(self, key):
++                pytest.fail("Zero rows must not read direction or dot")
++
++        direction = dots = Unreadable()
++    h.consume.project_columns(
++        actual,
++        direction,
++        np.array([dose], np.float32),
++        dots,
++        np.float32(2.5),
++        0,
++        0,
++        128,
++    )
++    if dose == 0:
++        np.testing.assert_array_equal(actual.view(np.uint32), before)
++    else:
++        expected = torch.tensor(
++            original.double().numpy()
++            - dose * 2.5 * direction.astype(np.float64) * scalar,
++            dtype=torch.bfloat16,
++        )
++        observed = torch.tensor(actual, dtype=torch.bfloat16)
++        spacing = (
++            (
++                torch.nextafter(expected, torch.full_like(expected, float("inf")))
++                - expected
++            )
++            .abs()
++            .float()
++        )
++        assert ((observed.float() - expected.float()).abs() <= 2 * spacing).all()
+diff --git a/tests/models/test_deepseek_v4_1_steering_gpu.py b/tests/models/test_deepseek_v4_1_steering_gpu.py
+index cec31c799..b13a14ad2 100644
+--- a/tests/models/test_deepseek_v4_1_steering_gpu.py
++++ b/tests/models/test_deepseek_v4_1_steering_gpu.py
+@@ -16,6 +16,7 @@ def kernels():
+     registry = JitWarmupRegistry(None)
+     with registry.activate():
+         ops.register_projection_warmups(5120)
++        ops.register_dot_warmups(5120)
+         row_kernel.register_row_warmup()
+     registry.warmup()
+     return ops, row_kernel
+@@ -182,3 +183,98 @@ def test_openai_wire_boolean_is_not_coerced_into_a_dose():
+         assert top_level.to_sampling_params(8, {}).extra_args == top_level.vllm_xargs
+         with pytest.raises(ValidationError, match="beam search"):
+             model(model="test", **prompt, steering_profile="p", use_beam_search=True)
++
++
++@pytest.mark.parametrize("rows", [3, 16, 96, 129])
++def test_fused_consumer_graph_matches_independent_projection(
++    kernels, monkeypatch, rows
++):
++    """The actual TileLang fold and one active graph must survive dose changes."""
++    if torch.cuda.get_device_capability()[0] != 12:
++        pytest.skip("DeepSeek mHC target requires SM12x")
++    from types import SimpleNamespace
++
++    from vllm.models.deepseek_v4_1.tilelang.mhc import TileKernelsMHC
++    from vllm.v1.worker.workspace import (
++        collect_cuda_graph_capture_resources,
++        init_workspace_manager,
++        is_workspace_manager_initialized,
++        reset_workspace_manager,
++    )
++
++    owned_workspace = not is_workspace_manager_initialized()
++    if owned_workspace:
++        init_workspace_manager(torch.device("cuda"))
++    ops, _ = kernels
++    h = 5120
++    gen = torch.Generator(device="cuda").manual_seed(1729)
++    writer = torch.randn(rows, h, device="cuda", dtype=torch.bfloat16, generator=gen)
++    residual = torch.randn(
++        rows, 4, h, device="cuda", dtype=torch.bfloat16, generator=gen
++    )
++    direction = torch.randn(h, device="cuda", generator=gen)
++    direction /= direction.double().norm().float()
++    scales = torch.zeros(rows, device="cuda")
++    dots = torch.full((rows, 2), float("nan"), device="cuda")
++    layer = TileKernelsMHC(
++        SimpleNamespace(
++            hc_mult=4,
++            hidden_size=h,
++            rms_norm_eps=1e-6,
++            hc_eps=1e-6,
++            hc_sinkhorn_iters=20,
++        )
++    )
++    layer.steering_enabled = True
++    monkeypatch.setattr(
++        layer,
++        "_entries",
++        lambda: [(mode, 1) for mode in ("pre", "post_pre", "broadcast")],
++    )
++    layer.declare_kernels()
++    post = torch.rand(rows, 4, device="cuda", generator=gen)
++    comb = torch.rand(rows, 4, 4, device="cuda", generator=gen)
++    fn = torch.randn(24, 4 * h, device="cuda", generator=gen) / (4 * h) ** 0.5
++    norm = torch.ones(h, device="cuda", dtype=torch.bfloat16)
++    params = (
++        residual,
++        post,
++        comb,
++        fn,
++        torch.ones(3, device="cuda"),
++        torch.zeros(24, device="cuda"),
++        norm,
++        post,
++    )
++
++    def fused():
++        controls = ops.prepare_consumer(writer, direction, scales, dots, None, 2.5)[1]
++        return layer.post_pre(writer, *params, **controls)
++
++    try:
++        stream = torch.cuda.Stream()
++        stream.wait_stream(torch.cuda.current_stream())
++        with torch.cuda.stream(stream):
++            fused()
++        torch.cuda.current_stream().wait_stream(stream)
++        graph = torch.cuda.CUDAGraph()
++        with (
++            collect_cuda_graph_capture_resources() as resources,
++            torch.cuda.graph(graph),
++        ):
++            observed = fused()
++        pointers = [t.data_ptr() for t in observed] + [dots.data_ptr()]
++        for i in range(101):
++            scales.fill_(4 * i / 100)
++            scales[0] = 0  # mixed rows, including poisoned but unread dot entries
++            graph.replay()
++            projected = writer.clone()
++            ops.project_writer(projected, direction, scales, 2.5)
++            expected = layer.post_pre(projected, *params)
++            for actual, oracle in zip(observed, expected):
++                torch.testing.assert_close(actual, oracle, rtol=0, atol=0)
++            assert pointers == [t.data_ptr() for t in observed] + [dots.data_ptr()]
++        assert resources  # owns the captured mHC workspace for graph's lifetime
++    finally:
++        if owned_workspace:
++            reset_workspace_manager()
+diff --git a/tests/models/test_deepseek_v4_1_steering_state.py b/tests/models/test_deepseek_v4_1_steering_state.py
+index 453f55350..6a464f79f 100644
+--- a/tests/models/test_deepseek_v4_1_steering_state.py
++++ b/tests/models/test_deepseek_v4_1_steering_state.py
+@@ -10,7 +10,7 @@ from tests.models.steering_test_support import valid_profile
+ 
+ # The helper installs this isolated package before its contracts are imported.
+ # isort: off
+-from ds41_steering_test.runtime import SteeringRuntime
++from ds41_steering_test.runtime import SteeringRuntime, validate_model_inputs
+ # isort: on
+ 
+ 
+@@ -20,7 +20,7 @@ def test_fixed_buffers_cancel_reuse_and_many_scales(tmp_path):
+     pointers = (
+         state.row_scales.data_ptr(),
+         state.request_scales.data_ptr(),
+-        state.scratch.data_ptr(),
++        state.dots.data_ptr(),
+     )
+     for i in range(101):
+         state.add_request(
+@@ -42,7 +42,7 @@ def test_fixed_buffers_cancel_reuse_and_many_scales(tmp_path):
+         assert pointers == (
+             state.row_scales.data_ptr(),
+             state.request_scales.data_ptr(),
+-            state.scratch.data_ptr(),
++            state.dots.data_ptr(),
+         )
+     assert not state.requests and not state.slots
+ 
+@@ -85,3 +85,94 @@ def test_profiling_dummy_is_explicit_and_preserves_live_request(tmp_path):
+                 is_dummy=False,
+             )
+         )
++
++
++def batch_for(ids, slots):
++    return SimpleNamespace(
++        num_tokens_after_padding=8,
++        num_reqs=len(ids),
++        req_ids=ids,
++        idx_mapping_np=np.array(slots),
++        query_start_loc=torch.tensor([0, *range(2, 2 * len(ids) + 1, 2)]),
++        is_padding=torch.tensor([False] * (2 * len(ids)) + [True] * (8 - 2 * len(ids))),
++    )
++
++
++@pytest.mark.parametrize("scale", [0.0, -0.0, 1e-100])
++def test_scheduled_stock_skips_controls_even_with_other_active_residents(
++    tmp_path, monkeypatch, scale
++):
++    p = valid_profile(tmp_path)
++    state = SteeringRuntime(p, 4, 16, "cpu")
++    state.add_request(
++        0, "stock", {"steering_profile": p.profile_id, "steering_scale": scale}
++    )
++    state.add_request(1, "other", {"steering_profile": p.profile_id})
++    state.row_scales.fill_(17)
++    state.dots.fill_(19)
++
++    def unexpected_prepare(_):
++        pytest.fail("Stock batch must not expand row controls")
++
++    monkeypatch.setattr(state, "prepare", unexpected_prepare)
++    assert state.input_variant(["stock"]) == 0
++    assert state.input_variant(["stock", "other"]) == 1
++    assert state.model_inputs(batch_for(["stock"], [0])) == {"steering_active": False}
++    assert (state.row_scales == 17).all() and (state.dots == 19).all()
++    assert state.dummy_inputs(8, 0) == {"steering_active": False}
++    assert (state.row_scales == 17).all()
++    with pytest.raises(ValueError, match="slot mapping"):
++        state.model_inputs(batch_for(["stock"], [1]))
++    with pytest.raises(ValueError, match="unregistered"):
++        state.input_variant(["other", "missing"])
++
++
++def test_mixed_batch_and_capture_topology_stay_explicit_after_cancel_and_reuse(
++    tmp_path,
++):
++    p = valid_profile(tmp_path)
++    state = SteeringRuntime(p, 4, 16, "cpu")
++    state.add_request(
++        2, "active", {"steering_profile": p.profile_id, "steering_scale": 2}
++    )
++    state.add_request(0, "stock", None)
++    inputs = state.model_inputs(batch_for(["active", "stock"], [2, 0]))
++    assert inputs["steering_active"] is True
++    assert inputs["steering_scales"].tolist() == [2, 2, 0, 0, 0, 0, 0, 0]
++    assert inputs["steering_dots"] is state.dots
++    assert state.dots.shape == (16, 2) and state.dots.dtype == torch.float32
++    validate_model_inputs(p, True, inputs["steering_scales"], state.dots, 8)
++    # Capture route 1 must exist even though all dummy doses are zero.
++    capture = state.dummy_inputs(8, 1)
++    assert capture["steering_active"] and not capture["steering_scales"].any()
++    assert state.input_variant(["active"], dummy=True) == 0
++    state.remove_request("active")
++    state.add_request(2, "new", None)
++    assert state.model_inputs(batch_for(["new", "stock"], [2, 0])) == {
++        "steering_active": False
++    }
++    with pytest.raises(ValueError, match="unknown steering_profile"):
++        state.add_request(
++            3, "bad", {"steering_profile": "unknown", "steering_scale": 0}
++        )
++    with pytest.raises(ValueError):
++        state.dummy_inputs(8, 2)
++
++
++@pytest.mark.parametrize(
++    "active,scales,dots",
++    [
++        (False, torch.zeros(8), None),
++        (True, None, None),
++        (True, torch.zeros(7), torch.zeros(8, 2)),
++        (True, torch.zeros(8), torch.zeros(8, 5120, dtype=torch.bfloat16)),
++        (1, None, None),
++    ],
++)
++def test_malformed_controls_cannot_silently_choose_stock(
++    tmp_path, active, scales, dots
++):
++    with pytest.raises(ValueError):
++        validate_model_inputs(valid_profile(tmp_path), active, scales, dots, 8)
++    with pytest.raises(ValueError):
++        validate_model_inputs(None, True, torch.zeros(8), torch.zeros(8, 2), 8)

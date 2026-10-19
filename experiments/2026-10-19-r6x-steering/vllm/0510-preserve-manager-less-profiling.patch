@@ -1,0 +1,256 @@
+From e865219d8ba875fcee3d017ff73e9ba28218cb42 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Mon, 19 Oct 2026 01:15:58 +0900
+Subject: [PATCH] Preserve manager-less profiling before steering graph
+ dispatch
+
+Replay baseline: r6x author head 7316c7f9fae1bc4a0b7ab1848de0db4143eec5d2 and preceding
+0500-series downstream patches. The original base and validation entries
+below are historical provenance; r6x qualification is recorded separately.
+
+Base: downstream steering candidate b9d59d9d2 on the complete 182-patch
+r6v and request-steering series.
+Rationale: initial profile_run calls _dummy_run and execute_model before
+initialize_kv_cache constructs the graph manager. Preserve the existing
+manager-less eager descriptor without selecting or calling a graph manager;
+leave initialized graph routing unchanged.
+Quality: no request, precision, profile, kernel or capacity changes. Execute
+the complete production profile_run, _dummy_run, execute_model, descriptor
+and dispatch bodies in a CPU fixture with device boundaries substituted.
+Cover loaded/unloaded profiles and explicit/default KV budgets, real model
+input preparation and the rejection of manager-less non-profile dispatch.
+Validation: all four regression cases fail on the prior candidate's assert
+and pass after this fix; the local CPU source collection has 108 passing
+checks. GPU startup, CED/SP integration and throughput remain unqualified.
+Upstream status: independent downstream experiment; not submitted upstream.
+
+Signed-off-by: Daniel <2660793+imDaniel@users.noreply.github.com>
+---
+ .../test_deepseek_v4_1_steering_consume.py    | 186 ++++++++++++++++++
+ vllm/v1/worker/gpu/model_runner.py            |   6 +-
+ 2 files changed, 190 insertions(+), 2 deletions(-)
+
+diff --git a/tests/models/test_deepseek_v4_1_steering_consume.py b/tests/models/test_deepseek_v4_1_steering_consume.py
+index ef5db1e6b..f76ac5bd5 100644
+--- a/tests/models/test_deepseek_v4_1_steering_consume.py
++++ b/tests/models/test_deepseek_v4_1_steering_consume.py
+@@ -2,9 +2,11 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Execute host hooks and the consumer formula on CPU; no CUDA qualification."""
+ 
++import ast
+ import ctypes
+ import importlib.util
+ import sys
++from contextlib import nullcontext
+ from dataclasses import dataclass
+ from enum import Enum
+ from types import ModuleType, SimpleNamespace
+@@ -301,6 +303,190 @@ def test_actual_model_state_real_dummy_and_capture_hooks(host_modules, tmp_path)
+         state.prepare_dummy_inputs_for_variant(1, 8, 1)
+ 
+ 
++def source_definitions(path, names, namespace, *, owner=None):
++    """Execute complete production bodies without importing the GPU dependency tree.
++
++    Only decorators are removed. No statements, branches or expressions in the
++    tested methods are replaced. Device/allocator/connector boundaries are fakes.
++    """
++    source = ROOT / path
++    tree = ast.parse(source.read_text())
++    nodes = tree.body
++    if owner is not None:
++        nodes = next(
++            n for n in nodes if isinstance(n, ast.ClassDef) and n.name == owner
++        ).body
++    selected = [n for n in nodes if getattr(n, "name", None) in names]
++    assert {n.name for n in selected} == set(names)
++    for node in selected:
++        if isinstance(node, ast.FunctionDef):
++            node.decorator_list = []
++    module = ast.Module(
++        body=[
++            ast.ImportFrom(
++                module="__future__", names=[ast.alias(name="annotations")], level=0
++            ),
++            *selected,
++        ],
++        type_ignores=[],
++    )
++    exec(compile(ast.fix_missing_locations(module), str(source), "exec"), namespace)
++
++
++@pytest.mark.parametrize("loaded", [False, True])
++@pytest.mark.parametrize("explicit_kv_bytes", [None, 1024])
++def test_actual_runner_initial_profile_before_graph_manager(
++    host_modules, tmp_path, loaded, explicit_kv_bytes
++):
++    """profile_run -> _dummy_run -> execute_model must reach eager model forward.
++
++    This runs complete production host bodies and real DeepSeek prepare_inputs,
++    not a reimplementation of their dispatch. It does not emulate GPU allocation,
++    the separate attention-cache profile, or initialize_kv_cache's GPU setup.
++    """
++    h = host_modules
++    events = []
++    state = h.state.__new__(h.state)
++    state.steering = (
++        SteeringRuntime(valid_profile(tmp_path), 4, 16, "cpu") if loaded else None
++    )
++    state.ced_state = state.lookback_token_ids = None
++    state.disk_engram_models = ()
++    state.single_request_prefill_cudagraph_tokens = 0
++    # A profile has no scheduled real requests and must never select an active
++    # graph or clear/expand GPU controls, even when a profile is loaded.
++    state.get_model_input_variant = lambda *a, **kw: pytest.fail(
++        "profiling must not select a graph variant"
++    )
++    if state.steering is not None:
++        state.steering.row_scales.fill_(31)
++
++    def make_empty():
++        return SimpleNamespace(
++            finished_req_ids=set(), resolve_num_spec_tokens_to_schedule=lambda n: 0
++        )
++
++    def make_dummy(num_reqs, num_tokens, buffers, **kwargs):
++        return SimpleNamespace(
++            num_reqs=num_reqs,
++            num_reqs_after_padding=num_reqs,
++            num_tokens=num_tokens,
++            num_tokens_after_padding=num_tokens,
++            is_dummy=True,
++            req_ids=[f"_dummy_req_{i}" for i in range(num_reqs)],
++            input_ids=torch.zeros(num_tokens, dtype=torch.int64),
++            positions=torch.arange(num_tokens),
++            logits_indices=torch.arange(num_reqs),
++            idx_mapping=torch.arange(num_reqs),
++            is_padding=torch.zeros(num_tokens, dtype=torch.bool),
++        )
++
++    def forward_context(*args, **kwargs):
++        events.append(("forward", kwargs["cudagraph_runtime_mode"]))
++        return nullcontext()
++
++    def model(**inputs):
++        assert not inputs.get("steering_active", False)
++        assert "steering_scales" not in inputs
++        events.append(("model", loaded))
++        return torch.ones(8, 8)
++
++    ns = dict(
++        dataclass=dataclass,
++        CUDAGraphMode=Mode,
++        np=np,
++        torch=SimpleNamespace(
++            Tensor=torch.Tensor, accelerator=SimpleNamespace(synchronize=lambda: None)
++        ),
++        SchedulerOutput=SimpleNamespace(make_empty=make_empty),
++        InputBatch=SimpleNamespace(make_dummy=make_dummy),
++        ExecuteModelState=SimpleNamespace,
++        BatchDescriptor=lambda **kw: SimpleNamespace(**kw),
++        normalize_model_token_inputs=lambda *a: None,
++        set_forward_context=forward_context,
++        current_workspace_manager=lambda: SimpleNamespace(reserve_by_lane=lambda: None),
++        gc=SimpleNamespace(collect=lambda: None),
++    )
++    source_definitions(
++        "vllm/v1/worker/gpu/cudagraph_utils.py", ["BatchExecutionDescriptor"], ns
++    )
++    source_definitions(
++        "vllm/v1/worker/gpu/dp_utils.py", ["dispatch_cg_and_sync_dp"], ns
++    )
++    methods = ["profile_run", "_dummy_run", "execute_model"]
++    source_definitions(
++        "vllm/v1/worker/gpu/model_runner.py", methods, ns, owner="GPUModelRunner"
++    )
++    runner = type("HostRunner", (), {name: ns[name] for name in methods})()
++    for key, value in dict(
++        cudagraph_manager=None,
++        model_state=state,
++        model=model,
++        max_num_tokens=8,
++        max_num_reqs=4,
++        decode_query_len=1,
++        supports_mm_inputs=False,
++        is_first_pp_rank=True,
++        is_last_pp_rank=True,
++        pooling_runner=None,
++        speculator=None,
++        lora_config=None,
++        pcp_manager=None,
++        ubatch_runner=None,
++        is_encoder_decoder=False,
++        uses_inputs_embeds=False,
++        dp_size=1,
++        dp_rank=0,
++        parallel_config=None,
++        model_config=None,
++        vllm_config=None,
++        input_buffers=None,
++        req_states=None,
++        num_speculative_steps=0,
++        use_aux_hidden_state_outputs=False,
++        cache_config=SimpleNamespace(kv_cache_memory_bytes=explicit_kv_bytes),
++        maybe_dummy_run_with_lora=lambda *a, **kw: nullcontext(),
++        gather_batch_req_state=lambda *a: (None, None),
++        _reserve_profile_scratch=lambda: None,
++        _dummy_sampler_run=lambda output: events.append(
++            ("sampler", tuple(output.shape))
++        ),
++        _profile_deepseek_v4_attention=lambda *a: events.append(
++            ("attention-profile-boundary", None)
++        ),
++        reset_encoder_cache=lambda: None,
++        kv_connector=SimpleNamespace(
++            set_disabled=lambda flag: events.append(("connector", flag)),
++            pre_forward=lambda **kw: None,
++            finish_forward=lambda: None,
++        ),
++        eplb=SimpleNamespace(prepare_forward=lambda *a: None),
++        step_timing=SimpleNamespace(
++            record_batch=lambda *a: None,
++            forward_start=lambda: None,
++            forward_end=lambda: None,
++        ),
++    ).items():
++        setattr(runner, key, value)
++
++    runner.profile_run()
++    assert runner.cudagraph_manager is None
++    assert events == [
++        ("connector", True),
++        ("forward", Mode.NONE),
++        ("model", loaded),
++        ("connector", False),
++        ("sampler", (4, 8)),
++        ("attention-profile-boundary", None),
++    ]
++    assert runner.execute_model_state is None
++    if loaded:
++        assert (state.steering.row_scales == 31).all()
++    # The existing dispatch contract must still reject a manager-less real run.
++    with pytest.raises(AssertionError, match="only be None during profile run"):
++        ns["dispatch_cg_and_sync_dp"](None, 1, 8, None, 1, 0)
++
++
+ @pytest.mark.parametrize("world", [1, 4])
+ def test_actual_mhc_keeps_original_writer_and_stock_kernel_abi(host_modules, world):
+     h = host_modules
+diff --git a/vllm/v1/worker/gpu/model_runner.py b/vllm/v1/worker/gpu/model_runner.py
+index 818049c24..0cb53630e 100644
+--- a/vllm/v1/worker/gpu/model_runner.py
++++ b/vllm/v1/worker/gpu/model_runner.py
+@@ -2431,8 +2431,10 @@ class GPUModelRunner(LoRAModelRunnerMixin):
+         )
+ 
+         input_variant = getattr(self.model_state, "get_model_input_variant", None)
+-        if input_variant is not None:
+-            assert self.cudagraph_manager is not None
++        # Initial memory profiling runs before initialize_kv_cache creates the
++        # manager. dispatch_cg_and_sync_dp already requires eager in that phase;
++        # keep its stock descriptor and do not select a graph on a None manager.
++        if input_variant is not None and self.cudagraph_manager is not None:
+             batch_desc = self.cudagraph_manager.with_input_variant(
+                 batch_desc,
+                 input_variant(scheduler_output.num_scheduled_tokens, dummy=dummy_run),

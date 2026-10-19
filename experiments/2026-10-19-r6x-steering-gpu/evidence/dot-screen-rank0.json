@@ -1,0 +1,2576 @@
+{
+  "identity": {
+    "ops": "d539205a087213fea9faf1c4ceff7db520db458eea91b1075e66d80fbb72cb27",
+    "consume": "917dc0646dd5573c6d5d27314f7e08c58a2041f588bd0a8a1d9e2618096d17db",
+    "mhc": "19e3f85d32ec917dc62839e564f494cfb44d1ebbb6d42008e2d213a1b789f23b",
+    "source_tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4",
+    "image": "sha256:6bfca1ba83e22bd6ed3933fa8837f25131bbbb791ad6e6d7c4c0587977ad597f"
+  },
+  "device": "NVIDIA GB10",
+  "torch": "2.13.0+cu130",
+  "scope": "same-source isolated kernels, not r6x whole-model qualification",
+  "cases": [
+    {
+      "rows": 1,
+      "seed": 20261020,
+      "layouts": {
+        "8": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 64
+          },
+          "dot_max_relative_to_absolute_sum": 2.941642251629488e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.1302917351325354,
+          "median_total_us": 13.315333674351374
+        },
+        "4": {
+          "correctness": true,
+          "kernel": {
+            "registers": 33,
+            "spills": 0,
+            "shared_bytes": 32
+          },
+          "dot_max_relative_to_absolute_sum": 1.2747116423727782e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.509562453875939,
+          "median_total_us": 13.69933287302653
+        },
+        "16": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "dot_max_relative_to_absolute_sum": 2.941642251629488e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.2895208870371184,
+          "median_total_us": 13.452666501204172
+        },
+        "32": {
+          "correctness": true,
+          "kernel": {
+            "registers": 26,
+            "spills": 0,
+            "shared_bytes": 256
+          },
+          "dot_max_relative_to_absolute_sum": 2.941642251629488e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.3695208753148713,
+          "median_total_us": 13.506833463907242
+        }
+      },
+      "samples": [
+        {
+          "round": 0,
+          "warps": 16,
+          "dot_us": 2.3167917194465795,
+          "total_us": 13.542833427588144
+        },
+        {
+          "round": 0,
+          "warps": 8,
+          "dot_us": 2.1539999482532344,
+          "total_us": 13.406500220298767
+        },
+        {
+          "round": 0,
+          "warps": 32,
+          "dot_us": 2.3934999480843544,
+          "total_us": 13.451500485340754
+        },
+        {
+          "round": 0,
+          "warps": 4,
+          "dot_us": 2.524833350131909,
+          "total_us": 13.794166346391043
+        },
+        {
+          "round": 1,
+          "warps": 8,
+          "dot_us": 2.1285833790898323,
+          "total_us": 13.31233357389768
+        },
+        {
+          "round": 1,
+          "warps": 16,
+          "dot_us": 2.2894375336666903,
+          "total_us": 13.44950000445048
+        },
+        {
+          "round": 1,
+          "warps": 32,
+          "dot_us": 2.369291614741087,
+          "total_us": 13.705833504597345
+        },
+        {
+          "round": 1,
+          "warps": 4,
+          "dot_us": 2.6721665635704994,
+          "total_us": 13.693500310182571
+        },
+        {
+          "round": 2,
+          "warps": 16,
+          "dot_us": 2.28945833320419,
+          "total_us": 13.452333708604177
+        },
+        {
+          "round": 2,
+          "warps": 4,
+          "dot_us": 2.508312463760376,
+          "total_us": 13.705000281333923
+        },
+        {
+          "round": 2,
+          "warps": 32,
+          "dot_us": 2.53543754418691,
+          "total_us": 13.506833463907242
+        },
+        {
+          "round": 2,
+          "warps": 8,
+          "dot_us": 2.1296250633895397,
+          "total_us": 13.319833825031916
+        },
+        {
+          "round": 3,
+          "warps": 8,
+          "dot_us": 2.129687462002039,
+          "total_us": 13.31366722782453
+        },
+        {
+          "round": 3,
+          "warps": 4,
+          "dot_us": 2.512020835032066,
+          "total_us": 13.700333734353384
+        },
+        {
+          "round": 3,
+          "warps": 16,
+          "dot_us": 2.289187473555406,
+          "total_us": 13.453333328167597
+        },
+        {
+          "round": 3,
+          "warps": 32,
+          "dot_us": 2.3695832739273706,
+          "total_us": 13.500500470399857
+        },
+        {
+          "round": 4,
+          "warps": 4,
+          "dot_us": 2.511958281199137,
+          "total_us": 13.69833325346311
+        },
+        {
+          "round": 4,
+          "warps": 16,
+          "dot_us": 2.2909374286731086,
+          "total_us": 13.449167211850485
+        },
+        {
+          "round": 4,
+          "warps": 32,
+          "dot_us": 2.3685207900901637,
+          "total_us": 13.502000520626703
+        },
+        {
+          "round": 4,
+          "warps": 8,
+          "dot_us": 2.1295625095566115,
+          "total_us": 13.314500451087952
+        },
+        {
+          "round": 5,
+          "warps": 8,
+          "dot_us": 2.1307291463017464,
+          "total_us": 13.322833925485611
+        },
+        {
+          "round": 5,
+          "warps": 32,
+          "dot_us": 2.3688124492764473,
+          "total_us": 13.50566620628039
+        },
+        {
+          "round": 5,
+          "warps": 16,
+          "dot_us": 2.2893749798337617,
+          "total_us": 13.444166630506516
+        },
+        {
+          "round": 5,
+          "warps": 4,
+          "dot_us": 2.508437571426233,
+          "total_us": 13.709500432014465
+        },
+        {
+          "round": 6,
+          "warps": 4,
+          "dot_us": 2.51227089514335,
+          "total_us": 13.699166476726532
+        },
+        {
+          "round": 6,
+          "warps": 16,
+          "dot_us": 2.290270756930113,
+          "total_us": 13.461999595165253
+        },
+        {
+          "round": 6,
+          "warps": 8,
+          "dot_us": 2.330583365013202,
+          "total_us": 13.347999503215155
+        },
+        {
+          "round": 6,
+          "warps": 32,
+          "dot_us": 2.3695208753148713,
+          "total_us": 13.504999379316965
+        },
+        {
+          "round": 7,
+          "warps": 4,
+          "dot_us": 2.509229195614656,
+          "total_us": 13.96000012755394
+        },
+        {
+          "round": 7,
+          "warps": 16,
+          "dot_us": 2.2895208870371184,
+          "total_us": 13.453833758831024
+        },
+        {
+          "round": 7,
+          "warps": 8,
+          "dot_us": 2.1302917351325354,
+          "total_us": 13.31433281302452
+        },
+        {
+          "round": 7,
+          "warps": 32,
+          "dot_us": 2.3689999555548034,
+          "total_us": 13.516999781131744
+        },
+        {
+          "round": 8,
+          "warps": 8,
+          "dot_us": 2.1303541337450347,
+          "total_us": 13.315333674351374
+        },
+        {
+          "round": 8,
+          "warps": 16,
+          "dot_us": 2.2902291578551135,
+          "total_us": 13.4531669318676
+        },
+        {
+          "round": 8,
+          "warps": 32,
+          "dot_us": 2.3694375219444432,
+          "total_us": 13.50933313369751
+        },
+        {
+          "round": 8,
+          "warps": 4,
+          "dot_us": 2.5094583009680114,
+          "total_us": 13.69933287302653
+        },
+        {
+          "round": 9,
+          "warps": 8,
+          "dot_us": 2.1304374871154628,
+          "total_us": 13.318832963705063
+        },
+        {
+          "round": 9,
+          "warps": 4,
+          "dot_us": 2.509562453875939,
+          "total_us": 13.697666426499685
+        },
+        {
+          "round": 9,
+          "warps": 32,
+          "dot_us": 2.370854218800863,
+          "total_us": 13.510332753260931
+        },
+        {
+          "round": 9,
+          "warps": 16,
+          "dot_us": 2.2893124260008335,
+          "total_us": 13.452666501204172
+        },
+        {
+          "round": 10,
+          "warps": 4,
+          "dot_us": 2.5079374512036643,
+          "total_us": 13.698666046063105
+        },
+        {
+          "round": 10,
+          "warps": 8,
+          "dot_us": 2.1285416247944036,
+          "total_us": 13.310667127370834
+        },
+        {
+          "round": 10,
+          "warps": 16,
+          "dot_us": 2.289625039945046,
+          "total_us": 13.449333608150482
+        },
+        {
+          "round": 10,
+          "warps": 32,
+          "dot_us": 2.3697291811307273,
+          "total_us": 13.508666306734085
+        }
+      ]
+    },
+    {
+      "rows": 4,
+      "seed": 20261023,
+      "layouts": {
+        "8": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 64
+          },
+          "dot_max_relative_to_absolute_sum": 3.9324696829009917e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.1757500556608043,
+          "median_total_us": 13.441833357016245
+        },
+        "4": {
+          "correctness": true,
+          "kernel": {
+            "registers": 33,
+            "spills": 0,
+            "shared_bytes": 32
+          },
+          "dot_max_relative_to_absolute_sum": 4.406821384588296e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.5442708283662796,
+          "median_total_us": 13.822833697001139
+        },
+        "16": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "dot_max_relative_to_absolute_sum": 4.406821384588296e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.3043332621455193,
+          "median_total_us": 13.569500297307968
+        },
+        "32": {
+          "correctness": true,
+          "kernel": {
+            "registers": 26,
+            "spills": 0,
+            "shared_bytes": 256
+          },
+          "dot_max_relative_to_absolute_sum": 4.406821384588296e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.4003333722551665,
+          "median_total_us": 13.579833010832468
+        }
+      },
+      "samples": [
+        {
+          "round": 0,
+          "warps": 32,
+          "dot_us": 2.4181874468922615,
+          "total_us": 13.57633372147878
+        },
+        {
+          "round": 0,
+          "warps": 8,
+          "dot_us": 2.1866875079770884,
+          "total_us": 13.41333364446958
+        },
+        {
+          "round": 0,
+          "warps": 16,
+          "dot_us": 2.314583398401737,
+          "total_us": 13.55983316898346
+        },
+        {
+          "round": 0,
+          "warps": 4,
+          "dot_us": 2.5550417291621366,
+          "total_us": 13.803833474715551
+        },
+        {
+          "round": 1,
+          "warps": 8,
+          "dot_us": 2.16066666568319,
+          "total_us": 13.32266628742218
+        },
+        {
+          "round": 1,
+          "warps": 16,
+          "dot_us": 2.289187473555406,
+          "total_us": 13.464666903018951
+        },
+        {
+          "round": 1,
+          "warps": 4,
+          "dot_us": 2.528687473386526,
+          "total_us": 13.707666347424189
+        },
+        {
+          "round": 1,
+          "warps": 32,
+          "dot_us": 2.385291736572981,
+          "total_us": 13.570167124271393
+        },
+        {
+          "round": 2,
+          "warps": 16,
+          "dot_us": 2.2900624511142573,
+          "total_us": 13.459333529074987
+        },
+        {
+          "round": 2,
+          "warps": 32,
+          "dot_us": 2.384625064829985,
+          "total_us": 13.569833089907965
+        },
+        {
+          "round": 2,
+          "warps": 8,
+          "dot_us": 2.16018750021855,
+          "total_us": 13.330666969219843
+        },
+        {
+          "round": 2,
+          "warps": 4,
+          "dot_us": 2.529604205240806,
+          "total_us": 13.724499692519506
+        },
+        {
+          "round": 3,
+          "warps": 4,
+          "dot_us": 2.527812495827675,
+          "total_us": 13.70666672786077
+        },
+        {
+          "round": 3,
+          "warps": 8,
+          "dot_us": 2.1611874302228293,
+          "total_us": 13.320833444595337
+        },
+        {
+          "round": 3,
+          "warps": 32,
+          "dot_us": 2.3842708518107734,
+          "total_us": 13.564833750327429
+        },
+        {
+          "round": 3,
+          "warps": 16,
+          "dot_us": 2.2895208870371184,
+          "total_us": 13.466499745845795
+        },
+        {
+          "round": 4,
+          "warps": 8,
+          "dot_us": 2.160333407421907,
+          "total_us": 13.32266628742218
+        },
+        {
+          "round": 4,
+          "warps": 4,
+          "dot_us": 2.5289791325728097,
+          "total_us": 13.71366654833158
+        },
+        {
+          "round": 4,
+          "warps": 16,
+          "dot_us": 2.290354110300541,
+          "total_us": 13.48333309094111
+        },
+        {
+          "round": 4,
+          "warps": 32,
+          "dot_us": 2.4184375070035458,
+          "total_us": 13.576666514078775
+        },
+        {
+          "round": 5,
+          "warps": 4,
+          "dot_us": 2.6020208994547525,
+          "total_us": 15.017667164405188
+        },
+        {
+          "round": 5,
+          "warps": 16,
+          "dot_us": 2.304375016440948,
+          "total_us": 13.577166944742203
+        },
+        {
+          "round": 5,
+          "warps": 32,
+          "dot_us": 2.4003333722551665,
+          "total_us": 13.582833111286163
+        },
+        {
+          "round": 5,
+          "warps": 8,
+          "dot_us": 2.1762708202004433,
+          "total_us": 13.449167211850485
+        },
+        {
+          "round": 6,
+          "warps": 32,
+          "dot_us": 2.401375056554874,
+          "total_us": 13.586832831303278
+        },
+        {
+          "round": 6,
+          "warps": 16,
+          "dot_us": 2.3041249563296637,
+          "total_us": 13.576832910378775
+        },
+        {
+          "round": 6,
+          "warps": 8,
+          "dot_us": 2.1757291009028754,
+          "total_us": 13.449167211850485
+        },
+        {
+          "round": 6,
+          "warps": 4,
+          "dot_us": 2.5442708283662796,
+          "total_us": 13.832833617925644
+        },
+        {
+          "round": 7,
+          "warps": 32,
+          "dot_us": 2.4002916179597378,
+          "total_us": 13.592999428510666
+        },
+        {
+          "round": 7,
+          "warps": 4,
+          "dot_us": 2.543875016272068,
+          "total_us": 13.822833697001139
+        },
+        {
+          "round": 7,
+          "warps": 16,
+          "dot_us": 2.304375016440948,
+          "total_us": 13.571000347534815
+        },
+        {
+          "round": 7,
+          "warps": 8,
+          "dot_us": 2.1757500556608043,
+          "total_us": 13.447999954223633
+        },
+        {
+          "round": 8,
+          "warps": 32,
+          "dot_us": 2.4002500188847384,
+          "total_us": 13.579833010832468
+        },
+        {
+          "round": 8,
+          "warps": 8,
+          "dot_us": 2.1763333740333715,
+          "total_us": 13.441833357016245
+        },
+        {
+          "round": 8,
+          "warps": 4,
+          "dot_us": 2.544416735569636,
+          "total_us": 13.825499763091406
+        },
+        {
+          "round": 8,
+          "warps": 16,
+          "dot_us": 2.3044166155159473,
+          "total_us": 13.571333140134811
+        },
+        {
+          "round": 9,
+          "warps": 16,
+          "dot_us": 2.305687560389439,
+          "total_us": 13.569500297307968
+        },
+        {
+          "round": 9,
+          "warps": 4,
+          "dot_us": 2.5449375001092753,
+          "total_us": 13.823166489601135
+        },
+        {
+          "round": 9,
+          "warps": 8,
+          "dot_us": 2.1763957726458707,
+          "total_us": 13.449167211850485
+        },
+        {
+          "round": 9,
+          "warps": 32,
+          "dot_us": 2.4010416430731616,
+          "total_us": 13.58666643500328
+        },
+        {
+          "round": 10,
+          "warps": 4,
+          "dot_us": 2.5451875602205596,
+          "total_us": 13.826667020718256
+        },
+        {
+          "round": 10,
+          "warps": 8,
+          "dot_us": 2.1762708202004433,
+          "total_us": 13.450333227713903
+        },
+        {
+          "round": 10,
+          "warps": 32,
+          "dot_us": 2.4016457609832287,
+          "total_us": 13.586832831303278
+        },
+        {
+          "round": 10,
+          "warps": 16,
+          "dot_us": 2.3043332621455193,
+          "total_us": 13.576666514078775
+        }
+      ]
+    },
+    {
+      "rows": 5,
+      "seed": 20261024,
+      "layouts": {
+        "8": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 64
+          },
+          "dot_max_relative_to_absolute_sum": 5.530202256878686e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.1777708704272905,
+          "median_total_us": 13.46233362952868
+        },
+        "4": {
+          "correctness": true,
+          "kernel": {
+            "registers": 33,
+            "spills": 0,
+            "shared_bytes": 32
+          },
+          "dot_max_relative_to_absolute_sum": 5.530202256878686e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.5602083963652453,
+          "median_total_us": 13.875833402077356
+        },
+        "16": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "dot_max_relative_to_absolute_sum": 5.530202256878686e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.330583365013202,
+          "median_total_us": 13.634166369835535
+        },
+        "32": {
+          "correctness": true,
+          "kernel": {
+            "registers": 26,
+            "spills": 0,
+            "shared_bytes": 256
+          },
+          "dot_max_relative_to_absolute_sum": 5.530202256878686e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.4002082645893097,
+          "median_total_us": 13.695333153009415
+        }
+      },
+      "samples": [
+        {
+          "round": 0,
+          "warps": 32,
+          "dot_us": 2.412937426318725,
+          "total_us": 13.581999888022741
+        },
+        {
+          "round": 0,
+          "warps": 16,
+          "dot_us": 2.3461667199929557,
+          "total_us": 13.65949958562851
+        },
+        {
+          "round": 0,
+          "warps": 4,
+          "dot_us": 2.570708282291889,
+          "total_us": 13.917667170365652
+        },
+        {
+          "round": 0,
+          "warps": 8,
+          "dot_us": 2.1947291679680347,
+          "total_us": 13.532000283400217
+        },
+        {
+          "round": 1,
+          "warps": 32,
+          "dot_us": 2.3851250298321247,
+          "total_us": 13.584166765213013
+        },
+        {
+          "round": 1,
+          "warps": 4,
+          "dot_us": 2.545500018944343,
+          "total_us": 13.83316641052564
+        },
+        {
+          "round": 1,
+          "warps": 8,
+          "dot_us": 2.1677499947448573,
+          "total_us": 13.439666479825974
+        },
+        {
+          "round": 1,
+          "warps": 16,
+          "dot_us": 2.3197291108469167,
+          "total_us": 13.574833671251932
+        },
+        {
+          "round": 2,
+          "warps": 4,
+          "dot_us": 2.7413334076603255,
+          "total_us": 13.831167171398798
+        },
+        {
+          "round": 2,
+          "warps": 16,
+          "dot_us": 2.320062524328629,
+          "total_us": 13.577000548442205
+        },
+        {
+          "round": 2,
+          "warps": 32,
+          "dot_us": 2.38625006750226,
+          "total_us": 13.571833570798239
+        },
+        {
+          "round": 2,
+          "warps": 8,
+          "dot_us": 2.1689791853229203,
+          "total_us": 13.44349980354309
+        },
+        {
+          "round": 3,
+          "warps": 32,
+          "dot_us": 2.3855000423888364,
+          "total_us": 13.57966661453247
+        },
+        {
+          "round": 3,
+          "warps": 4,
+          "dot_us": 2.5450000539422035,
+          "total_us": 13.836500545342764
+        },
+        {
+          "round": 3,
+          "warps": 16,
+          "dot_us": 2.3197500656048455,
+          "total_us": 13.567167023817698
+        },
+        {
+          "round": 3,
+          "warps": 8,
+          "dot_us": 2.168395866950353,
+          "total_us": 13.444000234206518
+        },
+        {
+          "round": 4,
+          "warps": 8,
+          "dot_us": 2.167499934633573,
+          "total_us": 13.440000514189402
+        },
+        {
+          "round": 4,
+          "warps": 16,
+          "dot_us": 2.318916687120994,
+          "total_us": 13.568000247081121
+        },
+        {
+          "round": 4,
+          "warps": 4,
+          "dot_us": 2.5450208534797034,
+          "total_us": 13.827666640281677
+        },
+        {
+          "round": 4,
+          "warps": 32,
+          "dot_us": 2.385083275536696,
+          "total_us": 13.573167224725088
+        },
+        {
+          "round": 5,
+          "warps": 16,
+          "dot_us": 2.3336666636168957,
+          "total_us": 14.593166609605154
+        },
+        {
+          "round": 5,
+          "warps": 8,
+          "dot_us": 2.2770416301985583,
+          "total_us": 13.467332969109217
+        },
+        {
+          "round": 5,
+          "warps": 4,
+          "dot_us": 2.5602083963652453,
+          "total_us": 13.865667084852854
+        },
+        {
+          "round": 5,
+          "warps": 32,
+          "dot_us": 2.4004999237755933,
+          "total_us": 13.700166096289953
+        },
+        {
+          "round": 6,
+          "warps": 4,
+          "dot_us": 2.562020905315876,
+          "total_us": 13.875833402077356
+        },
+        {
+          "round": 6,
+          "warps": 16,
+          "dot_us": 2.330583365013202,
+          "total_us": 13.641500224669775
+        },
+        {
+          "round": 6,
+          "warps": 8,
+          "dot_us": 2.178354188799858,
+          "total_us": 13.473667204380035
+        },
+        {
+          "round": 6,
+          "warps": 32,
+          "dot_us": 2.4015416080753007,
+          "total_us": 13.69933287302653
+        },
+        {
+          "round": 7,
+          "warps": 16,
+          "dot_us": 2.3328958389659724,
+          "total_us": 13.647999614477158
+        },
+        {
+          "round": 7,
+          "warps": 32,
+          "dot_us": 2.4001458659768105,
+          "total_us": 13.69933287302653
+        },
+        {
+          "round": 7,
+          "warps": 4,
+          "dot_us": 2.559687476605177,
+          "total_us": 13.886832942565283
+        },
+        {
+          "round": 7,
+          "warps": 8,
+          "dot_us": 2.1772709054251513,
+          "total_us": 13.451666881640753
+        },
+        {
+          "round": 8,
+          "warps": 16,
+          "dot_us": 2.3307916708290577,
+          "total_us": 13.641333828369776
+        },
+        {
+          "round": 8,
+          "warps": 32,
+          "dot_us": 2.4002082645893097,
+          "total_us": 13.695333153009415
+        },
+        {
+          "round": 8,
+          "warps": 4,
+          "dot_us": 2.559750030438105,
+          "total_us": 13.88233279188474
+        },
+        {
+          "round": 8,
+          "warps": 8,
+          "dot_us": 2.1777708704272905,
+          "total_us": 13.46233362952868
+        },
+        {
+          "round": 9,
+          "warps": 4,
+          "dot_us": 2.5607291609048843,
+          "total_us": 13.9424999554952
+        },
+        {
+          "round": 9,
+          "warps": 32,
+          "dot_us": 2.401000043998162,
+          "total_us": 13.705499470233917
+        },
+        {
+          "round": 9,
+          "warps": 8,
+          "dot_us": 2.1779791762431464,
+          "total_us": 13.466666142145792
+        },
+        {
+          "round": 9,
+          "warps": 16,
+          "dot_us": 2.333354204893112,
+          "total_us": 13.634166369835535
+        },
+        {
+          "round": 10,
+          "warps": 32,
+          "dot_us": 2.40064583097895,
+          "total_us": 13.699166476726532
+        },
+        {
+          "round": 10,
+          "warps": 8,
+          "dot_us": 2.179083259155353,
+          "total_us": 13.472167154153189
+        },
+        {
+          "round": 10,
+          "warps": 16,
+          "dot_us": 2.330500011642774,
+          "total_us": 13.633333146572113
+        },
+        {
+          "round": 10,
+          "warps": 4,
+          "dot_us": 2.5608750681082406,
+          "total_us": 13.876833021640778
+        }
+      ]
+    },
+    {
+      "rows": 6,
+      "seed": 20261025,
+      "layouts": {
+        "8": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 64
+          },
+          "dot_max_relative_to_absolute_sum": 8.95766457650891e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.176854138573011,
+          "median_total_us": 13.464999695618948
+        },
+        "4": {
+          "correctness": true,
+          "kernel": {
+            "registers": 33,
+            "spills": 0,
+            "shared_bytes": 32
+          },
+          "dot_max_relative_to_absolute_sum": 3.9598318221255236e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.5609166671832404,
+          "median_total_us": 13.87666662534078
+        },
+        "16": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "dot_max_relative_to_absolute_sum": 5.925698014825603e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.3178542032837868,
+          "median_total_us": 13.666000217199326
+        },
+        "32": {
+          "correctness": true,
+          "kernel": {
+            "registers": 26,
+            "spills": 0,
+            "shared_bytes": 256
+          },
+          "dot_max_relative_to_absolute_sum": 5.925698014825603e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.401062442610661,
+          "median_total_us": 13.69599997997284
+        }
+      },
+      "samples": [
+        {
+          "round": 0,
+          "warps": 8,
+          "dot_us": 2.195958358546098,
+          "total_us": 13.535333176453909
+        },
+        {
+          "round": 0,
+          "warps": 4,
+          "dot_us": 2.570833389957746,
+          "total_us": 13.92833391825358
+        },
+        {
+          "round": 0,
+          "warps": 16,
+          "dot_us": 2.33020835245649,
+          "total_us": 13.667833060026169
+        },
+        {
+          "round": 0,
+          "warps": 32,
+          "dot_us": 2.4096250223616758,
+          "total_us": 13.5774997373422
+        },
+        {
+          "round": 1,
+          "warps": 4,
+          "dot_us": 2.5456875252226987,
+          "total_us": 13.838333388169607
+        },
+        {
+          "round": 1,
+          "warps": 16,
+          "dot_us": 2.5078958521286645,
+          "total_us": 13.569666693607966
+        },
+        {
+          "round": 1,
+          "warps": 8,
+          "dot_us": 2.160874971499046,
+          "total_us": 13.448999573787054
+        },
+        {
+          "round": 1,
+          "warps": 32,
+          "dot_us": 2.385541641463836,
+          "total_us": 13.576500117778778
+        },
+        {
+          "round": 2,
+          "warps": 32,
+          "dot_us": 2.384812571108341,
+          "total_us": 13.578833391269049
+        },
+        {
+          "round": 2,
+          "warps": 16,
+          "dot_us": 2.30427086353302,
+          "total_us": 13.570167124271393
+        },
+        {
+          "round": 2,
+          "warps": 4,
+          "dot_us": 2.543854216734568,
+          "total_us": 13.85533312956492
+        },
+        {
+          "round": 2,
+          "warps": 8,
+          "dot_us": 2.2807708010077477,
+          "total_us": 14.378332843383154
+        },
+        {
+          "round": 3,
+          "warps": 32,
+          "dot_us": 2.401437455167373,
+          "total_us": 13.69266708691915
+        },
+        {
+          "round": 3,
+          "warps": 4,
+          "dot_us": 2.56093746672074,
+          "total_us": 13.862999776999155
+        },
+        {
+          "round": 3,
+          "warps": 16,
+          "dot_us": 2.3171667320032916,
+          "total_us": 13.642833878596624
+        },
+        {
+          "round": 3,
+          "warps": 8,
+          "dot_us": 2.1761666672925153,
+          "total_us": 13.484999537467957
+        },
+        {
+          "round": 4,
+          "warps": 16,
+          "dot_us": 2.3178542032837868,
+          "total_us": 13.68200033903122
+        },
+        {
+          "round": 4,
+          "warps": 32,
+          "dot_us": 2.4008541367948055,
+          "total_us": 13.704499850670496
+        },
+        {
+          "round": 4,
+          "warps": 4,
+          "dot_us": 2.5609582662582397,
+          "total_us": 13.875833402077356
+        },
+        {
+          "round": 4,
+          "warps": 8,
+          "dot_us": 2.1989167047043643,
+          "total_us": 13.473999996980032
+        },
+        {
+          "round": 5,
+          "warps": 8,
+          "dot_us": 2.176854138573011,
+          "total_us": 13.460000356038412
+        },
+        {
+          "round": 5,
+          "warps": 32,
+          "dot_us": 2.401333302259445,
+          "total_us": 13.699833303689957
+        },
+        {
+          "round": 5,
+          "warps": 16,
+          "dot_us": 2.317833403746287,
+          "total_us": 13.670666764179865
+        },
+        {
+          "round": 5,
+          "warps": 4,
+          "dot_us": 2.5609166671832404,
+          "total_us": 13.865833481152853
+        },
+        {
+          "round": 6,
+          "warps": 16,
+          "dot_us": 2.3189374866584935,
+          "total_us": 13.640166570742926
+        },
+        {
+          "round": 6,
+          "warps": 32,
+          "dot_us": 2.4009166906277337,
+          "total_us": 13.694832722345987
+        },
+        {
+          "round": 6,
+          "warps": 4,
+          "dot_us": 2.5609166671832404,
+          "total_us": 14.215332766373953
+        },
+        {
+          "round": 6,
+          "warps": 8,
+          "dot_us": 2.35058336208264,
+          "total_us": 13.470166673262915
+        },
+        {
+          "round": 7,
+          "warps": 16,
+          "dot_us": 2.319375053048134,
+          "total_us": 13.657166312138239
+        },
+        {
+          "round": 7,
+          "warps": 4,
+          "dot_us": 2.561270880202452,
+          "total_us": 13.892500350872675
+        },
+        {
+          "round": 7,
+          "warps": 32,
+          "dot_us": 2.400270818422238,
+          "total_us": 13.704167058070501
+        },
+        {
+          "round": 7,
+          "warps": 8,
+          "dot_us": 2.1756249479949474,
+          "total_us": 13.455999394257864
+        },
+        {
+          "round": 8,
+          "warps": 4,
+          "dot_us": 2.5607917147378125,
+          "total_us": 13.884333272775015
+        },
+        {
+          "round": 8,
+          "warps": 16,
+          "dot_us": 2.3161666467785835,
+          "total_us": 13.715332994858423
+        },
+        {
+          "round": 8,
+          "warps": 8,
+          "dot_us": 2.175666702290376,
+          "total_us": 13.464999695618948
+        },
+        {
+          "round": 8,
+          "warps": 32,
+          "dot_us": 2.4014166556298733,
+          "total_us": 13.704499850670496
+        },
+        {
+          "round": 9,
+          "warps": 4,
+          "dot_us": 2.5611667272945247,
+          "total_us": 13.87666662534078
+        },
+        {
+          "round": 9,
+          "warps": 32,
+          "dot_us": 2.401062442610661,
+          "total_us": 13.704333454370499
+        },
+        {
+          "round": 9,
+          "warps": 16,
+          "dot_us": 2.316291599224011,
+          "total_us": 13.688000539938608
+        },
+        {
+          "round": 9,
+          "warps": 8,
+          "dot_us": 2.176895892868439,
+          "total_us": 13.46016675233841
+        },
+        {
+          "round": 10,
+          "warps": 32,
+          "dot_us": 2.401624961445729,
+          "total_us": 13.69599997997284
+        },
+        {
+          "round": 10,
+          "warps": 16,
+          "dot_us": 2.3189374866584935,
+          "total_us": 13.666000217199326
+        },
+        {
+          "round": 10,
+          "warps": 4,
+          "dot_us": 2.559770829975605,
+          "total_us": 13.877167056004206
+        },
+        {
+          "round": 10,
+          "warps": 8,
+          "dot_us": 2.1761666672925153,
+          "total_us": 13.460333148638407
+        }
+      ]
+    },
+    {
+      "rows": 16,
+      "seed": 20261035,
+      "layouts": {
+        "8": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 64
+          },
+          "dot_max_relative_to_absolute_sum": 9.589427562224003e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.32187503327926,
+          "median_total_us": 14.336999505758286
+        },
+        "4": {
+          "correctness": true,
+          "kernel": {
+            "registers": 33,
+            "spills": 0,
+            "shared_bytes": 32
+          },
+          "dot_max_relative_to_absolute_sum": 9.589427562224003e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.718354264895121,
+          "median_total_us": 14.727000147104263
+        },
+        "16": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "dot_max_relative_to_absolute_sum": 1.7213728872422197e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.4116666366656623,
+          "median_total_us": 14.482833445072174
+        },
+        "32": {
+          "correctness": true,
+          "kernel": {
+            "registers": 26,
+            "spills": 0,
+            "shared_bytes": 256
+          },
+          "dot_max_relative_to_absolute_sum": 9.589427562224003e-17,
+          "graph_dose_cases": 16,
+          "median_dot_us": 2.450458394984404,
+          "median_total_us": 14.264999578396479
+        }
+      },
+      "samples": [
+        {
+          "round": 0,
+          "warps": 8,
+          "dot_us": 2.3319791071116924,
+          "total_us": 14.319666971762976
+        },
+        {
+          "round": 0,
+          "warps": 32,
+          "dot_us": 2.459375032534202,
+          "total_us": 14.214333146810532
+        },
+        {
+          "round": 0,
+          "warps": 4,
+          "dot_us": 2.730583461622397,
+          "total_us": 14.694833507140478
+        },
+        {
+          "round": 0,
+          "warps": 16,
+          "dot_us": 2.423458267003298,
+          "total_us": 14.55383375287056
+        },
+        {
+          "round": 1,
+          "warps": 8,
+          "dot_us": 2.438895870000124,
+          "total_us": 14.98899981379509
+        },
+        {
+          "round": 1,
+          "warps": 16,
+          "dot_us": 2.410708305736383,
+          "total_us": 14.482833445072174
+        },
+        {
+          "round": 1,
+          "warps": 4,
+          "dot_us": 2.720958242813746,
+          "total_us": 14.72866659363111
+        },
+        {
+          "round": 1,
+          "warps": 32,
+          "dot_us": 2.569833304733038,
+          "total_us": 14.893667151530584
+        },
+        {
+          "round": 2,
+          "warps": 8,
+          "dot_us": 2.32187503327926,
+          "total_us": 14.335499455531439
+        },
+        {
+          "round": 2,
+          "warps": 16,
+          "dot_us": 2.414937441547712,
+          "total_us": 14.483833064635595
+        },
+        {
+          "round": 2,
+          "warps": 4,
+          "dot_us": 2.716312495370706,
+          "total_us": 14.72866659363111
+        },
+        {
+          "round": 2,
+          "warps": 32,
+          "dot_us": 2.450416640688976,
+          "total_us": 14.26033303141594
+        },
+        {
+          "round": 3,
+          "warps": 32,
+          "dot_us": 2.4501457810401917,
+          "total_us": 14.25199955701828
+        },
+        {
+          "round": 3,
+          "warps": 8,
+          "dot_us": 2.5042082803944745,
+          "total_us": 14.430000136295954
+        },
+        {
+          "round": 3,
+          "warps": 16,
+          "dot_us": 2.410958365847667,
+          "total_us": 14.487333595752716
+        },
+        {
+          "round": 3,
+          "warps": 4,
+          "dot_us": 2.716208187242349,
+          "total_us": 14.727000147104263
+        },
+        {
+          "round": 4,
+          "warps": 32,
+          "dot_us": 2.6259167740742364,
+          "total_us": 14.277500410874685
+        },
+        {
+          "round": 4,
+          "warps": 4,
+          "dot_us": 2.7188959841926894,
+          "total_us": 14.727833370367685
+        },
+        {
+          "round": 4,
+          "warps": 16,
+          "dot_us": 2.4141458173592887,
+          "total_us": 14.483999460935593
+        },
+        {
+          "round": 4,
+          "warps": 8,
+          "dot_us": 2.3162292006115117,
+          "total_us": 14.344833791255951
+        },
+        {
+          "round": 5,
+          "warps": 4,
+          "dot_us": 2.720500032107035,
+          "total_us": 14.72016672293345
+        },
+        {
+          "round": 5,
+          "warps": 8,
+          "dot_us": 2.314979210495949,
+          "total_us": 14.33433343966802
+        },
+        {
+          "round": 5,
+          "warps": 16,
+          "dot_us": 2.4103124936421714,
+          "total_us": 14.474499970674515
+        },
+        {
+          "round": 5,
+          "warps": 32,
+          "dot_us": 2.450458394984404,
+          "total_us": 14.264999578396479
+        },
+        {
+          "round": 6,
+          "warps": 32,
+          "dot_us": 2.451291618247827,
+          "total_us": 14.810167253017426
+        },
+        {
+          "round": 6,
+          "warps": 8,
+          "dot_us": 2.440395765006542,
+          "total_us": 14.333333820104599
+        },
+        {
+          "round": 6,
+          "warps": 16,
+          "dot_us": 2.4109166115522385,
+          "total_us": 14.467832942803701
+        },
+        {
+          "round": 6,
+          "warps": 4,
+          "dot_us": 2.721312455832958,
+          "total_us": 14.718500276406607
+        },
+        {
+          "round": 7,
+          "warps": 4,
+          "dot_us": 2.7178957437475524,
+          "total_us": 14.730333040157953
+        },
+        {
+          "round": 7,
+          "warps": 16,
+          "dot_us": 2.41220835596323,
+          "total_us": 14.472833524147669
+        },
+        {
+          "round": 7,
+          "warps": 8,
+          "dot_us": 2.317020824799935,
+          "total_us": 14.34466615319252
+        },
+        {
+          "round": 7,
+          "warps": 32,
+          "dot_us": 2.449645816038052,
+          "total_us": 14.271999398867289
+        },
+        {
+          "round": 8,
+          "warps": 8,
+          "dot_us": 2.3223333992064,
+          "total_us": 14.336999505758286
+        },
+        {
+          "round": 8,
+          "warps": 16,
+          "dot_us": 2.4134165917833648,
+          "total_us": 14.473500351111094
+        },
+        {
+          "round": 8,
+          "warps": 32,
+          "dot_us": 2.450416640688976,
+          "total_us": 14.251166333754858
+        },
+        {
+          "round": 8,
+          "warps": 4,
+          "dot_us": 2.7176042397816977,
+          "total_us": 14.726666112740835
+        },
+        {
+          "round": 9,
+          "warps": 32,
+          "dot_us": 2.450750054170688,
+          "total_us": 14.261999477942785
+        },
+        {
+          "round": 9,
+          "warps": 8,
+          "dot_us": 2.314687551309665,
+          "total_us": 14.33399940530459
+        },
+        {
+          "round": 9,
+          "warps": 4,
+          "dot_us": 2.718354264895121,
+          "total_us": 14.71799984574318
+        },
+        {
+          "round": 9,
+          "warps": 16,
+          "dot_us": 2.4109375663101673,
+          "total_us": 14.476000020901362
+        },
+        {
+          "round": 10,
+          "warps": 8,
+          "dot_us": 2.3167083660761514,
+          "total_us": 14.346333841482798
+        },
+        {
+          "round": 10,
+          "warps": 4,
+          "dot_us": 2.7176042397816977,
+          "total_us": 14.728832989931107
+        },
+        {
+          "round": 10,
+          "warps": 16,
+          "dot_us": 2.4116666366656623,
+          "total_us": 14.485166718562445
+        },
+        {
+          "round": 10,
+          "warps": 32,
+          "dot_us": 2.449125051498413,
+          "total_us": 14.271666606267294
+        }
+      ]
+    },
+    {
+      "rows": 96,
+      "seed": 20261115,
+      "layouts": {
+        "8": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 64
+          },
+          "dot_max_relative_to_absolute_sum": 1.6379748469833538e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 3.6920209725697837,
+          "median_total_us": 43.071165680885315
+        },
+        "4": {
+          "correctness": true,
+          "kernel": {
+            "registers": 33,
+            "spills": 0,
+            "shared_bytes": 32
+          },
+          "dot_max_relative_to_absolute_sum": 1.9288497988400841e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 3.5945000126957893,
+          "median_total_us": 43.04633537928263
+        },
+        "16": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "dot_max_relative_to_absolute_sum": 1.9288497988400841e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 3.9421040564775467,
+          "median_total_us": 44.424002369244896
+        },
+        "32": {
+          "correctness": true,
+          "kernel": {
+            "registers": 26,
+            "spills": 0,
+            "shared_bytes": 256
+          },
+          "dot_max_relative_to_absolute_sum": 1.6379748469833538e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 4.856874855856101,
+          "median_total_us": 44.07000044981638
+        }
+      },
+      "samples": [
+        {
+          "round": 0,
+          "warps": 32,
+          "dot_us": 5.103874951601028,
+          "total_us": 43.99033387502035
+        },
+        {
+          "round": 0,
+          "warps": 4,
+          "dot_us": 3.584125079214573,
+          "total_us": 46.46883408228556
+        },
+        {
+          "round": 0,
+          "warps": 16,
+          "dot_us": 3.934375010430813,
+          "total_us": 46.4713325103124
+        },
+        {
+          "round": 0,
+          "warps": 8,
+          "dot_us": 3.764270804822445,
+          "total_us": 43.10533404350281
+        },
+        {
+          "round": 1,
+          "warps": 8,
+          "dot_us": 3.8464373598496118,
+          "total_us": 42.95149942239126
+        },
+        {
+          "round": 1,
+          "warps": 16,
+          "dot_us": 3.9274791876475015,
+          "total_us": 44.34599975744883
+        },
+        {
+          "round": 1,
+          "warps": 32,
+          "dot_us": 4.834812444945176,
+          "total_us": 45.78566551208496
+        },
+        {
+          "round": 1,
+          "warps": 4,
+          "dot_us": 3.7244167178869247,
+          "total_us": 43.04633537928263
+        },
+        {
+          "round": 2,
+          "warps": 8,
+          "dot_us": 3.8677500560879707,
+          "total_us": 43.15666854381561
+        },
+        {
+          "round": 2,
+          "warps": 16,
+          "dot_us": 3.946770913898945,
+          "total_us": 44.462502002716064
+        },
+        {
+          "round": 2,
+          "warps": 32,
+          "dot_us": 4.8561251411835356,
+          "total_us": 44.034664829572044
+        },
+        {
+          "round": 2,
+          "warps": 4,
+          "dot_us": 3.598062631984552,
+          "total_us": 43.033500512441
+        },
+        {
+          "round": 3,
+          "warps": 16,
+          "dot_us": 4.184458404779434,
+          "total_us": 44.81983184814453
+        },
+        {
+          "round": 3,
+          "warps": 32,
+          "dot_us": 4.855354316532612,
+          "total_us": 47.30933407942454
+        },
+        {
+          "round": 3,
+          "warps": 4,
+          "dot_us": 3.5945000126957893,
+          "total_us": 45.08483409881592
+        },
+        {
+          "round": 3,
+          "warps": 8,
+          "dot_us": 3.792916735013326,
+          "total_us": 43.065001567204796
+        },
+        {
+          "round": 4,
+          "warps": 8,
+          "dot_us": 3.8507084051767984,
+          "total_us": 43.56716573238373
+        },
+        {
+          "round": 4,
+          "warps": 4,
+          "dot_us": 3.5921459396680198,
+          "total_us": 46.595667799313865
+        },
+        {
+          "round": 4,
+          "warps": 16,
+          "dot_us": 3.936625085771084,
+          "total_us": 44.39799984296163
+        },
+        {
+          "round": 4,
+          "warps": 32,
+          "dot_us": 4.859291637937228,
+          "total_us": 44.03583208719889
+        },
+        {
+          "round": 5,
+          "warps": 4,
+          "dot_us": 3.593624879916509,
+          "total_us": 43.05083552996317
+        },
+        {
+          "round": 5,
+          "warps": 32,
+          "dot_us": 4.860166770716508,
+          "total_us": 44.07950242360433
+        },
+        {
+          "round": 5,
+          "warps": 8,
+          "dot_us": 3.6903334160645804,
+          "total_us": 44.7398324807485
+        },
+        {
+          "round": 5,
+          "warps": 16,
+          "dot_us": 4.037999858458837,
+          "total_us": 44.39333577950796
+        },
+        {
+          "round": 6,
+          "warps": 32,
+          "dot_us": 4.870229090253512,
+          "total_us": 44.07000044981638
+        },
+        {
+          "round": 6,
+          "warps": 4,
+          "dot_us": 3.5922499373555183,
+          "total_us": 43.07266573111216
+        },
+        {
+          "round": 6,
+          "warps": 8,
+          "dot_us": 3.6887709672252336,
+          "total_us": 43.071165680885315
+        },
+        {
+          "round": 6,
+          "warps": 16,
+          "dot_us": 3.947645736237367,
+          "total_us": 44.41450039545695
+        },
+        {
+          "round": 7,
+          "warps": 32,
+          "dot_us": 4.865708450476329,
+          "total_us": 44.08116638660431
+        },
+        {
+          "round": 7,
+          "warps": 8,
+          "dot_us": 3.6901251102487245,
+          "total_us": 46.52466873327891
+        },
+        {
+          "round": 7,
+          "warps": 16,
+          "dot_us": 3.9421040564775467,
+          "total_us": 46.43333454926809
+        },
+        {
+          "round": 7,
+          "warps": 4,
+          "dot_us": 3.684708227713903,
+          "total_us": 43.04566482702891
+        },
+        {
+          "round": 8,
+          "warps": 8,
+          "dot_us": 3.6920209725697837,
+          "total_us": 43.06866725285848
+        },
+        {
+          "round": 8,
+          "warps": 4,
+          "dot_us": 3.5971874992052713,
+          "total_us": 42.98866788546244
+        },
+        {
+          "round": 8,
+          "warps": 32,
+          "dot_us": 4.856208339333534,
+          "total_us": 44.34599975744883
+        },
+        {
+          "round": 8,
+          "warps": 16,
+          "dot_us": 4.107416607439518,
+          "total_us": 44.37716801961263
+        },
+        {
+          "round": 9,
+          "warps": 32,
+          "dot_us": 4.856874855856101,
+          "total_us": 44.06916598478953
+        },
+        {
+          "round": 9,
+          "warps": 16,
+          "dot_us": 3.905958185593287,
+          "total_us": 44.424002369244896
+        },
+        {
+          "round": 9,
+          "warps": 4,
+          "dot_us": 3.5923542454838753,
+          "total_us": 43.028831481933594
+        },
+        {
+          "round": 9,
+          "warps": 8,
+          "dot_us": 3.6886874586343765,
+          "total_us": 43.06449989477793
+        },
+        {
+          "round": 10,
+          "warps": 8,
+          "dot_us": 3.6606459567944207,
+          "total_us": 42.9788331190745
+        },
+        {
+          "round": 10,
+          "warps": 16,
+          "dot_us": 3.9085416744152703,
+          "total_us": 44.42999760309855
+        },
+        {
+          "round": 10,
+          "warps": 32,
+          "dot_us": 4.8558541263143224,
+          "total_us": 44.03099914391836
+        },
+        {
+          "round": 10,
+          "warps": 4,
+          "dot_us": 3.6001248906056085,
+          "total_us": 43.015832702318825
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "seed": 20261147,
+      "layouts": {
+        "8": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 64
+          },
+          "dot_max_relative_to_absolute_sum": 1.3663899100619526e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 4.479604152341683,
+          "median_total_us": 61.0993355512619
+        },
+        "4": {
+          "correctness": true,
+          "kernel": {
+            "registers": 33,
+            "spills": 0,
+            "shared_bytes": 32
+          },
+          "dot_max_relative_to_absolute_sum": 1.9192486041335856e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 4.232812362412612,
+          "median_total_us": 62.526499231656395
+        },
+        "16": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "dot_max_relative_to_absolute_sum": 1.2408305290834266e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 5.093312511841456,
+          "median_total_us": 59.336831172307335
+        },
+        "32": {
+          "correctness": true,
+          "kernel": {
+            "registers": 26,
+            "spills": 0,
+            "shared_bytes": 256
+          },
+          "dot_max_relative_to_absolute_sum": 1.2408305290834266e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 7.012333100040753,
+          "median_total_us": 65.73483347892761
+        }
+      },
+      "samples": [
+        {
+          "round": 0,
+          "warps": 8,
+          "dot_us": 4.46681243677934,
+          "total_us": 60.907334089279175
+        },
+        {
+          "round": 0,
+          "warps": 32,
+          "dot_us": 7.11383360127608,
+          "total_us": 65.54866830507915
+        },
+        {
+          "round": 0,
+          "warps": 16,
+          "dot_us": 5.234145869811376,
+          "total_us": 59.11716818809509
+        },
+        {
+          "round": 0,
+          "warps": 4,
+          "dot_us": 4.4250208884477615,
+          "total_us": 62.43216494719187
+        },
+        {
+          "round": 1,
+          "warps": 4,
+          "dot_us": 4.221145684520404,
+          "total_us": 62.38300104935964
+        },
+        {
+          "round": 1,
+          "warps": 16,
+          "dot_us": 5.240146070718765,
+          "total_us": 59.418668349583946
+        },
+        {
+          "round": 1,
+          "warps": 8,
+          "dot_us": 4.777500095466773,
+          "total_us": 83.44016472498576
+        },
+        {
+          "round": 1,
+          "warps": 32,
+          "dot_us": 7.557895655433337,
+          "total_us": 75.76300203800201
+        },
+        {
+          "round": 2,
+          "warps": 16,
+          "dot_us": 5.32160388926665,
+          "total_us": 63.656831781069435
+        },
+        {
+          "round": 2,
+          "warps": 32,
+          "dot_us": 7.013270631432533,
+          "total_us": 69.8078324397405
+        },
+        {
+          "round": 2,
+          "warps": 4,
+          "dot_us": 4.225541527072589,
+          "total_us": 62.526499231656395
+        },
+        {
+          "round": 2,
+          "warps": 8,
+          "dot_us": 4.47650005420049,
+          "total_us": 61.28966808319092
+        },
+        {
+          "round": 3,
+          "warps": 16,
+          "dot_us": 5.095395880440871,
+          "total_us": 59.32766695817312
+        },
+        {
+          "round": 3,
+          "warps": 4,
+          "dot_us": 4.241270944476128,
+          "total_us": 66.942498087883
+        },
+        {
+          "round": 3,
+          "warps": 32,
+          "dot_us": 7.0100414256254835,
+          "total_us": 69.79483366012573
+        },
+        {
+          "round": 3,
+          "warps": 8,
+          "dot_us": 4.480333377917607,
+          "total_us": 61.086167891820274
+        },
+        {
+          "round": 4,
+          "warps": 4,
+          "dot_us": 4.23512514680624,
+          "total_us": 62.465667724609375
+        },
+        {
+          "round": 4,
+          "warps": 16,
+          "dot_us": 5.09079173207283,
+          "total_us": 63.530499736467995
+        },
+        {
+          "round": 4,
+          "warps": 8,
+          "dot_us": 4.478083302577336,
+          "total_us": 65.14800091584523
+        },
+        {
+          "round": 4,
+          "warps": 32,
+          "dot_us": 7.005416477719943,
+          "total_us": 65.6216690937678
+        },
+        {
+          "round": 5,
+          "warps": 8,
+          "dot_us": 4.478583422799905,
+          "total_us": 61.053832372029625
+        },
+        {
+          "round": 5,
+          "warps": 16,
+          "dot_us": 5.081312420467536,
+          "total_us": 59.296165903409324
+        },
+        {
+          "round": 5,
+          "warps": 4,
+          "dot_us": 4.234020908673604,
+          "total_us": 62.42366631825765
+        },
+        {
+          "round": 5,
+          "warps": 32,
+          "dot_us": 7.010770961642265,
+          "total_us": 65.6253347794215
+        },
+        {
+          "round": 6,
+          "warps": 32,
+          "dot_us": 7.121228923400243,
+          "total_us": 65.57816763718922
+        },
+        {
+          "round": 6,
+          "warps": 4,
+          "dot_us": 4.237541618446509,
+          "total_us": 62.573835253715515
+        },
+        {
+          "round": 6,
+          "warps": 8,
+          "dot_us": 4.475958334902923,
+          "total_us": 60.97383300463358
+        },
+        {
+          "round": 6,
+          "warps": 16,
+          "dot_us": 5.093312511841456,
+          "total_us": 59.336831172307335
+        },
+        {
+          "round": 7,
+          "warps": 16,
+          "dot_us": 5.085874969760577,
+          "total_us": 59.16266640027364
+        },
+        {
+          "round": 7,
+          "warps": 4,
+          "dot_us": 4.219916649162769,
+          "total_us": 62.4556690454483
+        },
+        {
+          "round": 7,
+          "warps": 32,
+          "dot_us": 7.008833189805348,
+          "total_us": 65.58216611544292
+        },
+        {
+          "round": 7,
+          "warps": 8,
+          "dot_us": 4.657999922831853,
+          "total_us": 61.0993355512619
+        },
+        {
+          "round": 8,
+          "warps": 8,
+          "dot_us": 4.650604290266831,
+          "total_us": 61.15033229192098
+        },
+        {
+          "round": 8,
+          "warps": 16,
+          "dot_us": 5.089791802068551,
+          "total_us": 59.437498450279236
+        },
+        {
+          "round": 8,
+          "warps": 32,
+          "dot_us": 7.014687483509381,
+          "total_us": 65.80016513665517
+        },
+        {
+          "round": 8,
+          "warps": 4,
+          "dot_us": 4.224104185899098,
+          "total_us": 62.81950076421102
+        },
+        {
+          "round": 9,
+          "warps": 8,
+          "dot_us": 4.491625043253104,
+          "total_us": 61.25649809837341
+        },
+        {
+          "round": 9,
+          "warps": 32,
+          "dot_us": 7.012333100040753,
+          "total_us": 65.88233510653178
+        },
+        {
+          "round": 9,
+          "warps": 4,
+          "dot_us": 4.231541727979978,
+          "total_us": 62.82333532969157
+        },
+        {
+          "round": 9,
+          "warps": 16,
+          "dot_us": 5.273937558134397,
+          "total_us": 59.414500991503395
+        },
+        {
+          "round": 10,
+          "warps": 16,
+          "dot_us": 5.084604024887085,
+          "total_us": 59.14666752020518
+        },
+        {
+          "round": 10,
+          "warps": 8,
+          "dot_us": 4.479604152341683,
+          "total_us": 61.01633111635844
+        },
+        {
+          "round": 10,
+          "warps": 32,
+          "dot_us": 7.005729402105014,
+          "total_us": 65.73483347892761
+        },
+        {
+          "round": 10,
+          "warps": 4,
+          "dot_us": 4.232812362412612,
+          "total_us": 62.57366637388865
+        }
+      ]
+    },
+    {
+      "rows": 205,
+      "seed": 20261224,
+      "layouts": {
+        "8": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 64
+          },
+          "dot_max_relative_to_absolute_sum": 1.6764827297006901e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 6.2474167595307035,
+          "median_total_us": 118.88982852300008
+        },
+        "4": {
+          "correctness": true,
+          "kernel": {
+            "registers": 33,
+            "spills": 0,
+            "shared_bytes": 32
+          },
+          "dot_max_relative_to_absolute_sum": 1.6764827297006901e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 5.540125072002411,
+          "median_total_us": 122.08567063013713
+        },
+        "16": {
+          "correctness": true,
+          "kernel": {
+            "registers": 35,
+            "spills": 0,
+            "shared_bytes": 128
+          },
+          "dot_max_relative_to_absolute_sum": 1.6764827297006901e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 6.715666502714157,
+          "median_total_us": 121.26616636912028
+        },
+        "32": {
+          "correctness": true,
+          "kernel": {
+            "registers": 26,
+            "spills": 0,
+            "shared_bytes": 256
+          },
+          "dot_max_relative_to_absolute_sum": 1.6764827297006901e-16,
+          "graph_dose_cases": 16,
+          "median_dot_us": 10.225854193170866,
+          "median_total_us": 125.1479983329773
+        }
+      },
+      "samples": [
+        {
+          "round": 0,
+          "warps": 32,
+          "dot_us": 10.0982915610075,
+          "total_us": 125.85116426150005
+        },
+        {
+          "round": 0,
+          "warps": 4,
+          "dot_us": 5.519979322950046,
+          "total_us": 123.09100230534871
+        },
+        {
+          "round": 0,
+          "warps": 8,
+          "dot_us": 6.209229429562886,
+          "total_us": 118.88982852300008
+        },
+        {
+          "round": 0,
+          "warps": 16,
+          "dot_us": 6.713374828298886,
+          "total_us": 122.07382917404175
+        },
+        {
+          "round": 1,
+          "warps": 16,
+          "dot_us": 6.887104362249374,
+          "total_us": 122.2166617711385
+        },
+        {
+          "round": 1,
+          "warps": 8,
+          "dot_us": 6.309521074096362,
+          "total_us": 116.97366833686829
+        },
+        {
+          "round": 1,
+          "warps": 4,
+          "dot_us": 5.53877092897892,
+          "total_us": 117.41216977437337
+        },
+        {
+          "round": 1,
+          "warps": 32,
+          "dot_us": 10.248937333623568,
+          "total_us": 124.9738335609436
+        },
+        {
+          "round": 2,
+          "warps": 8,
+          "dot_us": 6.160500148932139,
+          "total_us": 115.68616827329
+        },
+        {
+          "round": 2,
+          "warps": 32,
+          "dot_us": 10.096583515405655,
+          "total_us": 128.6256710688273
+        },
+        {
+          "round": 2,
+          "warps": 4,
+          "dot_us": 5.83012526233991,
+          "total_us": 122.08567063013713
+        },
+        {
+          "round": 2,
+          "warps": 16,
+          "dot_us": 6.715666502714157,
+          "total_us": 116.51000380516052
+        },
+        {
+          "round": 3,
+          "warps": 4,
+          "dot_us": 5.539458245038986,
+          "total_us": 122.1524973710378
+        },
+        {
+          "round": 3,
+          "warps": 32,
+          "dot_us": 10.24737519522508,
+          "total_us": 125.3446638584137
+        },
+        {
+          "round": 3,
+          "warps": 8,
+          "dot_us": 6.178916742404302,
+          "total_us": 119.58032846450806
+        },
+        {
+          "round": 3,
+          "warps": 16,
+          "dot_us": 6.712124993403752,
+          "total_us": 121.26616636912028
+        },
+        {
+          "round": 4,
+          "warps": 32,
+          "dot_us": 10.286666452884674,
+          "total_us": 124.9328354994456
+        },
+        {
+          "round": 4,
+          "warps": 4,
+          "dot_us": 5.697146058082581,
+          "total_us": 118.13016732533772
+        },
+        {
+          "round": 4,
+          "warps": 16,
+          "dot_us": 6.713895748058955,
+          "total_us": 121.32866183916728
+        },
+        {
+          "round": 4,
+          "warps": 8,
+          "dot_us": 6.329124793410301,
+          "total_us": 119.60200468699138
+        },
+        {
+          "round": 5,
+          "warps": 16,
+          "dot_us": 6.883583342035611,
+          "total_us": 116.27183357874553
+        },
+        {
+          "round": 5,
+          "warps": 32,
+          "dot_us": 10.225854193170866,
+          "total_us": 126.84933344523112
+        },
+        {
+          "round": 5,
+          "warps": 8,
+          "dot_us": 6.187687317530314,
+          "total_us": 119.71049507459004
+        },
+        {
+          "round": 5,
+          "warps": 4,
+          "dot_us": 5.748145903150241,
+          "total_us": 122.39566445350647
+        },
+        {
+          "round": 6,
+          "warps": 32,
+          "dot_us": 10.105187694231669,
+          "total_us": 125.12750426928203
+        },
+        {
+          "round": 6,
+          "warps": 16,
+          "dot_us": 6.842020899057388,
+          "total_us": 123.03566932678223
+        },
+        {
+          "round": 6,
+          "warps": 4,
+          "dot_us": 5.684104437629382,
+          "total_us": 132.25900133450827
+        },
+        {
+          "round": 6,
+          "warps": 8,
+          "dot_us": 6.158958499630292,
+          "total_us": 114.8550013701121
+        },
+        {
+          "round": 7,
+          "warps": 32,
+          "dot_us": 10.104583576321602,
+          "total_us": 125.1479983329773
+        },
+        {
+          "round": 7,
+          "warps": 8,
+          "dot_us": 6.274854143460591,
+          "total_us": 116.77016814549764
+        },
+        {
+          "round": 7,
+          "warps": 16,
+          "dot_us": 6.708937386671702,
+          "total_us": 116.12649758656819
+        },
+        {
+          "round": 7,
+          "warps": 4,
+          "dot_us": 5.540229380130768,
+          "total_us": 122.0721701780955
+        },
+        {
+          "round": 8,
+          "warps": 16,
+          "dot_us": 6.773083160320918,
+          "total_us": 120.32816807428996
+        },
+        {
+          "round": 8,
+          "warps": 4,
+          "dot_us": 5.533125251531601,
+          "total_us": 122.31866518656413
+        },
+        {
+          "round": 8,
+          "warps": 32,
+          "dot_us": 10.266062493125597,
+          "total_us": 125.0523328781128
+        },
+        {
+          "round": 8,
+          "warps": 8,
+          "dot_us": 6.33879192173481,
+          "total_us": 115.04266659418742
+        },
+        {
+          "round": 9,
+          "warps": 16,
+          "dot_us": 6.7293960601091385,
+          "total_us": 124.54100449879964
+        },
+        {
+          "round": 9,
+          "warps": 32,
+          "dot_us": 10.227312644322714,
+          "total_us": 128.19750110308328
+        },
+        {
+          "round": 9,
+          "warps": 8,
+          "dot_us": 6.277583539485931,
+          "total_us": 119.92249886194865
+        },
+        {
+          "round": 9,
+          "warps": 4,
+          "dot_us": 5.540125072002411,
+          "total_us": 117.3680027325948
+        },
+        {
+          "round": 10,
+          "warps": 4,
+          "dot_us": 5.538416405518849,
+          "total_us": 117.29483803113301
+        },
+        {
+          "round": 10,
+          "warps": 32,
+          "dot_us": 10.101645564039549,
+          "total_us": 119.98866995175679
+        },
+        {
+          "round": 10,
+          "warps": 16,
+          "dot_us": 6.707375248273213,
+          "total_us": 121.05100353558858
+        },
+        {
+          "round": 10,
+          "warps": 8,
+          "dot_us": 6.2474167595307035,
+          "total_us": 120.62283356984456
+        }
+      ]
+    }
+  ],
+  "completed": true,
+  "elapsed_seconds": 14.164503574371338
+}
