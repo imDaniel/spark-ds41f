@@ -1,0 +1,44 @@
+"""Focused, fixed C4 scale 0/1 repeat; no runtime or model modifications."""
+import hashlib
+import importlib.util
+import json
+import pathlib
+import subprocess
+import sys
+import time
+
+ROOT = pathlib.Path('/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019')
+REPO = pathlib.Path('/srv/ai-cluster/runtimes/steering-r6x-20261019/source/spark-ds41f')
+BASE = 'http://127.0.0.1:8004'
+PROFILE = 'heretic-1017-attn-v1'
+window = json.loads((ROOT/'window.json').read_text())['window']
+assert json.loads(pathlib.Path('/home/admin/spark-hold.json').read_text())['window'] == window
+assert not subprocess.check_output(['git','status','--porcelain'],cwd=REPO,text=True).strip()
+head = subprocess.check_output(['git','rev-parse','HEAD'],cwd=REPO,text=True).strip()
+assert head == '8181e0cc9595f6370291bd8274c41878f8ada56b'
+container = json.loads(subprocess.check_output(['docker','inspect','steering-r6x-qualification'],text=True))[0]
+assert container['State']['Running']
+assert container['Image'] == 'sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a'
+sys.path.insert(0,str(REPO))
+from servebench import prompts
+spec = importlib.util.spec_from_file_location('probe',REPO/'experiments/2026-10-19-steering-gpu/probe_model.py')
+probe = importlib.util.module_from_spec(spec); spec.loader.exec_module(probe)
+probe.THERMAL_SOURCE = ROOT/'evidence/host-telemetry.jsonl'
+source=prompts.default_prompts()[:16]
+prompt_file=ROOT/'tail-prompts.jsonl'
+prompt_file.write_text(''.join(json.dumps(x)+'\n' for x in source))
+report={'deployment_commit':head,'image':container['Image'],'window':window,'driver_sha256':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest(),'prompt_sha256':prompts.digest(source),'order':[0,1,1,0,0,1],'pairs':[[0,1],[2,3],[4,5]],'runs':[],'passed':False}
+output=ROOT/'evidence/tail-followup.json'
+for index,scale in enumerate(report['order']):
+ hold=json.loads(pathlib.Path('/home/admin/spark-hold.json').read_text()); assert hold['window']==window
+ thermal=probe.thermal_gate()
+ probe.reset()
+ target=ROOT/'evidence'/f'tail-{index}-s{scale}.json.gz'
+ extra={'temperature':0,'seed':2048,'steering_profile':PROFILE,'steering_scale':scale}
+ command=[sys.executable,'-m','servebench','run',BASE,'--mode','closed','--concurrency','4','--warmup','15','--duration','90','--batches','6','--max-tokens','256','--context','4096','--seed','2048','--prompts',str(prompt_file),'--extra-body',json.dumps(extra),'--save-requests','--label',f'tail-{index}-s{scale}','--output',str(target)]
+ start=time.time(); result=subprocess.run(command,cwd=REPO,timeout=420)
+ row={'index':index,'scale':scale,'command':command,'returncode':result.returncode,'seconds':time.time()-start,'path':str(target),'thermal_start':thermal}
+ report['runs'].append(row);output.write_text(json.dumps(report,indent=2))
+ assert result.returncode==0
+ print(json.dumps({'completed':index+1,'total':len(report['order']),'scale':scale}),flush=True)
+report['passed']=True;output.write_text(json.dumps(report,indent=2))

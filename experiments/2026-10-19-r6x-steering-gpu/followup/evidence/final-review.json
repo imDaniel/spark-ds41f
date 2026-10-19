@@ -1,0 +1,21 @@
+{
+  "reviewed_commit": "e4ba98c43675c5c29f4dac4169daa0e3f774a7ec",
+  "blocking_findings": [],
+  "scope": [
+    "request parsing and FP32 scale identity; profile name checked before zero dose",
+    "slot ownership, streaming update and cancellation lifecycle",
+    "manager-less profiling stock/eager path",
+    "stock/active graph identity and capture declaration",
+    "ordinary compensated dot and mHC consumer; zero row branch before direction/dot reads",
+    "SP rank-order BF16 boundary and CED row gathering",
+    "CPU gate complete pinned identity and sanitized pytest environment",
+    "188-patch source replay + independent stock oracle + trace/capacity evidence"
+  ],
+  "remaining_limits": [
+    "maximum scale 4 C4 throughput -2.61% against official in prior bounded workload",
+    "prior warm-cache scale 1 C4 p90 elevation requires focused follow-up",
+    "bounded workload evidence, not a general equivalence proof"
+  ],
+  "no_runtime_changes": true,
+  "reviewer": "local source and evidence review"
+}

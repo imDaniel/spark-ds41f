@@ -1,7 +1,8 @@
 # spark-ds41f
 
-本站 fork 已集成上游 r6x 源码；下文的上游晋级和性能数据不代表本站四机已部署或验收 r6x。
-本站已部署的配置／私有 overlay 和 r6v steering 运行时保持原样，迁移与新验证另有独立实验记录。
+本站 fork 已集成上游 r6x 与独立 steering 补丁，四机实测见[硬件记录](experiments/2026-10-19-r6x-steering-gpu/RESULTS.md)。
+本站日常验收使用独立[配方](experiments/2026-10-19-r6x-steering-gpu/followup/acceptance.json)，保留 1M 和请求级动态强度，旧配置、模型和镜像作为回退保留。
+下文的上游晋级记录与本站验收范围分别记录；本站的吞吐和尾延迟限制见[后续验收](experiments/2026-10-19-r6x-steering-gpu/followup/README.md)。
 
 Reproducible Docker/vLLM deployment, tuning, and benchmarks for DeepSeek V4.1
 Flash on a switchless three-node DGX Spark fabric, and the same deployment on
