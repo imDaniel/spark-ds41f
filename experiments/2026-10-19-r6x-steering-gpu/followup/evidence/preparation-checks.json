@@ -1,0 +1,27 @@
+{
+  "repository_cpu": {
+    "command": ".work/acceptance-client-venv/bin/python -m unittest discover -s tests",
+    "tests": 465,
+    "skipped": 0,
+    "passed": true,
+    "seconds": 132.474
+  },
+  "service_controller_transactions": {
+    "tests": 7,
+    "passed": true,
+    "scope": "same fixed helper logic, new policy/container constants"
+  },
+  "recipe_doctor": {
+    "passed": true
+  },
+  "build_check": {
+    "passed": true,
+    "build_directory": ".work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-cac85e1b"
+  },
+  "initial_preparation_failure": {
+    "test": "test_recipe.RecipeTest.test_no_other_cluster_files",
+    "reason": "site acceptance profile was placed beside the unique generic cluster recipe",
+    "resolution": "move the new file into this independent experiment; leave the existing test unchanged",
+    "runtime_affected": false
+  }
+}

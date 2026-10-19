@@ -1,0 +1,32 @@
+"""Summarize all fixed follow-up runs; never discard the closed-loop tails."""
+import gzip,hashlib,json,math,statistics
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[1]
+def summary(values):
+ v=sorted(values);n=len(v)
+ return {'n':n,'mean_ms':statistics.mean(v),'p50_ms':v[math.ceil(.5*n)-1],'p90_ms':v[math.ceil(.9*n)-1],'p99_ms':v[math.ceil(.99*n)-1],'above_450ms':sum(x>450 for x in v)} if v else {'n':0}
+rows=[];pool={0:[],1:[]};conditional={s:{False:[],True:[]} for s in (0,1)}
+for i,scale in enumerate((0,1,1,0,0,1)):
+ p=ROOT/'evidence'/f'tail-{i}-s{scale}.json.gz';d=json.load(gzip.open(p,'rt'))
+ assert d['summary']['requests']['failed']==0 and d['summary']['requests']['foreign']==0
+ requests=sorted(d['requests'],key=lambda x:x['sent']);values=[];groups={False:[],True:[]};slow=[]
+ for j,x in enumerate(requests):
+  if not 15<=x['sent']<105:continue
+  assert x['first'] is not None and x['error'] is None
+  pending=any(y.get('first') is not None and y['first']>x['sent'] for y in requests[:j]);ms=1000*(x['first']-x['sent'])
+  groups[pending].append(ms);conditional[scale][pending].append(ms);values.append(ms)
+  if ms>450:slow.append({'index':x['index'],'slot':x['slot'],'prompt_id':x['prompt_id'],'ttft_ms':ms,'prior_request_first_token_pending':pending})
+ pool[scale]+=values
+ rows.append({'index':i,'scale':scale,'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'path':p.name,'ttft_saved_timeline':summary(values),'ttft_full_precision_report':d['summary']['latency']['ttft_s'],'output_tps':d['summary']['output_tps']['mean'],'conditional':{'no_prior_first_token_pending':summary(groups[False]),'prior_first_token_pending':summary(groups[True])},'slow_requests':slow})
+burst=json.loads((ROOT/'evidence/paired-burst.json').read_text());assert burst['passed'] and len(burst['runs'])==16
+br={s:[] for s in (0,1)};pairs=[]
+for r in burst['runs']:
+ assert r['sent_span_ms']<20
+ br[r['scale']]+=[1000*(x['first']-x['sent']) for x in r['records']]
+for i in range(8):
+ p={x['scale']:x for x in burst['runs'] if x['pair']==i}
+ means={s:statistics.mean(1000*(x['first']-x['sent']) for x in r['records']) for s,r in p.items()}
+ pairs.append({'pair':i,'scale0_mean_ms':means[0],'scale1_mean_ms':means[1],'change_ms':means[1]-means[0],'change_pct':100*(means[1]/means[0]-1)})
+report={'source_runtime_unchanged':True,'closed_order':[0,1,1,0,0,1],'closed_groups':rows,'closed_pooled':{str(s):summary(v) for s,v in pool.items()},'conditional_pooled':{str(s):{'no_prior_first_token_pending':summary(g[False]),'prior_first_token_pending':summary(g[True])} for s,g in conditional.items()},'all_above_450ms_had_prior_first_token_pending':all(x['prior_request_first_token_pending'] for r in rows for x in r['slow_requests']),'synchronized_burst':{'pooled':{str(s):summary(v) for s,v in br.items()},'paired_means':pairs,'mean_paired_change_pct':statistics.mean(x['change_pct'] for x in pairs),'mean_paired_change_ms':statistics.mean(x['change_ms'] for x in pairs),'max_sent_span_ms':max(x['sent_span_ms'] for x in burst['runs'])},'limitations':['six closed groups share one additional serving boot; not six independent boots','conditional grouping observes prior first-token overlap, not internal scheduler timestamps or a causal proof','synchronized bursts complement closed C4, do not replace its throughput/tail outcome','stored request timelines are rounded to 0.1ms; per-group full-precision summaries retained','steering changes model output/routing and DSpark acceptance; fixed-input timing is not a pure added-math bound']}
+(ROOT/'evidence/followup-analysis.json').write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps({k:report[k] for k in ('closed_pooled','conditional_pooled','all_above_450ms_had_prior_first_token_pending','synchronized_burst')},indent=2))

@@ -1,0 +1,530 @@
+{
+  "deployment_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b",
+  "image": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+  "window": "f23d3cc46de64e838f483d3f32e321d9",
+  "driver_sha256": "fdb46936aa0ae50e03b9876463eb66c47d1ce46bf037513072fc070eb2f78115",
+  "prompt_sha256": "ce2d8ed479d6cbf2f01e01de28faae01e311495472b2260b7c8bbf3c901a0961",
+  "order": [
+    0,
+    1,
+    1,
+    0,
+    0,
+    1
+  ],
+  "pairs": [
+    [
+      0,
+      1
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      4,
+      5
+    ]
+  ],
+  "runs": [
+    {
+      "index": 0,
+      "scale": 0,
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "servebench",
+        "run",
+        "http://127.0.0.1:8004",
+        "--mode",
+        "closed",
+        "--concurrency",
+        "4",
+        "--warmup",
+        "15",
+        "--duration",
+        "90",
+        "--batches",
+        "6",
+        "--max-tokens",
+        "256",
+        "--context",
+        "4096",
+        "--seed",
+        "2048",
+        "--prompts",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/tail-prompts.jsonl",
+        "--extra-body",
+        "{\"temperature\": 0, \"seed\": 2048, \"steering_profile\": \"heretic-1017-attn-v1\", \"steering_scale\": 0}",
+        "--save-requests",
+        "--label",
+        "tail-0-s0",
+        "--output",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-0-s0.json.gz"
+      ],
+      "returncode": 0,
+      "seconds": 111.23402523994446,
+      "path": "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-0-s0.json.gz",
+      "thermal_start": {
+        "samples": [
+          {
+            "MemAvailable": 22358851584,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17035558912,
+            "time": 1792382248.820449,
+            "pswpin": 8582,
+            "pswpout": 119815,
+            "hottest_c": 49.8,
+            "node": 1
+          },
+          {
+            "MemAvailable": 24257626112,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17095000064,
+            "time": 1792382249.1853619,
+            "pswpin": 1567,
+            "pswpout": 106216,
+            "hottest_c": 48.8,
+            "node": 2
+          },
+          {
+            "MemAvailable": 24236523520,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17143562240,
+            "time": 1792382249.17814,
+            "pswpin": 1252,
+            "pswpout": 119278,
+            "hottest_c": 47.7,
+            "node": 3
+          },
+          {
+            "MemAvailable": 23667802112,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17073242112,
+            "time": 1792382249.3889308,
+            "pswpin": 2397,
+            "pswpout": 115294,
+            "hottest_c": 49.7,
+            "node": 4
+          }
+        ]
+      }
+    },
+    {
+      "index": 1,
+      "scale": 1,
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "servebench",
+        "run",
+        "http://127.0.0.1:8004",
+        "--mode",
+        "closed",
+        "--concurrency",
+        "4",
+        "--warmup",
+        "15",
+        "--duration",
+        "90",
+        "--batches",
+        "6",
+        "--max-tokens",
+        "256",
+        "--context",
+        "4096",
+        "--seed",
+        "2048",
+        "--prompts",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/tail-prompts.jsonl",
+        "--extra-body",
+        "{\"temperature\": 0, \"seed\": 2048, \"steering_profile\": \"heretic-1017-attn-v1\", \"steering_scale\": 1}",
+        "--save-requests",
+        "--label",
+        "tail-1-s1",
+        "--output",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-1-s1.json.gz"
+      ],
+      "returncode": 0,
+      "seconds": 112.94266891479492,
+      "path": "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-1-s1.json.gz",
+      "thermal_start": {
+        "samples": [
+          {
+            "MemAvailable": 22789160960,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17035558912,
+            "time": 1792382391.5399323,
+            "pswpin": 8582,
+            "pswpout": 119815,
+            "hottest_c": 54.8,
+            "node": 1
+          },
+          {
+            "MemAvailable": 24185536512,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17095000064,
+            "time": 1792382391.8716242,
+            "pswpin": 1567,
+            "pswpout": 106216,
+            "hottest_c": 54.8,
+            "node": 2
+          },
+          {
+            "MemAvailable": 24199430144,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17143562240,
+            "time": 1792382391.8843699,
+            "pswpin": 1252,
+            "pswpout": 119278,
+            "hottest_c": 52.2,
+            "node": 3
+          },
+          {
+            "MemAvailable": 24176951296,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17073242112,
+            "time": 1792382391.8783293,
+            "pswpin": 2397,
+            "pswpout": 115294,
+            "hottest_c": 54.0,
+            "node": 4
+          }
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "scale": 1,
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "servebench",
+        "run",
+        "http://127.0.0.1:8004",
+        "--mode",
+        "closed",
+        "--concurrency",
+        "4",
+        "--warmup",
+        "15",
+        "--duration",
+        "90",
+        "--batches",
+        "6",
+        "--max-tokens",
+        "256",
+        "--context",
+        "4096",
+        "--seed",
+        "2048",
+        "--prompts",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/tail-prompts.jsonl",
+        "--extra-body",
+        "{\"temperature\": 0, \"seed\": 2048, \"steering_profile\": \"heretic-1017-attn-v1\", \"steering_scale\": 1}",
+        "--save-requests",
+        "--label",
+        "tail-2-s1",
+        "--output",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-2-s1.json.gz"
+      ],
+      "returncode": 0,
+      "seconds": 112.76954245567322,
+      "path": "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-2-s1.json.gz",
+      "thermal_start": {
+        "samples": [
+          {
+            "MemAvailable": 22719365120,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17035558912,
+            "time": 1792382549.8455632,
+            "pswpin": 8582,
+            "pswpout": 119815,
+            "hottest_c": 54.9,
+            "node": 1
+          },
+          {
+            "MemAvailable": 24105582592,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17095000064,
+            "time": 1792382550.2077665,
+            "pswpin": 1567,
+            "pswpout": 106216,
+            "hottest_c": 53.9,
+            "node": 2
+          },
+          {
+            "MemAvailable": 24141889536,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17143562240,
+            "time": 1792382550.2003796,
+            "pswpin": 1252,
+            "pswpout": 119278,
+            "hottest_c": 52.1,
+            "node": 3
+          },
+          {
+            "MemAvailable": 24312086528,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17073242112,
+            "time": 1792382550.1971319,
+            "pswpin": 2397,
+            "pswpout": 115294,
+            "hottest_c": 54.8,
+            "node": 4
+          }
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "scale": 0,
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "servebench",
+        "run",
+        "http://127.0.0.1:8004",
+        "--mode",
+        "closed",
+        "--concurrency",
+        "4",
+        "--warmup",
+        "15",
+        "--duration",
+        "90",
+        "--batches",
+        "6",
+        "--max-tokens",
+        "256",
+        "--context",
+        "4096",
+        "--seed",
+        "2048",
+        "--prompts",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/tail-prompts.jsonl",
+        "--extra-body",
+        "{\"temperature\": 0, \"seed\": 2048, \"steering_profile\": \"heretic-1017-attn-v1\", \"steering_scale\": 0}",
+        "--save-requests",
+        "--label",
+        "tail-3-s0",
+        "--output",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-3-s0.json.gz"
+      ],
+      "returncode": 0,
+      "seconds": 112.55961632728577,
+      "path": "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-3-s0.json.gz",
+      "thermal_start": {
+        "samples": [
+          {
+            "MemAvailable": 22711173120,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17035558912,
+            "time": 1792382714.1523182,
+            "pswpin": 8582,
+            "pswpout": 119815,
+            "hottest_c": 54.8,
+            "node": 1
+          },
+          {
+            "MemAvailable": 24036769792,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17095000064,
+            "time": 1792382714.5133762,
+            "pswpin": 1567,
+            "pswpout": 106216,
+            "hottest_c": 53.8,
+            "node": 2
+          },
+          {
+            "MemAvailable": 24038342656,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17143562240,
+            "time": 1792382714.515031,
+            "pswpin": 1252,
+            "pswpout": 119278,
+            "hottest_c": 51.9,
+            "node": 3
+          },
+          {
+            "MemAvailable": 24328732672,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17073242112,
+            "time": 1792382714.5016062,
+            "pswpin": 2397,
+            "pswpout": 115294,
+            "hottest_c": 53.9,
+            "node": 4
+          }
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "scale": 0,
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "servebench",
+        "run",
+        "http://127.0.0.1:8004",
+        "--mode",
+        "closed",
+        "--concurrency",
+        "4",
+        "--warmup",
+        "15",
+        "--duration",
+        "90",
+        "--batches",
+        "6",
+        "--max-tokens",
+        "256",
+        "--context",
+        "4096",
+        "--seed",
+        "2048",
+        "--prompts",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/tail-prompts.jsonl",
+        "--extra-body",
+        "{\"temperature\": 0, \"seed\": 2048, \"steering_profile\": \"heretic-1017-attn-v1\", \"steering_scale\": 0}",
+        "--save-requests",
+        "--label",
+        "tail-4-s0",
+        "--output",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-4-s0.json.gz"
+      ],
+      "returncode": 0,
+      "seconds": 111.96802616119385,
+      "path": "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-4-s0.json.gz",
+      "thermal_start": {
+        "samples": [
+          {
+            "MemAvailable": 22722117632,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17035558912,
+            "time": 1792382878.3335211,
+            "pswpin": 8582,
+            "pswpout": 119815,
+            "hottest_c": 54.8,
+            "node": 1
+          },
+          {
+            "MemAvailable": 24039391232,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17095000064,
+            "time": 1792382878.665809,
+            "pswpin": 1567,
+            "pswpout": 106216,
+            "hottest_c": 53.8,
+            "node": 2
+          },
+          {
+            "MemAvailable": 24131076096,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17143562240,
+            "time": 1792382878.6685672,
+            "pswpin": 1252,
+            "pswpout": 119278,
+            "hottest_c": 51.8,
+            "node": 3
+          },
+          {
+            "MemAvailable": 24320147456,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17073242112,
+            "time": 1792382878.6856804,
+            "pswpin": 2397,
+            "pswpout": 115294,
+            "hottest_c": 53.9,
+            "node": 4
+          }
+        ]
+      }
+    },
+    {
+      "index": 5,
+      "scale": 1,
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "servebench",
+        "run",
+        "http://127.0.0.1:8004",
+        "--mode",
+        "closed",
+        "--concurrency",
+        "4",
+        "--warmup",
+        "15",
+        "--duration",
+        "90",
+        "--batches",
+        "6",
+        "--max-tokens",
+        "256",
+        "--context",
+        "4096",
+        "--seed",
+        "2048",
+        "--prompts",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/tail-prompts.jsonl",
+        "--extra-body",
+        "{\"temperature\": 0, \"seed\": 2048, \"steering_profile\": \"heretic-1017-attn-v1\", \"steering_scale\": 1}",
+        "--save-requests",
+        "--label",
+        "tail-5-s1",
+        "--output",
+        "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-5-s1.json.gz"
+      ],
+      "returncode": 0,
+      "seconds": 113.1677017211914,
+      "path": "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/evidence/tail-5-s1.json.gz",
+      "thermal_start": {
+        "samples": [
+          {
+            "MemAvailable": 22754885632,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17035558912,
+            "time": 1792383042.4486024,
+            "pswpin": 8583,
+            "pswpout": 119815,
+            "hottest_c": 54.8,
+            "node": 1
+          },
+          {
+            "MemAvailable": 24087560192,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17095000064,
+            "time": 1792383042.7889948,
+            "pswpin": 1567,
+            "pswpout": 106216,
+            "hottest_c": 53.8,
+            "node": 2
+          },
+          {
+            "MemAvailable": 24035262464,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17143562240,
+            "time": 1792383042.7855992,
+            "pswpin": 1252,
+            "pswpout": 119278,
+            "hottest_c": 51.8,
+            "node": 3
+          },
+          {
+            "MemAvailable": 24334368768,
+            "SwapTotal": 17179803648,
+            "SwapFree": 17073242112,
+            "time": 1792383042.7921386,
+            "pswpin": 2397,
+            "pswpout": 115294,
+            "hottest_c": 53.8,
+            "node": 4
+          }
+        ]
+      }
+    }
+  ],
+  "passed": true
+}

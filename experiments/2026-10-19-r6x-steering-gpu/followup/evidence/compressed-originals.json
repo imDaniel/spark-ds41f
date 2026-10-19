@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "compressed_originals": [
+    {
+      "original": "paired-burst.json",
+      "original_sha256": "c4d6dac6a3fa411c2523962f115e6d9d1b0d3a6fe870f40803c55a02e2bef8ee",
+      "compressed": "paired-burst.json.gz",
+      "compressed_sha256": "c9ccce73358a652a6b4545612edcb47d9295b5ab6b87b8213cb1bd0253498127"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "baseline": "2026-10-19-homelab-r6x-steering-acceptance",
+  "scope": "isolated site daily acceptance; upstream general recipe is unchanged",
+  "source_baseline": "2026-10-19-r6x-steering-candidate",
+  "decision": "accept_for_daily_trial_with_recorded_end_to_end_limits",
+  "configuration": "experiments/2026-10-19-r6x-steering-gpu/followup/acceptance.json",
+  "upstreams_config": "experiments/2026-10-19-r6x-steering/upstreams.lock.json",
+  "vllm": {
+    "patches": 188,
+    "patch_head": "ebb44766d6f04d3a9272b712778d7f2fa2cec1fd",
+    "tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4",
+    "downstream_series": "0500-0511"
+  },
+  "image_id": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+  "profile": {
+    "id": "heretic-1017-attn-v1",
+    "startup": "hf:default",
+    "sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093",
+    "alpha": 2.5,
+    "scale_range": [
+      0,
+      4
+    ]
+  },
+  "capacity": {
+    "max_model_len": 1048576,
+    "max_num_seqs": 16,
+    "kv_bytes_per_rank": 11274289152,
+    "qualified_exact_single_request_total_tokens": 1048576
+  },
+  "evidence": {
+    "prior_hardware": "experiments/2026-10-19-r6x-steering-gpu/RESULTS.md",
+    "followup": "experiments/2026-10-19-r6x-steering-gpu/followup/README.md",
+    "analysis": "experiments/2026-10-19-r6x-steering-gpu/followup/evidence/followup-analysis.json",
+    "source_review": "experiments/2026-10-19-r6x-steering-gpu/followup/evidence/final-review.json",
+    "cpu_gate_cases": 108,
+    "prior_repository_tests": 465,
+    "gpu_component_tests": 29,
+    "independent_stock_cases": 12,
+    "worker_traces": 32,
+    "followup_closed_groups": 6,
+    "followup_paired_bursts": 8
+  },
+  "limits": [
+    "recorded closed C4 tail and ~1% scale1 throughput difference",
+    "prior scale4 C4 output throughput -2.61% versus official",
+    "one extra boot; no general statistical equivalence or all-workload guarantee",
+    "single-request 1M capacity, not 16 concurrent full 1M requests"
+  ],
+  "rollback": {
+    "service": "Deepseek 1017 heretic test",
+    "source_revision": "2e99502fdb547a7325719a758f45b00be5986ce9",
+    "image_id": "sha256:a63259a196d82dae51016d487ed43093f2045261adcb41045cfe9c1be29f70d2",
+    "configuration_sha256": "51a34eebfdfb77a1d5be030b2432c83c622d67a63f77a8f61c9c2455f88af695",
+    "preserve_original_assets": true
+  },
+  "deployment_state": "qualified image; isolated service rollout and end-to-end receipts recorded separately by the site"
+}

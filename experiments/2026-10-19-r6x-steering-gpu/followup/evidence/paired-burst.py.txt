@@ -1,0 +1,36 @@
+"""Paired C4 warm bursts with synchronized arrivals, retaining all observations."""
+import concurrent.futures,hashlib,importlib.util,json,pathlib,random,subprocess,sys,threading,time,uuid
+ROOT=pathlib.Path('/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019')
+REPO=pathlib.Path('/srv/ai-cluster/runtimes/steering-r6x-20261019/source/spark-ds41f')
+BASE='http://127.0.0.1:8004';PROFILE='heretic-1017-attn-v1';MODEL='deepseek-v4.1-flash'
+assert json.loads((ROOT/'evidence/tail-status.json').read_text())['returncode']==0
+sys.path.insert(0,str(REPO));from servebench import client,load,prompts,prom
+spec=importlib.util.spec_from_file_location('probe',REPO/'experiments/2026-10-19-steering-gpu/probe_model.py');probe=importlib.util.module_from_spec(spec);spec.loader.exec_module(probe)
+probe.THERMAL_SOURCE=ROOT/'evidence/host-telemetry.jsonl'
+thermal=probe.thermal_gate();probe.reset()
+L=load.Load(mode='burst',concurrency=4,max_tokens=256,fixed_length=True,seed=2048,context_tokens=4096)
+docs=load.documents(BASE,MODEL,L,True);source=prompts.default_prompts()[:16];random.Random(2048).shuffle(source)
+report={'driver_sha256':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest(),'deployment_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=REPO,text=True).strip(),'purpose':'hold C4 arrival pattern constant rather than feedback on completion; a complementary diagnostic, not a replacement for closed workload','thermal_start':thermal,'prompt_sha256':prompts.digest(prompts.default_prompts()[:16]),'pairs':8,'tokens':256,'priming':[],'runs':[],'passed':False}
+def body(scale,i,slot,prime=False):
+ extra={'temperature':0,'seed':2048,'steering_profile':PROFILE,'steering_scale':scale}
+ if prime:extra.update(max_tokens=1,min_tokens=1)
+ return load.payload(MODEL,source[(i*4+slot)%16],L,vllm=True,extra_body=extra,document=docs[slot]['text'],salt=docs[slot]['salt'])
+for scale in (0,1):
+ for slot in range(4):
+  row=client.stream_chat(BASE,body(scale,0,slot,True),continuous_usage=True)
+  report['priming'].append({'scale':scale,'slot':slot,'record':row});assert row['error'] is None
+output=ROOT/'evidence/paired-burst.json'
+for pair in range(8):
+ for scale in ((0,1) if pair%2==0 else (1,0)):
+  barrier=threading.Barrier(4)
+  def one(slot):
+   payload=body(scale,pair,slot);barrier.wait();r=client.stream_chat(BASE,payload,continuous_usage=True);r.update(slot=slot,prompt_id=source[(pair*4+slot)%16]['id']);return r
+  before=prom.scrape(BASE,prom.VLLM)
+  with concurrent.futures.ThreadPoolExecutor(4) as pool:rows=list(pool.map(one,range(4)))
+  after=prom.scrape(BASE,prom.VLLM)
+  record={'pair':pair,'scale':scale,'records':rows,'before':before,'after':after,'sent_span_ms':1000*(max(x['sent'] for x in rows)-min(x['sent'] for x in rows))}
+  report['runs'].append(record);output.write_text(json.dumps(report,indent=2))
+  assert all(x['error'] is None and x['completion_tokens']==256 and x['first'] is not None for x in rows)
+  assert record['sent_span_ms']<20,'Arrivals were not synchronized'
+  print(json.dumps({'pair':pair,'scale':scale,'ttft_ms':[round((x['first']-x['sent'])*1000,2) for x in rows],'sent_span_ms':record['sent_span_ms']}),flush=True)
+report['passed']=True;output.write_text(json.dumps(report,indent=2))
