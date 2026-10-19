@@ -1,11 +1,25 @@
 # spark-ds41f
 
+本站 fork 已集成上游 r6x 源码；下文的上游晋级和性能数据不代表本站四机已部署或验收 r6x。
+本站已部署的配置／私有 overlay 和 r6v steering 运行时保持原样，迁移与新验证另有独立实验记录。
+
 Reproducible Docker/vLLM deployment, tuning, and benchmarks for DeepSeek V4.1
 Flash on a switchless three-node DGX Spark fabric, and the same deployment on
 a four-node ring.
 
-Production is **r6v**, serving DeepSeek-V4.1-Flash-1017 on both profiles: the
-four-node TP4 1M profile on the ring the site is cabled as (2026-10-17,
+Production is **r6x**, serving DeepSeek-V4.1-Flash-1017 on the four-node TP4 1M
+profile on the ring the site is cabled as (2026-10-19,
+[promotion record](experiments/2026-10-18-r6x/README.md)). r6x is r6v with the routed
+experts' SwiGLU over the dispatch layout's live tiles, the routed experts' weight scales
+kept as row bases and 4-bit codes (exact, about 2.1 GiB a rank freed), and a DSpark draft
+budget that is a rule of the inputs (row cost 0.035), so nothing is timed at boot. Outputs
+are identical to r6v's; against r6v decode steps are 2.5% faster and 16 and 8 streams 3.6%
+and 3.8% faster, prefill level. The three-node TP3 512K profile is unqualified on r6x
+until a triangle release run; r6v served it on r6u's path. r6v's recipe and lock are frozen
+in `experiments/2026-10-18-r6x/r6v`.
+
+Before r6x, production was **r6v** on both profiles: the
+four-node TP4 1M profile on the ring (2026-10-17,
 [promotion record](experiments/2026-10-17-r6v/README.md)), and the three-node TP3
 512K profile on the triangle, whose path is r6u's (2026-10-17,
 [promotion record](experiments/2026-10-17-r6u/README.md)). r6v is r6u with
@@ -611,7 +625,9 @@ policy boundary are documented in [docs/recovery.md](docs/recovery.md).
 
 ## Benchmarking
 
-`bin/spark bench` measures the live service from the head node and writes one
+A release is benchmarked against the previous one with servebench suites in a lab session:
+[docs/release-benchmark.md](docs/release-benchmark.md) has the commands. `bin/spark bench`
+measures the live service from the head node and writes one
 self-contained report to `results/private/bench/<UTC time>/bench.json`
 (`--output` to change). By default it is a quick check of about six minutes:
 the quality gate and every decode point with three or four samples each.
@@ -644,9 +660,9 @@ Suites of the full run, in order (`--suites` selects a subset):
   With `--full`, each point keeps sampling until its 95% confidence interval
   is within `--precision` (2%) of the mean, between `--min-samples` (6) and
   `--max-samples` (40) samples; the quick default takes 3-4.
-  Single boots of one configuration differ by about 3%, because adaptive
-  verification profiles its costs at startup, so effects smaller than that
-  need several boots per arm.
+  Before r6x, single boots of one configuration differed by about 3%, because
+  adaptive verification profiled its costs at startup; since r6x nothing is timed
+  at boot and the same build repeats within about 0.4%.
   `--decode-cases` selects other cases. `prose-nothink`, `code-nothink` and
   `json-nothink` turn reasoning off to measure the answer itself. The
   `portable` group (`count`, `explain`, `tasks`, `rows`, `math`, `chat`,

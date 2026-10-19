@@ -15,7 +15,7 @@
 
 长期开发以原项目 `spark-ds41f` 为基础，持续跟进并集成其演进，在自己的 fork 中维护增量补丁。r6v 是本轮修改与验证采用的当前稳定版本，不是 fork 长期固定的开发版本。每轮实验记录明确的源码、补丁和配置身份以便复现；后续集成上游新版本时，重新选择基线、适配补丁并完成相应验证，保留既有实验记录。
 
-本轮实验基线为 r6v `11d31712a5821948f3cbfe14c0ae8419efb22a81`。该版本的 vLLM 输入为 Local Inference Lab 的 `19f2c20ed4d64ae22bd009ceacadd85e2a81e354` 加作者当时的 172 个补丁；本轮沿用原项目选定的 vLLM 集成链。准确身份以 [本轮基线的 lock](../../upstreams.lock.json) 和 [source manifest](../../manifests/sources/2026-10-17-r6v-source.json) 为准。下文具体文件、调用点与支持范围均基于本轮基线核对，上游更新后需重新核对。
+本轮实验基线为 r6v `11d31712a5821948f3cbfe14c0ae8419efb22a81`。该版本的 vLLM 输入为 Local Inference Lab 的 `19f2c20ed4d64ae22bd009ceacadd85e2a81e354` 加作者当时的 172 个补丁；本轮沿用原项目选定的 vLLM 集成链。准确身份以 [保留的 r6v 基线 lock](../2026-10-18-r6x/r6v/upstreams.lock.json) 和 [source manifest](../../manifests/sources/2026-10-17-r6v-source.json) 为准。下文具体文件、调用点与支持范围均基于本轮基线核对，上游更新后需重新核对。
 
 这些是公开源基线，不代表本站完整部署配置。未来候选必须继承私有 site overlay 中已登记的上下文、KV、并发、思考/采样、图片预算、主机及网络策略，只对 steering 作明确增量；不能用作者通用 recipe 覆盖本站配置。实际路径、地址、节点资料及访问凭据不进入本计划或 Git。
 

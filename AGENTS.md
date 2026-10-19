@@ -34,6 +34,15 @@ upstream independently supplies equivalent functionality, adopt it and retire
 the redundant downstream patch after validation; no upstream submission is
 needed for that maintenance step.
 
+New downstream runtime patch series use filenames starting at `0500` in a
+dedicated downstream experiment directory. Keep the upstream series and its
+filenames unchanged; compose it with the downstream series in dependency order.
+The separate directory is the namespace boundary: numbering reduces accidental
+collisions but cannot prevent source conflicts or an upstream eventually using
+the same numbers. Preserve published experiment series and manifests; a rebase
+creates a new experiment with an explicit old-to-new patch map and verified
+head/tree/patchset rather than rewriting historical evidence.
+
 ## Sources of truth
 
 - `config/cluster.json` is the promoted runtime configuration: one recipe for every
