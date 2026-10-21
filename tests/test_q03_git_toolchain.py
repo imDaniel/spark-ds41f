@@ -342,9 +342,16 @@ class LaunchContracts(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             sources = CORE.RuntimeOps().recovery_sources()
-            self.assertEqual(len(sources), 10)
-            self.assertIn('q03_held_window.py', sources)
-            self.assertIn('q03_git_toolchain.py', sources)
+            expected = {'q03_window.py', 'q03_window_preflight.py', 'q03_window_watchdog.py',
+                'q03_original_spark_adapter.py', 'q03_remote_operation.py', 'q03_build_adapter.py',
+                'q03_window_build.py', 'q03_buildkit_plan.py', 'q03_git_toolchain.py',
+                'q03_held_window.py', 'q03_owner_model.py', 'q03_image_preparation.py',
+                'memguard-start.sh', 'memguard.sh', '../bin/spark', 'mesh_fabric.py',
+                'kernel_backend.py', 'kernel_readiness.py', 'topology.py',
+                'transport_profiles.py', 'model_layout.py', 'recipe.py'}
+            self.assertEqual(set(sources), expected)
+            for name, digest in sources.items():
+                self.assertEqual(digest, hashlib.sha256((ROOT / 'scripts' / name).read_bytes()).hexdigest())
             capsule = {'session_dir': str(root), 'deadline_epoch': 100,
                 'heartbeat_timeout_s': 20, 'recovery_timeout_s': 30,
                 'recovery_command': [sys.executable, str(ROOT / 'scripts/q03_window.py'),

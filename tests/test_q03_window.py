@@ -176,6 +176,20 @@ class PreflightFaultTests(unittest.TestCase):
         with self.assertRaises(self.guard.PreflightError):
             self.validate(stopped)
 
+    def test_historical_exit_failure_is_not_an_unknown_stopped_identity(self):
+        self.expected['original_service_disposition'] = 'keep-stopped'
+        value = copy.deepcopy(self.observed)
+        value.update(gpus_empty=True, idle=False)
+        value['deepseek'].update(running=False, ready=False, failed=True,
+            nodes={str(i): {'valid': True, 'running': False, 'memguard': 'inactive'} for i in range(4)})
+        for phase in ('restore_drained', 'before_hold', 'before_stop'):
+            value.update(phase=phase, hold=None if phase == 'before_hold' else self.owned())
+            self.validate(value)
+            bad = copy.deepcopy(value); bad['deepseek']['errors'] = {'3': ['unknown identity']}
+            with self.assertRaises(self.guard.PreflightError): self.validate(bad)
+        value['deepseek']['failed'] = None
+        with self.assertRaises(self.guard.PreflightError): self.validate(value)
+
     def test_keep_stopped_live_entry_still_requires_idle_ready_ownership(self):
         self.expected['original_service_disposition'] = 'keep-stopped'
         self.validate(self.observed)

@@ -113,9 +113,10 @@ def _validate_preflight(expected, observed):
     else:
         _fresh_hold(observed.get("hold"), expected, observed["now"], recovery)
     ds, glm = observed["deepseek"], observed["glm"]
+    stopped_entry = keep_stopped and phase in {"before_hold", "before_stop"} and ds.get("running") is False
     for service in (ds, glm):
         require(type(service.get("failed")) is bool, "Unknown service state")
-        if service is glm or phase not in {"before_restore", "stopped", "restore_drained"}:
+        if service is glm or (phase not in {"before_restore", "stopped", "restore_drained"} and not stopped_entry):
             require(service["failed"] is False, "Failed service state")
         require(len(service.get("nodes", {})) == 4, "Incomplete service observation")
     require(type(ds.get("running")) is bool and type(ds.get("ready")) is bool,
@@ -126,7 +127,6 @@ def _validate_preflight(expected, observed):
         require(ds.get("errors") == {}, "Unknown or foreign DeepSeek identity")
         require(all(row.get("valid") is True for row in ds["nodes"].values()),
                 "DeepSeek identity must be known before cleanup")
-    stopped_entry = keep_stopped and phase in {"before_hold", "before_stop"} and ds["running"] is False
     if phase in {"before_hold", "before_stop", "restored"} and not stopped_entry:
         require(ds.get("running") is True and ds.get("ready") is True,
                 "DeepSeek is not fully ready")
