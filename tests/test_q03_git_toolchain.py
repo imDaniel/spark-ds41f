@@ -317,7 +317,9 @@ class LaunchContracts(unittest.TestCase):
             'cache_path': '/independent/cache', 'output_path': '/independent/output',
             'runtime_manifest_path': '/independent/runtime.json', 'component_head': 'b'*40,
             'git_toolchain_path': '/independent/git', 'git_toolchain_manifest_sha256': 'c'*64,
-            'git_toolchain_base_path': '/opt/bin:/usr/bin:/bin', 'git_config_sha256': 'e'*64}
+            'git_toolchain_base_path': '/opt/bin:/usr/bin:/bin', 'git_config_sha256': 'e'*64,
+            'tblib_path': '/independent/tblib', 'tblib_manifest_sha256': 'f'*64,
+            'pytest_base_pythonpath': '/opt/native'}
         for kind in ('p0', 'g1', 'g2'):
             _, argv = CORE.job_command({'candidate': candidate}, kind, 'd'*32)
             env = [argv[i+1] for i, part in enumerate(argv[:-1]) if part == '--env']

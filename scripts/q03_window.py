@@ -21,6 +21,71 @@ import select
 
 sys.dont_write_bytecode = True
 
+TBLIB_WHEEL = "tblib-3.1.0-py3-none-any.whl"
+TBLIB_SHA256 = "670bb4582578134b3d81a84afa1b016128b429f3d48e6cbbaecc9d15675e984e"
+# This fixed bootstrap is part of the already capsule-pinned controller source.
+# Append only the genuine pure-Python wheel; never replace image PYTHONPATH.
+TBLIB_BOOTSTRAP = r"""
+import hashlib, os, pathlib, sys
+if os.environ.get('PYTHONPATH') != os.environ['Q03_EXPECTED_PYTHONPATH']:
+    raise RuntimeError('image PYTHONPATH binding mismatch')
+wheel = pathlib.Path('/pytest-dependency/tblib-3.1.0-py3-none-any.whl')
+if hashlib.sha256(wheel.read_bytes()).hexdigest() != '670bb4582578134b3d81a84afa1b016128b429f3d48e6cbbaecc9d15675e984e':
+    raise RuntimeError('tblib wheel hash mismatch')
+sys.path.append(str(wheel))
+import tblib
+if tblib.__version__ != '3.1.0' or tblib.__file__ != str(wheel) + '/tblib/__init__.py':
+    raise RuntimeError('tblib version or import origin mismatch')
+import pytest
+sys.exit(pytest.main(sys.argv[1:]))
+"""
+
+
+def needs_tblib(manifest):
+    return any(job.get("kind") in ("g1", "g2") for job in manifest.get("jobs", []))
+
+
+def validate_tblib_dependency(candidate):
+    """Read-only validation before hold/STOP; no dependency code is imported."""
+    import io
+    import zipfile
+    root = Path(candidate["tblib_path"])
+    if not root.is_absolute() or root.resolve() != root or not root.is_dir():
+        raise ValueError("tblib bundle must be a canonical directory")
+    for parent in (root, *root.parents):
+        info = parent.stat()
+        if info.st_uid not in (0, os.getuid()) or info.st_mode & 0o022:
+            raise ValueError("tblib ancestry is not owner-controlled")
+    if {p.name for p in root.iterdir()} != {TBLIB_WHEEL, "manifest.json"}:
+        raise ValueError("tblib bundle inventory differs")
+    def read(name):
+        path = root / name
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        with os.fdopen(fd, "rb") as stream:
+            info = os.fstat(stream.fileno())
+            if (not stat.S_ISREG(info.st_mode) or info.st_uid not in (0, os.getuid())
+                    or info.st_mode & 0o022):
+                raise ValueError("tblib file ownership/type/mode differs")
+            return stream.read()
+    raw = read("manifest.json")
+    if hashlib.sha256(raw).hexdigest() != candidate["tblib_manifest_sha256"]:
+        raise ValueError("tblib manifest hash mismatch")
+    record = json.loads(raw)
+    wheel = read(TBLIB_WHEEL)
+    if hashlib.sha256(wheel).hexdigest() != TBLIB_SHA256:
+        raise ValueError("official tblib wheel hash mismatch")
+    with zipfile.ZipFile(io.BytesIO(wheel)) as archive:
+        members = {name: {"sha256": hashlib.sha256(archive.read(name)).hexdigest(),
+                          "size": len(archive.read(name))} for name in archive.namelist()}
+    if (record.get("schema_version") != 1 or record.get("package") != "tblib"
+            or record.get("version") != "3.1.0" or record.get("wheel") != TBLIB_WHEEL
+            or record.get("wheel_sha256") != TBLIB_SHA256
+            or record.get("wheel_size") != len(wheel) or record.get("requires_dist") != []
+            or record.get("license") != "BSD-2-Clause" or record.get("members") != members):
+        raise ValueError("tblib manifest does not describe the pinned wheel")
+    return record
+
+
 # The leader remains alive until its local process group is quiescent. The
 # actual command starts only after the parent has durably journalled this PID.
 COMMAND_SUPERVISOR = r"""
@@ -197,6 +262,8 @@ class RuntimeOps:
             raise ValueError("test mount requires a self-contained git checkout")
         self.validate_candidate_image(manifest, selection)
         self.validate_git_toolchain(manifest)
+        if needs_tblib(manifest):
+            validate_tblib_dependency(candidate)
 
     def validate_git_toolchain(self, manifest):
         from q03_git_toolchain import validate_toolchain
@@ -210,6 +277,11 @@ class RuntimeOps:
                  if item.startswith("PATH=")]
         if paths != [candidate.get("git_toolchain_base_path")]:
             raise ValueError("Git toolchain must preserve the exact image PATH")
+        if needs_tblib(manifest):
+            pythonpaths = [item[11:] for item in images[0].get("Config", {}).get("Env", [])
+                           if item.startswith("PYTHONPATH=")]
+            if pythonpaths != [candidate.get("pytest_base_pythonpath")]:
+                raise ValueError("pytest must preserve the exact image PYTHONPATH")
 
     def validate_candidate_image(self, manifest, selection):
         from q03_window_build import validate_candidate_build
@@ -638,7 +710,15 @@ def job_command(manifest, kind, window_id):
                  "--env", "Q03_GIT_TOOLCHAIN_MANIFEST_SHA256=" + digest,
                  "--env", "Q03_GIT_CONFIG_SHA256=" + config_digest]
     if kind in ("g1", "g2"):
-        argv += ["--env", f"VLLM_Q03_RUN_{kind.upper()}_GPU=1"]
+        if not re.fullmatch(r"[0-9a-f]{64}", candidate["tblib_manifest_sha256"]):
+            raise ValueError("pinned tblib manifest required")
+        pythonpath = candidate["pytest_base_pythonpath"]
+        if not isinstance(pythonpath, str) or not pythonpath or any(c in pythonpath for c in ("\n", "\x00")):
+            raise ValueError("explicit image PYTHONPATH binding required")
+        argv += ["--env", "Q03_EXPECTED_PYTHONPATH=" + pythonpath,
+                 "--env", f"VLLM_Q03_RUN_{kind.upper()}_GPU=1",
+                 "--mount", "type=bind,src=" + candidate["tblib_path"]
+                 + ",dst=/pytest-dependency,readonly"]
     argv += ["--entrypoint", "python3", candidate["image"]]
     if kind == "p0":
         argv += ["tests/standalone_tests/deepseek_v41_q03_registration.py", "--run",
@@ -649,7 +729,7 @@ def job_command(manifest, kind, window_id):
     else:
         path = ("test_deepseek_v41_mhc_three_way.py" if kind == "g1" else
                 "test_deepseek_v41_q03_owner.py")
-        argv += ["-m", "pytest", "-p", "no:cacheprovider", "-q", "tests/kernels/" + path,
+        argv += ["-c", TBLIB_BOOTSTRAP, "-p", "no:cacheprovider", "-q", "tests/kernels/" + path,
                  "--junitxml=/results/" + kind + ".xml"]
     return name, argv
 
@@ -739,6 +819,8 @@ def validate_layout(manifest, directory):
     paths = {key: safe(candidate[key]) for key in
              ("tests_path", "cache_path", "output_path", "runtime_manifest_path",
               "build_receipt_path", "build_inputs_path", "git_toolchain_path")}
+    if needs_tblib(manifest):
+        paths["tblib_path"] = safe(candidate["tblib_path"])
     session_path = safe(directory)
     for value in (*paths.values(), session_path):
         if value == resolved_root or resolved_root not in value.parents:
@@ -747,7 +829,8 @@ def validate_layout(manifest, directory):
         if any(overlap(writable, immutable) for immutable in
                (paths["tests_path"], paths["runtime_manifest_path"],
                 paths["build_receipt_path"], paths["build_inputs_path"],
-                paths["git_toolchain_path"])):
+                paths["git_toolchain_path"],
+                *([paths["tblib_path"]] if "tblib_path" in paths else []))):
             raise ValueError("writable path overlaps immutable test/runtime evidence")
     if overlap(session_path, paths["cache_path"]) or overlap(session_path, paths["output_path"]):
         raise ValueError("session evidence must be separate from container writable mounts")

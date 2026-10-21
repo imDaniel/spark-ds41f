@@ -288,7 +288,7 @@ class FakeOps:
         return {name: "a" * 64 for name in ("q03_window.py", "q03_window_preflight.py",
                 "q03_window_watchdog.py", "q03_original_spark_adapter.py",
                 "q03_remote_operation.py", "q03_build_adapter.py",
-                "q03_window_build.py", "q03_buildkit_plan.py")}
+                "q03_window_build.py", "q03_buildkit_plan.py", "q03_git_toolchain.py")}
 
     def validate_host(self, manifest):
         # Host authorization is replaced only at the explicit fake I/O boundary.
@@ -394,6 +394,13 @@ class WindowRecoveryTests(unittest.TestCase):
                           "legacy_request_path": str(self.root.parent / "legacy.json")},
             "candidate": {"image": "sha256:" + "a" * 64,
                           "tests_path": str(self.root / "tests"),
+                          "git_toolchain_path": str(self.root / "git-toolchain"),
+                          "git_toolchain_manifest_sha256": "c" * 64,
+                          "git_toolchain_base_path": "/usr/local/bin:/usr/bin:/bin",
+                          "git_config_sha256": "d" * 64,
+                          "tblib_path": str(self.root / "tblib"),
+                          "tblib_manifest_sha256": "e" * 64,
+                          "pytest_base_pythonpath": "/opt/native",
                           "cache_path": str(self.root / "cache"),
                           "output_path": str(self.root / "output"),
                           "runtime_manifest_path": str(self.root / "runtime.json"),
