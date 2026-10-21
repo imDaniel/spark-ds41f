@@ -8,4 +8,7 @@
 experiments/**/runs*/** -whitespace
 experiments/**/results/** -whitespace
 experiments/**/overlay/** -whitespace
+experiments/2026-10-19-sink-rejection-v2/analysis/*.txt -whitespace
+# Preserve the exact upstream test snapshot, including its final blank line.
+experiments/2026-10-19-prefix-replay/bundles/prefix-tests/test_prefix_caching.py whitespace=-blank-at-eof
 *.csv -whitespace

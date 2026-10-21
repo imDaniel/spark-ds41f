@@ -1,8 +1,14 @@
 # Current state
 
 The release status and measurements below describe the upstream project.
-This fork has integrated its source; the site's deployed configurations,
-private overlays and running services have not been migrated to r6x.
+The site's separate r6x steering daily acceptance is recorded in
+[its immutable acceptance manifest](../manifests/baselines/2026-10-19-homelab-r6x-steering-acceptance.json).
+The site's TP4 service is not qualified by the upstream triangle's results.
+
+The original r6x TP4 baseline remains unchanged. The later upstream TP3 1M
+qualification is an additive
+[triangle record](../manifests/baselines/2026-10-19-karmic-kraken-r6x-tp3.json),
+with its own release suites and the original baseline's content hash.
 
 Production is the recipe's `tp4-ring` shape ([config/cluster.json](../config/cluster.json)) on
 **r6x**, serving DeepSeek-V4.1-Flash-1017, promoted 2026-10-19 as
@@ -18,9 +24,12 @@ Against r6v on the `release` suite: decode steps 2.5% faster, 16 and 8 streams 3
 faster (sampled 3.0% and 4.5%), prefill level, one conversation at a time 74.1 tok/s.
 `tp4-ring`'s `benchmark_reference` is
 [manifests/suites/2026-10-19-karmic-kraken-r6x-tp4](../manifests/suites/2026-10-19-karmic-kraken-r6x-tp4/).
-`tp3-triangle` is unqualified on r6x (its path changed too): it needs a triangle release run,
-and until then `cluster start --unqualified-shape`. r6v's recipe and lock are frozen in
-`experiments/2026-10-18-r6x/r6v` as the rollback.
+On the triangle, `tp3-triangle` serves r6x at **1,048,576 tokens** since 2026-10-19
+([experiments/2026-10-19-r6x-tp3-1m](../experiments/2026-10-19-r6x-tp3-1m/README.md)): a
+4.90625 GiB KV pool, 4,765,898 tokens (4.55 full 1M contexts), outputs identical to r6u's TP3
+path; its `benchmark_reference` is
+[manifests/suites/2026-10-19-karmic-kraken-r6x-tp3](../manifests/suites/2026-10-19-karmic-kraken-r6x-tp3/).
+r6v's recipe and lock are frozen in `experiments/2026-10-18-r6x/r6v` as the rollback.
 
 Before r6x the ring ran **r6v**, promoted 2026-10-17 as
 [`2026-10-17-karmic-kraken-r6v`](../manifests/baselines/2026-10-17-karmic-kraken-r6v.json)
