@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "status": "complete197 replay and CPU/static checks verified; P0/GPU unexecuted",
+  "deployment_base": "610cbde6cd65284dceb9202136a6892a1fb7211c",
+  "deployment_base_tree": "19341e9608eb3f45d09d6948ab99fe9f16c0a861",
+  "original_runtime_deployment_base": "3ff57762036fc72c2221c3845a39e70850fd2d7e",
+  "source_base": "19f2c20ed4d64ae22bd009ceacadd85e2a81e354",
+  "inherited_patch_head": "dd0d8326d31456a6038ac2f244f765e8d783ce59",
+  "inherited_tree": "9cee307fa4fcfca0b907bafc192a7866ea77ec83",
+  "inherited_patch_count": 192,
+  "inherited_patchset_sha256": "5a918aefd8a12c5c36aae9117ba7059e976a4503efae3362fd41da1df3dddd7e",
+  "candidate_export_complete": true,
+  "image_built": false,
+  "gpu_tests_run": false,
+  "patch_head": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+  "expected_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a",
+  "patchset_sha256": "98741a02fde9452b0a7dc906861ec381c2bff20a4f0067ba61c3fe543d9f92e5",
+  "total_patch_count": 197,
+  "candidate_patch_count": 5,
+  "runtime_source_unchanged": true,
+  "validation_results": {
+    "full_replay": true,
+    "checkpoints": [
+      188,
+      192,
+      196,
+      197
+    ],
+    "runtime_diff_from_dd0": "empty",
+    "packaging_tests": 5,
+    "doctor": true,
+    "release_classification": {
+      "selected": 128,
+      "gate": 71,
+      "excluded": 57,
+      "problems": 0
+    },
+    "build_inputs_check": false,
+    "build_inputs_blocker": "cloud candidate build directory not prepared; no image compilation attempted"
+  },
+  "validation_only_checkpoint_196": {
+    "head": "77c7112e0340a05aea07252c70acdf91a3d3f1d4",
+    "tree": "6747ba0c7662d231063a44e464b25b8252bb2f7d"
+  }
+}

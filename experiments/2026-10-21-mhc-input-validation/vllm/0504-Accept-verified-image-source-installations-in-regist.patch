@@ -1,0 +1,58 @@
+From 154159dc3e38ca8b2321c01a153a1b2ccaf8663b Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 16:00:06 +0900
+Subject: [PATCH] Accept verified image-source installations in registration
+ checks
+
+Base: original vLLM 19f2c20 with 196 mailbox checkpoint 77c7112e0340a05aea07252c70acdf91a3d3f1d4. Rationale: the official image installs reviewed source and rebuilt extensions under /opt/spark3/candidate/vllm using image-baked PYTHONPATH, not a wheel or editable install.
+
+Numerical/quality impact: tests only; explicit image-source mode retains all independently verified source/native hashes and candidate identity checks. It does not authorize runtime Python overlays.
+
+Tests: syntax and diff checks passed; target P0/GPU execution not performed. Upstream status: downstream-only test compatibility, not submitted upstream.
+---
+ .../standalone_tests/deepseek_v41_q03_registration.md | 11 +++++++++--
+ .../standalone_tests/deepseek_v41_q03_registration.py |  2 +-
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/tests/standalone_tests/deepseek_v41_q03_registration.md b/tests/standalone_tests/deepseek_v41_q03_registration.md
+index 513d915bf..034c62a9c 100644
+--- a/tests/standalone_tests/deepseek_v41_q03_registration.md
++++ b/tests/standalone_tests/deepseek_v41_q03_registration.md
+@@ -48,8 +48,8 @@ Do not force vLLM's platform to CUDA or use dependency stubs to obtain a pass.
+   that inherited value, and uses actual package defaults. Opaque LayerName must
+   actually be supported and enabled; otherwise the run is unexecuted/nonzero.
+ - `string`: explicitly sets `VLLM_USE_LAYERNAME=0` before any serving import.
+-- Normal imports must resolve to the reviewed installation root. Both wheel
+-  and reviewed editable candidate installations are accepted, including one
++- Normal imports must resolve to the reviewed installation root. Wheel, reviewed
++  editable and reviewed image-source candidate installations are accepted, including one
+   rooted in the prepared checkout. No sys.path overlay is injected. The nine
+   relevant source files must match this expected checkout byte for byte;
+   imported Python modules must share the reviewed package root, and each native
+@@ -114,3 +114,10 @@ For an approved editable installation set mode to `editable` and record its
+ actual package root and native build paths. A verified editable build is not
+ rejected merely for residing in the prepared checkout; unknown/unverified
+ origins or an unrecorded Python overlay remain errors.
++
++The official image may use `installation.mode=image-source`: its build installs
++candidate Python under `/opt/spark3/candidate/vllm` with image-baked PYTHONPATH
++and separately rebuilt native extensions. This mode is accepted only with the
++same independently reviewed candidate-build manifest, exact Python bytes,
++package root, native origins/hashes and versions. Preserve the verified baked
++image environment; it is not permission to inject an unverified runtime overlay.
+diff --git a/tests/standalone_tests/deepseek_v41_q03_registration.py b/tests/standalone_tests/deepseek_v41_q03_registration.py
+index 83963064f..61ae0917e 100644
+--- a/tests/standalone_tests/deepseek_v41_q03_registration.py
++++ b/tests/standalone_tests/deepseek_v41_q03_registration.py
+@@ -141,7 +141,7 @@ def worker(args):
+         require(manifest["source_head"] == args.expected_head,
+                 "runtime manifest must identify the approved candidate HEAD")
+         installation = manifest["installation"]
+-        require(installation["mode"] in ("wheel", "editable"),
++        require(installation["mode"] in ("wheel", "editable", "image-source"),
+                 "unknown/unverified installation mode")
+         import torch
+ 
+-- 
+2.52.0
+

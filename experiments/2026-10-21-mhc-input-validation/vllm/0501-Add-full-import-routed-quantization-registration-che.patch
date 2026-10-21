@@ -1,0 +1,526 @@
+From 084c1f4ff03efcdc573dc2bafcbec240058a097e Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 15:40:01 +0900
+Subject: [PATCH 501/503] Add full-import routed quantization registration
+ checks
+
+Base: vLLM 19f2c20ed4d64ae22bd009ceacadd85e2a81e354 with the
+immutable 192-mailbox stack ending dd0d8326d31456a6038ac2f244f765e8d783ce59.
+Apply this independent validation series in its recorded dependency order.
+
+Rationale: Check actual installed candidate imports and default opaque/string registration without silently overlaying baseline Python sources.
+
+Numerical/quality impact: test-only; runtime sources and production defaults
+are unchanged. Synthetic fixtures do not establish model quality or performance.
+
+Tests: stdlib syntax/provenance checks and 15 harness-contract tests passed
+in the combined tree; inherited 30 host tests passed. Actual target imports,
+CUDA compilation, GPU numerics/graphs and four-rank qualification not executed.
+
+Upstream status: downstream-only validation, not submitted upstream.
+---
+ .../deepseek_v41_q03_registration.md          | 116 ++++++
+ .../deepseek_v41_q03_registration.py          | 368 ++++++++++++++++++
+ 2 files changed, 484 insertions(+)
+ create mode 100644 tests/standalone_tests/deepseek_v41_q03_registration.md
+ create mode 100644 tests/standalone_tests/deepseek_v41_q03_registration.py
+
+diff --git a/tests/standalone_tests/deepseek_v41_q03_registration.md b/tests/standalone_tests/deepseek_v41_q03_registration.md
+new file mode 100644
+index 000000000..513d915bf
+--- /dev/null
++++ b/tests/standalone_tests/deepseek_v41_q03_registration.md
+@@ -0,0 +1,116 @@
++# Q03 P0: full-import registration and fake-dispatch smoke
++
++Purpose: replace the earlier AST-only/string-only registration evidence with
++actual serving-module imports and real operator registrations in two isolated
++processes. This is not a real MoE execution test or a substitute for opcheck,
++functionalization, CUDA graphs, numerical or performance gates.
++
++## Safety and scope
++
++`--list` and Python syntax checks use only the standard library. `--run` imports
++Torch, the full MoE runner/backend and the DeepSeek V4.1 NVIDIA model module.
++Those imports may load native libraries, discover devices or initialize CUDA.
++Do not call this CPU-only merely because its operator inputs are FakeTensors.
++Run only in an independently approved isolated environment. The acknowledgment
++flag records operator intent, not permission to use a device or service.
++No model instance, weights, real tensor allocation, real MoE call or cluster
++operation is requested by the test itself. Dependency imports remain observable
++platform work. No packages are installed or platform registrations replaced.
++
++## Commands
++
++From the new, clean, committed candidate vLLM checkout, using the approved
++existing environment's Python (shown as `.venv/bin/python`):
++
++```sh
++.venv/bin/python tests/standalone_tests/deepseek_v41_q03_registration.py --list
++.venv/bin/python -m py_compile tests/standalone_tests/deepseek_v41_q03_registration.py
++```
++
++Only after approval for the selected environment and its import/device effects:
++
++```sh
++.venv/bin/python tests/standalone_tests/deepseek_v41_q03_registration.py \
++  --run --allow-platform-initialization --expected-platform cuda \
++  --expected-head FULL_NEW_CANDIDATE_COMMIT \
++  --runtime-manifest /APPROVED_RESULTS/reviewed-candidate-runtime.json \
++  --output-dir /APPROVED_RESULTS/p0-registration-run-01
++```
++
++Use a fresh output directory for every attempt; preserve failed logs. A genuinely
++approved CPU environment can name `--expected-platform cpu`, but that result
++must be labeled CPU-platform evidence, not target-CUDA registration evidence.
++Do not force vLLM's platform to CUDA or use dependency stubs to obtain a pass.
++
++## What each process verifies
++
++- `default`: removes only the inherited `VLLM_USE_LAYERNAME` override, records
++  that inherited value, and uses actual package defaults. Opaque LayerName must
++  actually be supported and enabled; otherwise the run is unexecuted/nonzero.
++- `string`: explicitly sets `VLLM_USE_LAYERNAME=0` before any serving import.
++- Normal imports must resolve to the reviewed installation root. Both wheel
++  and reviewed editable candidate installations are accepted, including one
++  rooted in the prepared checkout. No sys.path overlay is injected. The nine
++  relevant source files must match this expected checkout byte for byte;
++  imported Python modules must share the reviewed package root, and each native
++  extension must match its independently recorded build origin and hash.
++  Imported hashes, Torch/CUDA-build version, actual platform/dispatch key,
++  LayerName mode and CUDA initialization state are saved.
++- The reviewed runtime manifest must bind the candidate HEAD to exact package
++  versions, installation mode/root and both native vLLM extension origins/hashes. Produce it from independently
++  verified candidate build/install receipts, not from an unchecked runtime just
++  to satisfy the test. A baseline image with candidate Python mounted over it
++  is not evidence of a complete candidate installation.
++- Both bridge operators retain explicit read-only q/sf and their expected
++  mutation schemas. Calls go through actual `torch.ops` and FakeTensor dispatch,
++  not a direct fake function. Both output arities, shape/dtype/device, no output
++  input alias, malformed scale dtype/width, rows0/1/6/16/96/8192 and optional
++  shared-input metadata are checked.
++
++Both processes and complete reports must pass; missing dependencies, missing
++reports, wrong mode, timeout or assertion failure cannot be skipped into green.
++Exit 0 means this bounded smoke passed, not all P0/compiler/runtime gates.
++Native logs and mode JSON reports accompany summary.json. The current test
++contains no `torch.library.opcheck`, AOT functionalization or real operator
++execution; those remain separate, explicitly unexecuted gates.
++
++## Required reviewed runtime manifest
++
++The exact source HEAD is the new committed test candidate used above. The target
++versions supplied for this work are Python 3.12.3, Torch 2.13.0+cu130, TileLang
++0.1.15 and TileKernels 2.0.0, not the earlier local Torch 2.14.1 probe environment.
++The two native hashes must come from the approved candidate build evidence;
++placeholders are deliberately not runnable values:
++
++```json
++{
++  "source_head": "FULL_NEW_CANDIDATE_COMMIT",
++  "installation": {
++    "mode": "wheel",
++    "package_root": "/APPROVED_INSTALL/vllm"
++  },
++  "versions": {
++    "python": "3.12.3",
++    "torch": "2.13.0+cu130",
++    "tilelang": "0.1.15",
++    "tile_kernels": "2.0.0"
++  },
++  "native_paths": {
++    "vllm._C_stable_libtorch": "/APPROVED_BUILD/_C_stable_libtorch.so",
++    "vllm._moe_C_stable_libtorch": "/APPROVED_BUILD/_moe_C_stable_libtorch.so"
++  },
++  "native_sha256": {
++    "vllm._C_stable_libtorch": "REVIEWED_SHA256",
++    "vllm._moe_C_stable_libtorch": "REVIEWED_SHA256"
++  }
++}
++```
++
++Until that installation and manifest exist, full-candidate P0 is unexecuted.
++An approved different environment must have its own reviewed manifest and
++clearly labeled evidence; do not silently substitute package versions.
++
++For an approved editable installation set mode to `editable` and record its
++actual package root and native build paths. A verified editable build is not
++rejected merely for residing in the prepared checkout; unknown/unverified
++origins or an unrecorded Python overlay remain errors.
+diff --git a/tests/standalone_tests/deepseek_v41_q03_registration.py b/tests/standalone_tests/deepseek_v41_q03_registration.py
+new file mode 100644
+index 000000000..83963064f
+--- /dev/null
++++ b/tests/standalone_tests/deepseek_v41_q03_registration.py
+@@ -0,0 +1,368 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""P0 full-import registration/fake smoke. --list imports only the stdlib.
++
++--run is target-environment work: serving imports can initialize CUDA or load
++native extensions. It requires separate approval; the acknowledgment flag is
++not that approval. No model construction, real operator call or GPU benchmark.
++"""
++
++import argparse
++import hashlib
++import importlib
++import importlib.metadata
++import json
++import os
++import platform
++from pathlib import Path
++import subprocess
++import sys
++import traceback
++
++ROOT = Path(__file__).resolve().parents[2]
++MODULES = (
++    "vllm.model_executor.layers.fused_moe.runner.moe_runner",
++    "vllm.model_executor.layers.fused_moe.tilelang",
++    "vllm.models.deepseek_v4_1.nvidia.model",
++)
++OPS = ("dsv41_moe_forward_mxfp8", "dsv41_moe_forward_shared_mxfp8")
++ROWS = (0, 1, 6, 16, 96, 8192)
++
++NATIVE_MODULES = ("vllm._C_stable_libtorch", "vllm._moe_C_stable_libtorch")
++SOURCE_FILES = (
++    "model_executor/layers/fused_moe/runner/moe_runner.py",
++    "model_executor/layers/fused_moe/tilelang.py",
++    "models/deepseek_v4_1/tilelang/moe.py",
++    "models/deepseek_v4_1/tilelang/mhc.py",
++    "models/deepseek_v4_1/tilelang/routed_input.py",
++    "models/deepseek_v4_1/tilelang/input_quant_arena.py",
++    "models/deepseek_v4_1/nvidia/model.py",
++    "models/deepseek_v4/nvidia/model.py",
++    "utils/torch_utils.py",
++)
++
++
++def require(condition, message):
++    if not condition:
++        raise AssertionError(message)
++
++
++def write_report(path, report):
++    path.write_text(json.dumps(report, indent=2) + "\n")
++
++
++def mode_environment(inherited, mode):
++    env = inherited.copy()
++    if mode == "default":
++        env.pop("VLLM_USE_LAYERNAME", None)
++    elif mode == "string":
++        env["VLLM_USE_LAYERNAME"] = "0"
++    else:
++        raise ValueError(f"unknown mode: {mode}")
++    return env
++
++
++def expected_checks():
++    checks = set()
++    for name in OPS:
++        checks.add(f"{name}:schema")
++        for rows in ROWS:
++            for shared in (False, True):
++                checks.add(f"{name}:rows={rows}:shared={shared}")
++            for defect in ("width", "dtype"):
++                checks.add(f"{name}:rows={rows}:bad_sf_{defect}")
++    return checks
++
++
++def mode_passed(exit_code, report, mode):
++    """No missing/partial report or unsupported mode may count as a pass."""
++    if mode not in ("default", "string") or not isinstance(report, dict):
++        return False
++    checks = report.get("checks", [])
++    if not isinstance(checks, list) or not all(isinstance(c, str) for c in checks):
++        return False
++    sources, operators = report.get("sources", {}), report.get("operators", {})
++    if not isinstance(sources, dict) or not isinstance(operators, dict):
++        return False
++    for name in MODULES:
++        source = sources.get(name, {})
++        if not isinstance(source, dict):
++            return False
++        digest = source.get("sha256", "")
++        if (not isinstance(digest, str) or len(digest) != 64
++                or any(c not in "0123456789abcdef" for c in digest)
++                or not isinstance(source.get("path"), str) or not source["path"]):
++            return False
++    return (
++        exit_code == 0
++        and report.get("result") == "passed"
++        and report.get("mode") == mode
++        and report.get("runtime_identity_verified") is True
++        and report.get("opaque_enabled") is (mode == "default")
++        and len(checks) == len(set(checks))
++        and set(checks) == expected_checks()
++        and all(isinstance(operators.get(name), str)
++                and operators[name].startswith(f"vllm::{name}(") for name in OPS)
++    )
++
++
++def verify_installed_sources(package_root, expected_root):
++    hashes = {}
++    for relative in SOURCE_FILES:
++        installed = package_root / relative
++        expected = expected_root / "vllm" / relative
++        digest = hashlib.sha256(installed.read_bytes()).hexdigest()
++        require(digest == hashlib.sha256(expected.read_bytes()).hexdigest(),
++                f"installed/prepared source mismatch: {relative}")
++        hashes[relative] = digest
++    return hashes
++
++
++def worker(args):
++    report = {
++        "mode": args.worker,
++        "result": "unexecuted",
++        "phase": "import",
++        "python": sys.version,
++        "executable": sys.executable,
++        "layername_override": os.environ.get("VLLM_USE_LAYERNAME"),
++        "checks": [],
++        "pythonpath": os.environ.get("PYTHONPATH"),
++        "runtime_identity_verified": False,
++        "limitations": [
++            "No real MoE execution, opcheck or functionalization",
++            "No model construction, graph, stream, numeric or capacity evidence",
++            "Full serving imports may initialize CUDA; not a CPU-only test",
++        ],
++    }
++    write_report(args.report, report)
++    try:
++        manifest = json.loads(args.runtime_manifest.read_text())
++        require(manifest["source_head"] == args.expected_head,
++                "runtime manifest must identify the approved candidate HEAD")
++        installation = manifest["installation"]
++        require(installation["mode"] in ("wheel", "editable"),
++                "unknown/unverified installation mode")
++        import torch
++
++        report["torch"] = torch.__version__
++        report["torch_cuda_build"] = torch.version.cuda
++        report["cuda_initialized_before_import"] = torch.cuda.is_initialized()
++        # Import the installed package normally: never overlay the prepared tree.
++        modules = [importlib.import_module(name) for name in MODULES]
++        import vllm
++
++        package_root = Path(vllm.__file__).resolve().parent
++        report["package_root"] = str(package_root)
++        require(package_root == Path(installation["package_root"]).resolve(),
++                "import source differs from reviewed installation root")
++        report["installation"] = installation
++        from vllm.platforms import current_platform
++        from vllm.utils import torch_utils
++
++        report["platform"] = current_platform.device_type
++        report["dispatch_key"] = current_platform.dispatch_key
++        report["cuda_initialized_after_import"] = torch.cuda.is_initialized()
++        report["opaque_supported"] = torch_utils.HAS_OPAQUE_TYPE
++        report["opaque_enabled"] = torch_utils._USE_LAYERNAME
++        report["sources"] = {}
++        for module in [*modules, torch_utils]:
++            path = Path(module.__file__).resolve()
++            require(path.is_relative_to(package_root),
++                    f"mixed imported package roots: {path}")
++            report["sources"][module.__name__] = {
++                "path": str(path),
++                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
++            }
++        report["installed_source_sha256"] = verify_installed_sources(
++            package_root, ROOT
++        )
++        report["runtime_manifest_sha256"] = hashlib.sha256(
++            args.runtime_manifest.read_bytes()
++        ).hexdigest()
++        versions = {
++            "python": platform.python_version(),
++            "torch": torch.__version__,
++            "tilelang": importlib.metadata.version("tilelang"),
++            "tile_kernels": importlib.metadata.version("tile_kernels"),
++        }
++        require(versions == manifest["versions"], "runtime version mismatch")
++        report["versions"] = versions
++        report["native_extensions"] = {}
++        for name in NATIVE_MODULES:
++            module = importlib.import_module(name)
++            path = Path(module.__file__).resolve()
++            require(path == Path(manifest["native_paths"][name]).resolve(),
++                    f"native extension origin differs from reviewed build: {name}")
++            digest = hashlib.sha256(path.read_bytes()).hexdigest()
++            require(digest == manifest["native_sha256"][name],
++                    f"native extension identity mismatch: {name}")
++            report["native_extensions"][name] = {
++                "path": str(path), "sha256": digest,
++            }
++        report["runtime_identity_verified"] = True
++        require(report["platform"] == args.expected_platform, "platform mismatch")
++        if args.worker == "default" and not torch_utils._USE_LAYERNAME:
++            report["reason"] = "default opaque LayerName mode unavailable/disabled"
++            return 2
++        require(
++            torch_utils._USE_LAYERNAME == (args.worker == "default"),
++            "actual LayerName mode differs from requested subprocess mode",
++        )
++        report["phase"] = "schema_and_fake_dispatch"
++        from torch._subclasses.fake_tensor import FakeTensorMode
++
++        runner = modules[0]
++        require(
++            runner._layer_name_type
++            is (torch_utils.LayerName if args.worker == "default" else str),
++            "runner annotation did not use actual LayerName selection",
++        )
++        layer_name = torch_utils._encode_layer_name("q03.registration.smoke")
++        report["layer_argument_type"] = type(layer_name).__qualname__
++        report["operators"] = {}
++        for name in OPS:
++            op = getattr(torch.ops.vllm, name).default
++            schema = op._schema
++            writes = {
++                arg.name for arg in schema.arguments
++                if arg.alias_info and arg.alias_info.is_write
++            }
++            require(writes == ({"hidden_states"} if name == OPS[0] else set()),
++                    f"mutation mismatch: {name}")
++            require([a.name for a in schema.arguments][-2:] == ["q", "sf"],
++                    "q/sf must remain explicit operands")
++            require(all(a.alias_info is None for a in schema.arguments[-2:]),
++                    "q/sf must be read-only and unaliased in schema")
++            report["operators"][name] = str(schema)
++            report["checks"].append(f"{name}:schema")
++            with FakeTensorMode():
++                for rows in ROWS:
++                    def tensor(shape, dtype):
++                        return torch.empty(shape, dtype=dtype, device="cuda:0")
++
++                    x = tensor((rows, 5120), torch.bfloat16)
++                    q = tensor((rows, 5120), torch.float8_e4m3fn)
++                    sf = tensor((rows, 160), torch.uint8)
++                    logits = tensor((rows, 256), torch.float32)
++                    for separate_shared in (False, True):
++                        shared = tensor(x.shape, x.dtype) if separate_shared else None
++                        inputs = (x, logits, shared, None, layer_name,
++                                  0, torch.bfloat16, q, sf)
++                        output = op(*inputs)
++                        outputs = output if isinstance(output, tuple) else (output,)
++                        require(len(outputs) == (1 if name == OPS[0] else 2),
++                                "wrong output arity")
++                        for value in outputs:
++                            require(value.shape == x.shape and value.dtype == x.dtype
++                                    and value.device == x.device,
++                                    "fake output mismatch")
++                            for source in (x, q, sf):
++                                require(not torch._C._is_alias_of(value, source),
++                                        "fake output aliases an input")
++                        report["checks"].append(
++                            f"{name}:rows={rows}:shared={separate_shared}"
++                        )
++                    for defect, bad_sf in (
++                        ("width", tensor((rows, 159), torch.uint8)),
++                        ("dtype", tensor((rows, 160), torch.float32)),
++                    ):
++                        try:
++                            op(x, logits, None, None, layer_name,
++                               0, torch.bfloat16, q, bad_sf)
++                        except ValueError:
++                            report["checks"].append(
++                                f"{name}:rows={rows}:bad_sf_{defect}"
++                            )
++                        else:
++                            raise AssertionError("invalid scale metadata accepted")
++        report["result"] = "passed"
++        return 0
++    except (ImportError, ModuleNotFoundError) as error:
++        report["result"] = "unexecuted"
++        report["reason"] = f"dependency/import failure: {error}"
++        report["traceback"] = traceback.format_exc()
++        return 2
++    except Exception as error:
++        report["result"] = "failed"
++        report["reason"] = str(error)
++        report["traceback"] = traceback.format_exc()
++        return 1
++    finally:
++        write_report(args.report, report)
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    action = parser.add_mutually_exclusive_group(required=True)
++    action.add_argument("--list", action="store_true")
++    action.add_argument("--run", action="store_true")
++    action.add_argument(
++        "--worker", choices=("default", "string"), help=argparse.SUPPRESS
++    )
++    parser.add_argument("--allow-platform-initialization", action="store_true")
++    parser.add_argument("--expected-platform", choices=("cuda", "cpu"))
++    parser.add_argument("--expected-head")
++    parser.add_argument("--runtime-manifest", type=Path)
++    parser.add_argument("--output-dir", type=Path)
++    parser.add_argument("--report", type=Path, help=argparse.SUPPRESS)
++    parser.add_argument("--timeout", type=int, default=180)
++    args = parser.parse_args()
++    if args.list:
++        print(json.dumps({"modules": MODULES, "ops": OPS, "rows": ROWS,
++                          "modes": ["default opaque", "explicit string"],
++                          "target_approval_required": True}, indent=2))
++        return 0
++    if not args.allow_platform_initialization or not args.expected_platform:
++        parser.error("target approval and --allow-platform-initialization plus "
++                     "--expected-platform are required; imports may initialize CUDA")
++    if args.runtime_manifest is None or not args.expected_head:
++        parser.error("--runtime-manifest and --expected-head are required")
++    if args.worker:
++        if args.report is None:
++            parser.error("worker needs --report")
++        return worker(args)
++    if not args.output_dir or not args.expected_head or args.timeout <= 0:
++        parser.error("--output-dir, --expected-head and positive --timeout required")
++    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT,
++                                   text=True).strip()
++    require(head == args.expected_head, "unexpected checkout HEAD")
++    dirty = subprocess.check_output(
++        ["git", "status", "--porcelain"], cwd=ROOT, text=True
++    )
++    require(not dirty.strip(), "run requires a clean, committed checkout")
++    args.output_dir.mkdir(parents=True, exist_ok=False)
++    summary = {"head": head, "root": str(ROOT), "results": {},
++               "inherited_layername_override": os.environ.get("VLLM_USE_LAYERNAME")}
++    for mode in ("default", "string"):
++        env = mode_environment(os.environ, mode)
++        report = args.output_dir / f"{mode}.json"
++        command = [sys.executable, "-u", str(Path(__file__).resolve()),
++                   "--worker", mode, "--allow-platform-initialization",
++                   "--expected-platform", args.expected_platform,
++                   "--report", str(report.resolve()),
++                   "--expected-head", args.expected_head,
++                   "--runtime-manifest", str(args.runtime_manifest.resolve())]
++        with (args.output_dir / f"{mode}.log").open("w") as log:
++            try:
++                result = subprocess.run(command, cwd=ROOT, env=env, stdout=log,
++                                        stderr=subprocess.STDOUT, timeout=args.timeout)
++                status = {"exit_code": result.returncode, "command": command}
++            except subprocess.TimeoutExpired:
++                status = {"exit_code": 124, "result": "incomplete_timeout",
++                          "command": command}
++        try:
++            details = json.loads(report.read_text())
++        except (OSError, ValueError):
++            details = {}
++        status["passed"] = mode_passed(status["exit_code"], details, mode)
++        summary["results"][mode] = status
++    passed = all(r["passed"] for r in summary["results"].values())
++    summary["result"] = "passed" if passed else "failed_or_unexecuted"
++    write_report(args.output_dir / "summary.json", summary)
++    print(json.dumps(summary, indent=2))
++    return 0 if passed else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+-- 
+2.52.0
+

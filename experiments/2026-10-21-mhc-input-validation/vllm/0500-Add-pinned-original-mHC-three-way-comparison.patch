@@ -1,0 +1,1216 @@
+From 0917d300ff9b2af7c2296cb297374195b1d95e5c Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 15:39:25 +0900
+Subject: [PATCH 500/503] Add pinned original mHC three-way comparison
+
+Base: vLLM 19f2c20ed4d64ae22bd009ceacadd85e2a81e354 with the
+immutable 192-mailbox stack ending dd0d8326d31456a6038ac2f244f765e8d783ce59.
+Apply this independent validation series in its recorded dependency order.
+
+Rationale: Compare exact original-188 finalize with candidate-off and dual using the same inputs and real cast oracle.
+
+Numerical/quality impact: test-only; runtime sources and production defaults
+are unchanged. Synthetic fixtures do not establish model quality or performance.
+
+Tests: stdlib syntax/provenance checks and 15 harness-contract tests passed
+in the combined tree; inherited 30 host tests passed. Actual target imports,
+CUDA compilation, GPU numerics/graphs and four-rank qualification not executed.
+
+Upstream status: downstream-only validation, not submitted upstream.
+---
+ tests/kernels/deepseek_v41_mhc_baseline.py    | 101 +++
+ tests/kernels/fixtures/mhc_188/mhc.py.txt     | 855 ++++++++++++++++++
+ .../kernels/fixtures/mhc_188/provenance.json  |  18 +
+ .../test_deepseek_v41_mhc_three_way.py        | 185 ++++
+ 4 files changed, 1159 insertions(+)
+ create mode 100644 tests/kernels/deepseek_v41_mhc_baseline.py
+ create mode 100644 tests/kernels/fixtures/mhc_188/mhc.py.txt
+ create mode 100644 tests/kernels/fixtures/mhc_188/provenance.json
+ create mode 100644 tests/kernels/test_deepseek_v41_mhc_three_way.py
+
+diff --git a/tests/kernels/deepseek_v41_mhc_baseline.py b/tests/kernels/deepseek_v41_mhc_baseline.py
+new file mode 100644
+index 000000000..95f9f4e3e
+--- /dev/null
++++ b/tests/kernels/deepseek_v41_mhc_baseline.py
+@@ -0,0 +1,101 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Offline, hash-pinned original mHC finalize; not a full serving-module import."""
++
++import ast
++import hashlib
++import json
++import sys
++from pathlib import Path
++from types import ModuleType
++
++BASELINE_HEAD = "ebb44766d6f04d3a9272b712778d7f2fa2cec1fd"
++BASELINE_TREE = "ac79557915e3ee2778f8f6353a3d35f848f564e4"
++BASELINE_BLOB = "d238757bb886e5df208dcffbea6abda9332f4749"
++BASELINE_SHA256 = "19e3f85d32ec917dc62839e564f494cfb44d1ebbb6d42008e2d213a1b789f23b"
++BASELINE_PATH = "vllm/models/deepseek_v4_1/tilelang/mhc.py"
++_CONSTANTS = ("MULT", "MIXES", "BLOCK_H", "BLOCK_M", "VEC", "_PASS_CONFIGS")
++_FIXTURE = Path(__file__).parent / "fixtures" / "mhc_188"
++
++
++def _verified_source(directory: Path | None = None):
++    directory = _FIXTURE if directory is None else Path(directory)
++    source_path = directory / "mhc.py.txt"
++    data = source_path.read_bytes()
++    digest = hashlib.sha256(data).hexdigest()
++    if digest != BASELINE_SHA256:
++        raise ValueError("Original mHC source SHA256 mismatch")
++    # SHA1 here is Git object identity, not an authentication mechanism.
++    blob = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
++    if blob != BASELINE_BLOB:
++        raise ValueError("Original mHC Git blob mismatch")
++    provenance = json.loads((directory / "provenance.json").read_text())
++    expected = {
++        "schema_version": 1,
++        "patch_head": BASELINE_HEAD,
++        "tree": BASELINE_TREE,
++        "source_path": BASELINE_PATH,
++        "source_blob": BASELINE_BLOB,
++        "source_sha256": BASELINE_SHA256,
++        "selected_constants": list(_CONSTANTS),
++        "selected_function": "finalize",
++        "scope": "Exact original decorated finalize and constants; not full module",
++    }
++    if provenance != expected:
++        raise ValueError("Original mHC provenance manifest mismatch")
++    return source_path, data.decode("utf-8"), provenance
++
++
++def _selected_nodes(source: str):
++    parsed = ast.parse(source)
++    nodes = []
++    selected = []
++    for node in parsed.body:
++        if (
++            isinstance(node, ast.Assign)
++            and len(node.targets) == 1
++            and isinstance(node.targets[0], ast.Name)
++            and node.targets[0].id in _CONSTANTS
++        ):
++            nodes.append(node)
++            selected.append(node.targets[0].id)
++        elif isinstance(node, ast.FunctionDef) and node.name == "finalize":
++            nodes.append(node)
++            selected.append(node.name)
++    if selected != [*_CONSTANTS, "finalize"]:
++        raise ValueError("Original mHC selected definition inventory mismatch")
++    return nodes
++
++
++def validate_baseline_fixture(directory: Path | None = None) -> dict:
++    """Check bytes, Git identity, manifest and AST inventory without any runtime."""
++    _, source, provenance = _verified_source(directory)
++    _selected_nodes(source)
++    return provenance
++
++
++def load_baseline_finalize(T, tilelang):
++    """Compile original AST definitions with real TileLang supplied by GPU tests.
++
++    No decorator, constant, function body or line number is rewritten. Keeping
++    the original file and locations lets TileLang inspect the original source.
++    The original factory does not call any candidate implementation.
++    """
++    source_path, source, _ = _verified_source()
++    nodes = _selected_nodes(source)
++    module = ModuleType("tests.kernels._original_188_mhc_finalize")
++    # Retain each independent factory namespace for inspect.getmodule and JIT
++    # source parsing. Do not overwrite an earlier live factory's module.
++    module.__name__ += f"_{id(module):x}"
++    module.__file__ = str(source_path)
++    module.__dict__.update(T=T, tilelang=tilelang)
++    sys.modules[module.__name__] = module
++    try:
++        exec(
++            compile(ast.Module(body=nodes, type_ignores=[]), str(source_path), "exec"),
++            module.__dict__,
++        )
++    except BaseException:
++        del sys.modules[module.__name__]
++        raise
++    return module.finalize
+diff --git a/tests/kernels/fixtures/mhc_188/mhc.py.txt b/tests/kernels/fixtures/mhc_188/mhc.py.txt
+new file mode 100644
+index 000000000..d238757bb
+--- /dev/null
++++ b/tests/kernels/fixtures/mhc_188/mhc.py.txt
+@@ -0,0 +1,855 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++# TileLang tensor declarations are runtime DSL annotations.
++# mypy: disable-error-code=valid-type
++"""DeepSeek-V4.1 lagged mHC on TileKernels (``--linear-backend tilelang``).
++
++V4.1's hyper-connections keep four residual streams. Each sublayer's ``pre``
++projects the flattened streams through ``fn`` (RMS-normalized), splits the 24
++mixes into a pre-mix (sigmoid), a post-mix (2 * sigmoid) and a 4 x 4
++combination (softmax, then Sinkhorn), and feeds the sublayer the streams
++collapsed with the *incoming* pre-mix, RMS-normalized with the norm weight.
++The new pre-mix is returned for the next sublayer (the lag). ``post`` folds a
++sublayer's output back into the streams.
++
++TileKernels provides DeepSeek's mHC kernels. A standalone ``post`` and the
++final stream collapse use them as they are. A sublayer's entry needs more:
++DeepSeek moved the projection GEMM to DeepGEMM, which does not run on
++SM120/SM121, TileKernels' fused pre step applies the mix it has just computed
++rather than the lagged one, and in prefill the four streams are large enough
++that reading them once matters. Two TileLang kernels make each entry:
++
++- ``project_streams``: per hidden block, the previous sublayer's ``post``
++  (writing the updated streams), the projection's split partials on TF32
++  tensor cores at FP32 precision (fn split into exact TF32 parts) with the
++  streams' sum of squares, and
++  the streams collapsed with the incoming pre-mix in BF16, with its sum of
++  squares. Each thread folds and accumulates one token's columns in
++  registers; the GEMM reads the folded streams from shared memory. The split
++  is fixed and every token tile accumulates in the same order, so a token's
++  results do not depend on the batch.
++- ``finalize``: per token, TileKernels' fused reduce, RMS, mix split and
++  Sinkhorn (``mhc_pre_big_fuse``), emitting the new pre-mix, beside the
++  collapse's RMSNorm with the sublayer's weight.
++"""
++
++from functools import cache
++
++import torch
++from torch import nn
++
++from vllm.distributed import get_tensor_model_parallel_world_size
++from vllm.models.deepseek_v4_1 import sp_prefill
++from vllm.models.deepseek_v4_1.steering.consume import project_columns
++from vllm.models.deepseek_v4_1.tilelang import prepare
++from vllm.models.deepseek_v4_1.tilelang.collectives import RankOrderParts
++from vllm.tilelang_utils import T, tilelang
++from vllm.v1.worker.workspace import (
++    current_workspace_manager,
++    retain_cuda_graph_capture_resource,
++)
++
++MULT = 4  # residual streams
++MIXES = (2 + MULT) * MULT  # pre, post and combination mixes
++BLOCK_H = 128  # hidden columns per projection split, fixed for batch invariance
++BLOCK_M = 16  # token tile of project_streams; larger tiles measured slower
++VEC = 8  # BF16 elements per vector access
++
++_PASS_CONFIGS = {
++    tilelang.PassConfigKey.TL_DISABLE_WARP_SPECIALIZED: True,
++    tilelang.PassConfigKey.TL_DISABLE_VECTORIZE_256: True,
++}
++
++
++@tilelang.jit(pass_configs=_PASS_CONFIGS)
++def project_streams(
++    hidden_size: int,
++    mode: str,
++    block_M: int = 16,
++    block_H: int = BLOCK_H,
++    world: int = 1,
++    steering: bool = False,
++):
++    """The streams' projection partials and their collapse, for one hidden block.
++
++    ``mode`` is the sublayer's entry: ``"post_pre"`` first folds the previous
++    sublayer's output into the streams (``post``) and writes them, ``"pre"``
++    reads streams already updated, and ``"broadcast"`` expands an embedding to
++    four copies (the first layer, whose ``fn`` is the stream blocks summed).
++    ``X`` is ``(world, M, H)``: with ``world`` > 1 (``"post_pre"`` only) the
++    previous output arrives as the ranks' unreduced partials, which each thread
++    adds in FP32 in rank order and rounds once, as the rank-order reduce-scatter
++    does, so the output has the same bits as that sum read back.
++
++    Each CTA owns ``block_H`` hidden columns of every stream, a K split of the
++    projection, for ``block_M`` tokens. Each thread owns one token's
++    ``block_H / 8`` contiguous columns: it loads them for every stream into
++    registers, folds the previous output in, writes the updated streams, and
++    keeps its share of the streams' sum of squares ``S`` and of the collapse
++    with the incoming pre-mix. The projection ``P = streams @ fn^T`` runs on
++    TF32 tensor cores at FP32 precision, one stream at a time: the streams are
++    BF16 (exact in TF32) and each FP32 ``fn`` value is split exactly into three
++    TF32-representable parts, so every product is exact and the three GEMMs
++    accumulate in FP32, as DeepSeek's reference computes the mixes. The
++    collapse is rounded to BF16, with its sum of squares ``Q``.
++    """
++    assert hidden_size % block_H == 0 and mode in ("pre", "post_pre", "broadcast")
++    assert 1 <= world <= 4 and (world == 1 or mode == "post_pre")
++    assert not steering or mode == "post_pre"
++    splits = hidden_size // block_H
++    streams = 1 if mode == "broadcast" else MULT
++    K = streams * hidden_size
++    N = 32  # the 24 mixes, padded
++    LANES = 8  # threads per token: adjacent lanes of one warp
++    COLS = block_H // LANES  # contiguous columns per thread
++    threads = block_M * LANES
++    H = hidden_size
++    M = T.dynamic("M")
++
++    @T.macro
++    def load_split_tf32(Fn, k0, F_shared, F_mid, F_low):
++        # fn = high + middle + low, each exact in TF32 (11 significant bits): the
++        # high part keeps fn's top 11 bits, the middle the next 11, the low the rest.
++        # Each value goes from global memory through registers into the three tiles
++        # in one pass.
++        for i, j in T.Parallel(MIXES, block_H):
++            f = Fn[i, k0 + j]
++            high = T.reinterpret(T.reinterpret(f, T.uint32) & 0xFFFFE000, T.float32)
++            rest = f - high
++            middle = T.reinterpret(
++                T.reinterpret(rest, T.uint32) & 0xFFFFE000, T.float32
++            )
++            F_shared[i, j] = high
++            F_mid[i, j] = middle
++            F_low[i, j] = rest - middle
++
++    @T.macro
++    def project_body(
++        X,
++        R,
++        post,
++        comb,
++        pre_in,
++        Fn,
++        R_out,
++        P,
++        S,
++        C,
++        Q,
++        direction,
++        doses,
++        dots,
++        alpha,
++    ):
++        with T.Kernel(splits, T.ceildiv(M, block_M), threads=threads) as (sp, by):
++            h0 = sp * block_H
++            A_shared = T.alloc_shared((block_M, block_H), T.float32)
++            F_shared = T.alloc_shared((N, block_H), T.float32)
++            F_mid = T.alloc_shared((N, block_H), T.float32)
++            F_low = T.alloc_shared((N, block_H), T.float32)
++            C_local = T.alloc_fragment((block_M, N), T.float32)
++            xv = T.alloc_local((COLS,), T.bfloat16)
++            rv = T.alloc_local((MULT * COLS,), T.bfloat16)
++            nv = T.alloc_local((COLS,), T.bfloat16)
++            av = T.alloc_local((COLS,), T.float32)
++            sq = T.alloc_local((COLS,), T.float32)
++            col = T.alloc_local((COLS,), T.float32)
++            coef = T.alloc_local((2 * MULT + MULT * MULT,), T.float32)
++            red = T.alloc_local((1,), T.float32)
++            tx = T.get_thread_binding()
++            row = tx // LANES
++            c0 = (tx % LANES) * COLS
++            token = by * block_M + row
++            src = T.min(token, M - 1)
++            T.clear(C_local)
++            # The padding mixes stay zero; each stream's copy fills the rest.
++            for i, j in T.Parallel(N - MIXES, block_H):
++                F_shared[MIXES + i, j] = 0.0
++                F_mid[MIXES + i, j] = 0.0
++                F_low[MIXES + i, j] = 0.0
++            # This thread's token: its mixes, then its columns of x and the streams.
++            for k in T.unroll(MULT):
++                coef[k] = pre_in[src, k]
++            if mode == "post_pre":
++                for k in T.unroll(MULT):
++                    coef[MULT + k] = post[src, k]
++                for k in T.unroll(MULT * MULT):
++                    coef[2 * MULT + k] = comb[src, k // MULT, k % MULT]
++            if mode != "pre" and world == 1:
++                for v in T.vectorized(COLS):
++                    xv[v] = X[0, src, h0 + c0 + v]
++            if world > 1:
++                # The first part as is (signed zeros survive), then the others.
++                for r in T.unroll(world):
++                    for v in T.vectorized(COLS):
++                        xv[v] = X[r, src, h0 + c0 + v]
++                    for v in T.unroll(COLS):
++                        if r == 0:
++                            av[v] = T.Cast(T.float32, xv[v])
++                        else:
++                            av[v] = av[v] + T.Cast(T.float32, xv[v])
++                for v in T.unroll(COLS):
++                    xv[v] = T.Cast(T.bfloat16, av[v])
++            if steering:
++                project_columns(xv, direction, doses, dots, alpha, src, h0 + c0, COLS)
++            if mode != "broadcast":
++                for m in T.unroll(MULT):
++                    for v in T.vectorized(COLS):
++                        rv[m * COLS + v] = R[src, m * H + h0 + c0 + v]
++            for v in T.unroll(COLS):
++                sq[v] = 0.0
++                col[v] = 0.0
++
++            if mode == "broadcast":
++                # Four copies of the embedding; fn already sums the blocks.
++                for v in T.unroll(COLS):
++                    av[v] = T.Cast(T.float32, xv[v])
++                    A_shared[row, c0 + v] = av[v]
++                    sq[v] = av[v] * av[v]
++                for n in T.unroll(MULT):
++                    if token < M:
++                        for v in T.vectorized(COLS):
++                            R_out[token, n * H + h0 + c0 + v] = xv[v]
++                    for v in T.unroll(COLS):
++                        col[v] += coef[n] * av[v]
++                load_split_tf32(Fn, h0, F_shared, F_mid, F_low)
++                T.sync_threads()
++                T.gemm(A_shared, F_shared, C_local, transpose_B=True)
++                T.gemm(A_shared, F_mid, C_local, transpose_B=True)
++                T.gemm(A_shared, F_low, C_local, transpose_B=True)
++            else:
++                for n in T.unroll(MULT):
++                    if mode == "post_pre":
++                        # post[n] * x + sum_m comb[m, n] * streams[m], in FP32.
++                        for v in T.unroll(COLS):
++                            av[v] = coef[MULT + n] * T.Cast(T.float32, xv[v])
++                            for m in T.unroll(MULT):
++                                av[v] += coef[2 * MULT + m * MULT + n] * T.Cast(
++                                    T.float32, rv[m * COLS + v]
++                                )
++                            nv[v] = T.Cast(T.bfloat16, av[v])
++                        if token < M:
++                            for v in T.vectorized(COLS):
++                                R_out[token, n * H + h0 + c0 + v] = nv[v]
++                    else:
++                        for v in T.unroll(COLS):
++                            nv[v] = rv[n * COLS + v]
++                    for v in T.unroll(COLS):
++                        av[v] = T.Cast(T.float32, nv[v])
++                        A_shared[row, c0 + v] = av[v]
++                        sq[v] += av[v] * av[v]
++                        col[v] += coef[n] * av[v]
++                    load_split_tf32(Fn, n * H + h0, F_shared, F_mid, F_low)
++                    T.sync_threads()
++                    T.gemm(A_shared, F_shared, C_local, transpose_B=True)
++                    T.gemm(A_shared, F_mid, C_local, transpose_B=True)
++                    T.gemm(A_shared, F_low, C_local, transpose_B=True)
++                    T.sync_threads()
++
++            # The collapse in BF16 and its sum of squares, then the streams'.
++            for v in T.unroll(COLS):
++                nv[v] = T.Cast(T.bfloat16, col[v])
++            if token < M:
++                for v in T.vectorized(COLS):
++                    C[token, h0 + c0 + v] = nv[v]
++            red[0] = 0.0
++            for v in T.unroll(COLS):
++                red[0] += T.Cast(T.float32, nv[v]) * T.Cast(T.float32, nv[v])
++            red[0] += T.shfl_xor(red[0], 4)
++            red[0] += T.shfl_xor(red[0], 2)
++            red[0] += T.shfl_xor(red[0], 1)
++            if tx % LANES == 0 and token < M:
++                Q[sp, token] = red[0]
++            red[0] = 0.0
++            for v in T.unroll(COLS):
++                red[0] += sq[v]
++            red[0] += T.shfl_xor(red[0], 4)
++            red[0] += T.shfl_xor(red[0], 2)
++            red[0] += T.shfl_xor(red[0], 1)
++            if tx % LANES == 0 and token < M:
++                S[sp, token, 0] = red[0]
++            for i, j in T.Parallel(block_M, MIXES):
++                if by * block_M + i < M:
++                    P[sp, by * block_M + i, 0, j] = C_local[i, j]
++
++    if steering:
++
++        @T.prim_func
++        def mhc_project_streams(
++            X: T.Tensor((world, M, H), T.bfloat16),
++            R: T.Tensor((M, MULT * H), T.bfloat16),
++            post: T.Tensor((M, MULT), T.float32),
++            comb: T.Tensor((M, MULT, MULT), T.float32),
++            pre_in: T.Tensor((M, MULT), T.float32),
++            Fn: T.Tensor((MIXES, K), T.float32),
++            R_out: T.Tensor((M, MULT * H), T.bfloat16),
++            P: T.Tensor((splits, M, 1, MIXES), T.float32),
++            S: T.Tensor((splits, M, 1), T.float32),
++            C: T.Tensor((M, H), T.bfloat16),
++            Q: T.Tensor((splits, M), T.float32),
++            direction: T.Tensor((H,), T.float32),
++            doses: T.Tensor((M,), T.float32),
++            dots: T.Tensor((M, 2), T.float32),
++            alpha: T.float32,
++        ):
++            project_body(
++                X,
++                R,
++                post,
++                comb,
++                pre_in,
++                Fn,
++                R_out,
++                P,
++                S,
++                C,
++                Q,
++                direction,
++                doses,
++                dots,
++                alpha,
++            )
++    else:
++
++        @T.prim_func
++        def mhc_project_streams(
++            X: T.Tensor((world, M, H), T.bfloat16),
++            R: T.Tensor((M, MULT * H), T.bfloat16),
++            post: T.Tensor((M, MULT), T.float32),
++            comb: T.Tensor((M, MULT, MULT), T.float32),
++            pre_in: T.Tensor((M, MULT), T.float32),
++            Fn: T.Tensor((MIXES, K), T.float32),
++            R_out: T.Tensor((M, MULT * H), T.bfloat16),
++            P: T.Tensor((splits, M, 1, MIXES), T.float32),
++            S: T.Tensor((splits, M, 1), T.float32),
++            C: T.Tensor((M, H), T.bfloat16),
++            Q: T.Tensor((splits, M), T.float32),
++        ):
++            # The stock ABI and body have no steering buffers or operations.
++            project_body(
++                X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, Fn, Fn, Fn, 0.0
++            )
++
++    return mhc_project_streams
++
++
++@tilelang.jit(pass_configs=_PASS_CONFIGS)
++def finalize(
++    hidden_size: int,
++    rms_group_size: int,
++    rms_eps: float,
++    hc_eps: float,
++    sinkhorn_repeat: int,
++    norm_eps: float,
++    post_mult: float = 2.0,
++    block_H: int = BLOCK_H,
++    threads: int = 128,
++):
++    """One token per CTA: warp 0 turns the projection partials into the new
++    pre-mix, the post-mix and the Sinkhorn combination (TileKernels'
++    ``mhc_pre_big_fuse``); the other warps RMS-normalize the collapse."""
++    assert hidden_size % VEC == 0
++    splits = hidden_size // block_H
++    chunks = hidden_size // VEC
++    workers = threads - 32
++    M = T.dynamic("M")
++
++    @T.prim_func
++    def mhc_finalize(
++        P: T.Tensor((splits, M, 1, MIXES), T.float32),
++        S: T.Tensor((splits, M, 1), T.float32),
++        C: T.Tensor((M, hidden_size), T.bfloat16),
++        Q: T.Tensor((splits, M), T.float32),
++        scale: T.Tensor((3,), T.float32),
++        base: T.Tensor((MIXES,), T.float32),
++        weight: T.Tensor((hidden_size,), T.bfloat16),
++        post: T.Tensor((M, MULT), T.float32),
++        comb: T.Tensor((M, MULT, MULT), T.float32),
++        pre_out: T.Tensor((M, MULT), T.float32),
++        y: T.Tensor((M, hidden_size), T.bfloat16),
++    ):
++        with T.Kernel(M, threads=threads) as pid:
++            tx = T.get_thread_binding()
++            mixes_shared = T.alloc_shared((MIXES,), T.float32)
++            xv = T.alloc_local((VEC,), T.bfloat16)
++            wv = T.alloc_local((VEC,), T.bfloat16)
++            yv = T.alloc_local((VEC,), T.bfloat16)
++            total = T.alloc_local((1,), T.float32)
++
++            if tx < 32:
++                # Reduce the split partials; RMS over the flattened streams.
++                rms = T.alloc_fragment(1, T.float32)
++                mixes = T.alloc_fragment(MIXES, T.float32)
++                rms[0] = 0
++                for i_split in T.serial(splits):
++                    rms[0] += S[i_split, pid, 0]
++                rms[0] = T.rsqrt(rms[0] / rms_group_size + rms_eps)
++                for j in T.Parallel(MIXES):
++                    mixes[j] = 0
++                    for i_split in T.serial(splits):
++                        mixes[j] += P[i_split, pid, 0, j]
++                    mixes[j] *= rms[0]
++                T.copy(mixes, mixes_shared, disable_tma=True)
++
++            if tx < 32:
++                # The new pre-mix, the post-mix and the Sinkhorn combination.
++                cm = T.alloc_fragment((MULT, MULT), T.float32)
++                for j in T.Parallel(MULT):
++                    pre_out[pid, j] = (
++                        T.sigmoid(mixes_shared[j] * scale[0] + base[j]) + hc_eps
++                    )
++                    post[pid, j] = (
++                        T.sigmoid(mixes_shared[j + MULT] * scale[1] + base[j + MULT])
++                        * post_mult
++                    )
++                for j, k in T.Parallel(MULT, MULT):
++                    cm[j, k] = (
++                        mixes_shared[j * MULT + k + MULT * 2] * scale[2]
++                        + base[j * MULT + k + MULT * 2]
++                    )
++                row_sum = T.alloc_fragment(MULT, T.float32)
++                col_sum = T.alloc_fragment(MULT, T.float32)
++                row_max = T.alloc_fragment(MULT, T.float32)
++                T.reduce_max(cm, row_max, dim=1)
++                for j, k in T.Parallel(MULT, MULT):
++                    cm[j, k] = T.exp(cm[j, k] - row_max[j])
++                T.reduce_sum(cm, row_sum, dim=1)
++                for j, k in T.Parallel(MULT, MULT):
++                    cm[j, k] = cm[j, k] / row_sum[j] + hc_eps
++                T.reduce_sum(cm, col_sum, dim=0)
++                for j, k in T.Parallel(MULT, MULT):
++                    cm[j, k] = cm[j, k] / (col_sum[k] + hc_eps)
++                for _ in T.serial(sinkhorn_repeat - 1):
++                    T.reduce_sum(cm, row_sum, dim=1)
++                    for j, k in T.Parallel(MULT, MULT):
++                        cm[j, k] = cm[j, k] / (row_sum[j] + hc_eps)
++                    T.reduce_sum(cm, col_sum, dim=0)
++                    for j, k in T.Parallel(MULT, MULT):
++                        cm[j, k] = cm[j, k] / (col_sum[k] + hc_eps)
++                for j, k in T.Parallel(MULT, MULT):
++                    comb[pid, j, k] = cm[j, k]
++            else:
++                # RMSNorm of the collapse, with the sublayer's weight.
++                worker = tx - 32
++                total[0] = 0
++                for i_split in T.serial(splits):
++                    total[0] += Q[i_split, pid]
++                total[0] = T.rsqrt(total[0] / hidden_size + norm_eps)
++                for step in T.serial(T.ceildiv(chunks, workers)):
++                    chunk = step * workers + worker
++                    if chunk < chunks:
++                        for v in T.vectorized(VEC):
++                            yv[v] = C[pid, chunk * VEC + v]
++                        for v in T.vectorized(VEC):
++                            wv[v] = weight[chunk * VEC + v]
++                        for v in T.unroll(VEC):
++                            xv[v] = T.Cast(
++                                T.bfloat16,
++                                T.Cast(T.float32, yv[v])
++                                * total[0]
++                                * T.Cast(T.float32, wv[v]),
++                            )
++                        for v in T.vectorized(VEC):
++                            y[pid, chunk * VEC + v] = xv[v]
++
++    return mhc_finalize
++
++
++def _project_call(
++    hidden: int, mode: str, world: int, steering: bool = False
++) -> prepare.TileLangCall:
++    """The ``project_streams`` call of a sublayer entry."""
++    return prepare.call(
++        project_streams, hidden, mode, block_M=BLOCK_M, world=world, steering=steering
++    )
++
++
++def _finalize_call(
++    hidden: int, k: int, rms_eps: float, hc_eps: float, iterations: int
++) -> prepare.TileLangCall:
++    """The ``finalize`` call of a sublayer entry projecting ``k`` stream columns."""
++    return prepare.call(finalize, hidden, k, rms_eps, hc_eps, iterations, rms_eps)
++
++
++def _make(call: prepare.TileLangCall):
++    function, args, kwargs = call
++    return function(*args, **kwargs)
++
++
++@cache
++def _project(hidden: int, mode: str, world: int, steering: bool = False):
++    return _make(_project_call(hidden, mode, world, steering))
++
++
++@cache
++def _finalize(hidden: int, k: int, rms_eps: float, hc_eps: float, iterations: int):
++    return _make(_finalize_call(hidden, k, rms_eps, hc_eps, iterations))
++
++
++def _tile_kernels_mhc():
++    import tile_kernels
++
++    return tile_kernels.mhc
++
++
++@torch.library.custom_op(
++    "vllm::dsv41_tilelang_mhc_pre",
++    mutates_args=("residual_out", "y", "post", "comb", "pre_out"),
++)
++def _mhc_pre(
++    residual: torch.Tensor,
++    fn: torch.Tensor,
++    scale: torch.Tensor,
++    base: torch.Tensor,
++    norm: torch.Tensor,
++    pre: torch.Tensor,
++    residual_out: torch.Tensor | None,
++    y: torch.Tensor,
++    post: torch.Tensor,
++    comb: torch.Tensor,
++    pre_out: torch.Tensor,
++    rms_eps: float,
++    hc_eps: float,
++    iterations: int,
++    previous_output: torch.Tensor | None = None,
++    previous_post: torch.Tensor | None = None,
++    previous_comb: torch.Tensor | None = None,
++    steering_direction: torch.Tensor | None = None,
++    steering_scales: torch.Tensor | None = None,
++    steering_dots: torch.Tensor | None = None,
++    steering_alpha: float = 0.0,
++) -> None:
++    tokens, hidden = int(residual.shape[0]), int(residual.shape[-1])
++    if tokens == 0:
++        return
++    streams = MULT * hidden
++    world = 1
++    # Unused operands of a mode take a buffer of the right shape; none is read.
++    if previous_output is not None:
++        if residual_out is None:
++            raise ValueError("mHC post_pre requires an output buffer")
++        # (T, H), or the ranks' unreduced partials of it, (world, T, H).
++        if previous_output.ndim == 3:
++            world = int(previous_output.shape[0])
++        mode, x, k = "post_pre", previous_output, streams
++        source, updated = residual.view(tokens, streams), residual_out
++        mix_post, mix_comb = previous_post, previous_comb
++    elif residual.ndim == 2:
++        if residual_out is None:
++            raise ValueError("mHC broadcast requires an output buffer")
++        mode, x, k = "broadcast", residual, hidden
++        source, updated = residual_out.view(tokens, streams), residual_out
++        mix_post, mix_comb = pre, comb
++    else:
++        mode, x, k = "pre", y, streams
++        source = residual.view(tokens, streams)
++        updated, mix_post, mix_comb = source, pre, comb
++    splits = hidden // BLOCK_H
++    scratch = current_workspace_manager().get_simultaneous(
++        ((splits, tokens, 1, MIXES), torch.float32),
++        ((splits, tokens, 1), torch.float32),
++        ((tokens, hidden), torch.bfloat16),
++        ((splits, tokens), torch.float32),
++    )
++    retain_cuda_graph_capture_resource(scratch)
++    P, S, C, Q = scratch
++    steering_args: tuple[torch.Tensor | float, ...] = ()
++    if steering_direction is not None:
++        if (
++            mode != "post_pre"
++            or steering_scales is None
++            or steering_dots is None
++            or steering_direction.shape != (hidden,)
++            or steering_scales.shape != (tokens,)
++            or steering_dots.shape != (tokens, 2)
++            or any(
++                t.dtype != torch.float32
++                or not t.is_contiguous()
++                or t.device != residual.device
++                for t in (steering_direction, steering_scales, steering_dots)
++            )
++        ):
++            raise ValueError("Invalid steering mHC consumer controls")
++        steering_args = (
++            steering_direction,
++            steering_scales,
++            steering_dots,
++            steering_alpha,
++        )
++    elif (
++        steering_scales is not None or steering_dots is not None or steering_alpha != 0
++    ):
++        raise ValueError("Steering mHC controls require a direction")
++    assert updated is not None
++    _project(hidden, mode, world, bool(steering_args))(
++        x if x.ndim == 3 else x.unsqueeze(0),
++        source,
++        mix_post,
++        mix_comb,
++        pre,
++        fn,
++        updated.view(tokens, streams),
++        P,
++        S,
++        C,
++        Q,
++        *steering_args,
++    )
++    _finalize(hidden, k, rms_eps, hc_eps, iterations)(
++        P, S, C, Q, scale, base, norm, post, comb, pre_out, y
++    )
++
++
++@_mhc_pre.register_fake
++def _mhc_pre_fake(
++    residual,
++    fn,
++    scale,
++    base,
++    norm,
++    pre,
++    residual_out,
++    y,
++    post,
++    comb,
++    pre_out,
++    rms_eps,
++    hc_eps,
++    iterations,
++    previous_output=None,
++    previous_post=None,
++    previous_comb=None,
++    steering_direction=None,
++    steering_scales=None,
++    steering_dots=None,
++    steering_alpha=0.0,
++):
++    return None
++
++
++@torch.library.custom_op("vllm::dsv41_tilelang_mhc_post", mutates_args=("out",))
++def _mhc_post(
++    x: torch.Tensor,
++    residual: torch.Tensor,
++    post: torch.Tensor,
++    comb: torch.Tensor,
++    out: torch.Tensor,
++) -> None:
++    tokens, hidden = int(residual.shape[0]), int(residual.shape[-1])
++    if tokens == 0:
++        return
++    _tile_kernels_mhc().mhc_post_fwd(
++        x.view(1, tokens, hidden),
++        residual.view(1, tokens, MULT, hidden),
++        post.view(1, tokens, MULT, 1),
++        comb.view(1, tokens, MULT, MULT),
++        out=out.view(1, tokens, MULT, hidden),
++    )
++
++
++@_mhc_post.register_fake
++def _mhc_post_fake(x, residual, post, comb, out):
++    return None
++
++
++@torch.library.custom_op("vllm::dsv41_tilelang_mhc_collapse", mutates_args=("out",))
++def _mhc_collapse(state: torch.Tensor, mix: torch.Tensor, out: torch.Tensor) -> None:
++    if state.shape[0] == 0:
++        return
++    _tile_kernels_mhc().mhc_pre_apply_mix_fwd(state, mix, out)
++
++
++@_mhc_collapse.register_fake
++def _mhc_collapse_fake(state, mix, out):
++    return None
++
++
++@cache
++def _warm_post_and_collapse(hidden: int) -> None:
++    """TileKernels' post and stream collapse, run once on one zero token, so their
++    eager kernels (keyed by the stream count, the hidden size and TileKernels' PDL
++    switch) are compiled before the cache freezes."""
++    x = torch.zeros((1, hidden), dtype=torch.bfloat16, device="cuda")
++    residual = torch.zeros((1, MULT, hidden), dtype=torch.bfloat16, device="cuda")
++    mix = torch.zeros((1, MULT), dtype=torch.float32, device="cuda")
++    comb = torch.zeros((1, MULT, MULT), dtype=torch.float32, device="cuda")
++    _mhc_post(x, residual, mix, comb, torch.empty_like(residual))
++    _mhc_collapse(residual, mix, torch.empty_like(x))
++
++
++class TileKernelsMHC(nn.Module):
++    """V4.1 lagged mHC for a decoder layer, with ``B12xMHC``'s interface."""
++
++    def __init__(self, config):
++        super().__init__()
++        if config.hc_mult != MULT:
++            raise ValueError("V4.1 mHC requires four streams")
++        self.hidden_size = config.hidden_size
++        self.rms_eps = config.rms_norm_eps
++        self.hc_eps = config.hc_eps
++        self.iterations = config.hc_sinkhorn_iters
++
++    def _entries(self) -> list[tuple[str, int]]:
++        """The (mode, world) of every sublayer entry this layer can launch."""
++        entries = [(mode, 1) for mode in ("pre", "post_pre", "broadcast")]
++        if sp_prefill.unreduced_enabled():
++            # Sequence-parallel steps hand post_pre the ranks' unreduced parts.
++            entries.append(("post_pre", get_tensor_model_parallel_world_size()))
++        return entries
++
++    def declare_kernels(self) -> None:
++        """Declare every sublayer entry's kernels and warm TileKernels' post and
++        stream collapse, so that no forward (or CUDA graph capture) compiles."""
++        hidden = self.hidden_size
++        entries = self._entries()
++        steering_entries = (
++            [
++                (mode, world)
++                for mode, world in entries
++                if mode == "post_pre" and world == 1
++            ]
++            if getattr(self, "steering_enabled", False)
++            else []
++        )
++        # The broadcast entry projects one stream; the others all four.
++        widths = (hidden, MULT * hidden)
++        mix = (self.rms_eps, self.hc_eps, self.iterations)
++
++        def calls() -> list[prepare.TileLangCall]:
++            return [
++                *(_project_call(hidden, mode, world) for mode, world in entries),
++                *(
++                    _project_call(hidden, mode, world, True)
++                    for mode, world in steering_entries
++                ),
++                *(_finalize_call(hidden, k, *mix) for k in widths),
++            ]
++
++        def bind() -> None:
++            # The forward's cached kernels, as its lookups name them.
++            for mode, world in entries:
++                _project(hidden, mode, world)
++            for mode, world in steering_entries:
++                _project(hidden, mode, world, True)
++            for k in widths:
++                _finalize(hidden, k, *mix)
++
++        prepare.declare(calls, bind=bind, warm=lambda: _warm_post_and_collapse(hidden))
++
++    def pre(
++        self,
++        residual,
++        fn,
++        scale,
++        base,
++        norm,
++        pre,
++        *,
++        previous_output=None,
++        previous_post=None,
++        previous_comb=None,
++        steering_direction=None,
++        steering_scales=None,
++        steering_dots=None,
++        steering_alpha=0.0,
++    ):
++        tokens, device = int(residual.shape[0]), residual.device
++        if isinstance(previous_output, RankOrderParts):
++            # Added inside the projection kernel, in rank order.
++            previous_output = previous_output.packed
++        if pre is None:
++            pre = torch.zeros((tokens, MULT), dtype=torch.float32, device=device)
++            pre[:, 0].fill_(1)
++        unchanged = previous_output is None and residual.ndim == 3
++        residual_out = (
++            None
++            if unchanged
++            else torch.empty(
++                (tokens, MULT, self.hidden_size), dtype=residual.dtype, device=device
++            )
++        )
++        y = torch.empty((tokens, self.hidden_size), dtype=residual.dtype, device=device)
++        post = torch.empty((tokens, MULT), dtype=torch.float32, device=device)
++        comb = torch.empty((tokens, MULT, MULT), dtype=torch.float32, device=device)
++        pre_out = torch.empty((tokens, MULT), dtype=torch.float32, device=device)
++        _mhc_pre(
++            residual,
++            fn,
++            scale,
++            base,
++            norm,
++            pre,
++            residual_out,
++            y,
++            post,
++            comb,
++            pre_out,
++            self.rms_eps,
++            self.hc_eps,
++            self.iterations,
++            previous_output,
++            previous_post,
++            previous_comb,
++            steering_direction,
++            steering_scales,
++            steering_dots,
++            steering_alpha,
++        )
++        return residual if unchanged else residual_out, post, comb, y, pre_out
++
++    def post_pre(
++        self,
++        x,
++        residual,
++        post,
++        comb,
++        fn,
++        scale,
++        base,
++        norm,
++        pre,
++        *,
++        steering_direction=None,
++        steering_scales=None,
++        steering_dots=None,
++        steering_alpha=0.0,
++    ):
++        return self.pre(
++            residual,
++            fn,
++            scale,
++            base,
++            norm,
++            pre,
++            previous_output=x,
++            previous_post=post,
++            previous_comb=comb,
++            steering_direction=steering_direction,
++            steering_scales=steering_scales,
++            steering_dots=steering_dots,
++            steering_alpha=steering_alpha,
++        )
++
++    def post(self, x, residual, post, comb):
++        if isinstance(x, RankOrderParts):
++            x = x.sum()
++        out = torch.empty_like(residual)
++        _mhc_post(x, residual, post, comb, out)
++        return out
++
++    def collapse(
++        self, state: torch.Tensor, pre: torch.Tensor | None = None
++    ) -> torch.Tensor:
++        """The streams' weighted sum with ``pre``, or their mean."""
++        if pre is None:
++            pre = torch.full(
++                (state.shape[0], MULT), 0.25, dtype=torch.float32, device=state.device
++            )
++        out = torch.empty(
++            (state.shape[0], state.shape[-1]), dtype=state.dtype, device=state.device
++        )
++        _mhc_collapse(state, pre, out)
++        return out
++
++
++__all__ = ["TileKernelsMHC", "finalize", "project_streams"]
+diff --git a/tests/kernels/fixtures/mhc_188/provenance.json b/tests/kernels/fixtures/mhc_188/provenance.json
+new file mode 100644
+index 000000000..022e7d8a9
+--- /dev/null
++++ b/tests/kernels/fixtures/mhc_188/provenance.json
+@@ -0,0 +1,18 @@
++{
++  "schema_version": 1,
++  "patch_head": "ebb44766d6f04d3a9272b712778d7f2fa2cec1fd",
++  "tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4",
++  "source_path": "vllm/models/deepseek_v4_1/tilelang/mhc.py",
++  "source_blob": "d238757bb886e5df208dcffbea6abda9332f4749",
++  "source_sha256": "19e3f85d32ec917dc62839e564f494cfb44d1ebbb6d42008e2d213a1b789f23b",
++  "selected_constants": [
++    "MULT",
++    "MIXES",
++    "BLOCK_H",
++    "BLOCK_M",
++    "VEC",
++    "_PASS_CONFIGS"
++  ],
++  "selected_function": "finalize",
++  "scope": "Exact original decorated finalize and constants; not full module"
++}
+diff --git a/tests/kernels/test_deepseek_v41_mhc_three_way.py b/tests/kernels/test_deepseek_v41_mhc_three_way.py
+new file mode 100644
+index 000000000..083834a21
+--- /dev/null
++++ b/tests/kernels/test_deepseek_v41_mhc_three_way.py
+@@ -0,0 +1,185 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Original-188 -> candidate-off -> dual finalize qualification on SM121.
++
++These tests execute CUDA only in an explicitly authorized validation window.
++A skipped/missing case is incomplete qualification, never a passing gate.
++The baseline is an offline pinned original function, not a full model import.
++"""
++
++import os
++
++import pytest
++
++if os.environ.get("VLLM_Q03_RUN_G1_GPU") != "1":
++    pytest.skip(
++        "G1 is opt-in; skipped qualification is incomplete", allow_module_level=True
++    )
++
++import torch  # noqa: E402
++
++from vllm.platforms import current_platform  # noqa: E402
++
++if not (current_platform.is_cuda() and current_platform.is_device_capability(121)):
++    raise RuntimeError("Opted-in G1 requires SM121; qualification incomplete")
++
++# After explicit opt-in, missing runtime dependencies are errors, not skips.
++import tile_kernels  # noqa: E402, F401
++import tilelang as real_tilelang  # noqa: E402, F401
++
++from tests.kernels import test_deepseek_v41_tilelang_mhc as common  # noqa: E402
++from tests.kernels.deepseek_v41_mhc_baseline import (  # noqa: E402
++    load_baseline_finalize,
++    validate_baseline_fixture,
++)
++from vllm.models.deepseek_v4_1.tilelang.mhc import (  # noqa: E402
++    _mxfp8_config,
++    finalize,
++    project_streams,
++)
++from vllm.tilelang_utils import T, tilelang  # noqa: E402
++
++
++@pytest.fixture(autouse=True)
++def baseline_receipt(record_property):
++    for key, value in validate_baseline_fixture().items():
++        record_property("original_188_" + key, str(value))
++
++
++@pytest.fixture(scope="module")
++def three_way_kernels():
++    original = load_baseline_finalize(T, tilelang)
++    assert original is not finalize
++    config = common.CONFIG
++    args = (
++        common.HIDDEN,
++        4 * common.HIDDEN,
++        config.rms_norm_eps,
++        config.hc_eps,
++        config.hc_sinkhorn_iters,
++        config.rms_norm_eps,
++    )
++    baseline = original(*args)
++    off = finalize(*args)
++    dual = finalize(*args, emit_mxfp8=True, quant_config=_mxfp8_config())
++    assert baseline is not off, "Original kernel must not reuse the candidate object"
++    return baseline, off, dual
++
++
++def _same_bytes(actual, expected, label):
++    try:
++        common._q03_assert_bytes(actual, expected)
++    except AssertionError as error:
++        raise AssertionError(label) from error
++
++
++def _compare_three_way(kernels, inputs):
++    """All three launches read identical objects; verify they remain unchanged."""
++    rows = inputs[2].shape[0]
++    immutable = tuple(tensor.clone() for tensor in inputs)
++    baseline_out = common._q03_finalize_outputs(rows)
++    off_out = common._q03_finalize_outputs(rows)
++    dual_out = common._q03_finalize_outputs(rows)
++    (q, sf), allocations = common._q03_sinks(rows)
++    for label, kernel, outputs, extra in (
++        ("original188", kernels[0], baseline_out, ()),
++        ("candidate_off", kernels[1], off_out, ()),
++        ("candidate_dual", kernels[2], dual_out, (q, sf)),
++    ):
++        kernel(*inputs, *outputs, *extra)
++        for index, (value, before) in enumerate(zip(inputs, immutable)):
++            _same_bytes(value, before, f"{label} mutated input {index}")
++    for name, before, off, dual in zip(
++        ("post", "comb", "pre", "y"), baseline_out, off_out, dual_out
++    ):
++        _same_bytes(off, before, f"Original188 -> candidate-off {name} mismatch")
++        _same_bytes(dual, before, f"Original188 -> candidate-dual {name} mismatch")
++    # Compare to the real patched cast of ORIGINAL output, not candidate y.
++    common._q03_assert_cast(baseline_out[-1], q, sf)
++    common._q03_assert_canaries(allocations)
++
++
++@pytest.mark.parametrize("rows", [1, 6, 16, 96, 4096, 4097, 8192])
++def test_original188_three_way_rows(three_way_kernels, rows):
++    inputs = common._q03_finalize_inputs(rows)
++    columns = [0, 7, 8, 15, 16, 23, 24, 31, 32, 767, 768, 4607, 4608, 5119]
++    inputs[2][:, columns] = torch.arange(
++        1, len(columns) + 1, device=common.DEVICE, dtype=torch.bfloat16
++    )
++    _compare_three_way(three_way_kernels, inputs)
++
++
++def test_original188_three_way_finite_edges(three_way_kernels):
++    inputs = common._q03_finalize_inputs(6)
++    values = torch.tensor(
++        [0.0, -0.0, 2**-133, 2**-126, 1e-4, 1.0625, 1.0626, 448.0, 449.0,
++         torch.finfo(torch.bfloat16).max],
++        device=common.DEVICE,
++        dtype=torch.bfloat16,
++    )
++    inputs[2].zero_()
++    inputs[2][:, 1:32:2] = -0.0
++    for row in range(6):
++        inputs[2][row, 32:42] = values if row % 2 == 0 else -values
++        inputs[2][row, -10:] = values.roll(row)
++    _compare_three_way(three_way_kernels, inputs)
++
++
++@pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf")])
++def test_original188_three_way_nonfinite(three_way_kernels, value):
++    # Finite Q deliberately isolates nonfinite collapse/quantization semantics.
++    inputs = common._q03_finalize_inputs(36)
++    for column in range(32):
++        inputs[2][column, column] = value
++    inputs[2][32, :32] = value
++    inputs[2][33, :32:2] = value
++    inputs[2][34, -32:] = value
++    _compare_three_way(three_way_kernels, inputs)
++
++
++@pytest.mark.parametrize("rows", [1, 16, 96])
++@pytest.mark.parametrize("steering", ["off", "loaded_zero", "active"])
++def test_original188_three_way_after_projection(three_way_kernels, rows, steering):
++    """One shared real projection supplies all finalizers; not a model test."""
++    from vllm.models.deepseek_v4_1.steering.ops import prepare_consumer
++
++    residual, fn, scale, base, weight, incoming = common._inputs(rows, 9300 + rows)
++    generator = torch.Generator(device=common.DEVICE).manual_seed(9300 + rows)
++    x = torch.randn(
++        rows, common.HIDDEN, generator=generator, device=common.DEVICE
++    ).bfloat16()
++    post = torch.rand(rows, 4, generator=generator, device=common.DEVICE)
++    comb = torch.softmax(
++        torch.randn(rows, 4, 4, generator=generator, device=common.DEVICE), dim=-1
++    )
++    controls = ()
++    if steering != "off":
++        direction = torch.nn.functional.normalize(
++            torch.randn(common.HIDDEN, generator=generator, device=common.DEVICE),
++            dim=0,
++        )
++        doses = torch.zeros(rows, device=common.DEVICE)
++        if steering == "active":
++            doses[:] = torch.arange(rows, device=common.DEVICE) % 3 * 2.0
++            doses[-1] = 4.0
++        writer, kwargs = prepare_consumer(
++            x,
++            direction,
++            doses,
++            torch.empty(rows, 2, device=common.DEVICE),
++            torch.empty_like(x),
++            2.5,
++        )
++        assert writer is x
++        controls = tuple(kwargs[name] for name in (
++            "steering_direction", "steering_scales", "steering_dots", "steering_alpha"
++        ))
++    P, S, C, Q, _, _, _ = common._q03_finalize_inputs(rows)
++    updated = torch.empty_like(residual)
++    project_streams(
++        common.HIDDEN, "post_pre", block_M=16, world=1, steering=bool(controls)
++    )(
++        x.unsqueeze(0), residual.flatten(1), post, comb, incoming, fn,
++        updated.flatten(1), P, S, C, Q, *controls,
++    )
++    _compare_three_way(three_way_kernels, (P, S, C, Q, scale, base, weight))
+-- 
+2.52.0
+

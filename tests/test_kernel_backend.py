@@ -30,6 +30,7 @@ TILELANG_EXPERIMENTS = (
     "experiments/2026-10-19-steering-gpu/",
     "experiments/2026-10-19-r6x-steering/",
     "experiments/2026-10-21-mhc-input-quant/",
+    "experiments/2026-10-21-mhc-input-validation/",
     "experiments/2026-10-03-packed-bf16-head/tilelang-tp4",
     "experiments/2026-10-03-tilelang-tp4-performance",
     "experiments/2026-10-04-tilelang-1m",

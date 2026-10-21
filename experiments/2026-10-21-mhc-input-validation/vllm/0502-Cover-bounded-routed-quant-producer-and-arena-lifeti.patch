@@ -1,0 +1,414 @@
+From d9b86ea773ff263837eb578ff46a1e9351ed3628 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 15:38:46 +0900
+Subject: [PATCH 502/503] Cover bounded routed quant producer and arena
+ lifetime
+
+Base: vLLM 19f2c20ed4d64ae22bd009ceacadd85e2a81e354 with the
+immutable 192-mailbox stack ending dd0d8326d31456a6038ac2f244f765e8d783ce59.
+Apply this independent validation series in its recorded dependency order.
+
+Rationale: Exercise legal post_pre and the real routed plan with bounded synthetic weights and explicit owner/graph lifetime checks.
+
+Numerical/quality impact: test-only; runtime sources and production defaults
+are unchanged. Synthetic fixtures do not establish model quality or performance.
+
+Tests: stdlib syntax/provenance checks and 15 harness-contract tests passed
+in the combined tree; inherited 30 host tests passed. Actual target imports,
+CUDA compilation, GPU numerics/graphs and four-rank qualification not executed.
+
+Upstream status: downstream-only validation, not submitted upstream.
+---
+ tests/kernels/q03_owner_validation.md        |  81 ++++++
+ tests/kernels/test_deepseek_v41_q03_owner.py | 291 +++++++++++++++++++
+ 2 files changed, 372 insertions(+)
+ create mode 100644 tests/kernels/q03_owner_validation.md
+ create mode 100644 tests/kernels/test_deepseek_v41_q03_owner.py
+
+diff --git a/tests/kernels/q03_owner_validation.md b/tests/kernels/q03_owner_validation.md
+new file mode 100644
+index 000000000..f184296eb
+--- /dev/null
++++ b/tests/kernels/q03_owner_validation.md
+@@ -0,0 +1,81 @@
++# G2: bounded producer/plan and arena validation
++
++This is executable GPU test authoring, not a GPU result. Execution must remain within Daniel's applicable authorization; this authoring
++work performs no execution or lifecycle action. Frozen deployment 610cbde remains unchanged.
++
++## Boundary
++
++`test_deepseek_v41_q03_owner.py` invokes the real legal mHC `post_pre` producer:
++BF16 x/residual, previous post/comb, norm and pre tensors are supplied. Its
++explicit arena q/sf outputs feed the real `MoeExpertsV41Plan.run`. Nothing
++replaces the producer or consumer with FakeTensor or mock arithmetic. A
++counting wrapper delegates to the real input cast and checks one baseline cast
++versus zero dual casts. The comparator is the candidate's BF16 path, NOT the
++original 188 implementation; original-188 numerical proof belongs to G1.
++
++The fixture preserves H=5120 and per-rank I=576; it bounds expert count to 8,
++top-k to 2, active rows to 96. It never constructs a model or loads checkpoint
++weights. Before tensors are constructed, its conservative payload estimate is
++275,775,488 bytes (four times packed weights plus 128 MiB), under a 512 MiB
++payload budget. It separately requires 2 GiB free device memory. Neither value
++is a measured peak or a bound on compiler/driver allocations. Each test owns a
++fresh function-scoped fixture and current vLLM configuration.
++
++Twelve selected cases cover:
++- nine row/steering combinations (1/16/96, off/loaded-zero/active);
++- a real deferred shared addend with CUDA event ordering and independent cast
++  verification of the surviving arena q/sf;
++- three real captured shapes alternating replay with eager execution, changed
++  inputs/doses, poisoned unused capacity, and stable owner storage pointers;
++- graph-resource retention after the Python owner is dropped.
++
++The two arena allocations total 43,253,760 bytes at capacity 8192. Only up to 96
++rows run through the actual producer/plan here. Byte equality is deliberately
++strict; any mismatch stops the gate and requires investigation, not tolerance
++relaxation. CUDA synchronizations and `.item()` calls occur in assertions,
++not runtime model changes.
++
++## Invocation and stop conditions
++
++Once applicable GPU authorization is verified, run from the candidate checkout with its
++approved installed runtime and dependency set (do not overlay source through
++PYTHONPATH). Record `vllm.__file__`, component/runtime identity, CUDA/device
++identity, command, collected count and full result in the run manifest first.
++The packaging/P0 gate is responsible for proving those identities.
++
++```
++VLLM_Q03_RUN_G2_GPU=1 .venv/bin/python -m pytest -q \
++  tests/kernels/test_deepseek_v41_q03_owner.py
++```
++
++Expected selected count: 12, all must pass. Without opt-in the module skips
++before Torch/runtime imports. A default skip is NOT success. With opt-in,
++missing dependencies, non-SM121, insufficient memory, compilation errors,
++zero collection, skips, numerical differences or alias/lifetime failures are
++stop conditions. Do not install, restart, deploy or repair hardware as a side
++effect of this command. The pure `_gpu_requested(environ)` helper can be
++AST-extracted by a stdlib selection test without Torch imports.
++
++## Explicitly remaining gates
++
++This test does not construct MoERunner, the production shared expert, a TP4
++model or a drafter. Its shared addend tests the plan's callable/event boundary,
++not production runner auxiliary-stream scheduling. The owner is borrowed by
++eager Python during capture, not by `torch.compile(fullgraph=True)` model
++execution. The test manually retains the graph-resource collector list; it
++does not prove production graph-wrapper retirement/lifetime behavior.
++
++A full-model gate still needs approved TP4 checkpoint/distributed fixtures,
++actual startup allocation accounting and guards (target/non-SP/TP4/SM121,
++draft/SP/unsupported/capacity baseline), actual production graph wrappers,
++fullgraph compilation and sequential layer/graph ownership. Exercise real
++capacity boundaries including 8192, all steering modes, candidate off/on,
++production shared-expert event ordering, and alternating eager/captured
++requests. Concurrent graph replays on independent streams are outside the
++single-slot contract and must not be presented as supported.
++
++Stage execution: P0 installed imports/opaque LayerName, G1 original188/BF16/dual,
++then this bounded G2, then the separately prepared TP4 full-model gate. Stop at
++first failure. Candidate remains off by default. Rollback is startup with
++VLLM_DS41_Q03_MHC_MXFP8 unset or 0, through an authorized restart;
++no service command is part of this test or cloud authoring work.
+diff --git a/tests/kernels/test_deepseek_v41_q03_owner.py b/tests/kernels/test_deepseek_v41_q03_owner.py
+new file mode 100644
+index 000000000..63ba7739f
+--- /dev/null
++++ b/tests/kernels/test_deepseek_v41_q03_owner.py
+@@ -0,0 +1,291 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Opt-in real SM121 producer/plan and owner tests, not TP4 model qualification."""
++
++import gc
++import os
++import weakref
++from types import SimpleNamespace
++
++import pytest
++
++
++def _gpu_requested(environ):
++    return environ.get("VLLM_Q03_RUN_G2_GPU", "0") == "1"
++
++
++if not _gpu_requested(os.environ):
++    pytest.skip("G2 GPU execution requires explicit opt-in", allow_module_level=True)
++
++# Missing dependencies or wrong hardware after opt-in are errors, not skips.
++import torch  # noqa: E402
++
++from vllm.platforms import current_platform  # noqa: E402
++
++if not current_platform.is_cuda() or not current_platform.is_device_capability(121):
++    pytest.fail("G2 requires the authorized SM121 device", pytrace=False)
++
++from vllm.models.deepseek_v4_1.steering.ops import prepare_consumer  # noqa: E402
++from vllm.models.deepseek_v4_1.tilelang.input_quant_arena import (  # noqa: E402
++    RoutedInputQuantArena,
++)
++from vllm.models.deepseek_v4_1.tilelang.mhc import TileKernelsMHC  # noqa: E402
++from vllm.models.deepseek_v4_1.tilelang.moe import (  # noqa: E402
++    MoeExpertsV41Plan,
++    workspace_bytes,
++)
++from vllm.v1.worker.workspace import (  # noqa: E402
++    collect_cuda_graph_capture_resources,
++    init_workspace_manager,
++)
++
++pytestmark = pytest.mark.usefixtures("default_vllm_config")
++HIDDEN, INTERMEDIATE, EXPERTS, TOPK = 5120, 576, 8, 2
++CAPACITY, MAX_ROWS = 8192, 96
++# Packed source weights plus conservative prepared weights, activations, scratch,
++# arena and three small captured cases. This is NOT a measured JIT/driver peak.
++PAYLOAD_BUDGET = 512 * 1024**2
++MIN_FREE_BYTES = 2 * 1024**3
++CONFIG = SimpleNamespace(
++    hidden_size=HIDDEN, hc_mult=4, rms_norm_eps=1e-6,
++    hc_eps=1e-6, hc_sinkhorn_iters=20,
++)
++
++
++def _bytes_equal(actual, expected):
++    assert actual.shape == expected.shape and actual.dtype == expected.dtype
++    assert torch.equal(actual.contiguous().view(torch.uint8),
++                       expected.contiguous().view(torch.uint8))
++
++
++@pytest.fixture
++def kernels(default_vllm_config):
++    # Bound the fixture BEFORE constructing any expert/activation tensors.
++    raw_weights = EXPERTS * (
++        2 * INTERMEDIATE * HIDDEN // 2 + HIDDEN * INTERMEDIATE // 2
++    )
++    estimated_payload = 4 * raw_weights + 128 * 1024**2
++    assert (HIDDEN, INTERMEDIATE, EXPERTS, TOPK) == (5120, 576, 8, 2)
++    assert estimated_payload < PAYLOAD_BUDGET
++    free, _ = torch.cuda.mem_get_info()
++    if free < MIN_FREE_BYTES:
++        pytest.fail("G2 requires 2 GiB free before bounded fixture construction")
++    device = torch.device("cuda", torch.cuda.current_device())
++    init_workspace_manager(device)
++    mhc = TileKernelsMHC(CONFIG)
++    mhc.q03_enabled = True
++    mhc.steering_enabled = True
++    mhc.declare_kernels()
++    plan = MoeExpertsV41Plan(
++        EXPERTS, TOPK, HIDDEN, INTERMEDIATE,
++        swiglu_limit=10.0, out_dtype=torch.float32,
++    )
++    plan.declare_kernels()
++    generator = torch.Generator(device=device).manual_seed(4103)
++
++    def weight(n, k):
++        packed = torch.randint(
++            0, 256, (EXPERTS, n, k // 2), dtype=torch.uint8,
++            device=device, generator=generator,
++        )
++        scales = torch.full(
++            (EXPERTS, n, k // 32), 116, dtype=torch.uint8, device=device,
++        )
++        return packed, scales
++
++    weights = plan.prepare_weights(
++        *weight(2 * INTERMEDIATE, HIDDEN), *weight(HIDDEN, INTERMEDIATE)
++    )
++    return SimpleNamespace(mhc=mhc, plan=plan, weights=weights, device=device)
++
++
++def _case(kernels, rows, steering="off", owner=None):
++    assert 0 < rows <= MAX_ROWS
++    device = kernels.device
++    gen = torch.Generator(device=device).manual_seed(4200 + rows)
++
++    def random(*shape):
++        return torch.randn(*shape, device=device, generator=gen)
++
++    x = random(rows, HIDDEN).bfloat16()
++    residual = random(rows, 4, HIDDEN).bfloat16()
++    post = torch.sigmoid(random(rows, 4))
++    comb = torch.softmax(random(rows, 4, 4), dim=-1)
++    fn = random(24, 4 * HIDDEN) * 0.02
++    scale = torch.ones(3, device=device)
++    base = random(24) * 0.1
++    norm = (1 + random(HIDDEN) * 0.1).bfloat16()
++    pre = torch.softmax(random(rows, 4), dim=-1)
++    ids = (torch.arange(rows * TOPK, device=device) % EXPERTS).to(
++        torch.int32
++    ).view(rows, TOPK)
++    routing = torch.full((rows, TOPK), 0.5, device=device)
++    nbytes = workspace_bytes(kernels.plan.workspace_specs(rows, torch.int32))
++    assert nbytes < PAYLOAD_BUDGET // 4
++    direction = torch.nn.functional.normalize(random(HIDDEN), dim=0)
++    dose = torch.zeros(rows, device=device)
++    if steering == "active":
++        dose.copy_(torch.tensor([0., 2.5, 4.], device=device).repeat(
++            (rows + 2) // 3
++        )[:rows])
++        dose[-1] = 4.0
++    return SimpleNamespace(
++        args=(x, residual, post, comb, fn, scale, base, norm, pre),
++        ids=ids, routing=routing,
++        workspace=torch.empty(nbytes, device=device, dtype=torch.uint8),
++        out=torch.empty(rows, HIDDEN, device=device, dtype=torch.float32),
++        owner=owner if owner is not None else RoutedInputQuantArena(CAPACITY, device),
++        steering=steering, direction=direction, dose=dose,
++        dots=torch.empty(rows, 2, device=device), scratch=torch.empty_like(x),
++    )
++
++
++def _controls(case):
++    if case.steering == "off":
++        return {}
++    writer, controls = prepare_consumer(
++        case.args[0], case.direction, case.dose, case.dots, case.scratch, 2.5,
++    )
++    assert writer is case.args[0]
++    return controls
++
++
++def _run(kernels, case, *, dual, shared=None):
++    """Real post_pre and real plan; no fake kernel/consumer replacement."""
++    controls = _controls(case)
++    lease = case.owner.borrow(case.args[0].shape[0]) if dual else None
++    try:
++        sinks = {} if lease is None else {"q_out": lease.q, "sf_out": lease.sf}
++        outputs = kernels.mhc.post_pre(*case.args, **controls, **sinks)
++        pair = None if lease is None else (lease.q, lease.sf)
++        out = case.out if shared is None else torch.empty_like(outputs[3])
++        kernels.plan.run(
++            outputs[3], case.ids, case.routing, kernels.weights, out,
++            case.workspace, shared=shared, input_quant=pair,
++        )
++        return outputs, out
++    finally:
++        if lease is not None:
++            lease.release()
++
++
++def _snapshot(result):
++    mhc, out = result
++    return tuple(t.clone() for t in mhc), out.clone()
++
++
++def _equal_results(actual, expected):
++    for got, want in zip(actual[0], expected[0]):
++        _bytes_equal(got, want)
++    _bytes_equal(actual[1], expected[1])
++
++
++@pytest.mark.parametrize("rows", [1, 16, 96])
++@pytest.mark.parametrize("steering", ["off", "loaded_zero", "active"])
++def test_legal_producer_to_plan_matches_bf16_path(kernels, rows, steering, monkeypatch):
++    """Candidate BF16 versus dual; the separate G1 gate supplies original-188 proof."""
++    case = _case(kernels, rows, steering)
++    casts = []
++    original = kernels.plan.tk.quant.per_token_cast
++
++    def counted(*args, **kwargs):
++        casts.append(args[0].shape)
++        return original(*args, **kwargs)
++
++    monkeypatch.setattr(kernels.plan.tk.quant, "per_token_cast", counted)
++    baseline = _snapshot(_run(kernels, case, dual=False))
++    assert casts == [torch.Size((rows, HIDDEN))]
++    casts.clear()
++    actual = _run(kernels, case, dual=True)
++    assert casts == [], "explicit routed pair must eliminate exactly the input cast"
++    _equal_results(actual, baseline)
++    assert not case.owner._busy
++
++
++def test_shared_addend_wait_and_scratch_do_not_overwrite_quant_pair(kernels):
++    """Real plan deferred-addend boundary, not the production shared-expert runner."""
++    case = _case(kernels, 16, "active")
++    baseline_outputs, _ = _run(kernels, case, dual=False)
++    source = baseline_outputs[3].clone()
++    shared = source.bfloat16()
++    baseline = _snapshot(_run(kernels, case, dual=False, shared=shared))
++    side, ready = torch.cuda.Stream(), torch.cuda.Event()
++    side.wait_stream(torch.cuda.current_stream())
++    with torch.cuda.stream(side):
++        delayed = source.bfloat16().clone()
++        ready.record(side)
++    calls = []
++
++    def resolve():
++        calls.append(1)
++        ready.wait(torch.cuda.current_stream())
++        return delayed
++
++    actual = _run(kernels, case, dual=True, shared=resolve)
++    assert calls == [1]
++    _equal_results(actual, baseline)
++    # The original cast is an independent real oracle for the retained pair.
++    q, sf = kernels.plan.tk.quant.per_token_cast(
++        actual[0][3], "e4m3", 32, round_sf=True, use_packed_ue8m0=True,
++    )
++    _bytes_equal(case.owner.q[:16], q)
++    _bytes_equal(case.owner.sf[:16], sf.view(torch.uint8).reshape(16, -1)[:, :160])
++
++
++def test_owner_alternating_graphs_and_eager_reuse(kernels):
++    owner = RoutedInputQuantArena(CAPACITY, kernels.device)
++    pointers = owner.q_storage.data_ptr(), owner.sf_storage.data_ptr()
++    assert sum(owner.storage_sizes(CAPACITY)) == 43_253_760
++    cases, graphs, resources, outputs = {}, {}, {}, {}
++    for rows in (1, 16, 96):
++        case = cases[rows] = _case(kernels, rows, "active", owner)
++        _run(kernels, case, dual=True)
++        _run(kernels, case, dual=False)  # Warm baseline oracle before capture too.
++        torch.cuda.synchronize()
++        graph = graphs[rows] = torch.cuda.CUDAGraph()
++        with collect_cuda_graph_capture_resources() as retained:
++            with torch.cuda.graph(graph):
++                outputs[rows] = _run(kernels, case, dual=True)
++        resources[rows] = retained
++        assert any(isinstance(r, tuple) and len(r) == 2
++                   and r[0].data_ptr() == pointers[0]
++                   and r[1].data_ptr() == pointers[1] for r in retained)
++        assert not owner._busy
++    for index, rows in enumerate((96, 1, 16, 1, 96, 16)):
++        case = cases[rows]
++        case.args[0].mul_(-0.5)
++        case.args[0][:, -1] = index + 1
++        case.dose.fill_(0.0 if index % 2 else 4.0)
++        baseline = _snapshot(_run(kernels, case, dual=False))
++        owner.q_storage.fill_(0xA5)
++        owner.sf_storage.fill_(0xA5)
++        graphs[rows].replay()
++        _equal_results(outputs[rows], baseline)
++        assert torch.all(owner.q[rows:].view(torch.uint8) == 0xA5).item()
++        assert torch.all(owner.sf[rows:] == 0xA5).item()
++        _equal_results(_run(kernels, case, dual=True), baseline)
++        assert (owner.q_storage.data_ptr(), owner.sf_storage.data_ptr()) == pointers
++    torch.cuda.synchronize()
++
++
++def test_capture_retains_quant_allocations_after_owner_is_dropped(kernels):
++    case = _case(kernels, 6)
++    _run(kernels, case, dual=True)
++    baseline = _snapshot(_run(kernels, case, dual=False))
++    torch.cuda.synchronize()
++    graph = torch.cuda.CUDAGraph()
++    owner_ref = weakref.ref(case.owner)
++    with collect_cuda_graph_capture_resources() as resources:
++        with torch.cuda.graph(graph):
++            actual = _run(kernels, case, dual=True)
++    qptr = case.owner.q_storage.data_ptr()
++    assert any(isinstance(r, tuple) and len(r) == 2
++               and r[0].data_ptr() == qptr for r in resources)
++    case.owner = None
++    gc.collect()
++    assert owner_ref() is None
++    # Resources, not a Python lease/owner, retain the captured q/sf allocations.
++    for _ in range(3):
++        graph.replay()
++        _equal_results(actual, baseline)
++    torch.cuda.synchronize()
+-- 
+2.52.0
+

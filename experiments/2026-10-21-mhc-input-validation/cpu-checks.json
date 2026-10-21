@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "scope": "Sanitized historical CPU/static counts and scoped outcomes only",
+  "source_head": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+  "source_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a",
+  "full_deployment_suite": {
+    "tests": 512,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 156.998,
+    "scope": "private integration before public packaging minimization"
+  },
+  "prior_interrupted_suite": {
+    "exit_code": 130,
+    "pass_claimed": false
+  },
+  "component_stdlib_tests": 15,
+  "inherited_host_tests": 30,
+  "packaging_tests_before_minimization": 5,
+  "classification": {
+    "selected": 128,
+    "gate": 71,
+    "excluded": 57,
+    "problems": 0
+  },
+  "build_inputs_check": "failed: candidate inputs not prepared",
+  "image_build": "not run",
+  "P0": "not run",
+  "G1": "not run",
+  "G2": "not run"
+}

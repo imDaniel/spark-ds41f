@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "source_head": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+  "source_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a",
+  "expected": {
+    "G1": {
+      "path": "expected/g1.json",
+      "sha256": "0abf29b59d76abeb84e10ddc5341329fa75c79e2659badc0353b6d26e4212ce5",
+      "count": 20,
+      "execution_status": "not run"
+    },
+    "G2": {
+      "path": "expected/g2.json",
+      "sha256": "c8a33ae139760934448da9b4fbc7ec162a9fa9ecacba4dadc4fda6556d011374",
+      "count": 12,
+      "execution_status": "not run"
+    }
+  },
+  "P0": {
+    "launcher": "tests/standalone_tests/deepseek_v41_q03_registration.py",
+    "modes": [
+      "default",
+      "string"
+    ],
+    "execution_status": "not run",
+    "runtime_manifest": "must be provided from independently reviewed candidate build/install evidence"
+  }
+}

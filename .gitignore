@@ -16,3 +16,7 @@ results/private/
 .DS_Store
 .venv/
 .pytest_cache/
+
+# Private validation configuration and raw execution evidence
+/experiments/2026-10-21-mhc-input-validation/cluster.local.json
+/experiments/2026-10-21-mhc-input-validation/runs/

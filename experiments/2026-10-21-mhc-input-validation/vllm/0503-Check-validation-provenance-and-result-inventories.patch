@@ -1,0 +1,475 @@
+From 77c7112e0340a05aea07252c70acdf91a3d3f1d4 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 15:41:24 +0900
+Subject: [PATCH 503/503] Check validation provenance and result inventories
+
+Base: vLLM 19f2c20ed4d64ae22bd009ceacadd85e2a81e354 with the
+immutable 192-mailbox stack ending dd0d8326d31456a6038ac2f244f765e8d783ce59.
+Apply this independent validation series in its recorded dependency order.
+
+Rationale: Reject invalid old-source provenance and incomplete or failed JUnit inventories without executing target tests.
+
+Numerical/quality impact: test-only; runtime sources and production defaults
+are unchanged. Synthetic fixtures do not establish model quality or performance.
+
+Tests: stdlib syntax/provenance checks and 15 harness-contract tests passed
+in the combined tree; inherited 30 host tests passed. Actual target imports,
+CUDA compilation, GPU numerics/graphs and four-rank qualification not executed.
+
+Upstream status: downstream-only validation, not submitted upstream.
+---
+ tests/kernels/q03_result_receipt.py           | 131 ++++++++
+ .../test_deepseek_v41_q03_validation.py       | 303 ++++++++++++++++++
+ 2 files changed, 434 insertions(+)
+ create mode 100644 tests/kernels/q03_result_receipt.py
+ create mode 100644 tests/models/test_deepseek_v41_q03_validation.py
+
+diff --git a/tests/kernels/q03_result_receipt.py b/tests/kernels/q03_result_receipt.py
+new file mode 100644
+index 000000000..b00a54ebf
+--- /dev/null
++++ b/tests/kernels/q03_result_receipt.py
+@@ -0,0 +1,131 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Check existing Q03 JUnit evidence. Never collects or executes GPU tests.
++
++The expected collection and its SHA256 must be frozen independently before the
++run (for example in the deployment experiment), not inferred from its results.
++Source-tree equality checks the supplied identity, not the execution machine.
++"""
++
++import argparse
++import hashlib
++import json
++from pathlib import Path
++import re
++import sys
++import xml.etree.ElementTree as ET
++
++
++class EvidenceError(ValueError):
++    pass
++
++
++def require(condition, message):
++    if not condition:
++        raise EvidenceError(message)
++
++
++def junit_identity(nodeid):
++    """Map pytest file/class/function IDs to pytest's JUnit classname/name."""
++    prefix, bracket, parameters = nodeid.partition("[")
++    parts = prefix.split("::")
++    parts[-1] += bracket + parameters
++    path = parts[0]
++    require(len(parts) >= 2 and path.endswith(".py"), "invalid pytest node ID")
++    require(not path.startswith("/") and ".." not in path.split("/"),
++            "node ID must be repository relative")
++    require(all(parts) and "\\" not in path, "invalid pytest node ID")
++    classname = path[:-3].replace("/", ".")
++    if len(parts) > 2:
++        classname += "." + ".".join(parts[1:-1])
++    return classname, parts[-1]
++
++
++def check_evidence(
++    stage, expected_bytes, expected_sha256, source_tree, xml_bytes, exit_code
++):
++    require(type(exit_code) is int and exit_code == 0, "pytest process did not exit 0")
++    require(stage in ("G1", "G2"), "unsupported Q03 stage")
++    require(re.fullmatch(r"[0-9a-f]{40}", source_tree) is not None,
++            "invalid frozen source tree")
++    digest = hashlib.sha256(expected_bytes).hexdigest()
++    require(digest == expected_sha256, "expected collection SHA256 mismatch")
++    expected = json.loads(expected_bytes)
++    require(isinstance(expected, dict), "expected manifest must be an object")
++    require(expected.get("schema_version") == 1, "unsupported expected schema")
++    require(expected.get("stage") == stage, "expected collection stage mismatch")
++    require(expected.get("source_tree") == source_tree, "source tree mismatch")
++    nodeids = expected.get("nodeids")
++    require(isinstance(nodeids, list) and nodeids, "empty expected collection")
++    require(all(isinstance(n, str) for n in nodeids), "invalid expected node ID")
++    require(len(set(nodeids)) == len(nodeids), "duplicate expected node ID")
++    identities = [junit_identity(n) for n in nodeids]
++    require(len(set(identities)) == len(identities), "ambiguous JUnit identities")
++    root = ET.fromstring(xml_bytes)
++    require(root.tag in ("testsuite", "testsuites"), "invalid JUnit root")
++    cases = list(root.iter("testcase"))
++    require(cases, "zero executed cases")
++    for tag in ("failure", "error", "skipped"):
++        require(not list(root.iter(tag)), f"JUnit contains {tag}")
++    suites = list(root.iter("testsuite"))
++    if root.tag == "testsuites":
++        suites.append(root)
++    for suite in suites:
++        suite_cases = list(suite.iter("testcase"))
++        if "tests" in suite.attrib:
++            require(int(suite.attrib["tests"]) == len(suite_cases),
++                    "JUnit test total differs from case inventory")
++        for key in ("failures", "errors", "skipped"):
++            require(int(suite.attrib.get(key, "0")) == 0,
++                    f"JUnit suite reports {key}")
++    for case in cases:
++        require(case.attrib.get("status") in (None, "run", "passed"),
++                "JUnit testcase was not run successfully")
++        require(all(child.tag in ("properties", "system-out", "system-err")
++                    for child in case), "unexpected JUnit testcase outcome")
++    actual = [(c.attrib.get("classname"), c.attrib.get("name")) for c in cases]
++    require(len(set(actual)) == len(actual), "duplicate JUnit case identity")
++    require(set(actual) == set(identities), "JUnit collection identity mismatch")
++    return {
++        "schema_version": 1, "stage": stage, "result": "passed",
++        "source_tree": source_tree, "expected_sha256": digest,
++        "junit_sha256": hashlib.sha256(xml_bytes).hexdigest(),
++        "passed": len(cases), "failed": 0, "errors": 0, "skipped": 0,
++        "pytest_exit_code": exit_code,
++        "nodeids": nodeids,
++        "scope": "Existing evidence accounting only; no runtime execution",
++    }
++
++
++def main(argv=None):
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--stage", required=True, choices=("G1", "G2"))
++    parser.add_argument("--expected", type=Path, required=True)
++    parser.add_argument("--expected-sha256", required=True)
++    parser.add_argument("--source-tree", required=True)
++    parser.add_argument("--junit", type=Path, required=True)
++    parser.add_argument("--exit-code", type=int, required=True)
++    parser.add_argument("--output", type=Path, required=True)
++    args = parser.parse_args(argv)
++    if args.output.exists():
++        parser.error("output must be a new file; existing evidence is never replaced")
++    try:
++        report = check_evidence(
++            args.stage, args.expected.read_bytes(), args.expected_sha256,
++            args.source_tree, args.junit.read_bytes(), args.exit_code,
++        )
++    except (ValueError, TypeError, OSError, ET.ParseError) as exc:
++        report = {"schema_version": 1, "stage": args.stage, "result": "failed",
++                  "reason": str(exc), "scope": "Evidence accounting only"}
++    try:
++        with args.output.open("x") as output:
++            output.write(json.dumps(report, indent=2) + "\n")
++    except OSError as exc:
++        print(f"cannot create new receipt: {exc}", file=sys.stderr)
++        return 2
++    print(json.dumps(report, sort_keys=True))
++    return 0 if report["result"] == "passed" else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tests/models/test_deepseek_v41_q03_validation.py b/tests/models/test_deepseek_v41_q03_validation.py
+new file mode 100644
+index 000000000..53520376b
+--- /dev/null
++++ b/tests/models/test_deepseek_v41_q03_validation.py
+@@ -0,0 +1,303 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Standalone stdlib harness contracts, not execution of P0/G1/G2 runtime tests.
++
++Q03_KERNEL_ROOT, Q03_BRIDGE_ROOT and Q03_MODEL_ROOT select read-only worktrees.
++Run directly to avoid the serving pytest conftest and runtime imports.
++"""
++
++import ast
++import contextlib
++import copy
++import io
++import hashlib
++import importlib.util
++import json
++import os
++from pathlib import Path
++import shutil
++import tempfile
++import unittest
++import xml.etree.ElementTree as ET
++
++ROOT = Path(__file__).resolve().parents[2]
++
++
++def load(relative, part=None):
++    root = Path(os.environ.get(f"Q03_{part}_ROOT", ROOT)) if part else ROOT
++    path = root / relative
++    spec = importlib.util.spec_from_file_location(path.stem, path)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++class EvidenceAccountingTests(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.checker = load("tests/kernels/q03_result_receipt.py")
++
++    def setUp(self):
++        self.tree = "a" * 40
++        self.expected = {
++            "schema_version": 1, "stage": "G1", "source_tree": self.tree,
++            "nodeids": ["tests/kernels/test_gate.py::test_values[6-zero]",
++                        "tests/kernels/test_gate.py::TestGraph::test_value[a::b]"],
++        }
++
++    def xml(self, identities=None):
++        suite = ET.Element("testsuite", tests="2", failures="0", errors="0")
++        for classname, name in identities or [
++            ("tests.kernels.test_gate", "test_values[6-zero]"),
++            ("tests.kernels.test_gate.TestGraph", "test_value[a::b]"),
++        ]:
++            ET.SubElement(suite, "testcase", classname=classname, name=name)
++        return suite
++
++    def check(self, expected=None, xml=None, digest=None, stage="G1",
++              tree=None, exit_code=0):
++        data = json.dumps(self.expected if expected is None else expected).encode()
++        return self.checker.check_evidence(
++            stage, data, digest or hashlib.sha256(data).hexdigest(), tree or self.tree,
++            ET.tostring(self.xml() if xml is None else xml), exit_code,
++        )
++
++    def test_exact_parameterized_inventory_passes(self):
++        report = self.check()
++        self.assertEqual(report["passed"], 2)
++        self.assertEqual(report["nodeids"], self.expected["nodeids"])
++        self.assertEqual(report["result"], "passed")
++
++    def test_zero_duplicate_missing_extra_or_wrong_cases_fail(self):
++        original = self.xml()
++        variants = []
++        empty = ET.Element("testsuite", tests="0")
++        variants.append(empty)
++        missing = copy.deepcopy(original)
++        missing.remove(missing[-1])
++        missing.set("tests", "1")
++        variants.append(missing)
++        duplicate = copy.deepcopy(original)
++        duplicate.append(copy.deepcopy(duplicate[0]))
++        duplicate.set("tests", "3")
++        variants.append(duplicate)
++        replaced = copy.deepcopy(original)
++        replaced[1].set("name", "unrelated_same_count")
++        variants.append(replaced)
++        for value in variants:
++            with self.subTest(xml=ET.tostring(value)), self.assertRaises(ValueError):
++                self.check(xml=value)
++
++    def test_skip_failure_error_and_inconsistent_totals_fail(self):
++        for kind in ("skipped", "failure", "error", "rerunFailure",
++                     "tests", "failures", "errors"):
++            xml = self.xml()
++            if kind in ("skipped", "failure", "error", "rerunFailure"):
++                ET.SubElement(xml[0], kind)
++            else:
++                xml.set(kind, "99")
++            with self.subTest(kind=kind), self.assertRaises(ValueError):
++                self.check(xml=xml)
++        parent = ET.Element("testsuites", tests="2", skipped="1")
++        parent.append(self.xml())
++        with self.assertRaises(ValueError):
++            self.check(xml=parent)
++
++    def test_manifest_hash_stage_tree_and_inventory_are_pinned(self):
++        for key, value in (("schema_version", 2), ("stage", "G2"),
++                           ("source_tree", "b" * 40), ("nodeids", []),
++                           ("nodeids", self.expected["nodeids"] * 2)):
++            expected = dict(self.expected, **{key: value})
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                self.check(expected=expected)
++        for kwargs in ({"digest": "0" * 64}, {"stage": "unknown"},
++                       {"exit_code": 1}, {"exit_code": 5}):
++            with self.assertRaises(ValueError):
++                self.check(**kwargs)
++
++    def test_cli_writes_failed_receipt_for_zero_cases(self):
++        with tempfile.TemporaryDirectory() as directory:
++            root = Path(directory)
++            data = json.dumps(self.expected).encode()
++            (root / "expected.json").write_bytes(data)
++            (root / "run.xml").write_text('<testsuite tests="0"/>')
++            code = self.checker.main([
++                "--stage", "G1", "--source-tree", self.tree,
++                "--expected", str(root / "expected.json"),
++                "--expected-sha256", hashlib.sha256(data).hexdigest(),
++                "--junit", str(root / "run.xml"), "--exit-code", "0",
++                "--output", str(root / "receipt.json"),
++            ])
++            self.assertEqual(code, 1)
++            receipt = json.loads((root / "receipt.json").read_text())
++            self.assertEqual(receipt["result"], "failed")
++
++    def test_cli_never_replaces_existing_evidence(self):
++        with tempfile.TemporaryDirectory() as directory:
++            path = Path(directory) / "evidence.xml"
++            original = b"preserve previous evidence"
++            path.write_bytes(original)
++            with contextlib.redirect_stderr(io.StringIO()):
++                with self.assertRaises(SystemExit) as raised:
++                    self.checker.main([
++                        "--stage", "G1", "--source-tree", self.tree,
++                        "--expected", str(path), "--expected-sha256", "a" * 64,
++                        "--junit", str(path), "--exit-code", "0",
++                        "--output", str(path),
++                    ])
++            self.assertEqual(raised.exception.code, 2)
++            self.assertEqual(path.read_bytes(), original)
++
++
++class OriginalBaselineTests(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.loader = load("tests/kernels/deepseek_v41_mhc_baseline.py", "KERNEL")
++        root = Path(os.environ.get("Q03_KERNEL_ROOT", ROOT))
++        cls.fixture = root / "tests/kernels/fixtures/mhc_188"
++
++    def test_exact_old188_fixture_not_candidate_off(self):
++        result = self.loader.validate_baseline_fixture(self.fixture)
++        self.assertEqual(result["patch_head"],
++                         "ebb44766d6f04d3a9272b712778d7f2fa2cec1fd")
++        self.assertEqual(result["source_sha256"],
++                         "19e3f85d32ec917dc62839e564f494cfb44"
++                         "d1ebbb6d42008e2d213a1b789f23b")
++
++    def test_source_mutation_and_candidate_substitution_fail(self):
++        candidate = (ROOT / "vllm/models/deepseek_v4_1/tilelang/mhc.py").read_bytes()
++        original = (self.fixture / "mhc.py.txt").read_bytes()
++        for data in (original + b"\n", candidate):
++            with tempfile.TemporaryDirectory() as directory:
++                root = Path(directory)
++                shutil.copytree(self.fixture, root, dirs_exist_ok=True)
++                (root / "mhc.py.txt").write_bytes(data)
++                with self.assertRaises(ValueError):
++                    self.loader.validate_baseline_fixture(root)
++
++    def test_provenance_identity_cannot_be_relabelled(self):
++        for field in ("patch_head", "tree", "source_blob", "source_sha256",
++                      "source_path", "selected_function", "selected_constants"):
++            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
++                root = Path(directory)
++                shutil.copytree(self.fixture, root, dirs_exist_ok=True)
++                path = root / "provenance.json"
++                value = json.loads(path.read_text())
++                value[field] = "candidate"
++                path.write_text(json.dumps(value))
++                with self.assertRaises(ValueError):
++                    self.loader.validate_baseline_fixture(root)
++
++    def test_missing_source_or_manifest_fail(self):
++        for name in ("mhc.py.txt", "provenance.json"):
++            with tempfile.TemporaryDirectory() as directory:
++                root = Path(directory)
++                shutil.copytree(self.fixture, root, dirs_exist_ok=True)
++                (root / name).unlink()
++                with self.assertRaises(FileNotFoundError):
++                    self.loader.validate_baseline_fixture(root)
++
++
++class RegistrationSelectionTests(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.runner = load("tests/standalone_tests/deepseek_v41_q03_registration.py",
++                          "BRIDGE")
++
++    def test_default_mode_removes_override_without_changing_parent(self):
++        original = {"VLLM_USE_LAYERNAME": "0", "SENTINEL": "keep"}
++        self.assertEqual(self.runner.mode_environment(original, "default"),
++                         {"SENTINEL": "keep"})
++        self.assertEqual(original["VLLM_USE_LAYERNAME"], "0")
++        self.assertEqual(self.runner.mode_environment({}, "string"),
++                         {"VLLM_USE_LAYERNAME": "0"})
++        with self.assertRaises(ValueError):
++            self.runner.mode_environment({}, "other")
++
++
++    def test_installed_source_hashes_reject_changed_and_missing_files(self):
++        with tempfile.TemporaryDirectory() as directory:
++            root = Path(directory)
++            installed, expected = root / "installed", root / "expected"
++            for relative in self.runner.SOURCE_FILES:
++                for base in (installed, expected / "vllm"):
++                    path = base / relative
++                    path.parent.mkdir(parents=True, exist_ok=True)
++                    path.write_text(relative)
++            hashes = self.runner.verify_installed_sources(installed, expected)
++            self.assertEqual(set(hashes), set(self.runner.SOURCE_FILES))
++            for relative, digest in hashes.items():
++                self.assertEqual(digest, hashlib.sha256(relative.encode()).hexdigest())
++            changed = installed / self.runner.SOURCE_FILES[0]
++            changed.write_text("changed installed source")
++            with self.assertRaises(AssertionError):
++                self.runner.verify_installed_sources(installed, expected)
++            changed.unlink()
++            with self.assertRaises(FileNotFoundError):
++                self.runner.verify_installed_sources(installed, expected)
++
++    def valid_report(self, mode="default"):
++        ops = ("dsv41_moe_forward_mxfp8", "dsv41_moe_forward_shared_mxfp8")
++        checks = []
++        for name in ops:
++            checks.append(f"{name}:schema")
++            for rows in (0, 1, 6, 16, 96, 8192):
++                for shared in (False, True):
++                    checks.append(f"{name}:rows={rows}:shared={shared}")
++                for defect in ("width", "dtype"):
++                    checks.append(f"{name}:rows={rows}:bad_sf_{defect}")
++        return {
++            "result": "passed", "mode": mode, "opaque_enabled": mode == "default",
++            "runtime_identity_verified": True,
++            "checks": checks,
++            "sources": {name: {"path": name.replace(".", "/") + ".py",
++                               "sha256": "a" * 64} for name in self.runner.MODULES},
++            "operators": {name: f"vllm::{name}(Tensor x) -> Tensor" for name in ops},
++        }
++
++    def test_each_requested_mode_requires_exact_check_inventory(self):
++        for mode in ("default", "string"):
++            report = self.valid_report(mode)
++            self.assertTrue(self.runner.mode_passed(0, report, mode))
++            for checks in ([], report["checks"][:-1], ["arbitrary"] * 50,
++                           report["checks"][:-1] + [report["checks"][0]]):
++                with self.subTest(mode=mode, size=len(checks)):
++                    self.assertFalse(self.runner.mode_passed(
++                        0, dict(report, checks=checks), mode))
++
++    def test_wrong_mode_exit_status_or_partial_provenance_never_passes(self):
++        report = self.valid_report()
++        self.assertFalse(self.runner.mode_passed(1, report, "default"))
++        self.assertFalse(self.runner.mode_passed(0, report, "string"))
++        self.assertFalse(self.runner.mode_passed(
++            0, self.valid_report("other"), "other"))
++        for field, value in (("result", "unexecuted"), ("opaque_enabled", 1),
++                             ("sources", {}), ("operators", {}),
++                             ("runtime_identity_verified", False)):
++            self.assertFalse(self.runner.mode_passed(
++                0, dict(report, **{field: value}), "default"))
++        corrupt = copy.deepcopy(report)
++        next(iter(corrupt["sources"].values()))["sha256"] = "not-a-source-hash"
++        self.assertFalse(self.runner.mode_passed(0, corrupt, "default"))
++
++
++class OwnerOptInTests(unittest.TestCase):
++    def test_actual_gpu_opt_in_is_exact_and_disabled_by_default(self):
++        root = Path(os.environ.get("Q03_MODEL_ROOT", ROOT))
++        path = root / "tests/kernels/test_deepseek_v41_q03_owner.py"
++        parsed = ast.parse(path.read_text())
++        node = next(n for n in parsed.body if isinstance(n, ast.FunctionDef)
++                    and n.name == "_gpu_requested")
++        namespace = {}
++        # Execute this pure predicate only, never the GPU module/imports.
++        exec(compile(ast.Module(body=[node], type_ignores=[]), str(path), "exec"),
++             namespace)
++        enabled = namespace["_gpu_requested"]
++        self.assertFalse(enabled({}))
++        for value in ("0", "true", "yes", "01", "", "2"):
++            self.assertFalse(enabled({"VLLM_Q03_RUN_G2_GPU": value}))
++        self.assertTrue(enabled({"VLLM_Q03_RUN_G2_GPU": "1"}))
++
++
++if __name__ == "__main__":
++    unittest.main(verbosity=2)
+-- 
+2.52.0
+

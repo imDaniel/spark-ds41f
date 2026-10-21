@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "stage": "G1",
+  "source_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a",
+  "nodeids": [
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_rows[1]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_rows[6]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_rows[16]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_rows[96]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_rows[4096]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_rows[4097]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_rows[8192]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_finite_edges",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_nonfinite[nan]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_nonfinite[inf]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_nonfinite[-inf]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_after_projection[off-1]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_after_projection[off-16]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_after_projection[off-96]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_after_projection[loaded_zero-1]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_after_projection[loaded_zero-16]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_after_projection[loaded_zero-96]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_after_projection[active-1]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_after_projection[active-16]",
+    "tests/kernels/test_deepseek_v41_mhc_three_way.py::test_original188_three_way_after_projection[active-96]"
+  ]
+}
