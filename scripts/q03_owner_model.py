@@ -563,6 +563,9 @@ def validate_container(item, plan, record, *, initial=False):
         "q03.window": plan["window_id"], "q03.attempt": plan["attempt_id"], "q03.job": "owner_model",
         "q03.rank": str(rank), "q03.plan": plan["plan_sha256"]}.items()), "owner container labels differ")
     if initial:
+        require("OomKillDisable" in host and
+                (host["OomKillDisable"] is None or host["OomKillDisable"] is False),
+                "owner OOM killing must remain enabled")
         require(config.get("Entrypoint") == ["python3"] and config.get("Cmd") == wanted["python_argv"]
                 and config.get("WorkingDir") == "/validation" and host.get("NetworkMode") == "host"
                 and host.get("IpcMode") == "host" and host.get("Privileged") is False

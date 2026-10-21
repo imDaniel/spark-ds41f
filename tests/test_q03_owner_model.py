@@ -396,7 +396,7 @@ class FakeOwnerOps:
                            'WorkingDir': '/validation',
                            'Env': [f'{key}={value}' for key, value in env.items()]},
                 'HostConfig': {'NetworkMode': 'host', 'IpcMode': 'host',
-                               'Privileged': False, 'AutoRemove': False,
+                               'Privileged': False, 'AutoRemove': False, 'OomKillDisable': False,
                                'RestartPolicy': {'Name': 'no'},
                                'Memory': 112 * 1024**3, 'MemorySwap': 112 * 1024**3,
                                'ShmSize': 16 * 1024**3, 'CpusetCpus': '5-9,15-19',

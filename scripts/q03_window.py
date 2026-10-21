@@ -129,6 +129,11 @@ def held_container_projection(item):
     projection["Mounts"] = sorted(mounts, key=lambda mount: json.dumps(
         mount, sort_keys=True, separators=(",", ":"), allow_nan=False))
     host = dict(projection["HostConfig"])
+    # Docker may clear the explicit false pointer during startup. Both forms
+    # leave OOM killing enabled. Keep true, missing, and every other field
+    # distinct; never learn a replacement hash from the running container.
+    if "OomKillDisable" in host and host["OomKillDisable"] is None:
+        host["OomKillDisable"] = False
     if host.get("Ulimits") is not None:
         limits = host["Ulimits"]
         if not isinstance(limits, list) or not all(isinstance(limit, dict) for limit in limits):
