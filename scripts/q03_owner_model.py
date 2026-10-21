@@ -354,9 +354,15 @@ def validate_owner_binding(manifest, ops):
     require(digest(runtime_raw) == RUNTIME_SHA and json_bytes(runtime_raw).get("source_head") == SOURCE_HEAD,
             "actual runtime bytes/source differ before owner admission")
     binding = manifest.get("owner_model")
+    from q03_consumer_observer import selected
+    consumer = isinstance(binding, dict) and selected(binding)
     require(isinstance(binding, dict) and set(binding) == {
         "schema_version", "tests", "profile", "nodes", "effective_config", "prerequisites",
-        "master_port", "handoff_seconds"}, "owner binding fields differ")
+        "master_port", "handoff_seconds"} | ({"test_lane"} if consumer else set()),
+        "owner binding fields differ")
+    if consumer:
+        require(manifest["jobs"][0]["selection"]["mode"] == "dual",
+                "consumer observer lane requires dual")
     require(type(binding["schema_version"]) is int and binding["schema_version"] == 1,
             "unsupported owner binding schema")
     require(type(binding["master_port"]) is int and 1024 <= binding["master_port"] <= 65535,
@@ -368,8 +374,16 @@ def validate_owner_binding(manifest, ops):
             and candidate["runtime_manifest_sha256"] == RUNTIME_SHA,
             "owner adapter is fixed to native197/image90bd")
     tests = binding["tests"]
+    if consumer:
+        from q03_consumer_observer import COMMIT, TREE, TEST_SOURCES, DELTA_FILES
+        tree, sources, delta = TREE, TEST_SOURCES, DELTA_FILES
+        require(tests.get("head") == COMMIT, "exact reviewed consumer commit required")
+        fixture_sha = sources["tests/compile/fullgraph/q03_use_owner_fixture.py"]
+    else:
+        tree, sources, delta = TEST_TREE, {TEST_FILE: TEST_SHA}, [TEST_FILE]
+        fixture_sha = TEST_SHA
     require(set(tests) == {"path", "head", "tree", "fixture_sha256", "git_config_sha256"}
-            and tests["tree"] == TEST_TREE and tests["fixture_sha256"] == TEST_SHA
+            and tests["tree"] == tree and tests["fixture_sha256"] == fixture_sha
             and re.fullmatch(r"[0-9a-f]{40}", tests["head"]), "reviewed owner test tree required")
     from q03_git_toolchain import validate_git_metadata
     validate_git_metadata(tests["path"], tests["git_config_sha256"])
@@ -379,11 +393,11 @@ def validate_owner_binding(manifest, ops):
         return ops.run([*git, *args]).stdout.strip()
     require(Path(tests["path"], ".git").is_dir()
             and read("rev-parse", "HEAD") == tests["head"]
-            and read("rev-parse", "HEAD^{tree}") == TEST_TREE and not read("status", "--porcelain")
+            and read("rev-parse", "HEAD^{tree}") == tree and not read("status", "--porcelain")
             and read("rev-parse", SOURCE_HEAD + "^{tree}") == SOURCE_TREE
-            and read("diff", "--name-only", "--no-renames", SOURCE_HEAD, "HEAD", "--").splitlines() == [TEST_FILE]
-            and ops.sha256(Path(tests["path"]) / TEST_FILE) == TEST_SHA,
-            "owner test checkout is not the exact clean one-file delta from197")
+            and read("diff", "--name-only", "--no-renames", SOURCE_HEAD, "HEAD", "--").splitlines() == delta
+            and all(ops.sha256(Path(tests["path"]) / path) == sha for path, sha in sources.items()),
+            "owner test checkout is not the exact clean reviewed delta from197")
     profile = pinned_json(binding["profile"])
     require(binding["profile"]["sha256"] == PROFILE_SHA and profile["shape"] == "tp4-ring"
             and profile["fabric"]["transport"] == "oneshot-ring4", "reviewed TP4 ring profile required")
@@ -511,6 +525,9 @@ def owner_plan(binding, window_id, attempt_id, selection):
                 image=IMAGE, fixture_sha256=TEST_SHA, test_tree=TEST_TREE, runtime_sha256=RUNTIME_SHA,
                 spec=spec, spec_sha256=digest(canonical(spec)), ranks=ranks,
                 docker_args=profile["container"]["docker_run_args"], binding=copy.deepcopy(binding))
+    from q03_consumer_observer import selected, bind_plan
+    if selected(binding):
+        bind_plan(plan)
     plan["plan_sha256"] = digest(canonical(plan))
     return plan
 
@@ -616,7 +633,8 @@ def validate_container(item, plan, record, *, initial=False):
                 and host.get("Memory") == 112 * 1024**3 and host.get("MemorySwap") == 112 * 1024**3
                 and host.get("ShmSize") == 16 * 1024**3 and host.get("CpusetCpus") == "5-9,15-19",
                 "owner transport/resource/command configuration differs")
-        expected_env = dict(wanted["environment"], PYTHONPATH=plan["binding"]["candidate"]["pytest_base_pythonpath"])
+        expected_env = dict({"PYTHONPATH": plan["binding"]["candidate"]["pytest_base_pythonpath"]},
+                            **wanted["environment"])
         environment = config.get("Env", [])
         require(all([v for v in environment if v.startswith(k + "=")] == [k + "=" + str(val)]
                     for k, val in expected_env.items()), "owner per-node environment differs")
@@ -842,7 +860,7 @@ for relative in ('commondir','config.worktree','objects/info/alternates','object
  p=pathlib.Path(v['tests']['path'],'.git',relative); assert not p.exists() and not p.is_symlink()
 assert not git('status','--porcelain')
 assert git('rev-parse',v['base_head']+'^{tree}')==v['base_tree']
-assert git('diff','--name-only','--no-renames',v['base_head'],'HEAD','--').splitlines()==[v['fixture']]
+assert git('diff','--name-only','--no-renames',v['base_head'],'HEAD','--').splitlines()==v.get('delta_files',[v['fixture']])
 deployment=v['deployment']
 g=['git','--no-replace-objects','-c','core.fsmonitor=false','-c','core.hooksPath=/dev/null','-C',deployment['path']]
 assert pathlib.Path(deployment['path'],'.git').is_dir()
@@ -870,11 +888,20 @@ def input_contract(binding):
     receipt = json_bytes(receipt_raw)
     publication = binding["preflight"]["publication"]
     require(re.fullmatch(r"[0-9a-f]{40}", publication.get("sha", "")), "pinned deployment head required")
-    return dict(files=files, directories=[s.format(home=binding["profile_value"]["host"]["home"])
+    contract = dict(files=files, directories=[s.format(home=binding["profile_value"]["host"]["home"])
                  for s, d, m in binding["profile_value"]["container"]["mounts"] if m == "ro"],
                 tests=binding["tests"], base_head=SOURCE_HEAD, base_tree=SOURCE_TREE, fixture=TEST_FILE,
                 image=IMAGE, image_labels=receipt["image_labels"], pythonpath=candidate["pytest_base_pythonpath"],
                 deployment=dict(path=binding["checkout"], head=publication["sha"], repository=publication["url"]))
+    from q03_consumer_observer import selected, TEST_SOURCES, DELTA_FILES, SITE_FILE
+    if selected(binding):
+        files[:1] = [{"path": str(Path(binding["tests"]["path"]) / name), "sha256": sha}
+                     for name, sha in TEST_SOURCES.items()]
+        for name in ("q03_consumer_observer.py", SITE_FILE):
+            path = Path(binding["checkout"]) / "scripts" / name
+            files.append({"path": str(path), "sha256": digest(read_owned_bytes(path))})
+        contract["delta_files"] = DELTA_FILES
+    return contract
 
 
 def remote_nodes(binding):
@@ -1022,7 +1049,7 @@ def validate_remote_inputs(manifest, binding, ops):
                          bound_command(["python3", "-I", "-B", "-c", INPUT_PROBE, payload])), timeout=90)
         require(result.returncode == 0, "owner all-four input/image admission failed")
         report = json_bytes(result.stdout)
-        require(report.get("image") == IMAGE and report.get("test_tree") == TEST_TREE
+        require(report.get("image") == IMAGE and report.get("test_tree") == binding["tests"]["tree"]
                 and report.get("deployment_head") == manifest["preflight"]["publication"]["sha"],
                 "remote candidate image/test identity differs")
         reports.append(report)
@@ -1320,15 +1347,21 @@ class OwnerOps:
                 "owner result handshake differs")
         xml = ET.fromstring(xml_raw)
         cases = list(xml.iter("testcase"))
-        require(len(cases) == 1 and cases[0].get("name") == "test_real_model_owner_and_capture_retention"
+        from q03_consumer_observer import selected, TEST_CASE, validate_observation
+        consumer = selected(self.plan["binding"])
+        expected_case = TEST_CASE if consumer else "test_real_model_owner_and_capture_retention"
+        require(len(cases) == 1 and cases[0].get("name") == expected_case
                 and not any(cases[0].find(tag) is not None for tag in ("failure", "error", "skipped"))
                 and not list(xml.iter("failure")) and not list(xml.iter("error")) and not list(xml.iter("skipped")),
                 "owner selected pytest case did not pass exactly once")
         require(len(value.get("outputs", [])) == 6 and [len(b) for b in value["outputs"]] == [1, 6, 16] * 2,
                 "owner fixed observation requests incomplete")
-        return dict(result="passed", qualification="owner-and-collector-retention-only", image=IMAGE,
-                    fixture_sha256=TEST_SHA, spec_sha256=self.plan["spec_sha256"],
-                    result_sha256=digest(raw), junit_sha256=digest(xml_raw))
+        result = dict(result="passed", qualification="owner-and-collector-retention-only", image=IMAGE,
+                      fixture_sha256=self.plan["fixture_sha256"], spec_sha256=self.plan["spec_sha256"],
+                      result_sha256=digest(raw), junit_sha256=digest(xml_raw))
+        if consumer:
+            result.update(validate_observation(value, self.plan))
+        return result
 
 
 def verify_plan_identity(session, plan):

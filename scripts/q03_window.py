@@ -347,7 +347,7 @@ class RuntimeOps:
                  "q03_original_spark_adapter.py", "q03_remote_operation.py", "q03_build_adapter.py",
                  "q03_window_build.py", "q03_buildkit_plan.py", "q03_git_toolchain.py",
                  "q03_held_window.py")
-        owner_sources = ("q03_owner_model.py", "q03_rank_logs.py", "q03_image_preparation.py", "memguard-start.sh", "memguard.sh", "../bin/spark",
+        owner_sources = ("q03_consumer_observer.py", "q03_consumer_site.py", "q03_owner_model.py", "q03_rank_logs.py", "q03_image_preparation.py", "memguard-start.sh", "memguard.sh", "../bin/spark",
                          "mesh_fabric.py", "kernel_backend.py", "kernel_readiness.py", "topology.py",
                          "transport_profiles.py", "model_layout.py", "recipe.py")
         http_sources = ("q03_http_service.py", "q03_http_worker.py", "q03_http_client.py", "q03_http_toolbox.json", "q03_qualification.py")
