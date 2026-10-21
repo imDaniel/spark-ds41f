@@ -81,7 +81,7 @@ MODES = ("off", "dual")
 STEERING = ("off", "loaded_zero", "active")
 PHASES = ("admitted", "prepared4", "created4", "startup_guards4", "started4",
           "config_ready", "steady_guards4", "acked", "leader_terminal", "drained")
-SOURCE_FILES = ("q03_owner_model.py", "memguard-start.sh", "memguard.sh", "../bin/spark",
+SOURCE_FILES = ("q03_owner_model.py", "q03_rank_logs.py", "memguard-start.sh", "memguard.sh", "../bin/spark",
                 "mesh_fabric.py", "kernel_backend.py", "kernel_readiness.py", "topology.py",
                 "transport_profiles.py", "model_layout.py", "recipe.py")
 
@@ -788,51 +788,8 @@ def quiesce_owner(session, attempt_id, ops=None):
     ops = OwnerOps(session, plan, journal, recovering=True) if ops is None else ops
     ops.journal = journal
     try:
-        ops.check_authority()
-        ops.seal_all()  # Unknown/failed/delayed epochs cannot cross this fence.
-        records = journal.state["ranks"]
-        for row in records:
-            if row["container_id"] is None:
-                # A prepare-only interruption has no create intent. A missing ID
-                # AFTER create intent is deliberately UNKNOWN, not name adoption.
-                creates = [json_bytes(read_owned_bytes(p)) for p in journal.directory.glob("[0-9]*.json")]
-                require(not any(e["kind"] == "create-intent" and e["rank"] == row["rank"] for e in creates),
-                        "create intent lacks a durable ID: UNKNOWN")
-                continue
-            item = ops.inspect(row["rank"], row)
-            if item is not None:
-                validate_container(item, plan, row)
-                if item["State"].get("Running") is True:
-                    ops.action(row["rank"], "stop", row)
-                    item = ops.inspect(row["rank"], row)
-                    if item is not None:
-                        validate_container(item, plan, row)
-                        require(item["State"].get("Running") is False, "owned daemon still running")
-            if row["guard_intent"]:
-                state = ops.guard_state(row["rank"], row)
-                if state.get("absent") is not True:
-                    require(state.get("owned") is True, "foreign/unknown guard cannot be stopped")
-                    if state.get("active") is True:
-                        ops.action(row["rank"], "stop_guard", row)
-                state = ops.guard_state(row["rank"], row)
-                require(state.get("absent") is True or
-                        (state.get("owned") is True and state.get("active") is False),
-                        "owned guard not proven inactive")
-            if item is not None:
-                ops.action(row["rank"], "remove", row)
-            require(ops.inspect(row["rank"], row) is None, "exact owned ID still present")
-            row["removed"] = True
-            journal.save()
-        ops.seal_all()
-        # Core drain_attempt requires all-four stopped/GPU proof after this.
-        # Final restore also checks restore_drained after its registered STOP.
-        # Do not reject cleanup merely because a previous restore partly started originals.
-        journal.phase("drained")
-        proof = dict(window_id=plan["window_id"], attempt_id=attempt_id, node_count=4,
-                     daemon_quiescent=True, gpu_drain_required_by_caller=True, plan_sha256=plan["plan_sha256"])
-        if not (journal.directory / "drained.json").exists():
-            exclusive_json(journal.directory / "drained.json", proof)
-        return proof
+        from q03_rank_logs import quiesce_with_logs
+        return quiesce_with_logs(journal, ops, validate_container)
     finally:
         journal.close()
 
@@ -1177,6 +1134,38 @@ class OwnerOps:
         self.seal_epoch(epoch)
         return value["stdout"]
 
+    def capture_logs(self, rank, record):
+        self.check_authority()
+        ident = record['container_id']
+        command = self.helper.bound_command(['docker', 'logs', '--timestamps', '--', ident])
+        require(self.helper.log_capture_id(command) == ident, 'invalid fixed log capture')
+        epoch, operation = uuid.uuid4().hex, uuid.uuid4().hex
+        intent = dict(rank=rank, action_kind='capture_logs', epoch=epoch, operation=operation,
+                      argv_sha256=digest(canonical(command)))
+        self.journal.state['epochs'].append(intent)
+        self.journal.save()
+        self.journal.event('remote-intent', **intent)
+        value = self.helper_call(rank, 'launch', epoch, operation, (
+            '--argv-json', canonical(command).decode(), '--cwd', self.binding['independent_root'],
+            '--timeout-seconds', str(min(self.helper.LOG_TIMEOUT_SECONDS, max(1, self.end - time.time())))))
+        while value.get('status') != 'terminal':
+            self.check_authority()
+            require(value.get('status') != 'uncertain' or not value.get('state', {}).get('supervisor'),
+                    'log supervisor lost without terminal receipt')
+            self.sleep(.1)
+            value = self.helper_call(rank, 'status', epoch, operation)
+        # Do not duplicate raw log bytes in every journal/epoch event.
+        receipt = copy.deepcopy(value)
+        for stream in receipt.get('log_capture', {}).get('streams', {}).values():
+            stream.pop('data_base64', None)
+        self.journal.event('log-read-terminal', rank=rank, operation=operation, receipt=receipt)
+        self.seal_epoch(epoch)
+        value = self.helper_call(rank, 'status', epoch, operation)
+        require(value.get('status') == 'terminal' and value.get('epoch_sealed') is True
+                and value.get('safe_to_overlap') is True, 'log read fence receipt differs')
+        value['epoch'] = epoch
+        return value
+
     def seal_epoch(self, epoch):
         # Fence the generation on every node. A late dispatch cannot land on an
         # apparently idle rank after the local client/supervisor has gone away.
@@ -1192,7 +1181,11 @@ class OwnerOps:
                         self.helper_call(rank, "cancel", epoch, row["operation"])
                 self.sleep(.1)
                 value = self.helper_call(rank, "seal", epoch)
-            self.journal.event("epoch-sealed", rank=rank, epoch=epoch, receipt=value)
+            receipt = copy.deepcopy(value)
+            for operation in receipt.get('operations', []):
+                for stream in operation.get('log_capture', {}).get('streams', {}).values():
+                    stream.pop('data_base64', None)
+            self.journal.event("epoch-sealed", rank=rank, epoch=epoch, receipt=receipt)
         # A sealed remote epoch permanently refuses late launches. Retain the
         # all-four completion only AFTER every positive receipt is journalled.
         # Recovery retries incomplete epochs, but does not re-poll the entire

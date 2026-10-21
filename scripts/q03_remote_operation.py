@@ -9,6 +9,7 @@ A missing/dead supervisor without a receipt is uncertain, never safe to restore.
 """
 from __future__ import annotations
 import argparse
+import base64
 from contextlib import contextmanager
 import fcntl
 import hashlib
@@ -44,6 +45,49 @@ def operation_environment(inherited):
 def bound_command(command):
     # Preserve original argv exactly, changing only its inherited environment.
     return ['python3', '-I', '-B', '-c', REMOTE_ENV_EXEC, *command]
+
+
+LOG_STREAM_LIMIT = 4 * 1024 * 1024
+LOG_TIMEOUT_SECONDS = 20
+
+
+def log_capture_id(argv):
+    """Only this closed, read-only Docker operation gets failure-safe fencing."""
+    prefix = bound_command(['docker', 'logs', '--timestamps', '--'])
+    if (isinstance(argv, list) and argv[:-1] == prefix and
+            isinstance(argv[-1], str) and re.fullmatch(r'[0-9a-f]{64}', argv[-1])):
+        return argv[-1]
+    return None
+
+
+def log_streams(directory):
+    import stat
+    streams, errors = {}, {}
+    for key, name in (('stdout', 'output.log'), ('stderr', 'error.log')):
+        path = directory / name
+        try:
+            fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            with os.fdopen(fd, 'rb') as source:
+                before = os.fstat(source.fileno())
+                if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.geteuid()
+                        or before.st_mode & 0o022 or before.st_size > LOG_STREAM_LIMIT):
+                    raise RuntimeError('log artifact type/owner/mode/size differs')
+                raw = source.read(LOG_STREAM_LIMIT + 1)
+                after = os.fstat(source.fileno())
+                current = path.lstat()
+            if (len(raw) != before.st_size or
+                    (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) !=
+                    (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns) or
+                    (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns) !=
+                    (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns)):
+                raise RuntimeError('log artifact changed while reading')
+            streams[key] = dict(data_base64=base64.b64encode(raw).decode('ascii'),
+                                bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+        except (OSError, RuntimeError) as error:
+            # Evidence loss is not process liveness. Keep sealed read-only
+            # failures retryable without ever claiming that missing bytes exist.
+            errors[key] = type(error).__name__ + ': ' + str(error)
+    return streams, errors
 
 
 def acknowledged_memguard_absence(argv, receipt, stdout, stderr, expected_unit=None):
@@ -218,7 +262,7 @@ def create_operation(root, window, operation, argv, cwd, timeout_seconds, epoch)
     with epoch_lock(root, window, epoch) as (path, record):
         if record['sealed']:
             raise RuntimeError('transition epoch is permanently sealed')
-        directory.mkdir(parents=True, exist_ok=False)
+        directory.mkdir(mode=0o700, parents=True, exist_ok=False)
         atomic(directory / 'manifest.json', m)
         digest = hashlib.sha256((directory / 'manifest.json').read_bytes()).hexdigest()
         with (directory / 'manifest.sha256').open('x') as out:
@@ -253,6 +297,20 @@ def status(root, window, operation, alive=None):
         def output(name):
             path = directory / name
             return path.read_text(errors='replace') if path.exists() else ''
+        captured_id = log_capture_id(m['argv'])
+        if captured_id is not None:
+            streams, artifact_errors = log_streams(directory)
+            truncated = any(v['bytes'] >= LOG_STREAM_LIMIT for v in streams.values())
+            # A failed READ is not evidence success. Once its exact process group
+            # is gone and epoch is sealed it cannot mutate/start a daemon. This
+            # exception never applies to inspect, rm, stop, or arbitrary argv.
+            return dict(status='terminal', safe_to_overlap=sealed,
+                        action_succeeded=safe, epoch_sealed=sealed,
+                        stdout='', stderr='', log_capture=dict(
+                            container_id=captured_id, timestamps=True,
+                            stream_limit_bytes=LOG_STREAM_LIMIT, truncated=truncated,
+                            complete=safe and not truncated and not artifact_errors,
+                            artifact_errors=artifact_errors, streams=streams), **result)
         stdout, stderr = output('output.log'), output('error.log')
         acknowledged = acknowledged_memguard_absence(m['argv'], result, stdout, stderr)
         return dict(status='terminal', safe_to_overlap=((safe or acknowledged) and sealed),
@@ -284,6 +342,11 @@ class LocalOps:
         r, w = os.pipe()
         gate = ('import os,sys; f=int(sys.argv[1]); b=os.read(f,1); os.close(f); '
                 'os.execvpe(sys.argv[2],sys.argv[2:],os.environ) if b==b"1" else sys.exit(125)')
+        if log_capture_id(manifest['argv']) is not None:
+            # The kernel caps BOTH files, even if the client/supervisor stalls.
+            # The limit is inherited only by this exact read-only log client.
+            gate = ('import resource; resource.setrlimit(resource.RLIMIT_FSIZE, ('
+                    + str(LOG_STREAM_LIMIT) + ',' + str(LOG_STREAM_LIMIT) + ')); ' + gate)
         self.stderr = Path(log.name).with_name('error.log').open('ab')
         try:
             child = subprocess.Popen([sys.executable, '-I', '-B', '-c', gate, str(r), *manifest['argv']],
@@ -329,6 +392,8 @@ class LocalOps:
 
     def reap(self):
         result = self.child.wait(timeout=5)
+        self.stderr.flush()
+        os.fsync(self.stderr.fileno())
         self.stderr.close()
         return result
 
@@ -367,6 +432,8 @@ def supervise(directory, ops):
                 code = ops.reap()
                 break
             ops.sleep(.1)
+        log.flush()
+        os.fsync(log.fileno())
         result = dict(window=m['window'], operation=m['operation'], manifest_sha256=digest,
                       group_quiescent=True, exit_code=code, cancelled=cancelled,
                       timed_out=timed_out, finished_epoch=time.time())

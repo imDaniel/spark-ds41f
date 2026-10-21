@@ -721,51 +721,8 @@ def quiesce_http(session, attempt_id, ops=None):
     ops = HttpOps(session, plan, journal, recovering=True) if ops is None else ops
     ops.journal = journal
     try:
-        ops.check_authority()
-        ops.seal_all()  # Unknown/failed/delayed epochs cannot cross this fence.
-        records = journal.state["ranks"]
-        for row in records:
-            if row["container_id"] is None:
-                # A prepare-only interruption has no create intent. A missing ID
-                # AFTER create intent is deliberately UNKNOWN, not name adoption.
-                creates = [json_bytes(read_owned_bytes(p)) for p in journal.directory.glob("[0-9]*.json")]
-                require(not any(e["kind"] == "create-intent" and e["rank"] == row["rank"] for e in creates),
-                        "create intent lacks a durable ID: UNKNOWN")
-                continue
-            item = ops.inspect(row["rank"], row)
-            if item is not None:
-                validate_container(item, plan, row)
-                if item["State"].get("Running") is True:
-                    ops.action(row["rank"], "stop", row)
-                    item = ops.inspect(row["rank"], row)
-                    if item is not None:
-                        validate_container(item, plan, row)
-                        require(item["State"].get("Running") is False, "owned daemon still running")
-            if row["guard_intent"]:
-                state = ops.guard_state(row["rank"], row)
-                if state.get("absent") is not True:
-                    require(state.get("owned") is True, "foreign/unknown guard cannot be stopped")
-                    if state.get("active") is True:
-                        ops.action(row["rank"], "stop_guard", row)
-                state = ops.guard_state(row["rank"], row)
-                require(state.get("absent") is True or
-                        (state.get("owned") is True and state.get("active") is False),
-                        "owned guard not proven inactive")
-            if item is not None:
-                ops.action(row["rank"], "remove", row)
-            require(ops.inspect(row["rank"], row) is None, "exact owned ID still present")
-            row["removed"] = True
-            journal.save()
-        ops.seal_all()
-        # Core drain_attempt requires all-four stopped/GPU proof after this.
-        # Final restore also checks restore_drained after its registered STOP.
-        # Do not reject cleanup merely because a previous restore partly started originals.
-        journal.phase("drained")
-        proof = dict(window_id=plan["window_id"], attempt_id=attempt_id, node_count=4,
-                     daemon_quiescent=True, gpu_drain_required_by_caller=True, plan_sha256=plan["plan_sha256"])
-        if not (journal.directory / "drained.json").exists():
-            exclusive_json(journal.directory / "drained.json", proof)
-        return proof
+        from q03_rank_logs import quiesce_with_logs
+        return quiesce_with_logs(journal, ops, validate_container)
     finally:
         journal.close()
 

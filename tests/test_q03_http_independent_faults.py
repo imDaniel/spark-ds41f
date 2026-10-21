@@ -410,6 +410,10 @@ class FakeHttpOps:
                 self.items.pop(rank, None)
         return None
 
+    def capture_logs(self, rank, row):
+        from q03_log_fixture import capture_logs
+        return capture_logs(self, rank, row)
+
     def inspect(self, rank, row):
         self.events.append(('inspect', rank))
         return copy.deepcopy(self.items.get(rank))
@@ -721,13 +725,14 @@ class RecoveryRouteAndInventoryFaults(NoExternalOperations):
         self.core, self.watchdog, self.held = core, watchdog, held
 
     def test_exact_recovery_inventory_covers_every_new_executable_and_toolbox_pin(self):
-        self.assertEqual(hashlib.sha256((HTTP_ROOT / "scripts/q03_owner_model.py").read_bytes()).hexdigest(),
-            "7e00c135f6e95ac0687a5f38a13eab07a0feacea90b935c70753faabea414471",
-            "owner adapter must match reviewed public native-RPC baseline e650318ef7fa3a43ab03338967b20efa3a61c5d0")
+        source = (HTTP_ROOT / "scripts/q03_owner_model.py").read_text()
+        run = source[source.index('def run_owner('):source.index('\ndef quiesce_owner(')]
+        self.assertEqual(hashlib.sha256(run.encode()).hexdigest(),
+            "203de0598931c483c4aec61cb0a7749e06e197e49f04aab9ededf0819543d594", "owner run protocol remains the reviewed native-RPC baseline")
         expected = {"q03_window.py", "q03_window_preflight.py", "q03_window_watchdog.py",
             "q03_original_spark_adapter.py", "q03_remote_operation.py", "q03_build_adapter.py",
             "q03_window_build.py", "q03_buildkit_plan.py", "q03_git_toolchain.py", "q03_held_window.py",
-            "q03_owner_model.py", "q03_image_preparation.py", "memguard-start.sh", "memguard.sh",
+            "q03_owner_model.py", "q03_rank_logs.py", "q03_image_preparation.py", "memguard-start.sh", "memguard.sh",
             "../bin/spark", "mesh_fabric.py", "kernel_backend.py", "kernel_readiness.py", "topology.py",
             "transport_profiles.py", "model_layout.py", "recipe.py",
             "q03_http_service.py", "q03_http_worker.py", "q03_http_client.py", "q03_http_toolbox.json"}

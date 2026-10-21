@@ -448,6 +448,10 @@ class FakeOwnerOps:
                 self.items.pop(rank, None)
         return None
 
+    def capture_logs(self, rank, row):
+        from q03_log_fixture import capture_logs
+        return capture_logs(self, rank, row)
+
     def inspect(self, rank, row):
         self.events.append(('inspect', rank))
         return copy.deepcopy(self.items.get(rank))
@@ -1014,7 +1018,7 @@ class OwnerControllerIntegrationTests(NoExternalOperations):
             calls.append(('execute', argv, kw))
             path = root / 'quiesce.log'
             path.write_text(json.dumps({'window_id': 'a' * 32, 'attempt_id': 'b' * 32,
-                'daemon_quiescent': True, 'gpu_drain_required_by_caller': True}))
+                'daemon_quiescent': True, 'gpu_drain_required_by_caller': True, 'logs_complete': True}))
             return {'log_path': str(path)}
         facade = SimpleNamespace(execute=execute)
         facade.require_receipt = lambda result, expected: core.RuntimeOps.require_receipt(facade, result, expected)
