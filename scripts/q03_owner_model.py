@@ -585,7 +585,9 @@ def validate_container(item, plan, record, *, initial=False):
         devices = host.get("Devices")
         require(devices == [{"PathOnHost": "/dev/infiniband", "PathInContainer": "/dev/infiniband",
                              "CgroupPermissions": "rwm"}]
-                and host.get("CapAdd") == ["IPC_LOCK"]
+                # Docker may return the canonical CAP_ spelling in inspect.
+                # Accept only this single capability, with no extras/duplicates.
+                and host.get("CapAdd") in (["IPC_LOCK"], ["CAP_IPC_LOCK"])
                 and sorted(host.get("SecurityOpt") or []) == ["label=disable", "seccomp=unconfined"]
                 and host.get("DeviceCgroupRules") == ["c 226:* rw"],
                 "owner RDMA/device/capability/security profile differs")

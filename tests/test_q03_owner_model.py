@@ -565,6 +565,27 @@ class OwnerLifecycleTests(OwnerPlanFixture):
         again = self.drain(session, plan, ops)
         self.assertEqual(again, proof)
 
+    def test_actual_run_accepts_docker_canonical_single_ipc_lock_capability(self):
+        session, plan, ops, checks = self.scenario('canonical-cap')
+        ops.mutate = lambda rank, item: item['HostConfig'].update(CapAdd=['CAP_IPC_LOCK'])
+        result = self.owner.run_owner(session, plan, ops=ops)
+        self.assertEqual(result['status'], 'observed-only')
+        self.assertEqual({rank for kind, rank in ops.events if kind == 'start'}, {0, 1, 2, 3})
+        self.drain(session, plan, ops)
+        self.assertFalse(ops.items)
+
+    def test_capability_alias_does_not_allow_unknown_extra_or_duplicate_caps(self):
+        for index, caps in enumerate((None, [], ['CAP_SYS_ADMIN'], ['IPC_LOCK', 'SYS_ADMIN'],
+                                     ['CAP_IPC_LOCK', 'CAP_SYS_ADMIN'], ['CAP_IPC_LOCK', 'IPC_LOCK'],
+                                     ['CAP_IPC_LOCK', 'CAP_IPC_LOCK'], ['CAP_CAP_IPC_LOCK'])):
+            session, plan, ops, checks = self.scenario('bad-cap-' + str(index))
+            ops.mutate = lambda rank, item: item['HostConfig'].update(CapAdd=caps)
+            with self.subTest(caps=caps), self.assertRaisesRegex(RuntimeError, 'capability'):
+                self.owner.run_owner(session, plan, ops=ops)
+            self.assertFalse(any(kind == 'start' for kind, rank in ops.events))
+            self.drain(session, plan, ops)
+            self.assertFalse(ops.items)
+
     def test_missing_delayed_or_malformed_create_id_never_starts_or_restores(self):
         for index, value in enumerate((None, '', 'a' * 12, 'A' * 64, 'a' * 65)):
             session, plan, ops, checks = self.scenario('badid' + str(index))
