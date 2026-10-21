@@ -1,0 +1,108 @@
+{
+  "independent_root": "<APPROVED_ABS_INDEPENDENT_ROOT>",
+  "preflight": {
+    "independent_checkout": "<ABS_INDEPENDENT_DEPLOYMENT>",
+    "publication": {
+      "url": "https://github.com/imDaniel/spark-ds41f.git",
+      "ref": "<PUBLISHED_EXACT_BRANCH_REF>",
+      "sha": "<FROZEN_DEPLOYMENT_SHA40>"
+    },
+    "policy_path": "<EXISTING_REGISTERED_POLICY_PATH>",
+    "policy_sha256": "<POLICY_SHA256>",
+    "spark_sha256": "<ORIGINAL_BIN_SPARK_SHA256>",
+    "registered_policy": {
+      "repository": "<ORIGINAL_REPOSITORY>",
+      "cluster_config": "<REGISTERED_RESTORE_CONFIG_RELATIVE_PATH>",
+      "config_sha256": "<REGISTERED_RESTORE_CONFIG_SHA256>",
+      "revision": "<ORIGINAL_REVISION_SHA40>",
+      "image_id": "<ORIGINAL_IMAGE_SHA256_ID>",
+      "container": "<ORIGINAL_SERVICE_CONTAINER>",
+      "api_port": "<REGISTERED_API_PORT_INTEGER>"
+    },
+    "protected_roots": [
+      "<ORIGINAL_RUNTIME_MODEL_CACHE_NAMESPACE>",
+      "<ORIGINAL_POLICY_NAMESPACE>",
+      "<ORIGINAL_CONTROLLER_NAMESPACE>"
+    ],
+    "hold_path": "<EXISTING_SHARED_HOLD>",
+    "request_path": "<EXISTING_SHARED_REQUEST>",
+    "legacy_hold_path": "<EXISTING_LEGACY_HOLD>",
+    "legacy_request_path": "<EXISTING_LEGACY_REQUEST>",
+    "controllers": {
+      "deepseek": {
+        "path": "<REGISTERED_DEEPSEEK_CONTROLLER>",
+        "sha256": "<CONTROLLER_SHA256>"
+      },
+      "glm": {
+        "path": "<REGISTERED_GLM_CONTROLLER>",
+        "sha256": "<CONTROLLER_SHA256>"
+      }
+    },
+    "glm_container": "<REGISTERED_GLM_CONTAINER>",
+    "glm_image_id": "<REGISTERED_GLM_IMAGE_ID>",
+    "remote_helper_path": "<SAME_ABS_INDEPENDENT_HELPER_PATH_ON_FOUR_NODES>",
+    "remote_helper_sha256": "<PUBLISHED_HELPER_SHA256>",
+    "remote_authority_path": "<SAME_ABS_PRIVATE_AUTHORITY_PATH_ON_FOUR_NODES>",
+    "remote_authority_sha256": "<PRIVATE_AUTHORITY_SHA256>",
+    "nodes": [
+      {
+        "name": "<ACTUAL_NODE_1_NAME>",
+        "rank": 1,
+        "local": true,
+        "ssh_host": "<ACTUAL_NODE_1_SSH_HOST>",
+        "inventory_path": "<ABS_NODE_1_INVENTORY_RECEIPT>",
+        "inventory_sha256": "<NODE_1_INVENTORY_SHA256>"
+      },
+      {
+        "name": "<ACTUAL_NODE_2_NAME>",
+        "rank": 2,
+        "local": false,
+        "ssh_host": "<ACTUAL_NODE_2_SSH_HOST>",
+        "inventory_path": "<ABS_NODE_2_INVENTORY_RECEIPT>",
+        "inventory_sha256": "<NODE_2_INVENTORY_SHA256>"
+      },
+      {
+        "name": "<ACTUAL_NODE_3_NAME>",
+        "rank": 3,
+        "local": false,
+        "ssh_host": "<ACTUAL_NODE_3_SSH_HOST>",
+        "inventory_path": "<ABS_NODE_3_INVENTORY_RECEIPT>",
+        "inventory_sha256": "<NODE_3_INVENTORY_SHA256>"
+      },
+      {
+        "name": "<ACTUAL_NODE_4_NAME>",
+        "rank": 4,
+        "local": false,
+        "ssh_host": "<ACTUAL_NODE_4_SSH_HOST>",
+        "inventory_path": "<ABS_NODE_4_INVENTORY_RECEIPT>",
+        "inventory_sha256": "<NODE_4_INVENTORY_SHA256>"
+      }
+    ],
+    "ssh_identity": "<EXISTING_SSH_IDENTITY_PATH_ONLY_NO_KEY_CONTENT>",
+    "metrics_url": "<REGISTERED_LOCAL_LOOPBACK_METRICS_URL>",
+    "idle_samples": 7,
+    "idle_interval_seconds": 5
+  },
+  "site_evidence": {
+    "observed_live_config_sha256": "<OBSERVED_LIVE_CONFIG_SHA256>",
+    "registered_restore_config_sha256": "<REGISTERED_RESTORE_CONFIG_SHA256>",
+    "expected_preexisting_transition": "<PRIVATE_REVIEWED_EXPECTED_TRANSITION_OR_EXPLICIT_NONE>",
+    "initial_glm_state": "<PRIVATE_EVIDENCED_STOPPED_OR_ABSENT_STATE_PER_NODE>"
+  },
+  "window_seconds": 86400,
+  "jobs": [
+    {
+      "kind": "build",
+      "timeout_seconds": 82800
+    }
+  ],
+  "build": {
+    "build_directory": "<ABS_OFFICIAL_PREPARED_BUILD_DIRECTORY>",
+    "output_path": "<ABS_NEW_BUILD_OUTPUT_DIRECTORY>",
+    "profile_sha256": "<INDEPENDENT_PROFILE_SHA256>",
+    "inputs_sha256": "<OFFICIAL_INPUTS_JSON_SHA256>",
+    "builder_receipt_path": "<ABS_FRESH_BUILDER_METADATA>/provision-receipt.json",
+    "builder_receipt_sha256": "<FRESH_BUILDER_RECEIPT_SHA256>",
+    "tag": "<UNUSED_Q03_VALIDATION_IMAGE_TAG>"
+  }
+}

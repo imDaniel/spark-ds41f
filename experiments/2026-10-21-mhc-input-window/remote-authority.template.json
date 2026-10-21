@@ -1,0 +1,8 @@
+{
+  "independent_root": "<APPROVED_ABS_INDEPENDENT_ROOT>",
+  "protected_roots": [
+    "<ORIGINAL_RUNTIME_MODEL_CACHE_NAMESPACE>",
+    "<ORIGINAL_POLICY_NAMESPACE>",
+    "<ORIGINAL_CONTROLLER_NAMESPACE>"
+  ]
+}
