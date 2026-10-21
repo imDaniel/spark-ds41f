@@ -133,8 +133,9 @@ class RecoveryOrderingTests(unittest.TestCase):
         for name in ('session.lock', 'watchdog.lock'):
             (self.old_dir / name).write_text('')
         self.destination = self.root / 'new-journal'
-        self.capsule = {'window_id': 'a' * 32, 'manifest': {'independent_root': str(self.root),
-                        'preflight': {'protected_roots': [str(self.root / 'protected')]}}}
+        self.capsule = {'window_id': 'a' * 32, 'recovery_timeout_s': 300, 'manifest': {'independent_root': str(self.root),
+                        'preflight': {'protected_roots': [str(self.root / 'protected')],
+                                      'nodes': [{'name': 'node' + str(i), 'rank': i} for i in range(4)]}}}
         (self.old_dir / 'capsule.json').write_text(json.dumps(self.capsule))
         (self.old_dir / 'state.json').write_text('original state bytes')
         self.events, self.commands = [], []
@@ -158,7 +159,13 @@ class RecoveryOrderingTests(unittest.TestCase):
                 if action != 'quiesce':
                     assert session.state['transition_epochs'][-1] == {'epoch': epoch, 'action': action}
                 outer.events.append(action)
-                return {'synthetic': True}
+                import uuid
+                path = session.directory / ('command-' + uuid.uuid4().hex + '.log')
+                report = {'window_id': outer.plan.window_id, 'epoch': epoch, 'safe_to_overlap': True,
+                          'sealed_epochs': [{'node': 'node' + str(i), 'window': outer.plan.window_id,
+                                             'epoch': epoch, 'sealed': True, 'safe_to_overlap': True} for i in range(4)]}
+                path.write_text(json.dumps(report))
+                return {'log_path': str(path)}
             def require_receipt(inner, result, expected):
                 outer.events.append('proof')
                 if outer.failure == 'proof':
@@ -182,8 +189,17 @@ class RecoveryOrderingTests(unittest.TestCase):
                 outer.events.append('heartbeat')
             def release(inner):
                 outer.events.append('release')
-        modules = {'q03_window': SimpleNamespace(RuntimeOps=lambda: self.ops, Session=FakeSession)}
-        for patch in (mock.patch.object(M, 'verify_restore_plan', return_value=self.plan),
+        modules = {'q03_window': SimpleNamespace(RuntimeOps=lambda: self.ops, Session=FakeSession),
+                   'q03_window_watchdog': SimpleNamespace(process_identity=lambda pid: {'pid': pid, 'start_ticks': '123'})}
+        original_read = M._read
+        def source_read(path):
+            if Path(path).name == 'q03_recovery_supervisor.py':
+                # Only orchestration spawn boundary is inert. Dedicated tests exercise real supervisor.
+                return b"import sys\ndef start_watchdog(*args): return sys.modules['q03_restore_test']._test_watchdog_start(*args)\n"
+            return original_read(path)
+        for patch in (mock.patch.object(M, '_test_watchdog_start', create=True, side_effect=lambda *args: self.events.append('watchdog-ready')),
+                      mock.patch.object(M, '_read', side_effect=source_read),
+                      mock.patch.object(M, 'verify_restore_plan', return_value=self.plan),
                       mock.patch.object(M, 'load_old_modules', return_value=modules),
                       mock.patch.object(M, 'require_terminal', side_effect=lambda *a: self.events.append('terminal')),
                       mock.patch.object(M, 'verify_completed_build', side_effect=lambda *a: {'normal_complete': True}),
@@ -206,6 +222,8 @@ class RecoveryOrderingTests(unittest.TestCase):
         self.assertTrue(result['restored'])
         self.assertTrue(result['hold_released'])
         self.assertLess(self.events.index('lock'), self.events.index('cleanup'))
+        self.assertLess(self.events.index('heartbeat'), self.events.index('watchdog-ready'))
+        self.assertLess(self.events.index('watchdog-ready'), self.events.index('quiesce'))
         self.assertLess(self.events.index('proof'), self.events.index('cleanup'))
         self.assertLess(self.events.index('restore_drained'), self.events.index('start'))
         self.assertLess(self.events.index('restored'), self.events.index('release'))
@@ -227,6 +245,48 @@ class RecoveryOrderingTests(unittest.TestCase):
             self.assertEqual(state['phase'], 'recovery-failed')
             self.assertFalse(state['hold_released'])
 
+    def test_start_active_unit_does_not_revalidate_historical_unloaded_ack(self):
+        original_execute = self.ops.execute
+        active = False
+        started_epoch = None
+        def execute(session, argv, **kwargs):
+            nonlocal active, started_epoch
+            action = argv[argv.index('--action') + 1]
+            epoch = argv[argv.index('--epoch') + 1]
+            if action == 'stop':
+                active = False
+            elif action == 'start':
+                active, started_epoch = True, epoch
+            elif action == 'quiesce' and active and epoch != started_epoch:
+                raise RuntimeError('historical unloaded unit is now legitimately active')
+            return original_execute(session, argv, **kwargs)
+        self.ops.execute = execute
+        result = self.recover()
+        self.assertTrue(active)
+        self.assertTrue(result['restored'])
+        self.assertTrue(result['hold_released'])
+        self.assertEqual(self.commands, [('quiesce', 'c' * 32),
+            ('stop', result['transition_epochs'][-2]['epoch']),
+            ('quiesce', result['transition_epochs'][-2]['epoch']),
+            ('start', started_epoch), ('quiesce', started_epoch)])
+        self.assertLess(self.events.index('restored'), self.events.index('release'))
+
+    def test_uncertain_current_epoch_blocks_later_transition_and_release(self):
+        original = self.ops.require_receipt
+        def require_receipt(result, expected):
+            if expected['epoch'] != 'c' * 32:
+                raise RuntimeError('current epoch is uncertain')
+            return original(result, expected)
+        self.ops.require_receipt = require_receipt
+        with self.assertRaisesRegex(RuntimeError, 'current epoch'):
+            self.recover()
+        self.assertIn('stop', self.events)
+        self.assertNotIn('start', self.events)
+        self.assertNotIn('release', self.events)
+        state = json.loads((self.destination / 'state.json').read_text())
+        self.assertFalse(state['hold_released'])
+        self.assertEqual(state['phase'], 'recovery-failed')
+
     def test_retry_uses_new_journal_epochs_before_another_transition(self):
         self.failure = 'restored'
         with self.assertRaises(RuntimeError):
@@ -237,10 +297,39 @@ class RecoveryOrderingTests(unittest.TestCase):
         self.commands.clear()
         self.events.clear()
         result = self.recover()
-        self.assertEqual(self.commands[:len(prior)], [('quiesce', row['epoch']) for row in prior])
+        self.assertTrue(all(epoch not in {row['epoch'] for row in prior} for action, epoch in self.commands))
+        self.assertEqual(len(result['sealed_epoch_proofs']), 5)
         self.assertEqual(len(result['transition_epochs']), 5)
         self.assertEqual((self.old_dir / 'state.json').read_text(), 'original state bytes')
         self.assertLess(self.events.index('restored'), self.events.index('release'))
+
+    def test_cached_proof_rejects_changed_bytes_identity_and_incomplete_nodes(self):
+        result = self.recover()
+        transition = result['transition_epochs'][0]
+        proof = result['sealed_epoch_proofs'][transition['epoch']]
+        nodes = ['node' + str(i) for i in range(4)]
+        verify = lambda value: M.verify_sealed_epoch_proof(value, transition, self.plan.window_id,
+            proof['intent_sha256'], self.destination, nodes)
+        verify(proof)
+        for key, value in [('epoch', 'f' * 32), ('action', 'start'), ('window_id', 'f' * 32),
+                           ('intent_sha256', '0' * 64), ('receipt_sha256', '0' * 64)]:
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                verify(dict(proof, **{key: value}))
+        path = Path(proof['receipt_path'])
+        original = path.read_bytes()
+        for edit in ('missing', 'duplicate', 'unsafe'):
+            report = json.loads(original)
+            if edit == 'missing':
+                report['sealed_epochs'].pop()
+            elif edit == 'duplicate':
+                report['sealed_epochs'][-1]['node'] = 'node0'
+            else:
+                report['sealed_epochs'][0]['safe_to_overlap'] = False
+            path.write_text(json.dumps(report))
+            changed = dict(proof, receipt_sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+            with self.subTest(edit=edit), self.assertRaises(ValueError):
+                verify(changed)
+        path.write_bytes(original)
 
     def test_foreign_hold_and_plan_only_never_execute(self):
         result = self.recover(apply=False)
@@ -253,6 +342,25 @@ class RecoveryOrderingTests(unittest.TestCase):
         self.assertNotIn('cleanup', self.events)
         self.assertEqual(self.commands, [])
         self.assertFalse(self.destination.exists())
+
+
+class SupervisorPublicationTests(unittest.TestCase):
+    def test_exclusive_publishes_complete_json_without_overwriting(self):
+        spec = importlib.util.spec_from_file_location(
+            'q03_supervisor_publication_test', ROOT / 'scripts/q03_recovery_supervisor.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            target = root / 'ready.json'
+            original = {'ready': True, 'identity': {'pid': 123, 'start_ticks': '456'}}
+            module.exclusive(target, original)
+            self.assertEqual(json.loads(target.read_text()), original)
+            before = target.read_bytes()
+            with self.assertRaises(FileExistsError):
+                module.exclusive(target, {'ready': False})
+            self.assertEqual(target.read_bytes(), before)
+            self.assertEqual(list(root.glob('*.tmp')), [])
 
 
 if __name__ == '__main__':

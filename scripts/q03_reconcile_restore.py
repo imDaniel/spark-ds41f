@@ -266,8 +266,37 @@ def verify_completed_build(plan, modules, ops):
             'containers_absent': True, 'volume': adapter.plan['volume']}
 
 
+def verify_sealed_epoch_proof(proof, transition, window_id, intent_sha256,
+                              journal_dir, expected_nodes):
+    """A permanent epoch barrier remains valid after service state changes."""
+    require(isinstance(proof, dict) and proof.get('window_id') == window_id
+            and proof.get('epoch') == transition['epoch']
+            and proof.get('action') == transition['action']
+            and proof.get('intent_sha256') == intent_sha256,
+            'Cached epoch proof identity differs')
+    path = _path(proof['receipt_path'])
+    require(path.parent == _path(journal_dir) and path.name.startswith('command-')
+            and path.suffix == '.log', 'Cached epoch receipt escapes journal')
+    raw = _read(path)
+    require(hashlib.sha256(raw).hexdigest() == _digest(proof['receipt_sha256']),
+            'Cached epoch receipt bytes changed')
+    report = _json(raw)
+    require(report.get('window_id') == window_id
+            and report.get('epoch') == transition['epoch']
+            and report.get('safe_to_overlap') is True,
+            'Cached epoch receipt is not a successful barrier')
+    nodes = report.get('sealed_epochs')
+    require(isinstance(nodes, list) and len(nodes) == len(expected_nodes)
+            and {item.get('node') for item in nodes if isinstance(item, dict)} == set(expected_nodes)
+            and all(isinstance(item, dict) and item.get('window') == window_id
+                    and item.get('epoch') == transition['epoch']
+                    and item.get('sealed') is True and item.get('safe_to_overlap') is True
+                    for item in nodes), 'Cached epoch receipt lacks all-node sealed proof')
+    return report
+
+
 def recover_normal_complete(old_dir, capsule_sha256, journal_dir, compat_path,
-                            compat_sha256, *, apply=False):
+                            compat_sha256, *, apply=False, watchdog_retry=False):
     """Explicit foreground recovery. Never alters old session state or markers."""
     import contextlib
     import fcntl
@@ -280,7 +309,8 @@ def recover_normal_complete(old_dir, capsule_sha256, journal_dir, compat_path,
             'Compatibility adapter must be the released sibling')
     require(hashlib.sha256(_read(compat)).hexdigest() == _digest(compat_sha256), 'Compatibility source differs')
     new_sources = {name: hashlib.sha256(_read(compat.with_name(name))).hexdigest()
-                   for name in ('q03_reconcile_restore.py', 'q03_recovery_compat.py', 'q03_remote_operation.py')}
+                   for name in ('q03_reconcile_restore.py', 'q03_recovery_compat.py', 'q03_remote_operation.py',
+                                'q03_recovery_supervisor.py')}
     destination = _path(journal_dir)
     capsule = _json(_read(Path(old_dir) / 'capsule.json'))
     root = _path(capsule['manifest']['independent_root'])
@@ -295,6 +325,23 @@ def recover_normal_complete(old_dir, capsule_sha256, journal_dir, compat_path,
         return {'status': 'plan-only', 'execution_enabled': False,
                 'old_session': plan.session_dir, 'journal_dir': str(destination),
                 'scope': 'normal-completed-already-quiesced-build-only'}
+    # A retry flag is not authority: only the gated, recorded supervisor child
+    # may use it, and only while its exact supervisor remains alive.
+    if watchdog_retry:
+        raw_intent = _read(destination / 'intent.json')
+        retry_intent = _json(raw_intent)
+        marker = _json(_read(destination / 'supervisor-retry.json'))
+        prior_state = _json(_read(destination / 'state.json'))
+        require(marker.get('intent_sha256') == hashlib.sha256(raw_intent).hexdigest()
+                and retry_intent.get('old_session') == plan.session_dir
+                and retry_intent.get('capsule_sha256') == plan.capsule_sha256
+                and retry_intent.get('new_source_sha256') == new_sources,
+                'Supervisor retry intent differs')
+        require(marker['child']['pid'] == os.getpid() and recorded_process_alive(marker['child'])
+                and recorded_process_alive(marker['supervisor'])
+                and not recorded_process_alive(marker['main'])
+                and prior_state.get('recovery_process') == marker['main'],
+                'Supervisor retry process ownership differs')
     # No device or service operations occur before explicit apply.
     modules = load_old_modules(plan)
     old = modules['q03_window']
@@ -331,10 +378,19 @@ def recover_normal_complete(old_dir, capsule_sha256, journal_dir, compat_path,
         require(stat.S_ISREG(os.fstat(fd).st_mode), 'Recovery lock must be regular')
         stream = locks.enter_context(os.fdopen(fd, 'r+'))
         fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        intent = {'old_session': plan.session_dir, 'capsule_sha256': plan.capsule_sha256,
+        intent_path = destination / 'intent.json'
+        prior_intent = _json(_read(intent_path)) if intent_path.exists() else None
+        deadline_epoch = (prior_intent['deadline_epoch'] if prior_intent is not None
+                          else time.time() + capsule['recovery_timeout_s'])
+        require(isinstance(deadline_epoch, (float, int)) and time.time() < deadline_epoch
+                <= time.time() + capsule['recovery_timeout_s'], 'Recovery deadline is expired or invalid')
+        recovery_command = [sys.executable, '-I', '-B', str(Path(__file__).resolve()),
+                            '--old-session', plan.session_dir, '--capsule-sha256', plan.capsule_sha256,
+                            '--journal-dir', str(destination), '--compat-path', str(compat),
+                            '--compat-sha256', compat_sha256, '--apply']
+        intent = {'deadline_epoch': deadline_epoch, 'recovery_command': recovery_command, 'old_session': plan.session_dir, 'capsule_sha256': plan.capsule_sha256,
                   'window_id': plan.window_id, 'compat_path': str(compat),
                   'compat_sha256': compat_sha256, 'new_source_sha256': new_sources, 'entry_sha256': hashlib.sha256(_read(Path(__file__).resolve())).hexdigest()}
-        intent_path = destination / 'intent.json'
         if intent_path.exists():
             require(_json(_read(intent_path)) == intent, 'Reconciliation intent differs')
         else:
@@ -362,8 +418,22 @@ def recover_normal_complete(old_dir, capsule_sha256, journal_dir, compat_path,
             session.release()
             session.update(phase='restored', hold_released=True)
             return session.state
-        session.update(phase='restoring', restoring_started_epoch=time.time(),
-                       build_proof=proof, restored=False, hold_released=False)
+        main_identity = modules['q03_window_watchdog'].process_identity(os.getpid())
+        require(main_identity is not None, 'Current recovery process identity unavailable')
+        session.update(phase='restoring',
+                       restoring_started_epoch=deadline_epoch - capsule['recovery_timeout_s'],
+                       recovery_process=main_identity, build_proof=proof, restored=False, hold_released=False)
+        session.beat()
+        if not watchdog_retry:
+            import types
+            source_path = compat.with_name('q03_recovery_supervisor.py')
+            raw = _read(source_path)
+            require(hashlib.sha256(raw).hexdigest() == new_sources[source_path.name], 'Supervisor source changed')
+            supervisor = types.ModuleType('_q03_verified_recovery_supervisor')
+            supervisor.__file__ = str(source_path)
+            sys.modules[supervisor.__name__] = supervisor
+            exec(compile(raw, str(source_path), 'exec'), supervisor.__dict__)
+            supervisor.start_watchdog(destination, main_identity, deadline_epoch)
 
         def command(action, epoch):
             for name, expected in new_sources.items():
@@ -372,18 +442,36 @@ def recover_normal_complete(old_dir, capsule_sha256, journal_dir, compat_path,
             return [sys.executable, '-I', '-B', str(compat), '--old-session', plan.session_dir,
                     '--capsule-sha256', plan.capsule_sha256, '--recovery-dir', str(destination),
                     *adapter_command_plan(plan, action, epoch)[4:]]
+        intent_sha256 = hashlib.sha256(_read(intent_path)).hexdigest()
+        def seal_one(transition):
+            proofs = session.state.get('sealed_epoch_proofs', {})
+            epoch = transition['epoch']
+            if epoch in proofs:
+                verify_sealed_epoch_proof(proofs[epoch], transition, plan.window_id,
+                                          intent_sha256, destination, [node['name'] for node in session.manifest['preflight']['nodes']])
+                return
+            result = ops.execute(session, command('quiesce', epoch),
+                                 cwd=str(destination), timeout=360)
+            ops.require_receipt(result, {'window_id': plan.window_id,
+                                        'epoch': epoch, 'safe_to_overlap': True})
+            proof = {'window_id': plan.window_id, 'epoch': epoch,
+                     'action': transition['action'], 'intent_sha256': intent_sha256,
+                     'receipt_path': str(result['log_path']),
+                     'receipt_sha256': hashlib.sha256(_read(Path(result['log_path']))).hexdigest()}
+            verify_sealed_epoch_proof(proof, transition, plan.window_id,
+                                      intent_sha256, destination, [node['name'] for node in session.manifest['preflight']['nodes']])
+            # Durable before any later transition. A sealed registry rejects
+            # future launches, so its barrier does not depend on live unit state.
+            session.update(sealed_epoch_proofs={**proofs, epoch: proof})
         def seal_all():
-            for transition in session.state.get('transition_epochs', []):
-                result = ops.execute(session, command('quiesce', transition['epoch']),
-                                     cwd=str(destination), timeout=360)
-                ops.require_receipt(result, {'window_id': plan.window_id,
-                                            'epoch': transition['epoch'], 'safe_to_overlap': True})
+            for prior in session.state.get('transition_epochs', []):
+                seal_one(prior)
         def transition(action, timeout):
             epoch = uuid.uuid4().hex
-            session.update(transition_epochs=session.state.get('transition_epochs', []) +
-                           [{'epoch': epoch, 'action': action}])
+            record = {'epoch': epoch, 'action': action}
+            session.update(transition_epochs=session.state.get('transition_epochs', []) + [record])
             ops.execute(session, command(action, epoch), cwd=str(destination), timeout=timeout)
-            seal_all()
+            seal_one(record)
         import threading
         stop_heartbeat = threading.Event()
         heartbeat_errors = []
@@ -435,9 +523,11 @@ def main():
     parser.add_argument('--compat-path', required=True)
     parser.add_argument('--compat-sha256', required=True)
     parser.add_argument('--apply', action='store_true')
+    parser.add_argument('--watchdog-retry', action='store_true')
     args = parser.parse_args()
     print(json.dumps(recover_normal_complete(args.old_session, args.capsule_sha256,
-          args.journal_dir, args.compat_path, args.compat_sha256, apply=args.apply), sort_keys=True))
+          args.journal_dir, args.compat_path, args.compat_sha256, apply=args.apply,
+          watchdog_retry=args.watchdog_retry), sort_keys=True))
 
 
 if __name__ == '__main__':

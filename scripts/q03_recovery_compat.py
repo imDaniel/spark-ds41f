@@ -140,6 +140,7 @@ def install_overlay(old, classify, recovery_dir):
                 return derived
             if action == 'seal':
                 value = dict(value)
+                value['node'] = node['name']
                 value['operations'] = [transform(item) for item in value['operations']]
                 value['safe_to_overlap'] = value['sealed'] is True and all(
                     x.get('safe_to_overlap') is True for x in value['operations'])
@@ -176,7 +177,7 @@ def main(argv=None):
             intent['capsule_sha256'] == args.capsule_sha256, 'new intent/session mismatch')
     pins = intent['new_source_sha256']
     require(set(pins) == {'q03_reconcile_restore.py', 'q03_recovery_compat.py',
-                          'q03_remote_operation.py'}, 'new source inventory mismatch')
+                          'q03_remote_operation.py', 'q03_recovery_supervisor.py'}, 'new source inventory mismatch')
     for name, digest in pins.items():
         require(hashlib.sha256((here / name).read_bytes()).hexdigest() == digest,
                 'new released source changed: ' + name)

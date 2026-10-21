@@ -183,6 +183,42 @@ class CompatibilityTests(unittest.TestCase):
             self.assertEqual(len(list(directory.glob('memguard-ack-*.json'))), 1)
             self.assertEqual(bundle, before)
 
+    def test_compat_cli_accepts_exact_four_pins_and_rejects_missing_supervisor(self):
+        import hashlib
+        import tempfile
+        from pathlib import Path
+        here = Path(self.compat.__file__).resolve().parent
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            old_dir, recovery = root / 'old', root / 'recovery'
+            old_dir.mkdir(); recovery.mkdir()
+            pins = {name: hashlib.sha256((here / name).read_bytes()).hexdigest() for name in
+                    ('q03_reconcile_restore.py', 'q03_recovery_compat.py', 'q03_remote_operation.py', 'q03_recovery_supervisor.py')}
+            intent = {'old_session': str(old_dir), 'capsule_sha256': 'a' * 64, 'new_source_sha256': pins}
+            (recovery / 'intent.json').write_text(json.dumps(intent))
+            (old_dir / 'capsule.json').write_text(json.dumps({'manifest': {'independent_root': str(root),
+                'preflight': {'protected_roots': [str(root / 'protected')]}}}))
+            tail = ['--policy', str(root / 'policy'), '--policy-sha256', 'b' * 64,
+                    '--spark-sha256', 'c' * 64, '--evidence-dir', str(root / 'evidence'),
+                    '--hold', str(root / 'hold'), '--window-id', 'd' * 32,
+                    '--epoch', 'e' * 32, '--action', 'quiesce', '--apply']
+            argv = ['--old-session', str(old_dir), '--capsule-sha256', 'a' * 64,
+                    '--recovery-dir', str(recovery)] + tail
+            plan = SimpleNamespace(source_directory=str(old_dir), source_hashes=[('q03_original_spark_adapter.py', 'f' * 64)])
+            support = SimpleNamespace(verify_restore_plan=lambda *a: plan,
+                                      adapter_command_plan=lambda *a: ['unused'] * 4 + tail)
+            old = SimpleNamespace(run=mock.Mock(return_value=0))
+            def load(path, name, expected=None):
+                return support if name == '_q03_compat_support' else old if name == '_q03_compat_verified_old_adapter' else self.remote
+            with mock.patch.object(self.compat, 'load_source', side_effect=load), mock.patch.object(self.compat, 'install_overlay'):
+                self.assertEqual(self.compat.main(argv), 0)
+                old.run.assert_called_once()
+                pins.pop('q03_recovery_supervisor.py')
+                (recovery / 'intent.json').write_text(json.dumps(intent))
+                with self.assertRaisesRegex(RuntimeError, 'inventory'):
+                    self.compat.main(argv)
+                old.run.assert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main()
