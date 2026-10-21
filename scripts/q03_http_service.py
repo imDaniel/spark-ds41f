@@ -26,7 +26,7 @@ require, canonical, digest, json_bytes = owner.require, owner.canonical, owner.d
 IMAGE, SOURCE_HEAD, RUNTIME_SHA = owner.IMAGE, owner.SOURCE_HEAD, owner.RUNTIME_SHA
 PHASES = ('admitted', 'prepared4', 'created4', 'startup_guards4', 'started4',
           'config_ready', 'steady_guards4', 'client_running', 'client_terminal', 'drained')
-SOURCE_FILES = ('q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py', 'q03_quality_matrix.py')
+SOURCE_FILES = ('q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py', 'q03_quality_matrix.py', 'q03_performance.py')
 BOOT_MODES = ('off', 'off', 'dual')
 QUALIFICATION_SOURCE_SHA256 = 'f41e9fac23ee88defa71d6aed6dddaa6b0630b8c5e369f14b02c17ee2d242c1e'
 
@@ -65,6 +65,26 @@ def quality_module():
     return qualification_module(3)
 
 
+PERFORMANCE_SOURCE_SHA256 = '53bcbf7cd715c11ae23bf31354a61943c1fd0b11b3649ef72139a14c37dc0ebf'
+
+
+def performance_module():
+    path = Path(__file__).with_name('q03_performance.py')
+    raw = read_owned_bytes(path)
+    require(digest(raw) == PERFORMANCE_SOURCE_SHA256, 'performance source pin differs')
+    module = types.ModuleType('_q03_performance_source'); module.__file__ = str(path)
+    exec(compile(raw, str(path), 'exec'), module.__dict__)
+    return module
+
+
+def finite_corpus(value, binding=None):
+    if value.get('schema_version') == 4:
+        config, module = value['performance_screen'], performance_module()
+    else:
+        config, module = value['qualification'], qualification_module(value['schema_version'])
+    return config, module.validate_binding(config, binding)
+
+
 def is_http(manifest):
     return any(j.get('kind') == 'http_service' for j in manifest.get('jobs', []))
 
@@ -84,6 +104,8 @@ def validate_jobs(manifest):
 
 
 def next_selection(session):
+    if session.manifest.get('http_service', {}).get('schema_version') == 4:
+        return performance_module().next_selection(session)
     if session.manifest.get('http_service', {}).get('schema_version') in (2, 3):
         return qualification_module(session.manifest['http_service']['schema_version']).next_selection(session)
     passed = [r for r in session.state.get('attempt_results', [])
@@ -154,8 +176,9 @@ def validate_binding(manifest, ops, *, remote=True):
     fields = {'schema_version', 'owner_inputs', 'owner_matrix', 'toolbox', 'api_port',
               'startup_seconds', 'client_seconds'}
     require(isinstance(value, dict) and type(value.get('schema_version')) is int
-            and value['schema_version'] in (1, 2, 3), 'HTTP schema differs')
-    require(set(value) == (fields if value['schema_version'] == 1 else fields | {'qualification'}),
+            and value['schema_version'] in (1, 2, 3, 4), 'HTTP schema differs')
+    require(set(value) == (fields if value['schema_version'] == 1 else fields |
+            ({'performance_screen'} if value['schema_version'] == 4 else {'qualification'})),
             'HTTP binding fields differ')
     if value['schema_version'] in (2, 3):
         validate_qualification = qualification_module(value['schema_version']).validate_binding
@@ -163,6 +186,10 @@ def validate_binding(manifest, ops, *, remote=True):
         if value['schema_version'] == 2:
             require(manifest['jobs'][0]['selection']['steering'] == 'off',
                     'first lean qualification slice is unloaded only')
+    if value['schema_version'] == 4:
+        performance_module().validate_binding(value['performance_screen'])
+        require(manifest['jobs'][0]['selection']['steering'] == 'active',
+                'performance is active1 only; owned sequence determines OFF/DUAL')
     for key, low, high in (('api_port', 1024, 65535), ('startup_seconds', 1, 3600), ('client_seconds', 1, 600)):
         require(type(value[key]) is int and low <= value[key] <= high, 'invalid HTTP bound: ' + key)
     require(value['api_port'] != value['owner_inputs']['master_port'], 'HTTP and rendezvous ports collide')
@@ -186,6 +213,8 @@ def validate_binding(manifest, ops, *, remote=True):
     binding.update(http=copy.deepcopy(value), toolbox_inventory=inventory)
     if value['schema_version'] in (2, 3):
         validate_qualification(value['qualification'], binding)
+    if value['schema_version'] == 4:
+        performance_module().validate_binding(value['performance_screen'], binding)
     if remote:
         validate_remote_inputs(manifest, binding, ops)
     return binding
@@ -205,16 +234,20 @@ def validate_paths(manifest, directory):
     immutable += [Path(cell[key]['path']) for cell in matrix['terminals'] for key in ('terminal', 'descriptor')]
     for key in ('profile', 'nodes', 'effective_config'):
         immutable.append(Path(manifest['http_service']['owner_inputs'][key]['path']))
-    if manifest['http_service'].get('schema_version') in (2, 3):
-        validate_qualification = qualification_module(manifest['http_service']['schema_version']).validate_binding
-        qualification = manifest['http_service']['qualification']
-        corpus = validate_qualification(qualification)
+    if manifest['http_service'].get('schema_version') in (2, 3, 4):
+        qualification, corpus = finite_corpus(manifest['http_service'])
         immutable += [Path(qualification['corpus']['path']), Path(corpus['prompts']['path']),
                       Path(corpus['artifacts']['model_root'])]
         immutable += [Path(pin['path']) for pin in [corpus['artifacts']['weights_manifest'],
                       corpus['artifacts']['runtime_metadata'], *corpus['artifacts']['native_sources'].values()]]
     if manifest['http_service'].get('schema_version') == 3:
         prior = manifest['http_service']['qualification']['stage1a']['capsule']
+        immutable += [Path(prior['path']).parent,
+                      Path(owner.pinned_json(prior)['manifest']['preflight']['independent_checkout'])]
+    if manifest['http_service'].get('schema_version') == 4:
+        stage1 = manifest['http_service']['performance_screen']['stage1']
+        immutable.append(Path(stage1['session']))
+        prior = owner.pinned_json(stage1['capsule'])['manifest']['http_service']['qualification']['stage1a']['capsule']
         immutable += [Path(prior['path']).parent,
                       Path(owner.pinned_json(prior)['manifest']['preflight']['independent_checkout'])]
     writable = [resource, evidence_path(directory, manifest)]
@@ -326,6 +359,13 @@ def http_plan(binding, window_id, attempt_id, selection, *, session=None):
             for name in (('q03_qualification', 'q03_owner_model', 'q03_held_window')
                          + (('q03_quality_matrix',) if version == 3 else ()))}
         plan['client']['output'] = plan['ranks'][0]['root'] + '/results/lean.json'
+    if binding['http'].get('schema_version') == 4:
+        plan['client']['performance_screen'] = performance_module().client_plan(binding, selection)
+        plan['client']['performance_sources'] = {name: digest(read_owned_bytes(
+            Path(binding['checkout']) / 'scripts' / (name + '.py')))
+            for name in ('q03_performance', 'q03_owner_model', 'q03_held_window')}
+        plan['client']['output'] = plan['ranks'][0]['root'] + '/results/performance-screen.json'
+        plan['client']['runtime_context'] = plan['ranks'][0]['root'] + '/results/runtime-context.json'
     plan.pop('plan_sha256')
     plan['plan_sha256'] = digest(canonical(plan))
     return plan
@@ -350,10 +390,8 @@ def input_contract(binding, *, include_toolbox=True):
         value['files'].append({'path': str(path), 'sha256': digest(read_owned_bytes(path))})
     if not include_toolbox:
         return value
-    if binding['http'].get('schema_version') in (2, 3):
-        validate_qualification = qualification_module(binding['http']['schema_version']).validate_binding
-        qualification = binding['http']['qualification']
-        corpus = validate_qualification(qualification)
+    if binding['http'].get('schema_version') in (2, 3, 4):
+        qualification, corpus = finite_corpus(binding['http'])
         value['files'] += [qualification['corpus'], corpus['prompts'],
                            corpus['artifacts']['weights_manifest'], corpus['artifacts']['runtime_metadata'],
                            *corpus['artifacts']['native_sources'].values()]
@@ -371,10 +409,8 @@ def boundary_contract(binding, node, path):
     value['input_files'] = input_contract(binding, include_toolbox=include_toolbox)['files']
     toolbox = binding['http']['toolbox']['path']
     value['immutable_paths'].append(toolbox)
-    if binding['http'].get('schema_version') in (2, 3):
-        validate_qualification = qualification_module(binding['http']['schema_version']).validate_binding
-        qualification = binding['http']['qualification']
-        corpus = validate_qualification(qualification)
+    if binding['http'].get('schema_version') in (2, 3, 4):
+        qualification, corpus = finite_corpus(binding['http'])
         value['immutable_paths'] += [qualification['corpus']['path'], corpus['prompts']['path']]
     if include_toolbox:
         value['input_directories'].append(toolbox)
@@ -395,10 +431,9 @@ def validate_remote_inputs(manifest, binding, ops):
         report = json_bytes(result.stdout)
         require(report.get('image') == IMAGE and report.get('test_tree') == owner.TEST_TREE,
                 'HTTP all-four input/image identity differs')
-        if binding['http'].get('schema_version') in (2, 3):
-            qualifier = qualification_module(binding['http']['schema_version'])
-            corpus = qualifier.validate_binding(binding['http']['qualification'], binding)
+        if binding['http'].get('schema_version') in (2, 3, 4):
             legacy = qualification_module(2)
+            _, corpus = finite_corpus(binding['http'], binding)
             files = legacy.artifact_files(corpus)
             result = ops.run(_node_argv(manifest['preflight'], node, bound_command(
                 ['python3', '-I', '-B', '-c', legacy.ASSET_PROBE, canonical(files).decode()])), timeout=90)
@@ -716,6 +751,13 @@ class HttpOps(owner.OwnerOps):
         # Host-side fixed Python client, NOT docker exec: supervisor owns the
         # actual HTTP-client process and every descendant rather than a CLI proxy.
         path = self.journal.directory / 'client-plan.json'
+        if 'performance_screen' in self.plan['client']:
+            context = {k: self.plan[k] for k in ('window_id', 'attempt_id', 'plan_sha256', 'url')}
+            context.update(ranks=[{k: r[k] for k in ('rank', 'container_id', 'config_sha256')}
+                                  for r in self.journal.state['ranks']],
+                           ready_sha256=digest(read_owned_bytes(self.journal.directory / 'ready-observed.json')))
+            performance_module().validate_context(context, self.plan)
+            exclusive_json(Path(self.plan['client']['runtime_context']), context)
         sha = exclusive_json(path, self.plan)
         script = str(Path(self.binding['checkout']) / 'scripts/q03_http_client.py')
         self.mutate(0, 'http_client', ['python3', '-I', '-B', script, '--plan', str(path), '--sha256', sha],
@@ -769,6 +811,13 @@ class HttpOps(owner.OwnerOps):
                 and receipt.get('error') is None and receipt.get('output_sha256') == digest(raw),
                 'HTTP client receipt failed or differs')
         value = json_bytes(raw)
+        if 'performance_screen' in self.plan['client']:
+            module = performance_module()
+            module.verify_runtime_context(self.journal.directory.parent, self.plan)
+            result = module.validate_output(value, self.plan)
+            return dict(result='passed', window_id=self.plan['window_id'], attempt_id=self.plan['attempt_id'],
+                        image=IMAGE, source_head=SOURCE_HEAD, plan_sha256=self.plan['plan_sha256'],
+                        result_sha256=digest(raw), toolbox_head=self.plan['client']['toolbox_head'], **result)
         if 'qualification' in self.plan['client']:
             validate_output = qualification_module(self.binding['http']['schema_version']).validate_output
             qualification = validate_output(value, self.plan)
