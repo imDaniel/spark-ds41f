@@ -313,9 +313,12 @@ class RemoteOperationFaults(unittest.TestCase):
 
     def test_terminal_status_preserves_stdout_and_stderr_separately(self):
         directory = self.create()
-        (directory / "output.log").write_text("normal output\n")
-        (directory / "error.log").write_text("diagnostic output\n")
-        self.remote.supervise(directory, ChildOps(directory))
+        ops = ChildOps(directory)
+        def write_child_output():
+            (directory / "output.log").write_text("normal output\n")
+            (directory / "error.log").write_text("diagnostic output\n")
+        ops.hook = write_child_output
+        self.remote.supervise(directory, ops)
         result = self.status()
         self.assertEqual(result["stdout"], "normal output\n")
         self.assertEqual(result["stderr"], "diagnostic output\n")

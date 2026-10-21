@@ -60,6 +60,43 @@ def log_capture_id(argv):
     return None
 
 
+def create_private_log(directory, name):
+    """Create new evidence only; never reopen, truncate or repair an old log."""
+    import stat
+    directory = Path(directory)
+    if name not in ('output.log', 'error.log', 'supervisor.log'):
+        raise ValueError('unexpected operation log name')
+    if not directory.is_absolute() or directory.resolve() != directory:
+        raise ValueError('log directory must be absolute without symlink aliases')
+    parent_fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        parent = os.fstat(parent_fd)
+        if (parent.st_uid != os.geteuid() or stat.S_IMODE(parent.st_mode) != 0o700):
+            raise RuntimeError('log directory must be owned and private')
+        fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
+                     0o600, dir_fd=parent_fd)
+        try:
+            created = os.fstat(fd)
+            current = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
+            if (not stat.S_ISREG(created.st_mode) or created.st_uid != os.geteuid()
+                    or stat.S_IMODE(created.st_mode) != 0o600 or created.st_nlink != 1
+                    or created.st_size != 0):
+                raise RuntimeError('new log must be an owned private unaliased regular file')
+            if ((created.st_dev, created.st_ino, created.st_mode, created.st_uid, created.st_nlink) !=
+                    (current.st_dev, current.st_ino, current.st_mode, current.st_uid, current.st_nlink)):
+                raise RuntimeError('new log changed during creation')
+            current_parent = directory.lstat()
+            if (directory.resolve() != directory or
+                    (parent.st_dev, parent.st_ino) != (current_parent.st_dev, current_parent.st_ino)):
+                raise RuntimeError('log directory changed during creation')
+            return os.fdopen(fd, 'wb')
+        except BaseException:
+            os.close(fd)
+            raise
+    finally:
+        os.close(parent_fd)
+
+
 def log_streams(directory):
     import stat
     streams, errors = {}, {}
@@ -339,7 +376,6 @@ class LocalOps:
     sleep = staticmethod(time.sleep)
 
     def launch_gated(self, manifest, log):
-        r, w = os.pipe()
         gate = ('import os,sys; f=int(sys.argv[1]); b=os.read(f,1); os.close(f); '
                 'os.execvpe(sys.argv[2],sys.argv[2:],os.environ) if b==b"1" else sys.exit(125)')
         if log_capture_id(manifest['argv']) is not None:
@@ -347,7 +383,13 @@ class LocalOps:
             # The limit is inherited only by this exact read-only log client.
             gate = ('import resource; resource.setrlimit(resource.RLIMIT_FSIZE, ('
                     + str(LOG_STREAM_LIMIT) + ',' + str(LOG_STREAM_LIMIT) + ')); ' + gate)
-        self.stderr = Path(log.name).with_name('error.log').open('ab')
+        directory = operation_dir(manifest['root'], manifest['window'], manifest['operation'])
+        self.stderr = create_private_log(directory, 'error.log')
+        try:
+            r, w = os.pipe()
+        except BaseException:
+            self.stderr.close()
+            raise
         try:
             child = subprocess.Popen([sys.executable, '-I', '-B', '-c', gate, str(r), *manifest['argv']],
                                      cwd=manifest['cwd'], stdin=subprocess.DEVNULL,
@@ -405,7 +447,7 @@ def supervise(directory, ops):
     owner = identity(os.getpid())
     state = dict(phase='starting', supervisor=owner)
     atomic(directory / 'state.json', state)
-    with (directory / 'output.log').open('ab') as log:
+    with create_private_log(directory, 'output.log') as log:
         child = ops.launch_gated(m, log)
         state.update(phase='running', child=child)
         atomic(directory / 'state.json', state)  # durable BEFORE execution gate
@@ -478,7 +520,7 @@ def main():
     if a.action == 'launch':
         directory = create_operation(a.root, a.window, a.operation,
                                      json.loads(a.argv_json), a.cwd, a.timeout_seconds, a.epoch)
-        with (directory / 'supervisor.log').open('xb') as log:
+        with create_private_log(directory, 'supervisor.log') as log:
             expected = read_manifest(directory)[0]['helper_sha256']
             subprocess.Popen(verified_helper_command(Path(__file__).resolve(), expected,
                               ['_supervise', '--root', a.root, '--window', a.window,
