@@ -13,7 +13,7 @@ def checked_json(path, expected):
     return json.loads(raw), raw
 
 
-def derive(profile, *, checkout, cache, image, tree, port, master_port, protected_ports):
+def derive(profile, *, checkout, cache, image, tree, baseline, port, master_port, protected_ports):
     p = copy.deepcopy(profile)
     if p.get("shape") != "tp4-ring":
         raise ValueError("expected reviewed TP4 baseline profile")
@@ -43,6 +43,7 @@ def derive(profile, *, checkout, cache, image, tree, port, master_port, protecte
     p["environment"]["VLLM_DS41_Q03_MHC_MXFP8"] = "0"
     p["nodes_config"] = "config/q03-window-nodes.local.json"
     p["upstreams_config"] = "experiments/2026-10-21-mhc-input-validation/upstreams.lock.json"
+    p["promoted_baseline"] = baseline
     return p
 
 
@@ -75,13 +76,18 @@ def main():
     source = json.loads((checkout / "experiments/2026-10-21-mhc-input-validation/source.json").read_text())
     if source["vllm"]["expected_tree"] != args.source_tree:
         raise ValueError("candidate tree differs from deployment source manifest")
+    lock = json.loads((checkout / "experiments/2026-10-21-mhc-input-validation/upstreams.lock.json").read_text())
+    baseline = lock["generated_from_baseline"]
+    if not isinstance(baseline, str) or not baseline:
+        raise ValueError("candidate lock must name its baseline")
     output = checkout / "config/q03-window.local.json"
     output_map = checkout / "config/q03-window-nodes.local.json"
     for p in (output, output_map):
         if p.exists() or p.is_symlink() or p.parent.resolve() != checkout / "config":
             raise ValueError("output must be new and inside independent config directory")
     result = derive(profile, checkout=checkout, cache=cache, image=args.image_tag,
-                    tree=args.source_tree, port=args.http_port, master_port=args.master_port,
+                    tree=args.source_tree, baseline=baseline,
+                    port=args.http_port, master_port=args.master_port,
                     protected_ports=args.protected_port)
     # Exclusive writes prevent replacement; an interrupted attempt retains partial evidence.
     with output_map.open("xb") as f:
