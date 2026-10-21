@@ -192,11 +192,12 @@ os.environ['DOCKER_HOST']='unix:///var/run/docker.sock'
 
 sys.dont_write_bytecode=True
 
-import hashlib,json,subprocess,sys
+import hashlib,json,subprocess,sys,re
 from pathlib import Path
 r=Path(P['repository']);q=subprocess.run(['/usr/bin/docker','--host','unix:///var/run/docker.sock','inspect',P['container']],capture_output=True,text=True)
 row={'present':q.returncode==0,'running':False,'valid':False,'gpu_pids':[],'errors':[]}
-if q.returncode and 'No such object:' not in q.stderr and 'No such container:' not in q.stderr:
+missing=r'(?i:(?:error: |error response from daemon: )?no such (?:object|container): )'+re.escape(P['container'])
+if q.returncode and not (q.returncode==1 and q.stdout.strip() in ('','[]') and re.fullmatch(missing,q.stderr.strip())):
  raise RuntimeError('Unknown DeepSeek container state')
 profile=Path(P['profile_directory']);manifest=profile/P['profile_manifest'];directions=manifest.parent/'directions.f32'
 checks=[hashlib.sha256((r/P['cluster_config']).read_bytes()).hexdigest()==P['config_sha256'],hashlib.sha256(manifest.read_bytes()).hexdigest()==P['manifest_sha256'],hashlib.sha256(directions.read_bytes()).hexdigest()==P['directions_sha256'],subprocess.check_output(['git','-C',str(r),'rev-parse','HEAD'],text=True).strip()==P['revision'],not subprocess.check_output(['git','-C',str(r),'status','--porcelain'])]
@@ -265,13 +266,14 @@ def _observe_deepseek(spec, policy, ops):
 
 
 _GLM_PROBE = r'''
-import json,subprocess,os
+import json,subprocess,os,re
 for key in list(os.environ):
  if key.startswith(('DOCKER_','BUILDX_','BUILDKIT_')):os.environ.pop(key)
 os.environ['DOCKER_HOST']='unix:///var/run/docker.sock'
 p=subprocess.run(['sudo','-n','docker','--host','unix:///var/run/docker.sock','inspect',NAME],capture_output=True,text=True)
 if p.returncode:
- if 'No such object:' not in p.stderr and 'No such container:' not in p.stderr:
+ missing=r'(?i:(?:error: |error response from daemon: )?no such (?:object|container): )'+re.escape(NAME)
+ if not (p.returncode==1 and p.stdout.strip() in ('','[]') and re.fullmatch(missing,p.stderr.strip())):
   raise RuntimeError('Unknown GLM container state')
  print(json.dumps({'exists':False}))
 else:

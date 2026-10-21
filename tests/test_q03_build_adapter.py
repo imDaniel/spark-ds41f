@@ -152,10 +152,10 @@ class OwnershipTests(unittest.TestCase):
     def test_glm_probe_known_absence_and_unknown_errors(self):
         for error in ('No such object: owned', 'No such container: owned'):
             output = io.StringIO()
-            with patch('subprocess.run', return_value=SimpleNamespace(returncode=1, stderr=error)), contextlib.redirect_stdout(output):
+            with patch('subprocess.run', return_value=SimpleNamespace(returncode=1, stdout='', stderr=error)), contextlib.redirect_stdout(output):
                 exec(preflight._GLM_PROBE, {'NAME': 'owned'})
             self.assertEqual(json.loads(output.getvalue()), {'exists': False})
-        with patch('subprocess.run', return_value=SimpleNamespace(returncode=1, stderr='permission denied')):
+        with patch('subprocess.run', return_value=SimpleNamespace(returncode=1, stdout='', stderr='permission denied')):
             with self.assertRaises(RuntimeError):
                 exec(preflight._GLM_PROBE, {'NAME': 'owned'})
 

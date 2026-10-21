@@ -395,7 +395,10 @@ class RuntimeOps:
                                     text=True, capture_output=True, timeout=30, env=command_environment())
             if result.returncode:
                 # Absence must be distinguished from daemon/permission errors.
-                if "No such container" in result.stderr or "No such object" in result.stderr:
+                missing = (r'(?i:(?:error: |error response from daemon: )?no such (?:object|container): )'
+                           + re.escape(name))
+                if (result.returncode == 1 and result.stdout.strip() in ("", "[]")
+                        and re.fullmatch(missing, result.stderr.strip())):
                     if name not in session.state.get("candidate_container_ids", {}):
                         # A create RPC may finish late, but no start was ever
                         # authorized without its durable ID. Report an inert
