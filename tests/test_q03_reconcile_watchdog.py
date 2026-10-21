@@ -122,7 +122,7 @@ class ReconcileWatchdogTests(unittest.TestCase):
 
     def test_source_hash_drift_rejected_before_launch(self):
         with tempfile.TemporaryDirectory() as tmp:
-            directory = Path(tmp)
+            directory = Path(tmp).resolve()
             intent = {'new_source_sha256': {name: '0' * 64 for name in
                 ('q03_reconcile_restore.py', 'q03_recovery_compat.py',
                  'q03_remote_operation.py', 'q03_recovery_supervisor.py')}}

@@ -166,7 +166,7 @@ sys.exit(pytest.main(sys.argv[1:]))
 
 
 def needs_tblib(manifest):
-    return any(job.get("kind") in ("g1", "g2") for job in manifest.get("jobs", []))
+    return any(job.get("kind") in ("g1", "g2", "owner_model") for job in manifest.get("jobs", []))
 
 
 def validate_tblib_dependency(candidate):
@@ -342,7 +342,10 @@ class RuntimeOps:
                  "q03_original_spark_adapter.py", "q03_remote_operation.py", "q03_build_adapter.py",
                  "q03_window_build.py", "q03_buildkit_plan.py", "q03_git_toolchain.py",
                  "q03_held_window.py")
-        return {name: self.sha256(Path(__file__).with_name(name)) for name in names}
+        owner_sources = ("q03_owner_model.py", "memguard-start.sh", "memguard.sh", "../bin/spark",
+                         "mesh_fabric.py", "kernel_backend.py", "kernel_readiness.py", "topology.py",
+                         "transport_profiles.py", "model_layout.py", "recipe.py")
+        return {name: self.sha256(Path(__file__).parent / name) for name in (*names, *owner_sources)}
 
     def validate_host(self, manifest):
         checkout = Path(manifest["preflight"]["independent_checkout"]).resolve()
@@ -390,6 +393,10 @@ class RuntimeOps:
         self.validate_git_toolchain(manifest)
         if needs_tblib(manifest):
             validate_tblib_dependency(candidate)
+        from q03_owner_model import is_owner, validate_owner_binding, validate_remote_inputs
+        if is_owner(manifest):
+            binding = validate_owner_binding(manifest, self)
+            validate_remote_inputs(manifest, binding, self)
 
     def validate_g1_test_source(self, manifest, selection):
         candidate = manifest["candidate"]
@@ -772,6 +779,22 @@ class RuntimeOps:
         if actual != sorted(expected_mounts) or len(actual) != len(item.get("Mounts", [])):
             raise RuntimeError("held candidate readonly/writable mount plan differs")
 
+    def cleanup_owner(self, session, attempt_id=None):
+        from q03_owner_model import is_owner
+        if not is_owner(session.manifest):
+            return
+        attempts = ([session.directory / "attempts" / attempt_id] if attempt_id else
+                    sorted((session.directory / "attempts").glob("*")))
+        for directory in attempts:
+            if not (directory / "owner").exists():
+                continue
+            argv = [sys.executable, "-B", str(Path(__file__).with_name("q03_owner_model.py")),
+                    "quiesce", "--session-dir", str(session.directory), "--attempt-id", directory.name]
+            result = self.execute(session, argv, cwd=str(session.directory), timeout=600)
+            self.require_receipt(result, {"window_id": session.capsule["window_id"],
+                                "attempt_id": directory.name, "daemon_quiescent": True,
+                                "gpu_drain_required_by_caller": True})
+
     def cleanup_held_candidates(self, session, attempt_id=None):
         """Positive exact-ID removal proof. Unknown daemon outcomes never pause."""
         rows = [dict(row) for row in session.state.get("held_candidates", [])]
@@ -932,6 +955,9 @@ def restore(session):
         raise RuntimeError("recovery refuses foreign or missing hold")
     session.update(phase="restoring", restoring_started_epoch=session.state.get("restoring_started_epoch", time.time()))
     session.ops.terminate_owned_process(session.state.get("active_process"))
+    from q03_owner_model import is_owner
+    if is_owner(session.manifest):
+        session.ops.cleanup_owner(session)
     if "held_window" in session.manifest:
         from q03_held_window import verify_outer
         verify_outer(session)
@@ -1150,6 +1176,11 @@ def validate_layout(manifest, directory):
             raise ValueError("bounded capture timeout required (1..120)")
         job_command(manifest, "capture", "0" * 32)
         return
+    from q03_owner_model import is_owner, validate_jobs, validate_paths
+    if is_owner(manifest):
+        validate_jobs(manifest)
+        validate_paths(manifest, directory)
+        return
     candidate = manifest["candidate"]
     paths = {key: safe(candidate[key]) for key in
              ("tests_path", "cache_path", "output_path", "runtime_manifest_path",
@@ -1193,6 +1224,9 @@ def validate_layout(manifest, directory):
 
 
 def run_session(manifest, directory, ops=None):
+    from q03_owner_model import is_owner
+    if is_owner(manifest) and "held_window" not in manifest:
+        raise ValueError("owner_model requires a new bounded held window; no one-shot fallback")
     ops = RuntimeOps() if ops is None else ops
     directory = Path(directory)
     validate_layout(manifest, directory)
@@ -1329,6 +1363,8 @@ def main():
     plan = sub.add_parser("plan-attempt", help="write a typed immutable plan without running tests/services")
     plan.add_argument("--session-dir", required=True)
     plan.add_argument("--through", choices=("p0", "g1", "g2"))
+    plan.add_argument("--owner-mode", choices=("off", "dual"))
+    plan.add_argument("--owner-steering", choices=("off", "loaded_zero", "active"))
     plan.add_argument("--g1-tests")
     plan.add_argument("--g1-tests-sha256")
     control = sub.add_parser("control", help="request a held action; never directly change services")
@@ -1347,7 +1383,8 @@ def main():
         from q03_held_window import plan_attempt
         session = Session(args.session_dir, RuntimeOps())
         result = plan_attempt(session, sys.modules[__name__], through=args.through,
-                              g1_tests_path=args.g1_tests, g1_tests_sha256=args.g1_tests_sha256)
+                              g1_tests_path=args.g1_tests, g1_tests_sha256=args.g1_tests_sha256,
+                              owner_mode=args.owner_mode, owner_steering=args.owner_steering)
     elif args.command == "control":
         from q03_held_window import read_status, submit_control
         session = Session(args.session_dir, RuntimeOps())

@@ -1,0 +1,542 @@
+From 6c7eccff1e3edef5ae35c9be20cdc9a9d1e5834f Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 13:20:00 +0000
+Subject: [PATCH] test: observe Q03 owner configuration and readiness
+
+Base: component197 154159dc3e38ca8b2321c01a153a1b2ccaf8663b.
+
+Rationale: exercise the existing real-engine owner observation path with
+explicit four-rank resolved configuration and a bounded steady-guard
+acknowledgment before normal requests. Preserve runtime implementation,
+capacity and steering contracts; keep private graph retirement untouched.
+
+Quality: test-only observation, not numerical, performance or graph-retirement
+qualification. No model weights, native imports or device execution occurred.
+The external four-node controller and model-derived configuration admission
+remain separate prerequisites. Ordinary engine teardown is retained.
+
+Tests: eleven targeted CPU helper contracts passed for the readiness/config
+slice, plus separately recorded prior owner type/steering contracts. Source
+review completed. These mocks and AST tests do not qualify model execution.
+
+Upstream status: independent downstream review artifact; not submitted upstream.
+---
+ .../fullgraph/test_deepseek_v41_q03_owner.py  | 506 ++++++++++++++++++
+ 1 file changed, 506 insertions(+)
+ create mode 100644 tests/compile/fullgraph/test_deepseek_v41_q03_owner.py
+
+diff --git a/tests/compile/fullgraph/test_deepseek_v41_q03_owner.py b/tests/compile/fullgraph/test_deepseek_v41_q03_owner.py
+new file mode 100644
+index 000000000..d18153103
+--- /dev/null
++++ b/tests/compile/fullgraph/test_deepseek_v41_q03_owner.py
+@@ -0,0 +1,506 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Opt-in real-engine Q03 ownership gate, not a bounded expert-plan test.
++
++Collection uses the normal tests/conftest.py dependencies. This is NOT a
++Torch-free collection entry. A reviewed multi-node test launcher must supply
++one isolated engine, local checkpoint/native identity and independent outputs.
++Graph collectors are observed without forcing private graph retirement.
++"""
++
++import hashlib
++import json
++import math
++import os
++import struct
++import stat
++from pathlib import Path
++import weakref
++import time
++from enum import Enum
++
++import pytest
++
++SOURCE_HEAD = "154159dc3e38ca8b2321c01a153a1b2ccaf8663b"
++
++
++def validate_fixture_spec(spec):
++    """Reject an unspecified heavy model fixture before constructing an engine."""
++    if spec.get("source_head") != SOURCE_HEAD:
++        raise ValueError("This fixture targets the reviewed component197 runtime")
++    if spec.get("mode") not in ("off", "dual"):
++        raise ValueError("Run one startup mode per fresh test process")
++    for key in ("model_path", "runtime_manifest_path", "output_path"):
++        path = Path(spec[key])
++        if not path.is_absolute() or ".." in path.parts:
++            raise ValueError("Explicit absolute fixture paths are required")
++    digest = spec["runtime_manifest_sha256"]
++    if len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
++        raise ValueError("A reviewed runtime manifest hash is required")
++    kwargs = spec["engine_kwargs"]
++    if kwargs.get("tensor_parallel_size") != 4:
++        raise ValueError("The Q03 target fixture requires TP4")
++    if kwargs.get("enforce_eager") is not False:
++        raise ValueError("This is the production capture gate, not eager diagnosis")
++    for key in ("distributed_executor_backend", "compilation_config",
++                "max_model_len", "max_num_batched_tokens", "gpu_memory_utilization"):
++        if key not in kwargs:
++            raise ValueError("Missing reviewed engine binding: " + key)
++    backend = kwargs["distributed_executor_backend"]
++    if not isinstance(backend, str) or not backend.strip():
++        raise ValueError("Explicit distributed executor binding required")
++    for key in ("max_model_len", "max_num_batched_tokens"):
++        if type(kwargs[key]) is not int or kwargs[key] <= 0:
++            raise ValueError("Explicit positive engine capacity required: " + key)
++    memory = kwargs["gpu_memory_utilization"]
++    if (type(memory) not in (int, float) or not math.isfinite(memory)
++            or not 0 < memory <= 1):
++        raise ValueError("Explicit finite GPU memory utilization required")
++    if not isinstance(kwargs["compilation_config"], dict) or not kwargs["compilation_config"]:
++        raise ValueError("Explicit production compilation configuration required")
++    if kwargs.get("trust_remote_code", False) is not False:
++        raise ValueError("This local built-in model fixture does not load remote code")
++    if "model" in kwargs or "model_name" in kwargs:
++        raise ValueError("Use the separately bound local checkpoint path")
++    requests = spec["requests"]
++    if (not isinstance(requests, list) or len(requests) < 2
++            or any(not isinstance(batch, list) or not batch
++                   or any(not isinstance(prompt, str) for prompt in batch)
++                   for batch in requests)):
++        raise ValueError("At least two explicit nonempty request batches required")
++    if type(spec["max_tokens"]) is not int or spec["max_tokens"] < 2:
++        raise ValueError("Explicit multi-step decode length required")
++    fixed = {"distributed_executor_backend": "mp", "tensor_parallel_size": 4,
++             "nnodes": 4, "node_rank": 0,
++             "max_model_len": 1048576, "max_num_seqs": 16,
++             "max_num_batched_tokens": 8192, "kv_cache_memory_bytes": 11274289152}
++    if any(type(kwargs.get(key)) is not type(value) or kwargs[key] != value
++           for key, value in fixed.items()):
++        raise ValueError("Fixture requires the bound TP4 leader and unchanged capacity")
++    steering_request_args(spec)
++    validate_handshake(spec)
++    expected = spec["expected_effective_config"]
++    keys = {section + "." + field for section, fields in EFFECTIVE_FIELDS.items()
++            for field in fields}
++    keys.update({"compilation_config.pass_config.enable_sp",
++                 "speculative_config.draft_parallel_config.tensor_parallel_size",
++                 "model_config.multimodal_config.image_limit",
++                 "model_config.multimodal_config.mm_processor_cache_gb",
++                 "additional_config.ds41_steering"})
++    if not isinstance(expected, dict) or set(expected) != keys:
++        raise ValueError("Complete reviewed resolved-config projection required")
++    fixed_resolved = {
++        "model_config.max_model_len": 1048576,
++        "parallel_config.distributed_executor_backend": "mp",
++        "parallel_config.tensor_parallel_size": 4,
++        "parallel_config.pipeline_parallel_size": 1,
++        "parallel_config.data_parallel_size": 1,
++        "parallel_config.nnodes": 4,
++        "parallel_config.world_size": 4,
++        "parallel_config.local_world_size": 1,
++        "scheduler_config.max_num_seqs": 16,
++        "scheduler_config.max_num_batched_tokens": 8192,
++        "cache_config.kv_cache_memory_bytes": 11274289152,
++        "cache_config.block_size": 256,
++        "speculative_config.method": "dspark",
++        "speculative_config.num_speculative_tokens": 5,
++        "speculative_config.draft_tensor_parallel_size": 4,
++        "speculative_config.draft_parallel_config.tensor_parallel_size": 4,
++        "compilation_config.max_cudagraph_capture_size": 96,
++        "compilation_config.cudagraph_capture_sizes": [
++            1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 40, 48,
++            56, 64, 72, 80, 88, 96],
++    }
++    for key, value in fixed_resolved.items():
++        if canonical_json(expected[key]) != canonical_json(value):
++            raise ValueError("Reviewed resolved capacity/topology mismatch: " + key)
++    canonical_json(expected)
++    return spec
++
++
++def steering_request_args(spec):
++    """Keep disabled startup distinct from loaded zero-dose request semantics."""
++    selection = spec["steering"]
++    state = selection.get("state")
++    additional = spec["engine_kwargs"].get("additional_config", {})
++    startup = additional.get("ds41_steering")
++    if state == "off":
++        if "ds41_steering" in additional or set(selection) != {"state"}:
++            raise ValueError("Disabled steering must have no loaded profile or request dose")
++        return None
++    if state not in ("loaded_zero", "active") or not isinstance(startup, dict):
++        raise ValueError("Loaded steering requires its existing startup profile")
++    if (set(startup) != {"schema_version", "operator_version", "profile_path", "profile_sha256"}
++            or type(startup["schema_version"]) is not int or startup["schema_version"] != 1
++            or startup["operator_version"] != "attn-writer-project-bf16-rank-order-v1"
++            or not isinstance(startup["profile_path"], str) or not startup["profile_path"]
++            or not isinstance(startup["profile_sha256"], str)
++            or len(startup["profile_sha256"]) != 64
++            or any(c not in "0123456789abcdef" for c in startup["profile_sha256"])):
++        raise ValueError("Existing loaded steering contract and artifact pin required")
++    if set(selection) != {"state", "profile_name", "scale"}:
++        raise ValueError("Explicit steering state, profile and dose required")
++    name, scale = selection["profile_name"], selection["scale"]
++    if not isinstance(name, str) or not name:
++        raise ValueError("Explicit existing profile name required")
++    if type(scale) not in (int, float) or not math.isfinite(scale):
++        raise ValueError("Finite numeric steering dose required")
++    if not ((state == "loaded_zero" and scale == 0)
++            or (state == "active" and 0 < scale <= 4)):
++        raise ValueError("Dose differs from the selected steering state")
++    scale_bits = struct.unpack("!I", struct.pack("!f", float(scale)))[0] & 0x7FFFFFFF
++    if state == "active" and scale_bits == 0:
++        raise ValueError("Active steering dose rounds to zero in the real request parser")
++    return {"steering_profile": name, "steering_scale": scale}
++
++
++EFFECTIVE_FIELDS = {
++    "model_config": ("model", "tokenizer", "tokenizer_mode", "dtype",
++                     "max_model_len", "enforce_eager", "seed", "trust_remote_code",
++                     "generation_config", "override_generation_config",
++                     "served_model_name"),
++    "load_config": ("load_format",),
++    "cache_config": ("block_size", "cache_dtype", "enable_prefix_caching",
++                     "gpu_memory_utilization", "kv_cache_memory_bytes",
++                     "prefix_cache_retention_interval"),
++    "scheduler_config": ("max_num_seqs", "max_num_batched_tokens",
++                         "enable_chunked_prefill", "max_parallel_prefills",
++                         "long_prefill_token_threshold", "async_scheduling",
++                         "scheduler_reserve_full_isl"),
++    "parallel_config": ("distributed_executor_backend", "tensor_parallel_size",
++                        "pipeline_parallel_size", "data_parallel_size", "nnodes",
++                        "world_size", "local_world_size", "use_ubatching"),
++    "compilation_config": ("mode", "cudagraph_mode", "cudagraph_capture_sizes",
++                           "max_cudagraph_capture_size", "custom_ops"),
++    "speculative_config": ("method", "num_speculative_tokens",
++                           "draft_tensor_parallel_size", "draft_sample_method",
++                           "rejection_sample_method", "enable_adaptive_verification",
++                           "adaptive_verification_row_cost"),
++    "attention_config": ("backend",),
++    "kernel_config": ("linear_backend", "moe_backend", "enable_flashinfer_autotune"),
++    "engram_config": ("table_memory", "disk_resident_scales", "projection_tp"),
++    "observability_config": ("jit_monitor_mode",),
++}
++
++
++def canonical_json(value):
++    return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
++
++
++def project_effective_config(config):
++    """Read an explicit projection, never serialize arbitrary runtime objects."""
++    result = {}
++    for section, fields in EFFECTIVE_FIELDS.items():
++        obj = getattr(config, section)
++        for field in fields:
++            value = getattr(obj, field)
++            if isinstance(value, Enum):
++                value = value.name
++            if section == "model_config" and field == "dtype":
++                value = str(value)
++            result[section + "." + field] = value
++    result["compilation_config.pass_config.enable_sp"] = (
++        config.compilation_config.pass_config.enable_sp)
++    result["speculative_config.draft_parallel_config.tensor_parallel_size"] = (
++        config.speculative_config.draft_parallel_config.tensor_parallel_size)
++    mm = config.model_config.multimodal_config
++    result["model_config.multimodal_config.image_limit"] = (
++        None if mm is None else mm.get_limit_per_prompt("image"))
++    result["model_config.multimodal_config.mm_processor_cache_gb"] = (
++        None if mm is None else mm.mm_processor_cache_gb)
++    additional = config.additional_config
++    result["additional_config.ds41_steering"] = {
++        "present": "ds41_steering" in additional,
++        "value": additional.get("ds41_steering"),
++    }
++    return json.loads(canonical_json(result))
++
++
++def validate_rank_configs(reports, expected):
++    if not isinstance(reports, list) or len(reports) != 4:
++        raise ValueError("Exactly four resolved worker reports required")
++    seen = set()
++    for report in reports:
++        rank = report["worker_rank"]
++        if type(rank) is not int or rank not in range(4) or rank in seen:
++            raise ValueError("Missing, duplicate or foreign worker rank")
++        seen.add(rank)
++        for key, value in (("tp_rank", rank), ("config_rank", rank),
++                           ("node_rank", rank), ("node_rank_within_dp", rank),
++                           ("local_rank", 0)):
++            if type(report[key]) is not int or report[key] != value:
++                raise ValueError("Resolved rank topology mismatch: " + key)
++        if canonical_json(report["effective_config"]) != canonical_json(expected):
++            raise ValueError("Worker resolved configuration differs from reviewed projection")
++        if canonical_json(report["runner_config"]) != canonical_json(expected):
++            raise ValueError("Selected runner resolved configuration mismatch")
++    return reports
++
++
++def validate_handshake(spec):
++    handshake = spec["handshake"]
++    if set(handshake) != {"ready_path", "ack_path", "timeout_seconds",
++                          "window_id", "attempt_id"}:
++        raise ValueError("Exact readiness handshake fields required")
++    for key in ("window_id", "attempt_id"):
++        value = handshake[key]
++        if (not isinstance(value, str) or len(value) != 32
++                or any(c not in "0123456789abcdef" for c in value)):
++            raise ValueError("Canonical window and attempt UUID hex required")
++    timeout = handshake["timeout_seconds"]
++    if (type(timeout) not in (int, float) or not math.isfinite(timeout)
++            or not 0 < timeout <= 600):
++        raise ValueError("Readiness timeout must be finite and bounded to 600 seconds")
++    paths = [Path(handshake[key]) for key in ("ready_path", "ack_path")]
++    for path in paths:
++        if (not path.is_absolute() or ".." in path.parts
++                or path.resolve() != path or not path.parent.is_dir()
++                or path.exists() or path.is_symlink()):
++            raise ValueError("Fresh canonical readiness paths required")
++    if len(set(paths + [Path(spec["output_path"])])) != 3:
++        raise ValueError("Readiness and result paths must be distinct")
++    return handshake
++
++
++def await_steady_guard(spec, spec_sha256, reports, *, clock=time.monotonic,
++                       sleep=time.sleep):
++    """Publish verified worker evidence, then wait for this attempt's steady guard."""
++    handshake = validate_handshake(spec)
++    identity = {key: handshake[key] for key in ("window_id", "attempt_id")}
++    identity["spec_sha256"] = spec_sha256
++    ready = {"schema_version": 1, **identity, "reports": reports,
++             "reports_sha256": hashlib.sha256(
++                 canonical_json(reports).encode()).hexdigest()}
++    raw = (canonical_json(ready) + "\n").encode()
++    path = Path(handshake["ready_path"])
++    temporary = path.with_name(path.name + ".publishing")
++    with temporary.open("xb") as stream:
++        stream.write(raw)
++        stream.flush()
++        os.fsync(stream.fileno())
++    try:
++        os.link(temporary, path)  # Atomic publication without replacing prior evidence.
++    finally:
++        temporary.unlink()
++    parent_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
++    try:
++        os.fsync(parent_fd)
++    finally:
++        os.close(parent_fd)
++    expected = {"schema_version": 1, **identity,
++                "ready_sha256": hashlib.sha256(raw).hexdigest(),
++                "steady_guard_ready": True}
++    deadline = clock() + handshake["timeout_seconds"]
++    ack = Path(handshake["ack_path"])
++    while clock() < deadline:
++        try:
++            fd = os.open(ack, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
++        except FileNotFoundError:
++            sleep(min(0.1, max(0, deadline - clock())))
++            continue
++        with os.fdopen(fd, "rb") as stream:
++            if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
++                raise ValueError("Steady acknowledgment must be a regular file")
++            raw_ack = stream.read(65537)
++        if len(raw_ack) > 65536:
++            raise ValueError("Readiness acknowledgment too large")
++        def unique_keys(pairs):
++            value = {}
++            for key, item in pairs:
++                if key in value:
++                    raise ValueError("Duplicate acknowledgment field")
++                value[key] = item
++            return value
++        actual = json.loads(raw_ack, object_pairs_hook=unique_keys)
++        if canonical_json(actual) != canonical_json(expected):
++            raise ValueError("Foreign, incomplete or malformed steady acknowledgment")
++        return {"ready_sha256": expected["ready_sha256"],
++                "ack_sha256": hashlib.sha256(raw_ack).hexdigest()}
++    raise TimeoutError("Steady guard acknowledgment deadline exceeded")
++
++
++def _model_owner(model):
++    from vllm.models.deepseek_v4_1.nvidia.model import DeepseekV4Model
++
++    models = [module for module in model.modules()
++              if isinstance(module, DeepseekV4Model)]
++    assert len(models) == 1, "Expected the actual target model, not a synthetic FFN"
++    return models[0]
++
++
++def _owner_snapshot(model):
++    import torch
++    from vllm.distributed import get_tensor_model_parallel_rank
++
++    target = _model_owner(model)
++    arena = target.q03_input_arena
++    profile = target.steering_profile
++    result = {"rank": get_tensor_model_parallel_rank(),
++              "sm": list(torch.cuda.get_device_capability()),
++              "tp": target.parallel_config.tensor_parallel_size,
++              "sequence_parallel": target.use_sequence_parallel,
++              "owner_present": arena is not None,
++              "steering_profile": None if profile is None else {
++                  "name": profile.profile_id, "artifact_sha256": profile.artifact_sha256,
++                  "identity": profile.identity, "schedule_sha256": profile.schedule_sha256,
++                  "layers": list(profile.layers), "alphas": list(profile.alphas)}}
++    if arena is not None:
++        assert not arena._busy
++        layers = target.q03_input_layers
++        assert layers and all(layer.q03_input_arena is arena
++                              and not layer.is_draft
++                              and not layer.use_sequence_parallel
++                              and layer.ffn.experts.q03_input_quant_eligible()
++                              for layer in layers)
++        result.update(capacity=arena.capacity, layers=len(layers),
++                      q=arena.q_storage.data_ptr(), sf=arena.sf_storage.data_ptr(),
++                      q_bytes=arena.q_storage.numel(), sf_bytes=arena.sf_storage.numel())
++        assert result["q"] != result["sf"]
++        assert result["q"] % 256 == result["sf"] % 256 == 0
++        assert (result["q_bytes"], result["sf_bytes"]) == arena.storage_sizes(arena.capacity)
++    return result
++
++
++def _observe_graph_resources(worker):
++    """Observe actual collectors without resetting or clearing engine graphs."""
++    import torch
++    from vllm.compilation.breakable_cudagraph import BreakableCUDAGraphWrapper
++    from vllm.compilation.cuda_graph import CUDAGraphWrapper
++    from vllm.v1.worker.gpu.cudagraph_utils import _profiling_cudagraph_managers
++
++    runner = worker.model_runner
++    target = _model_owner(runner.get_model())
++    arena = target.q03_input_arena
++    assert arena is not None and not arena._busy
++    before = _owner_snapshot(runner.get_model())
++    # Reject observations that cannot be associated with this isolated engine.
++    def entries(wrapper):
++        if isinstance(wrapper, BreakableCUDAGraphWrapper):
++            return wrapper.entries
++        return wrapper.concrete_cudagraph_entries
++
++    wrappers = [wrapper for cls in (CUDAGraphWrapper, BreakableCUDAGraphWrapper)
++                for wrapper in list(cls._all_instances) if entries(wrapper)]
++    assert all(wrapper.vllm_config is runner.vllm_config for wrapper in wrappers), (
++        "Cannot bind all enclosing graphs to the isolated engine")
++    managers = (_profiling_cudagraph_managers(runner)
++                if hasattr(runner, "cudagraph_manager")
++                and hasattr(runner, "speculator") else [])
++    pointers = {arena.q_storage.data_ptr(), arena.sf_storage.data_ptr()}
++
++    def captured_views():
++        refs = {}
++        collectors = [entry.resources for wrapper in wrappers
++                      if isinstance(wrapper, BreakableCUDAGraphWrapper)
++                      for entry in wrapper.entries.values() if entry.resources]
++        collectors += [resources for manager in managers
++                       for resources in manager.graph_capture_resources.values()]
++        for resources in collectors:
++            for resource in resources:
++                if (isinstance(resource, tuple) and len(resource) == 2
++                        and all(isinstance(tensor, torch.Tensor) for tensor in resource)
++                        and {tensor.untyped_storage().data_ptr() for tensor in resource}
++                        == pointers):
++                    for tensor in resource:
++                        assert tensor is not arena.q and tensor is not arena.sf
++                        refs[id(tensor)] = weakref.ref(tensor)
++        return list(refs.values())
++
++    refs = captured_views()  # Only weak references escape the inspection scope.
++    assert refs, "No real production collector retained the Q03 producer views"
++    assert all(ref() is not None for ref in refs)
++    descriptors = [repr(key) for wrapper in wrappers for key in entries(wrapper)]
++    descriptors += [repr(key) for manager in managers for key in manager.graphs]
++    assert descriptors, "No production graph was captured"
++    assert before == _owner_snapshot(runner.get_model())
++    return {"rank": before["rank"], "retained_view_objects": len(refs),
++            "descriptors": descriptors, "arena_unchanged": True,
++            "wrapper_types": [type(wrapper).__name__ for wrapper in wrappers],
++            "manager_types": [type(manager).__name__ for manager in managers],
++            "wrapper_count": len(wrappers), "manager_count": len(managers),
++            "scope": "Collector view retention only; fine-grained retirement untested"}
++
++
++def _check_runtime(worker, manifest):
++    import importlib
++    import torch
++    import vllm
++
++    assert manifest["source_head"] == SOURCE_HEAD
++    assert manifest["installation"]["mode"] == "image-source"
++    assert set(manifest["native_sha256"]) == {
++        "vllm._C_stable_libtorch", "vllm._moe_C_stable_libtorch"}
++    assert set(manifest["native_paths"]) == set(manifest["native_sha256"])
++    assert str(Path(vllm.__file__).resolve().parent) == manifest["installation"]["package_root"]
++    assert torch.__version__ == manifest["versions"]["torch"]
++    for name, expected in manifest["native_sha256"].items():
++        path = Path(importlib.import_module(name).__file__).resolve()
++        assert str(path) == manifest["native_paths"][name]
++        assert hashlib.sha256(path.read_bytes()).hexdigest() == expected
++    owner = _owner_snapshot(worker.model_runner.get_model())
++    parallel = worker.parallel_config
++    return {"owner": owner, "worker_rank": worker.rank,
++            "tp_rank": owner["rank"], "config_rank": parallel.rank,
++            "node_rank": parallel.node_rank,
++            "node_rank_within_dp": parallel.node_rank_within_dp,
++            "local_rank": worker.local_rank,
++            "runner_type": type(worker.model_runner).__name__,
++            "effective_config": project_effective_config(worker.vllm_config),
++            "runner_config": project_effective_config(worker.model_runner.vllm_config)}
++
++
++def test_real_model_owner_and_capture_retention(vllm_runner):
++    if os.environ.get("VLLM_Q03_PRODUCTION_OWNER_TEST") != "1":
++        pytest.skip("Requires a reviewed independent four-node full-model window")
++    spec_raw = Path(os.environ["VLLM_Q03_PRODUCTION_OWNER_SPEC"]).read_bytes()
++    spec = validate_fixture_spec(json.loads(spec_raw))
++    spec_sha256 = hashlib.sha256(spec_raw).hexdigest()
++    expected_env = "1" if spec["mode"] == "dual" else "0"
++    assert os.environ.get("VLLM_DS41_Q03_MHC_MXFP8", "0") == expected_env
++    assert Path(spec["model_path"]).is_dir(), "No remote checkpoint download permitted"
++    raw = Path(spec["runtime_manifest_path"]).read_bytes()
++    assert hashlib.sha256(raw).hexdigest() == spec["runtime_manifest_sha256"]
++    runtime = json.loads(raw)
++    output = Path(spec["output_path"])
++    assert output.parent.is_dir() and not output.exists()
++    kwargs = dict(spec["engine_kwargs"])
++    kwargs["trust_remote_code"] = False
++    from vllm import SamplingParams
++    request_args = steering_request_args(spec)
++    with vllm_runner(spec["model_path"], **kwargs) as engine:
++        reports = engine.collective_rpc(_check_runtime, args=(runtime,), timeout=120)
++        validate_rank_configs(reports, spec["expected_effective_config"])
++        initial = [report["owner"] for report in reports]
++        assert {item["rank"] for item in initial} == {0, 1, 2, 3}
++        assert len(initial) == 4
++        assert all(item["sm"] == [12, 1] and item["tp"] == 4
++                   and not item["sequence_parallel"]
++                   and item["owner_present"] == (spec["mode"] == "dual")
++                   for item in initial)
++        for item in initial:
++            profile = item["steering_profile"]
++            if request_args is None:
++                assert profile is None
++            else:
++                assert profile is not None
++                assert profile["name"] == request_args["steering_profile"]
++                assert profile["artifact_sha256"] == kwargs["additional_config"][
++                    "ds41_steering"]["profile_sha256"]
++        assert all(item["steering_profile"] == initial[0]["steering_profile"]
++                   for item in initial)
++        readiness = await_steady_guard(spec, spec_sha256, reports)
++        outputs = []
++        for batch in spec["requests"] * 2:
++            params = SamplingParams(temperature=0.0, max_tokens=spec["max_tokens"],
++                                    extra_args=request_args)
++            generated = engine.generate(batch, params)
++            outputs.append([(token_ids[0], texts[0]) for token_ids, texts in generated])
++            assert engine.apply_model(_owner_snapshot) == initial
++        retention = (engine.collective_rpc(_observe_graph_resources, timeout=120)
++                      if spec["mode"] == "dual" else [])
++        # Ordinary engine context teardown only; no private graph cleanup.
++    with output.open("x") as stream:
++        json.dump({"mode": spec["mode"], "source_head": SOURCE_HEAD,
++                   "steering": spec["steering"], "resolved_workers": reports,
++                   "readiness": readiness, "owners": initial, "outputs": outputs, "retention": retention,
++                   "qualification": "Owner/collector retention only; fine-grained retirement and replay untested; no old188 comparison, numerical acceptance or performance claim"}, stream)
+-- 
+2.52.0
+

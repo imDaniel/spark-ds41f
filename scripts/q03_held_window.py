@@ -50,6 +50,10 @@ def validate_held_policy(manifest):
             "unsupported held-window policy")
     require(type(manifest.get("window_seconds")) is int and
             manifest["window_seconds"] == 10800, "held lease must be exactly 10800 seconds")
+    from q03_owner_model import is_owner, validate_jobs
+    if is_owner(manifest):
+        validate_jobs(manifest)
+        return
     jobs = manifest.get("jobs")
     require(isinstance(jobs, list) and [j.get("kind") for j in jobs if isinstance(j, dict)]
             in (["p0"], ["p0", "g1"], ["p0", "g1", "g2"]),
@@ -158,6 +162,10 @@ def verify_history(session):
 
 
 def attempt_commands(manifest, window_id, attempt_id, core):
+    from q03_owner_model import is_owner, validate_owner_binding, owner_plan
+    if is_owner(manifest):
+        binding = validate_owner_binding(manifest, core.RuntimeOps())
+        return [["owner_model", owner_plan(binding, window_id, attempt_id, manifest["jobs"][0]["selection"])]]
     return [list(core.job_command(manifest, job["kind"], window_id,
                                   attempt_id=attempt_id)) for job in manifest["jobs"]]
 
@@ -178,7 +186,8 @@ def derive_attempt_manifest(session, attempt_id, jobs, updates):
     return manifest
 
 
-def plan_attempt(session, core, *, through=None, g1_tests_path=None, g1_tests_sha256=None):
+def plan_attempt(session, core, *, through=None, g1_tests_path=None, g1_tests_sha256=None,
+                 owner_mode=None, owner_steering=None):
     """Prepare only a typed descriptor; no test, container or service operation."""
     check_open(session)
     require(session.state.get("phase") in ("held-ready", "paused-quiescent"),
@@ -187,6 +196,18 @@ def plan_attempt(session, core, *, through=None, g1_tests_path=None, g1_tests_sh
     through = kinds[-1] if through is None else through
     require(through in kinds, "requested gate is outside the fixed outer template")
     jobs = copy.deepcopy(session.manifest["jobs"][:kinds.index(through) + 1])
+    from q03_owner_model import is_owner, validate_selection
+    if is_owner(session.manifest):
+        require(through == "owner_model" and g1_tests_path is None and g1_tests_sha256 is None,
+                "owner attempt cannot select G1 source/gates")
+        selection = jobs[0]["selection"]
+        if owner_mode is not None:
+            selection["mode"] = owner_mode
+        if owner_steering is not None:
+            selection["steering"] = owner_steering
+        validate_selection(selection)
+    else:
+        require(owner_mode is None and owner_steering is None, "owner selection requires owner window")
     updates = {}
     if g1_tests_path is not None or g1_tests_sha256 is not None:
         require(isinstance(g1_tests_path, str) and isinstance(g1_tests_sha256, str) and
@@ -243,7 +264,15 @@ def build_attempt(session, descriptor, core):
     jobs = descriptor["jobs"]
     require(isinstance(jobs, list) and 1 <= len(jobs) <= len(session.manifest["jobs"]),
             "invalid attempt gate sequence")
+    from q03_owner_model import is_owner, validate_jobs
+    owner = is_owner(session.manifest)
+    if owner:
+        require(not updates, "owner binding is immutable; no G1/source updates")
+        validate_jobs(dict(session.manifest, jobs=jobs))
     for job, allowed in zip(jobs, session.manifest["jobs"]):
+        if owner:
+            require(job["timeout_seconds"] <= allowed["timeout_seconds"], "owner job budget increased")
+            continue
         require(isinstance(job, dict) and set(job) == {"kind", "timeout_seconds"} and
                 job["kind"] == allowed["kind"] and type(job["timeout_seconds"]) is int and
                 1 <= job["timeout_seconds"] <= allowed["timeout_seconds"],
@@ -284,7 +313,14 @@ def admit_attempt(session, request, core):
     session.ops.validate_host(attempt["manifest"])
     check_open(session)
     session.check("stopped")
+    from q03_owner_model import is_owner
+    admission = {}
+    if is_owner(attempt["manifest"]):
+        exclusive_json(attempt["directory"] / "owner-plan.json", attempt["commands"][0][1])
+        admission["owner_deadline_epoch"] = min(session.capsule["deadline_epoch"],
+            time.time() + attempt["manifest"]["jobs"][0]["timeout_seconds"])
     exclusive_json(attempt["directory"] / "admitted.json", {
+        **admission,
         "window_id": session.capsule["window_id"], "attempt_id": descriptor["attempt_id"],
         "descriptor_sha256": attempt["descriptor_sha256"],
         "command_plan_sha256": descriptor["command_plan_sha256"]})
@@ -375,6 +411,9 @@ def drain_attempt(session, attempt, core, *, closing=False):
     session.update(phase="attempt-draining")
     session.ops.terminate_owned_process(session.state.get("active_process"))
     attempt_id = attempt["descriptor"]["attempt_id"] if attempt else None
+    from q03_owner_model import is_owner
+    if is_owner(session.manifest):
+        session.ops.cleanup_owner(session, attempt_id=attempt_id)
     session.ops.cleanup_held_candidates(session, attempt_id=attempt_id)
     # Recovery phases intentionally tolerate a request or expired lease. They
     # still require original/GLM identity, stopped guards and all-four GPU drain.
@@ -399,15 +438,26 @@ def run_attempt(session, attempt, core):
             require(sha256(read_owned_bytes(attempt["directory"] / "descriptor.json")) ==
                     attempt["descriptor_sha256"], "accepted attempt descriptor changed")
             session.ops.validate_host(manifest)
-            session.update(phase="attempt-running", active_gate=job["kind"],
-                           candidate_containers=session.state.get("candidate_containers", []) + [name])
-            launch = session.ops.prepare_candidate(session, name, argv, held_attempt={
-                "attempt_id": attempt_id, "kind": job["kind"],
-                "image_id": manifest["candidate"]["image"],
-                "plan_sha256": descriptor["command_plan_sha256"]})
-            session.ops.execute(session, launch, cwd=str(attempt["directory"]),
-                                timeout=job["timeout_seconds"], poll=lambda: poll_attempt(session))
-            result = session.ops.validate_result(manifest, job["kind"])
+            if job["kind"] == "owner_model":
+                import sys
+                session.update(phase="attempt-running", active_gate="owner_model")
+                launch = [sys.executable, "-B", str(Path(core.__file__).with_name("q03_owner_model.py")),
+                          "run", "--session-dir", str(session.directory), "--attempt-id", attempt_id]
+                session.ops.execute(session, launch, cwd=str(attempt["directory"]),
+                                    timeout=job["timeout_seconds"], poll=lambda: poll_attempt(session))
+                result = json.loads(read_owned_bytes(attempt["directory"] / "owner" / "result.json"))
+                require(result.get("result") == "passed", "owner result did not pass")
+                session.ops.cleanup_owner(session, attempt_id=attempt_id)
+            else:
+                session.update(phase="attempt-running", active_gate=job["kind"],
+                               candidate_containers=session.state.get("candidate_containers", []) + [name])
+                launch = session.ops.prepare_candidate(session, name, argv, held_attempt={
+                    "attempt_id": attempt_id, "kind": job["kind"],
+                    "image_id": manifest["candidate"]["image"],
+                    "plan_sha256": descriptor["command_plan_sha256"]})
+                session.ops.execute(session, launch, cwd=str(attempt["directory"]),
+                                    timeout=job["timeout_seconds"], poll=lambda: poll_attempt(session))
+                result = session.ops.validate_result(manifest, job["kind"])
             if result is not None:
                 exclusive_json(attempt["directory"] / (job["kind"] + "-result.json"), result)
             passed.append(job["kind"])

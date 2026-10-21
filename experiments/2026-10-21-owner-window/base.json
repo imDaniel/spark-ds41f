@@ -1,0 +1,14 @@
+{
+  "state": "candidate; review required before field execution",
+  "deployment_base": "76dabf376bd04aef768cea71f3c0d4b360cb633b",
+  "vllm_runtime_head": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+  "vllm_runtime_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a",
+  "image_id": "sha256:90bd2bbc4709b14a2210a6752c707d9d16661180248949e183fa0c25b6691ff6",
+  "runtime_manifest_sha256": "24315da1b6138aef8acccb7244000feceef71b74486eeddce31bec25264919b9",
+  "owner_test_tree": "be18f33ae704f078dc8c22600e8d2bd431a99e4c",
+  "owner_fixture_sha256": "1cd3614b3e4a714892521978d120dfe09d5e27ad5dee26dcf09d31bd66f7de74",
+  "owner_patch_sha256": "1a7d2ef343ca040b03f0a6f076c47cabf8e1b7dc4e011dd9f17e9eae6cf0c189",
+  "patch_boundary": "Apply only this single net test-only0500 after native197 in a fresh test tree. No runtime source overlay or native rebuild. Do not combine historical owner mailbox or G1-cache198 delta.",
+  "baseline": "2026-10-19-karmic-kraken-r6x",
+  "intended_variable": "Observation/execution tooling only; unchanged native image; selected Q03 off/dual runtime environment only."
+}

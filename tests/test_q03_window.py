@@ -441,9 +441,9 @@ class WindowRecoveryTests(unittest.TestCase):
         for ready in (True, False):
             with (self.subTest(ready=ready),
                   mock.patch.object(self.core, "owned_process", return_value=True),
-                  mock.patch.object(self.core.os, "pidfd_open", return_value=88) as opened,
+                  mock.patch.object(self.core.os, "pidfd_open", return_value=88, create=True) as opened,
                   mock.patch.object(self.core.os, "getpgid", return_value=record["pid"]),
-                  mock.patch.object(self.core.signal, "pidfd_send_signal") as signal,
+                  mock.patch.object(self.core.signal, "pidfd_send_signal", create=True) as signal,
                   mock.patch.object(self.core.select, "select", return_value=([88] if ready else [], [], [])),
                   mock.patch.object(self.core.os, "close") as close,
                   mock.patch.object(self.core.os, "killpg", side_effect=AssertionError("numeric signal forbidden")),
