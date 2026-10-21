@@ -1,0 +1,25 @@
+{
+  "head": "c6342a1b6c5e5a98108905a71452a51d6d3a4a87",
+  "tree": "dbbd5d0e8976861f15afa2c1bd9c6daae1f2f660",
+  "files": {
+    "servebench/__init__.py": "be61499eac3eec7198fbb577d897ab5364ea604f30c09c71fa30da9e340382ef",
+    "servebench/__main__.py": "668e37c8ac62b8074427889d0cab081f532832ff0b20021a9ef5fe8d1c6bb5de",
+    "servebench/behaviour.py": "c7e74364b82ab717196e28cf49dccee6aeccc88d4712d64cf765565aefdcd0b2",
+    "servebench/client.py": "e6b649459307cf0fb79031b53b4ab48e6c1c37aa2f40343f4fe919768e00133a",
+    "servebench/engine.py": "5d2a77b5679227d211095e7dca606356b76c0d8e7297aded4b6f401f39ab6469",
+    "servebench/load.py": "c70363d71f0aaed5753ecb107424d018085e2243a0fe7298036482b2413c3092",
+    "servebench/prefill.py": "922bb96132d8c77c02a18f75026f50391dc6b4e5d3137f4d62a9fcb210e34552",
+    "servebench/profile.py": "6f1aeb11974dc063c73e46d33cc2536c1cad6a3b18e608524cd84e0c1c3fa7d7",
+    "servebench/prom.py": "3c1245bbe30144d1575e2a491bbfb379d815e3fd6468be8937aa8949e61096b2",
+    "servebench/prompts.py": "9e8510326546e862c35ee286a10589470b2423b70e4ab10e36f5b2cbbc3da0c6",
+    "servebench/report.py": "a66a01f511ea7db9f458aac966e594a197f8fbda0051c2f35a27be9e7637dbf0",
+    "servebench/stall.py": "c0fde702e9f48adc69f5610bbe3c88cae99790fcd9231f0de2f82d60325ac4a9",
+    "servebench/stats.py": "62e42ae9b37eb009b8787aaa69a91412de74a20dea38bb43893088af7639df7c",
+    "servebench/suite.py": "8c70f7712716892d05e25bdc6ea3123ea768f0729a0a85dda3ee4e6adabf6a9e"
+  },
+  "prompts": {
+    "name": "default",
+    "count": 256,
+    "sha256": "f5efd3d7a272672d9d039370d0a551ede96617e01ffde7d9a8fa17889cf1c7a0"
+  }
+}

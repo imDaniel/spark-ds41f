@@ -158,6 +158,7 @@ def load_capsule(session_dir):
     required.update({"q03_owner_model.py", "q03_image_preparation.py", "memguard-start.sh", "memguard.sh", "../bin/spark",
                      "mesh_fabric.py", "kernel_backend.py", "kernel_readiness.py", "topology.py",
                      "transport_profiles.py", "model_layout.py", "recipe.py"})
+    required.update({"q03_http_service.py", "q03_http_worker.py", "q03_http_client.py", "q03_http_toolbox.json"})
     sources = capsule["recovery_source_sha256"]
     if set(sources) != required:
         raise RuntimeError("recovery dependency source inventory mismatch")

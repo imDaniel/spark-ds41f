@@ -348,7 +348,8 @@ class LaunchContracts(unittest.TestCase):
                 'q03_held_window.py', 'q03_owner_model.py', 'q03_image_preparation.py',
                 'memguard-start.sh', 'memguard.sh', '../bin/spark', 'mesh_fabric.py',
                 'kernel_backend.py', 'kernel_readiness.py', 'topology.py',
-                'transport_profiles.py', 'model_layout.py', 'recipe.py'}
+                'transport_profiles.py', 'model_layout.py', 'recipe.py',
+                'q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json'}
             self.assertEqual(set(sources), expected)
             for name, digest in sources.items():
                 self.assertEqual(digest, hashlib.sha256((ROOT / 'scripts' / name).read_bytes()).hexdigest())

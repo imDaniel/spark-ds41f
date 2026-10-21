@@ -50,6 +50,10 @@ def validate_held_policy(manifest):
             "unsupported held-window policy")
     require(type(manifest.get("window_seconds")) is int and
             manifest["window_seconds"] == 10800, "held lease must be exactly 10800 seconds")
+    from q03_http_service import is_http, validate_jobs as validate_http_jobs
+    if is_http(manifest):
+        validate_http_jobs(manifest)
+        return
     from q03_owner_model import is_owner, validate_jobs
     if is_owner(manifest):
         validate_jobs(manifest)
@@ -162,6 +166,10 @@ def verify_history(session):
 
 
 def attempt_commands(manifest, window_id, attempt_id, core):
+    from q03_http_service import is_http, validate_binding, http_plan
+    if is_http(manifest):
+        binding = validate_binding(manifest, core.RuntimeOps(), remote=False)
+        return [["http_service", http_plan(binding, window_id, attempt_id, manifest["jobs"][0]["selection"])]]
     from q03_owner_model import is_owner, validate_owner_binding, owner_plan
     if is_owner(manifest):
         binding = validate_owner_binding(manifest, core.RuntimeOps())
@@ -196,6 +204,11 @@ def plan_attempt(session, core, *, through=None, g1_tests_path=None, g1_tests_sh
     through = kinds[-1] if through is None else through
     require(through in kinds, "requested gate is outside the fixed outer template")
     jobs = copy.deepcopy(session.manifest["jobs"][:kinds.index(through) + 1])
+    from q03_http_service import is_http, next_selection
+    if is_http(session.manifest):
+        require(through == "http_service" and g1_tests_path is None and g1_tests_sha256 is None
+                and owner_mode is None and owner_steering is None, "HTTP smoke has no arbitrary override")
+        jobs[0]["selection"] = next_selection(session)
     from q03_owner_model import is_owner, validate_selection
     if is_owner(session.manifest):
         require(through == "owner_model" and g1_tests_path is None and g1_tests_sha256 is None,
@@ -266,11 +279,17 @@ def build_attempt(session, descriptor, core):
             "invalid attempt gate sequence")
     from q03_owner_model import is_owner, validate_jobs
     owner = is_owner(session.manifest)
+    from q03_http_service import is_http, validate_jobs as validate_http_jobs, next_selection
+    http = is_http(session.manifest)
+    if http:
+        require(not updates, "HTTP native/source inputs are immutable")
+        validate_http_jobs(dict(session.manifest, jobs=jobs))
+        require(jobs[0]["selection"] == next_selection(session), "HTTP OFF/OFF/DUAL sequence differs")
     if owner:
         require(not updates, "owner binding is immutable; no G1/source updates")
         validate_jobs(dict(session.manifest, jobs=jobs))
     for job, allowed in zip(jobs, session.manifest["jobs"]):
-        if owner:
+        if owner or http:
             require(job["timeout_seconds"] <= allowed["timeout_seconds"], "owner job budget increased")
             continue
         require(isinstance(job, dict) and set(job) == {"kind", "timeout_seconds"} and
@@ -315,6 +334,11 @@ def admit_attempt(session, request, core):
     session.check("stopped")
     from q03_owner_model import is_owner
     admission = {}
+    from q03_http_service import is_http
+    if is_http(attempt["manifest"]):
+        exclusive_json(attempt["directory"] / "http-plan.json", attempt["commands"][0][1])
+        admission["http_deadline_epoch"] = min(session.capsule["deadline_epoch"],
+            time.time() + attempt["manifest"]["jobs"][0]["timeout_seconds"])
     if is_owner(attempt["manifest"]):
         exclusive_json(attempt["directory"] / "owner-plan.json", attempt["commands"][0][1])
         admission["owner_deadline_epoch"] = min(session.capsule["deadline_epoch"],
@@ -415,6 +439,9 @@ def drain_attempt(session, attempt, core, *, closing=False):
     from q03_owner_model import is_owner
     if is_owner(session.manifest):
         session.ops.cleanup_owner(session, attempt_id=attempt_id)
+    from q03_http_service import is_http
+    if is_http(session.manifest):
+        session.ops.cleanup_http(session, attempt_id=attempt_id)
     session.ops.cleanup_held_candidates(session, attempt_id=attempt_id)
     # Recovery phases intentionally tolerate a request or expired lease. They
     # still require original/GLM identity, stopped guards and all-four GPU drain.
@@ -439,7 +466,17 @@ def run_attempt(session, attempt, core):
             require(sha256(read_owned_bytes(attempt["directory"] / "descriptor.json")) ==
                     attempt["descriptor_sha256"], "accepted attempt descriptor changed")
             session.ops.validate_host(manifest)
-            if job["kind"] == "owner_model":
+            if job["kind"] == "http_service":
+                import sys
+                session.update(phase="attempt-running", active_gate="http_service")
+                launch = [sys.executable, "-B", str(Path(core.__file__).with_name("q03_http_service.py")),
+                          "run", "--session-dir", str(session.directory), "--attempt-id", attempt_id]
+                session.ops.execute(session, launch, cwd=str(attempt["directory"]),
+                                    timeout=job["timeout_seconds"], poll=lambda: poll_attempt(session))
+                result = json.loads(read_owned_bytes(attempt["directory"] / "http" / "result.json"))
+                require(result.get("result") == "passed", "HTTP result did not pass")
+                session.ops.cleanup_http(session, attempt_id=attempt_id)
+            elif job["kind"] == "owner_model":
                 import sys
                 session.update(phase="attempt-running", active_gate="owner_model")
                 launch = [sys.executable, "-B", str(Path(core.__file__).with_name("q03_owner_model.py")),
