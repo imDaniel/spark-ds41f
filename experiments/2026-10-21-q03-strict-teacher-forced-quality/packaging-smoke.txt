@@ -1,0 +1,8 @@
+test_accepted_payloads_are_byte_identical (test_packaging.PackagingSmokeTests.test_accepted_payloads_are_byte_identical) ... ok
+test_documented_api_uses_only_an_in_memory_transport (test_packaging.PackagingSmokeTests.test_documented_api_uses_only_an_in_memory_transport) ... ok
+test_standalone_imports_resolve_only_to_packaged_files (test_packaging.PackagingSmokeTests.test_standalone_imports_resolve_only_to_packaged_files) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.015s
+
+OK

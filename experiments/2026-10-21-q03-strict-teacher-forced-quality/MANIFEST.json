@@ -1,0 +1,24 @@
+{
+  "status": "SOURCE_CPU_CANDIDATE_NOT_ADOPTED",
+  "python": "3.12.14",
+  "focused_fixture_methods_passed": 25,
+  "source_probe_methods_passed": 5,
+  "live_endpoint_calls": 0,
+  "native_imports": 0,
+  "device_operations": 0,
+  "full_suite_run": false,
+  "published": false,
+  "whitespace_check": "passed",
+  "files": {
+    "README.md": "792a5dc0b7900bbb01c462c0f1ff6720244c95e7f6d7c39f18ca4dec86c87027",
+    "SOURCE-IDENTITY.json": "9644be843b5f3fc09f911e7752136dee3e6bf918b2e9cfe75d147168381c323f",
+    "evidence/cpu-tests.log": "7cf722830bb3505b399de488be153b82a6f6f8543827d34482ab7e5218aa1636",
+    "evidence/source-probe.log": "3b71da446cf1789bbc4f443ae4b14945656bfe73b6a38128d81e566c6513e32b",
+    "reference/PR8-LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "reference/pr8_projection.py": "eeb0da757a133acf81b55020141c30f0cd3ce7f490df2f06c8b4b0b94217854c",
+    "scoring_contract.py": "51d9bce5e3954aad81643ef16b18a1f07b5c156facd69d76384c7f8fec5f70dd",
+    "source_probe.py": "f50677e63d3730d7e8cc1c55a158b18f149adecbcdad754eb96ebdf8afd57a43",
+    "strict_producer.py": "274204425c84d73c04992f29f47db0b5c05e47a675dd12422e839f0f1451151e",
+    "test_scoring_contract.py": "558586d5e9ce9398f45da6d03a4bd47dc41b61e96b5ade2c80722bf293eb4151"
+  }
+}

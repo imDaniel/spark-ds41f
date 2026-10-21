@@ -1,0 +1,10 @@
+test_exact_native_files_match_source_audit_hashes (__main__.SourceProbe.test_exact_native_files_match_source_audit_hashes) ... ok
+test_native_choice_echo_and_prompt_rows_are_actual_source (__main__.SourceProbe.test_native_choice_echo_and_prompt_rows_are_actual_source) ... ok
+test_original_native_clamp_mutates_returned_list_in_place (__main__.SourceProbe.test_original_native_clamp_mutates_returned_list_in_place) ... ok
+test_projection_is_verbatim_pr8_not_a_new_control_implementation (__main__.SourceProbe.test_projection_is_verbatim_pr8_not_a_new_control_implementation) ... ok
+test_real_pr8_payload_adds_only_echo_and_legacy_does_not_validate_echo (__main__.SourceProbe.test_real_pr8_payload_adds_only_echo_and_legacy_does_not_validate_echo) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.033s
+
+OK

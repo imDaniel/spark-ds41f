@@ -1,0 +1,77 @@
+{
+  "native_commit": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+  "native_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a",
+  "native_local_source": "/workspace/shared/q-forward/q04-component",
+  "native_files": [
+    {
+      "path": "vllm/entrypoints/openai/completion/api_router.py",
+      "sha256": "b93b00298a74a62a3f2d8da1c0a9380a2be5823f5ab7ab99a2c911906280d769",
+      "bytes": 2596,
+      "matches_pinned_git": true
+    },
+    {
+      "path": "vllm/entrypoints/openai/completion/protocol.py",
+      "sha256": "9d244ae4cb6ae4f069752b5eef56d200d341650fc4a98ac30c00fc25683d7797",
+      "bytes": 27568,
+      "matches_pinned_git": true
+    },
+    {
+      "path": "vllm/entrypoints/openai/completion/serving.py",
+      "sha256": "75d05ddddf303734a078a3e42fcb173fef58ea56da09bc0b5c7525cb9bbbf527",
+      "bytes": 30431,
+      "matches_pinned_git": true
+    },
+    {
+      "path": "vllm/entrypoints/serve/engine/protocol.py",
+      "sha256": "ac2836423b9d50e7b19c20e90803cd9f27bf6941078c10b0894b4f1c54edd688",
+      "bytes": 6923,
+      "matches_pinned_git": true
+    },
+    {
+      "path": "vllm/renderers/base.py",
+      "sha256": "4db44560f4d331bf0f184626ed7cac97b350355a5c64bce648bf1fa971b16d68",
+      "bytes": 46364,
+      "matches_pinned_git": true
+    },
+    {
+      "path": "vllm/renderers/params.py",
+      "sha256": "6837717e82e4c322920de34bd6f3e26c9f7739dc49edf13e8c6a5c5050f87fc5",
+      "bytes": 21340,
+      "matches_pinned_git": true
+    },
+    {
+      "path": "vllm/logprobs.py",
+      "sha256": "3cc2ed6cdd30572d29f9b293ddbc14ad318c6b5d5dc7fdd36bee2f8af259b373",
+      "bytes": 8175,
+      "matches_pinned_git": true
+    },
+    {
+      "path": "vllm/v1/engine/logprobs.py",
+      "sha256": "14bbe78d92a2c451d79b3d9dd9d5268bc57e16bad5079e44ce9ed2cd805e873e",
+      "bytes": 12936,
+      "matches_pinned_git": true
+    },
+    {
+      "path": "vllm/entrypoints/generate/base/serving.py",
+      "sha256": "35ec53f63e86a8c1725728911db0df44eb3101d8cd65e9b2f39d048956977bad",
+      "bytes": 13850,
+      "matches_pinned_git": true
+    },
+    {
+      "path": "vllm/sampling_params.py",
+      "sha256": "f21efc98bf8ce8aab88eb67adb4207285e509a167d976e14d3e2e8282e024bea",
+      "bytes": 56186,
+      "matches_pinned_git": true
+    }
+  ],
+  "pr8_public_commit": "c6342a1b6c5e5a98108905a71452a51d6d3a4a87",
+  "pr8_public_tree": "dbbd5d0e8976861f15afa2c1bd9c6daae1f2f660",
+  "pr8_local_tree": "dbbd5d0e8976861f15afa2c1bd9c6daae1f2f660",
+  "pr8_behaviour_sha256": "c7e74364b82ab717196e28cf49dccee6aeccc88d4712d64cf765565aefdcd0b2",
+  "projection_source_lines": [
+    130,
+    152
+  ],
+  "projection_verbatim_sha256": "6a7596667e61be2201906ea85847b532e18010c901fb7fc54a4245bdf69fec0c",
+  "source_audit": "Only source and Git object reads; no native imports or live API."
+}
