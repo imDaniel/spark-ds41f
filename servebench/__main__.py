@@ -33,6 +33,11 @@ def read_json(path: str) -> dict:
         return json.load(handle)
 
 
+def _metric_mean(value: dict | float | None) -> float | None:
+    """Server metrics are scalars for bursts and distributions for timed windows."""
+    return value.get("mean") if isinstance(value, dict) else value
+
+
 def command_run(args: argparse.Namespace) -> int:
     prompt_set = prompts.load(args.prompts)
     spec = load.Load(mode=args.mode, concurrency=args.concurrency, rate=args.rate,
@@ -69,10 +74,10 @@ def command_run(args: argparse.Namespace) -> int:
             "concurrency": spec.concurrency if spec.mode != "poisson" else None,
             "rate": spec.rate if spec.mode == "poisson" else None,
             "tps_mean": tps.get("mean"), "ci95_pct": tps.get("ci95_pct"), "windows": tps.get("n"),
-            "steps_per_s": summary.get("server", {}).get("steps_per_s", {}).get("mean"),
-            "tokens_per_step": summary.get("server", {}).get("output_tokens_per_step", {}).get("mean"),
+            "steps_per_s": _metric_mean(summary.get("server", {}).get("steps_per_s")),
+            "tokens_per_step": _metric_mean(summary.get("server", {}).get("output_tokens_per_step")),
             "context_tokens": spec.context_tokens or None,
-            "prefix_cache_hit_rate": summary.get("server", {}).get("prefix_cache_hit_rate", {}).get("mean"),
+            "prefix_cache_hit_rate": _metric_mean(summary.get("server", {}).get("prefix_cache_hit_rate")),
             "ttft_p50_s": summary["latency"]["ttft_s"].get("p50"),
             "tpot_p50_ms": summary["latency"]["tpot_ms"].get("p50"),
             "failed": summary["requests"]["failed"],
@@ -119,6 +124,7 @@ def command_engine(args: argparse.Namespace) -> int:
 def command_model(args: argparse.Namespace) -> int:
     prompt_set = prompts.load(args.prompts)[:args.limit or None]
     extra = json.loads(args.extra_body) if args.extra_body else {}
+    score_extra = behaviour.score_extra_body(extra) if not args.no_score else None
     model = args.model or model_id(args.url)
     started = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
     generated = behaviour.generate(args.url, model, prompt_set, concurrency=args.concurrency,
@@ -130,7 +136,8 @@ def command_model(args: argparse.Namespace) -> int:
     scores, score_seconds = None, None
     if not args.no_score:
         began = time.monotonic()
-        scores = behaviour.score(args.url, model, sequences, top=args.top, concurrency=args.score_concurrency)
+        scores = behaviour.score(args.url, model, sequences, top=args.top, concurrency=args.score_concurrency,
+                                 extra_body=score_extra)
         score_seconds = round(time.monotonic() - began, 2)
     result = {"schema": behaviour.SCHEMA, "tool": {"name": "servebench", "version": __version__},
               "started_utc": started, "label": args.label, "server": {"url": args.url, "model": model},
@@ -143,6 +150,8 @@ def command_model(args: argparse.Namespace) -> int:
                          "sequences": sum(1 for s in sequences if not s.get("error"))},
               "scores": scores, "score_seconds": score_seconds,
               "self_agreement": behaviour.self_agreement(scores) if scores and source == "self" else None}
+    if not args.no_score:
+        result["workload"]["score_extra_body"] = score_extra
     if args.output:
         write_json(args.output, result)
     failed = sum(1 for s in generated["sequences"] + (scores or []) if s.get("error"))
@@ -344,7 +353,8 @@ def build_parser() -> argparse.ArgumentParser:
     behave.add_argument("--score-concurrency", type=int, default=8)
     behave.add_argument("--no-score", action="store_true", help="generation and acceptance only")
     behave.add_argument("--model", help="model id (default: the server's first)")
-    behave.add_argument("--extra-body", help="JSON merged into every generation request body")
+    behave.add_argument("--extra-body", help="JSON merged into every generation request body; "
+                                           "supported steering controls also apply to scoring")
     behave.add_argument("--label", help="name for tables")
     behave.add_argument("--output", help="write the result JSON here (.gz to compress)")
     behave.set_defaults(func=command_model)
