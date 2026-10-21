@@ -7,6 +7,31 @@ assets, caches and START policy are unchanged. Use a **new** immutable capsule
 whose source inventory includes `q03_rank_logs.py`; do not update an active
 capsule or reinterpret evidence from an older controller.
 
+## New-capsule deployment handoff
+
+This publication is not a deployment and does not authorize original START or a
+native image rebuild. Before admitting a **new** owner or HTTP capsule, stage
+the published `scripts/q03_remote_operation.py` identically on **all four**
+registered nodes at this new versioned path under the approved independent root:
+
+`<independent_root>/helpers/q03_remote_operation-1ddb0c79d6e50fd71245cff1c53c32fe9bf862e1a57f4078e6fed1ecafd7484a.py`
+
+Its exact SHA-256 is
+`1ddb0c79d6e50fd71245cff1c53c32fe9bf862e1a57f4078e6fed1ecafd7484a`.
+Use exclusive creation in an owned, non-shared-writable namespace; if that path
+already exists, verify identical bytes rather than overwrite it. Never replace
+the old `6eca...` helper or change any existing capsule, helper pin or authority
+file. Retain old helper paths for their original capsules and recovery.
+
+For the new capsule only, bind `preflight.remote_helper_path` to that resolved
+absolute versioned path and `preflight.remote_helper_sha256` to the full hash
+above. Require the same hash in `recovery_source_sha256.q03_remote_operation.py`,
+plus the exact published controller source inventory including
+`q03_rank_logs.py`. Verify path, owner/mode, bytes and helper/authority identity
+on all four registered nodes before admission; a missing or different rank is
+a preparation blocker, not permission to reuse the old helper. Preserve the
+existing keep-stopped original-service disposition and native image pins.
+
 ## Ordering and evidence
 
 Owner and HTTP normal, failure and watchdog cleanup call the same fixed routine:
