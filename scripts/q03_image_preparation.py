@@ -228,7 +228,10 @@ class Preparation:
         self.root.mkdir(mode=0o700, exist_ok=False)
         exclusive_json(self.root / "binding.json", binding)
         source = json.loads(self.transport(0, self.helper.bound_command(DOCKER + ["image", "inspect", IMAGE])))[0]
-        require(source["Id"] == IMAGE and not source.get("RepoTags"), "source image/tag changed")
+        # The immutable source may retain its candidate build tag. Only the
+        # hash-bound export archive and newly imported peers must be tagless;
+        # saving by ID does not remove a source tag, and we never retag it.
+        require(source["Id"] == IMAGE, "source image identity changed")
         for rank in (1, 2, 3):
             self.check()
             target = Path(self.session.manifest["independent_root"]) / (
@@ -257,7 +260,8 @@ class Preparation:
             require(same_containers(before["containers"], after["containers"]), "containers changed during image preparation")
             item = next(item for item in after["images"] if item["Id"] == IMAGE)
             require(item["Config"] == source["Config"] and item["RootFS"] == source["RootFS"]
-                    and item["Os"] == "linux" and item["Architecture"] == "arm64" and not item.get("RepoTags"),
+                    and item["Os"] == "linux" and item["Architecture"] == "arm64"
+                    and (existing is not None or not item.get("RepoTags")),
                     "prepared peer image identity differs")
             exclusive_json(self.root / ("after-" + str(rank) + ".json"), after)
         exclusive_json(self.root / "result.json", dict(result="passed", image=IMAGE, nodes=4,

@@ -116,6 +116,77 @@ class ImagePreparationTests(unittest.TestCase):
             with self.subTest(state=state), self.assertRaisesRegex(RuntimeError, 'core-owned stage'):
                 self.p.check()
 
+    def test_actual_run_accepts_tagged_source_and_unchanged_tagless_peer_images(self):
+        source = {'Id': M.IMAGE, 'RepoTags': ['q03-validation:mhc197-20261021-a'],
+                  'Config': {'Labels': {'native': '197'}}, 'RootFS': {'Layers': ['fixed']},
+                  'Os': 'linux', 'Architecture': 'arm64'}
+        peer = copy.deepcopy(source); peer['RepoTags'] = None
+        original = {'Id': 'original', 'RepoTags': ['original:fixed']}
+        self.p.root = self.directory / 'tagged-source-run'
+        self.p.transport = lambda *args: json.dumps([source])
+        self.p.probe = lambda *args, **kw: {'images': [copy.deepcopy(original), copy.deepcopy(peer)],
+                                           'containers': []}
+        self.p.mutate = mock.Mock(side_effect=AssertionError('existing image must not load or retag'))
+        with mock.patch.object(M, 'validate_binding', return_value={'binding': 'fixed'}):
+            self.p.run()
+        self.p.mutate.assert_not_called()
+        self.assertEqual(source['RepoTags'], ['q03-validation:mhc197-20261021-a'])
+        self.assertEqual(json.loads((self.p.root / 'result.json').read_text())['result'], 'passed')
+        for rank in (1, 2, 3):
+            after = json.loads((self.p.root / ('after-' + str(rank) + '.json')).read_text())
+            self.assertEqual(after['images'][0], original)
+            self.assertIsNone(after['images'][1]['RepoTags'])
+
+    def test_actual_run_preserves_existing_candidate_tags_and_refuses_retagging(self):
+        source = {'Id': M.IMAGE, 'RepoTags': ['candidate:source'],
+                  'Config': {'Labels': {'native': '197'}}, 'RootFS': {'Layers': ['fixed']},
+                  'Os': 'linux', 'Architecture': 'arm64'}
+        peer = copy.deepcopy(source); peer['RepoTags'] = ['candidate:existing-peer']
+        self.p.transport = lambda *args: json.dumps([source])
+        self.p.mutate = mock.Mock(side_effect=AssertionError('existing exact image must not mutate'))
+        self.p.root = self.directory / 'existing-tagged-peer'
+        self.p.probe = lambda *args, **kw: {'images': [copy.deepcopy(peer)], 'containers': []}
+        with mock.patch.object(M, 'validate_binding', return_value={'binding': 'fixed'}): self.p.run()
+        self.p.mutate.assert_not_called()
+        self.assertEqual(json.loads((self.p.root / 'after-3.json').read_text())['images'][0], peer)
+        changed = copy.deepcopy(peer); changed['RepoTags'] = ['candidate:rewritten']
+        responses = iter([{'images': [peer], 'containers': []}, {'images': [changed], 'containers': []}])
+        self.p.probe = lambda *args, **kw: next(responses)
+        self.p.root = self.directory / 'retagged-peer-refused'
+        with mock.patch.object(M, 'validate_binding', return_value={'binding': 'fixed'}):
+            with self.assertRaisesRegex(RuntimeError, 'original image/tag identity changed'): self.p.run()
+        self.p.mutate.assert_not_called()
+
+    def test_actual_run_still_refuses_wrong_source_id_before_peer_operations(self):
+        self.p.root = self.directory / 'wrong-source-run'
+        self.p.transport = lambda *args: json.dumps([{'Id': 'wrong', 'RepoTags': ['candidate:tag']}])
+        self.p.probe = mock.Mock(side_effect=AssertionError('wrong ID reached peer'))
+        self.p.mutate = mock.Mock(side_effect=AssertionError('wrong ID mutated peer'))
+        with mock.patch.object(M, 'validate_binding', return_value={'binding': 'fixed'}):
+            with self.assertRaisesRegex(RuntimeError, 'source image identity'): self.p.run()
+        self.p.probe.assert_not_called(); self.p.mutate.assert_not_called()
+
+    def test_export_receipt_still_requires_tagless_archive_and_exact_hash(self):
+        archive = self.root / 'candidate.tar'; archive.write_bytes(b'fixed-export')
+        receipt = self.root / 'export.json'
+        value = {'schema_version': 1, 'archive_path': str(archive),
+                 'archive_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
+                 'archive_size': archive.stat().st_size, 'export_receipt_path': str(receipt)}
+        proof = {'result': 'passed', 'path': str(archive), 'archive_sha256': value['archive_sha256'],
+                 'size': value['archive_size'], 'config_sha256': M.IMAGE.removeprefix('sha256:'),
+                 'original_image_tag_bindings_unchanged': True,
+                 'manifest': [{'RepoTags': None}]}
+        manifest = {'image_preparation': value}
+        def bind():
+            receipt.write_text(json.dumps(proof))
+            value['export_receipt_sha256'] = hashlib.sha256(receipt.read_bytes()).hexdigest()
+        with mock.patch.object(M, 'evidence_path', side_effect=lambda path, _: Path(path)):
+            bind(); self.assertEqual(M.validate_binding(manifest), value)
+            proof['manifest'][0]['RepoTags'] = ['original:fixed']; bind()
+            with self.assertRaisesRegex(RuntimeError, 'tagless'): M.validate_binding(manifest)
+            proof['manifest'][0]['RepoTags'] = None; bind(); archive.write_bytes(b'fixed-expork')
+            with self.assertRaisesRegex(RuntimeError, 'SHA differs'): M.validate_binding(manifest)
+
     def test_original_images_and_tags_must_all_survive(self):
         old = [{'Id': 'original', 'RepoTags': ['original:fixed']}]
         M.preserve_images(old, old + [{'Id': M.IMAGE, 'RepoTags': []}])
