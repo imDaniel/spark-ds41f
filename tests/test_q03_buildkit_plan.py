@@ -1,5 +1,6 @@
 """CPU-only BuildKit planning and fake Docker tests; no Docker execution."""
 import copy
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -10,13 +11,20 @@ from unittest.mock import patch
 SPEC = importlib.util.spec_from_file_location('q03_buildkit', Path(__file__).resolve().parents[1] / 'scripts/q03_buildkit_plan.py')
 M = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(M)
+OFFICIAL_BUILDX_SHA256 = M.BUILDX_SHA256
 
 
 class BuildkitTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.root = Path(self.tmp.name)
+        self.root = Path(self.tmp.name).resolve()
+        self.staged = self.root / "staged-buildx"
+        self.staged.write_bytes(b"inert synthetic plugin bytes; never executable in tests")
+        digest = hashlib.sha256(self.staged.read_bytes()).hexdigest()
+        pin = patch.object(M, "BUILDX_SHA256", digest)
+        pin.start()
+        self.addCleanup(pin.stop)
         self.p = M.make_plan('q03-cpu-test', self.root / 'new', 'moby/buildkit@sha256:' + 'a' * 64, independent_root=self.root)
         self.builder = {'Name': self.p['identity'], 'Driver': 'docker-container',
                         'Nodes': [{'Name': self.p['node'], 'Endpoint': M.ENDPOINT, 'Status': 'running'}]}
@@ -39,7 +47,7 @@ class BuildkitTest(unittest.TestCase):
         return json.dumps([self.volume])
 
     def test_provision_and_readonly_reverify(self):
-        r = M.provision(self.p, self.fake)
+        r = M.provision(self.p, self.fake, buildx_binary=self.staged)
         self.assertTrue(r['verified'])
         self.assertTrue((Path(self.p['root']) / 'provision-receipt.json').exists())
         self.calls.clear()
@@ -47,7 +55,7 @@ class BuildkitTest(unittest.TestCase):
         self.assertTrue(all('inspect' in c and '--bootstrap' not in c for c in self.calls))
 
     def test_no_use_delete_or_global_change(self):
-        M.provision(self.p, self.fake)
+        M.provision(self.p, self.fake, buildx_binary=self.staged)
         flat = [x for c in self.calls for x in c]
         self.assertFalse(set(flat) & {'--use', 'rm', 'prune', '--append', '--leave'})
         self.assertIn('network=bridge', flat)
@@ -57,20 +65,20 @@ class BuildkitTest(unittest.TestCase):
     def test_reuse_refused_before_commands(self):
         Path(self.p['root']).mkdir()
         with self.assertRaises(ValueError):
-            M.provision(self.p, self.fake)
+            M.provision(self.p, self.fake, buildx_binary=self.staged)
         self.assertEqual(self.calls, [])
 
     def test_existing_docker_resource_refused(self):
         for name in (self.p['container'], self.p['volume']):
             with self.subTest(name=name), self.assertRaises(ValueError):
-                M.provision(self.p, lambda argv: name + '\n')
+                M.provision(self.p, lambda argv: name + '\n', buildx_binary=self.staged)
         self.assertFalse(Path(self.p['root']).exists())
 
     def test_failed_inventory_not_absence(self):
         def fail(argv):
             raise RuntimeError('daemon unavailable fixture')
         with self.assertRaises(RuntimeError):
-            M.provision(self.p, fail)
+            M.provision(self.p, fail, buildx_binary=self.staged)
         self.assertFalse(Path(self.p['root']).exists())
 
     def test_protected_mount_or_gpu_refused(self):
@@ -105,7 +113,7 @@ class BuildkitTest(unittest.TestCase):
                 M.make_plan(identity, root, image, independent_root=self.root)
         self.p['create'].append('--use')
         with self.assertRaises(ValueError):
-            M.provision(self.p, self.fake)
+            M.provision(self.p, self.fake, buildx_binary=self.staged)
         self.assertEqual(self.calls, [])
 
     def test_inspect_parser_fails_closed(self):
@@ -135,7 +143,7 @@ class BuildkitTest(unittest.TestCase):
             M.verify_owned_state(self.p, self.container, self.volume, expected)
 
     def test_changed_daemon_config_refused(self):
-        M.provision(self.p, self.fake)
+        M.provision(self.p, self.fake, buildx_binary=self.staged)
         (Path(self.p['root']) / 'buildkitd.toml').write_text('changed')
         with self.assertRaises(ValueError):
             M.verify_live(self.p, self.fake)

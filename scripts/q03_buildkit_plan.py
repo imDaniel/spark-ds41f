@@ -1,6 +1,6 @@
 """Plan/provision one isolated local BuildKit builder; no build or service actions.
 
-Operator: plan first, then --apply on the authorized head before service stop.
+Operator: follow the reviewed stop-first sequence on the authorized head.
 Supply a reviewed official moby/buildkit@sha256 digest. Retain all resources and
 receipts on failure; this tool never removes or overwrites them. Export all four
 returned build_environment keys for the later guarded bin/spark build. Dedicated
@@ -19,9 +19,49 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import subprocess
 
 ENDPOINT = 'unix:///var/run/docker.sock'
+BUILDX_VERSION = 'v0.21.3'
+# Filled only from the official release checksum, never from a local observation.
+BUILDX_SHA256 = '90157681a0a033b285e80d3350741452d7647994fb371c9ee3a423f2ca4f22cc'
+
+
+def _plugin_bytes(path):
+    path = Path(path)
+    if not path.is_absolute() or path.resolve() != path:
+        raise ValueError('Buildx binary must have a canonical absolute path')
+    with path.open('rb') as stream:
+        before = os.fstat(stream.fileno())
+        if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.geteuid()
+                or before.st_mode & 0o022):
+            raise ValueError('Buildx binary must be owned and not shared-writable')
+        data = stream.read()
+        after = os.fstat(stream.fileno())
+    if ((before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+            != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
+            or hashlib.sha256(data).hexdigest() != BUILDX_SHA256):
+        raise ValueError('Official private Buildx binary identity mismatch')
+    return data
+
+
+def verify_plugin(plan):
+    """Read bytes only; never execute an unverified or fallback CLI plugin."""
+    expected = {'version': BUILDX_VERSION, 'sha256': BUILDX_SHA256,
+                'path': str(Path(plan['root']) / 'docker/cli-plugins/docker-buildx')}
+    if plan.get('buildx_plugin') != expected:
+        raise ValueError('Private Buildx plan identity mismatch')
+    config = Path(plan['root']) / 'docker/config.json'
+    if (config.resolve() != config or config.is_symlink()
+            or not stat.S_ISREG(config.stat().st_mode)
+            or config.stat().st_uid != os.geteuid() or config.stat().st_mode & 0o022
+            or config.read_bytes() != b'{}\n'):
+        raise ValueError('Private Docker config changed or overrides plugin discovery')
+    _plugin_bytes(expected['path'])
+    if not os.access(expected['path'], os.X_OK):
+        raise ValueError('Private Buildx plugin is not executable')
+    return expected
 
 
 def make_plan(identity, root, buildkit_image, *, independent_root):
@@ -50,6 +90,8 @@ def make_plan(identity, root, buildkit_image, *, independent_root):
     return {'schema_version': 1, 'identity': identity, 'root': str(root), 'independent_root': str(approved_root),
             'node': node, 'container': 'buildx_buildkit_' + node,
             'volume': 'buildx_buildkit_' + node + '_state', 'image': buildkit_image,
+            'buildx_plugin': {'version': BUILDX_VERSION, 'sha256': BUILDX_SHA256,
+                             'path': str(root / 'docker/cli-plugins/docker-buildx')},
             'build_environment': env, 'create': create,
             'bootstrap': docker + ['buildx', 'inspect', identity, '--bootstrap'],
             'docker': docker,
@@ -118,13 +160,19 @@ def clean_environment(plan):
     return env
 
 
-def provision(plan, run):
+def provision(plan, run, *, buildx_binary=None):
     """run(argv) returns stdout, raising on nonzero; injectable for CPU fakes."""
     if plan != make_plan(plan['identity'], plan['root'], plan['image'], independent_root=plan['independent_root']):
         raise ValueError('noncanonical builder plan')
     root = Path(plan['root'])
     if root.exists() or root.is_symlink():
         raise ValueError('builder metadata path already exists')
+    if buildx_binary is None:
+        raise ValueError('Explicit staged official Buildx binary required')
+    source = Path(buildx_binary)
+    if not source.is_relative_to(Path(plan['independent_root'])):
+        raise ValueError('Staged Buildx must remain inside independent root')
+    plugin_bytes = _plugin_bytes(source)  # Before any write or Docker command.
     docker = plan['docker']
     # List commands must succeed. A failed inspect is not proof of absence.
     for argv, name in ((docker + ['ps', '-a', '--format', '{{.Names}}'], plan['container']),
@@ -134,7 +182,16 @@ def provision(plan, run):
     root = Path(plan['root'])
     root.mkdir(parents=False, exist_ok=False)
     (root / 'buildx').mkdir()
-    (root / 'docker').mkdir()
+    (root / 'docker').mkdir(mode=0o700)
+    (root / 'docker/cli-plugins').mkdir(mode=0o700)
+    fd = os.open(root / 'docker/config.json', os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, 'wb') as stream:
+        stream.write(b'{}\n')
+    plugin = Path(plan['buildx_plugin']['path'])
+    with plugin.open('xb') as stream:
+        stream.write(plugin_bytes)
+    plugin.chmod(0o755)
+    verify_plugin(plan)
     (root / 'buildkitd.toml').write_text('# Independent builder; no registry mirrors or external cache.\n')
     # Fresh metadata cannot contain an existing builder; still check successful ls.
     rows = run(docker + ['buildx', 'ls', '--format', '{{.Name}}']).splitlines()
@@ -169,6 +226,7 @@ def verify_live(plan, run):
     """Read-only reinspection before each build; run(argv)->stdout must fail closed."""
     if plan != make_plan(plan['identity'], plan['root'], plan['image'], independent_root=plan['independent_root']):
         raise ValueError('noncanonical builder plan')
+    verify_plugin(plan)
     if (Path(plan['root']) / 'buildkitd.toml').read_text() != '# Independent builder; no registry mirrors or external cache.\n':
         raise ValueError('BuildKit daemon configuration changed')
     docker = plan['docker']
@@ -184,6 +242,8 @@ def main():
     ap.add_argument('--root', required=True)
     ap.add_argument('--independent-root', required=True)
     ap.add_argument('--buildkit-image', required=True)
+    ap.add_argument('--buildx-binary', type=Path,
+                    help='staged official Linux ARM64 v0.21.3 binary; required with --apply')
     ap.add_argument('--apply', action='store_true')
     args = ap.parse_args()
     plan = make_plan(args.identity, args.root, args.buildkit_image, independent_root=args.independent_root)
@@ -203,7 +263,7 @@ def main():
             raise RuntimeError('Docker command failed: ' + ' '.join(argv))
         return result.stdout
     try:
-        print(json.dumps(provision(plan, run), indent=2))
+        print(json.dumps(provision(plan, run, buildx_binary=args.buildx_binary), indent=2))
     finally:
         root = Path(plan['root'])
         if root.is_dir():
