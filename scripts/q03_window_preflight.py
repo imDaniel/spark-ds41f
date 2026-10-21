@@ -88,9 +88,16 @@ def _fresh_hold(hold, spec, now, recovery=False):
             raise PreflightError("Invalid hold expiration") from exc
 
 
+def service_disposition(spec):
+    value = spec.get("original_service_disposition", "restore")
+    require(value in ("restore", "keep-stopped"), "Unknown original service disposition")
+    return value
+
+
 def _validate_preflight(expected, observed):
     """Pure guard validation, also usable with CPU fault-injection fixtures."""
     phase = observed["phase"]
+    keep_stopped = service_disposition(expected) == "keep-stopped"
     require(phase in {"before_hold", "before_stop", "stopped", "before_restore", "restore_drained", "restored"},
             "Unknown preflight phase")
     require(observed.get("publication_ok") is True, "Publication not verified")
@@ -119,7 +126,8 @@ def _validate_preflight(expected, observed):
         require(ds.get("errors") == {}, "Unknown or foreign DeepSeek identity")
         require(all(row.get("valid") is True for row in ds["nodes"].values()),
                 "DeepSeek identity must be known before cleanup")
-    if phase in {"before_hold", "before_stop", "restored"}:
+    stopped_entry = keep_stopped and phase in {"before_hold", "before_stop"} and ds["running"] is False
+    if phase in {"before_hold", "before_stop", "restored"} and not stopped_entry:
         require(ds.get("running") is True and ds.get("ready") is True,
                 "DeepSeek is not fully ready")
         require(observed.get("idle") is True, "Unknown or busy serving state")
@@ -127,7 +135,7 @@ def _validate_preflight(expected, observed):
         if phase == "restored":
             require(ds.get("prompt_tokens_details") is True,
                     "Registered restored cache-details option is not active")
-    elif phase in {"stopped", "restore_drained"}:
+    elif phase in {"stopped", "restore_drained"} or stopped_entry:
         require(ds.get("running") is False, "DeepSeek not stopped")
         require(observed.get("gpus_empty") is True, "GPU drain not verified")
         require(ds.get("errors") == {}, "DeepSeek cleanup errors")
@@ -318,6 +326,7 @@ def verify_build_publication(publication, ops):
 
 def collect_preflight(manifest, ops, phase):
     spec = manifest["preflight"]
+    keep_stopped = service_disposition(spec) == "keep-stopped"
     for key in ("hold_path", "request_path", "legacy_hold_path", "legacy_request_path"):
         require(str(ops.resolve(spec[key])) == spec[key], "Coordination path must be canonical")
     require(len({spec[key] for key in ("hold_path", "request_path", "legacy_hold_path",
@@ -404,8 +413,10 @@ def collect_preflight(manifest, ops, phase):
             for row in services[name]["nodes"]:
                 row.pop("actual_env", None)
                 row.pop("cmd", None)
+    stopped_entry = (keep_stopped and phase in {"before_hold", "before_stop"}
+                     and services["deepseek"]["running"] is False)
     idle = False
-    if phase in {"before_hold", "before_stop", "restored"}:
+    if phase in {"before_hold", "before_stop", "restored"} and not stopped_entry:
         require(type(spec["idle_samples"]) is int and spec["idle_samples"] >= 2
                 and type(spec["idle_interval_seconds"]) in (int, float)
                 and math.isfinite(spec["idle_interval_seconds"])
@@ -421,7 +432,7 @@ def collect_preflight(manifest, ops, phase):
                 ops.sleep(spec["idle_interval_seconds"])
         idle = True
     empty = False
-    if phase in {"stopped", "restore_drained"}:
+    if phase in {"stopped", "restore_drained"} or stopped_entry:
         empty = all(not _run(ops, _node_argv(spec, node, ["nvidia-smi",
                     "--query-compute-apps=pid", "--format=csv,noheader,nounits"])) for node in nodes)
     return {"phase": phase, "policy": policy, "publication_ok": True,

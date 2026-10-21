@@ -142,6 +142,24 @@ class AdapterContracts(unittest.TestCase):
                 loader.assert_not_called()
                 verify.assert_not_called()
 
+    def test_keep_stopped_capsule_refuses_start_before_loading_original(self):
+        args = SimpleNamespace(evidence_dir='unused', hold='unused', window_id='window',
+                               policy='/synthetic/policy.json', policy_sha256='c' * 64,
+                               spark_sha256='d' * 64, action='start')
+        capsule = {'window_id': 'window', 'holder': 'owner', 'manifest': {'preflight': {
+            'hold_path': 'unused', 'policy_path': args.policy,
+            'policy_sha256': args.policy_sha256, 'spark_sha256': args.spark_sha256,
+            'original_service_disposition': 'keep-stopped'}}}
+        with (mock.patch.dict(os.environ),
+              mock.patch.object(self.adapter, 'read_capsule', return_value=capsule),
+              mock.patch.object(self.adapter, 'evidence_path', return_value=Path('/fake')),
+              mock.patch.object(self.adapter, 'owned_hold', return_value={}),
+              mock.patch.object(self.adapter, 'verify_hash') as verify,
+              mock.patch.object(self.adapter.importlib.machinery, 'SourceFileLoader') as loader):
+            with self.assertRaisesRegex(RuntimeError, 'forbids original service START'):
+                self.adapter.run(args)
+            verify.assert_not_called(); loader.assert_not_called()
+
     def test_hold_requires_exact_uuid_holder_and_rejects_symlink(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "hold.json"

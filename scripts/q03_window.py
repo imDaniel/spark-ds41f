@@ -996,9 +996,29 @@ def restore(session):
         # Historical work is no longer active only after positive all-node drain.
         # A failed/unknown drain never clears its ownership or attempt evidence.
         session.update(**fields)
-    transition_original(session, "start", 3650)
-    session.check("restored")
-    session.update(phase="restored", restored=True)
+    from q03_window_preflight import service_disposition
+    if service_disposition(session.manifest["preflight"]) == "keep-stopped":
+        # restore_drained just proved registered originals stopped, candidates
+        # gone and all four GPUs empty. No START is permitted for this capsule.
+        session.update(phase="closed-stopped", original_kept_stopped=True, restored=False)
+    else:
+        transition_original(session, "start", 3650)
+        session.check("restored")
+        session.update(phase="restored", restored=True)
+    session.release()
+    session.update(hold_released=True)
+
+
+def close_before_mutation(session):
+    from q03_window_preflight import service_disposition
+    if service_disposition(session.manifest["preflight"]) == "keep-stopped":
+        if not session.owns_hold():
+            raise RuntimeError("unverified stopped closure without owned hold")
+        session.check("restore_drained")
+        session.update(phase="closed-stopped", original_kept_stopped=True, restored=False,
+                       restoring_started_epoch=time.time())
+    else:
+        session.update(phase="aborted-before-mutation")
     session.release()
     session.update(hold_released=True)
 
@@ -1014,16 +1034,22 @@ def recover(directory, ops=None):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         session = Session(directory, ops)
         locks.enter_context(ops.acquire_gpu_lock())
-        if session.state.get("restored"):
+        from q03_window_watchdog import original_stopped_complete
+        kept_stopped = original_stopped_complete(session.capsule, session.state)
+        if session.state.get("restored") or kept_stopped:
             if session.owns_hold():
-                session.check("restored")
+                session.check("restore_drained" if kept_stopped else "restored")
                 session.release()
             session.update(hold_released=True)
             return session.state
         if not session.state.get("mutation_started"):
             if session.owns_hold():
-                session.release()
-            session.update(phase="aborted-before-mutation", hold_released=True)
+                close_before_mutation(session)
+            else:
+                from q03_window_preflight import service_disposition
+                if service_disposition(session.manifest["preflight"]) == "keep-stopped":
+                    raise RuntimeError("unverified stopped closure without owned hold")
+                session.update(phase="aborted-before-mutation", hold_released=True)
             return session.state
         try:
             restore(session)
@@ -1128,6 +1154,8 @@ def validate_layout(manifest, directory):
             raise ValueError("reviewed G1 identity adapter is not integrated")
     root = Path(manifest["independent_root"])
     spec = manifest["preflight"]
+    from q03_window_preflight import service_disposition
+    service_disposition(spec)  # Refuse an unknown policy before any writes.
     roots = spec.get("protected_roots")
     if not isinstance(roots, list) or not roots:
         raise ValueError("private site evidence must supply protected roots")
@@ -1301,7 +1329,9 @@ def run_session(manifest, directory, ops=None):
         claim_hold(session.hold, dict(holder=capsule["holder"], window=window_id,
                    since=utc(), heartbeat=utc(),
                    expected_end=datetime.datetime.fromtimestamp(capsule["deadline_epoch"], datetime.timezone.utc).isoformat(),
-                   rule="Exclusive Q03; restore registered policy before release",
+                   rule=("Exclusive Q03; keep originals stopped; positive all-four drain before release"
+                         if manifest["preflight"].get("original_service_disposition") == "keep-stopped"
+                         else "Exclusive Q03; restore registered policy before release"),
                    session_dir=str(directory)))
         heartbeat_stop = threading.Event()
         def keepalive():
@@ -1373,9 +1403,7 @@ def run_session(manifest, directory, ops=None):
                         session.update(phase="recovery-failed", failure=str(exc), outcome="failed")
                         raise
                 elif session.owns_hold():
-                    session.update(phase="aborted-before-mutation")
-                    session.release()
-                    session.update(hold_released=True)
+                    close_before_mutation(session)
             finally:
                 heartbeat_stop.set()
                 heartbeat_thread.join(timeout=10)
@@ -1432,7 +1460,10 @@ def main():
         manifest = json.loads(Path(args.manifest).read_text())
         if not args.apply:
             print(json.dumps({"status": "plan-only", "jobs": manifest.get("jobs"),
-                              "restore": original_command("start"), "no_operations": True,
+                              "finish": original_command("stop" if manifest["preflight"].get(
+                                  "original_service_disposition") == "keep-stopped" else "start"),
+                              "original_service_disposition": manifest["preflight"].get(
+                                  "original_service_disposition", "restore"), "no_operations": True,
                               "held_window": "held_window" in manifest,
                               "explicit_resume_required": "held_window" in manifest}))
             return

@@ -167,6 +167,22 @@ def load_capsule(session_dir):
     return capsule, expected
 
 
+def original_stopped_complete(capsule, state):
+    """A separate positive closure marker; never call stopped service restored."""
+    return (capsule.get("manifest", {}).get("preflight", {}).get(
+                "original_service_disposition") == "keep-stopped"
+            and state.get("phase") == "closed-stopped"
+            and state.get("original_kept_stopped") is True
+            and state.get("restored") is False)
+
+
+def reconciled(capsule, state):
+    return bool(state.get("restored") or original_stopped_complete(capsule, state)
+                or (state.get("phase") == "aborted-before-mutation"
+                    and capsule.get("manifest", {}).get("preflight", {}).get(
+                        "original_service_disposition", "restore") == "restore"))
+
+
 class Watchdog:
     """Single recovery attempt; all external effects are injectable for CPU tests."""
 
@@ -181,11 +197,10 @@ class Watchdog:
         try:
             ops.verify_capsule()
             state = ops.state()
-            reconcile = bool(state.get("restored")
-                             or state.get("phase") == "aborted-before-mutation")
+            reconcile = reconciled(c, state)
             if reconcile and state.get("hold_released"):
                 self.terminal = True
-                return "restored"
+                return "stopped" if original_stopped_complete(c, state) else "restored"
             # Verified restoration may have crashed immediately before/after
             # unlink. The pinned core reconciles that without another transition
             # and never mutates a replacement foreign hold.
@@ -198,7 +213,7 @@ class Watchdog:
                 stale = not reconcile
             dead = not ops.core_alive()
             limit = c["deadline_epoch"]
-            if state.get("phase") == "restoring" or state.get("restored"):
+            if state.get("phase") == "restoring" or state.get("restored") or original_stopped_complete(c, state):
                 started = state.get("restoring_started_epoch")
                 if not isinstance(started, (int, float)) or not math.isfinite(started):
                     raise ValueError("restoration start timestamp missing or invalid")
@@ -218,12 +233,11 @@ class Watchdog:
             # never use the pre-signal snapshot to inspect a replacement hold.
             ops.verify_capsule()
             state = ops.state()
-            reconcile = bool(state.get("restored")
-                             or state.get("phase") == "aborted-before-mutation")
+            reconcile = reconciled(c, state)
             if reconcile and state.get("hold_released"):
                 self.terminal = True
                 ops.journal("core_completed_during_termination")
-                return "restored"
+                return "stopped" if original_stopped_complete(c, state) else "restored"
             if not reconcile:
                 ops.owned_hold()
             if ops.recovery_attempted():
@@ -231,12 +245,12 @@ class Watchdog:
             ops.mark_recovery_attempted()
             ops.recover()
             final = ops.state()
-            if not (final.get("hold_released") and (final.get("restored")
-                    or final.get("phase") == "aborted-before-mutation")):
-                raise RuntimeError("recovery returned without verified restoration")
+            if not (final.get("hold_released") and reconciled(c, final)):
+                raise RuntimeError("recovery returned without verified closure")
             self.terminal = True
-            ops.journal("restored")
-            return "restored"
+            result = "stopped" if original_stopped_complete(c, final) else "restored"
+            ops.journal(result)
+            return result
         except Exception as error:
             self.terminal = True
             ops.journal("watchdog_failed", error=str(error),
@@ -375,7 +389,7 @@ def main():
     while True:
         result = watch.step()
         if result != "waiting":
-            return 0 if result == "restored" else 1
+            return 0 if result in ("restored", "stopped") else 1
         time.sleep(min(2, c["heartbeat_timeout_s"] / 4))
 
 

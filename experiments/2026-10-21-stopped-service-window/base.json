@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "base_commit": "19e2b5fda4609de3b6e25b960fec710ac0d4a8dc",
+  "base_tree": "0e4cc4f87b319a47253279999e536b981ce8e5e2",
+  "intended_variable": "explicit original-service lifecycle disposition; no engine or fixture change",
+  "native_image": "sha256:90bd2bbc4709b14a2210a6752c707d9d16661180248949e183fa0c25b6691ff6",
+  "execution_status": "not run; no local CPU tests while original models running"
+}

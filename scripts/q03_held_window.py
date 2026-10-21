@@ -337,7 +337,8 @@ def submit_control(session, action, expected_sequence, *, attempt_path=None, att
     require(action in ("pause", "resume", "close"), "unsupported held control action")
     require(type(expected_sequence) is int and expected_sequence >= 0 and
             expected_sequence == session.state.get("held_sequence"), "stale control sequence")
-    require(session.state.get("phase") not in ("restoring", "restored", "recovery-failed"),
+    require(session.state.get("phase") not in ("restoring", "restored", "recovery-failed",
+                                               "closed-stopped", "aborted-before-mutation"),
             "held controller is closing or terminal")
     request = {"schema_version": 1, "window_id": session.capsule["window_id"],
                "capsule_sha256": capsule_sha, "expected_sequence": expected_sequence,
@@ -545,4 +546,5 @@ def read_status(session):
             "active_attempt": session.state.get("active_attempt"),
             "last_attempt_receipt_sha256": session.state.get("last_attempt_receipt_sha256"),
             "hold_status": session.hold_status(), "restored": session.state.get("restored", False),
+            "original_kept_stopped": session.state.get("original_kept_stopped", False),
             "hold_released": session.state.get("hold_released", False)}

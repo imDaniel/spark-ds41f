@@ -154,6 +154,40 @@ class PreflightFaultTests(unittest.TestCase):
         self.assertIsNone(self.guard._optional_json(
             SimpleNamespace(read_json=absent), "fake-request"))
 
+    def test_keep_stopped_entry_requires_positive_all_four_drain(self):
+        self.expected['original_service_disposition'] = 'keep-stopped'
+        stopped = copy.deepcopy(self.observed)
+        stopped.update(gpus_empty=True, idle=False)
+        stopped['deepseek'].update(running=False, ready=False,
+            nodes={str(i): {'valid': True, 'running': False, 'memguard': 'inactive'} for i in range(4)})
+        for phase in ('before_hold', 'before_stop'):
+            value = copy.deepcopy(stopped)
+            value.update(phase=phase, hold=self.owned() if phase == 'before_stop' else None)
+            self.validate(value)
+            for key, bad in (('gpus_empty', False), ('requests_absent', False), ('protected_ok', False)):
+                with self.subTest(phase=phase, key=key), self.assertRaises(self.guard.PreflightError):
+                    self.validate(dict(value, **{key: bad}))
+            for key, bad in (('valid', False), ('running', True), ('memguard', 'active')):
+                changed = copy.deepcopy(value)
+                changed['deepseek']['nodes']['3'][key] = bad
+                with self.subTest(phase=phase, key=key), self.assertRaises(self.guard.PreflightError):
+                    self.validate(changed)
+        del self.expected['original_service_disposition']
+        with self.assertRaises(self.guard.PreflightError):
+            self.validate(stopped)
+
+    def test_keep_stopped_live_entry_still_requires_idle_ready_ownership(self):
+        self.expected['original_service_disposition'] = 'keep-stopped'
+        self.validate(self.observed)
+        for key in ('idle',):
+            with self.assertRaises(self.guard.PreflightError):
+                self.validate(dict(self.observed, **{key: False}))
+        for key in ('ready', 'gpu_ownership_verified'):
+            value = copy.deepcopy(self.observed); value['deepseek'][key] = False
+            with self.assertRaises(self.guard.PreflightError): self.validate(value)
+        self.expected['original_service_disposition'] = 'unknown'
+        with self.assertRaises(self.guard.PreflightError): self.validate(self.observed)
+
     def test_restored_requires_registered_pending_policy_not_old_live_options(self):
         observed = copy.deepcopy(self.observed)
         # The old live state need not have the pending registered option yet.
@@ -588,6 +622,81 @@ class WindowRecoveryTests(unittest.TestCase):
         self.assertNotIn("acceptance.json", " ".join(restore))
         self.assertNotIn("glm", " ".join(sum(self.ops.commands, [])))
 
+    def test_explicit_keep_stopped_success_and_job_failure_never_start(self):
+        for fault in (None, 'job:p0'):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory(dir=self.root) as tmp:
+                self.directory = Path(tmp) / 'session'
+                self.ops = FakeOps(fault); self.ops.commands = []
+                self.manifest['preflight']['original_service_disposition'] = 'keep-stopped'
+                if fault:
+                    with self.assertRaisesRegex(RuntimeError, 'injected'): self.run_window()
+                else:
+                    self.run_window()
+                state = self.state()
+                self.assertEqual(state['phase'], 'closed-stopped')
+                self.assertTrue(state['original_kept_stopped'])
+                self.assertFalse(state['restored'])
+                self.assertTrue(state['hold_released'])
+                self.assertFalse(self.hold.exists())
+                self.assertNotIn('restore:start', self.ops.events)
+                self.assertIn('check:restore_drained', self.ops.events)
+                actions = [a[a.index('--action') + 1] for a in self.ops.commands if '--action' in a]
+                self.assertEqual(actions, ['stop', 'stop'])
+
+    def test_keep_stopped_unknown_drain_retains_hold(self):
+        self.manifest['preflight']['original_service_disposition'] = 'keep-stopped'
+        self.ops.failure = 'check:restore_drained'
+        with self.assertRaisesRegex(RuntimeError, 'injected'): self.run_window()
+        self.assertTrue(self.hold.exists())
+        self.assertFalse(self.state().get('original_kept_stopped', False))
+        self.assertNotIn('restore:start', self.ops.events)
+        self.ops.failure = None
+        state = self.core.recover(self.directory, self.ops)
+        self.assertEqual(state['phase'], 'closed-stopped')
+        self.assertFalse(self.hold.exists())
+        self.assertNotIn('restore:start', self.ops.events)
+
+    def test_keep_stopped_release_race_recovery_does_not_repeat_transition(self):
+        self.manifest['preflight']['original_service_disposition'] = 'keep-stopped'
+        self.run_window()
+        session = self.core.Session(self.directory, self.ops)
+        from q03_window_watchdog import claim_hold
+        claim_hold(self.hold, {'window': session.capsule['window_id'], 'holder': session.capsule['holder']})
+        session.update(hold_released=False)
+        before = len(self.ops.commands)
+        state = self.core.recover(self.directory, self.ops)
+        self.assertEqual(len(self.ops.commands), before)
+        self.assertFalse(state['restored'])
+        self.assertTrue(state['hold_released'])
+        self.assertFalse(self.hold.exists())
+
+    def test_keep_stopped_early_abort_checks_drain_before_release(self):
+        self.manifest['preflight']['original_service_disposition'] = 'keep-stopped'
+        self.ops.failure = 'watchdog:spawn'
+        with self.assertRaisesRegex(RuntimeError, 'injected'): self.run_window()
+        self.assertIn('check:restore_drained', self.ops.events)
+        self.assertEqual(self.state()['phase'], 'closed-stopped')
+        self.assertFalse(self.hold.exists())
+        self.assertEqual(self.ops.commands, [])
+
+    def test_keep_stopped_early_abort_unknown_drain_retains_hold(self):
+        self.manifest['preflight']['original_service_disposition'] = 'keep-stopped'
+        def fault(event):
+            if event in ('watchdog:spawn', 'check:restore_drained'):
+                raise RuntimeError('unknown early stop state')
+        self.ops.hook = fault
+        with self.assertRaisesRegex(RuntimeError, 'unknown early'): self.run_window()
+        self.assertTrue(self.hold.exists())
+        self.assertFalse(self.state().get('original_kept_stopped', False))
+        self.assertEqual(self.ops.commands, [])
+
+    def test_unknown_disposition_rejects_before_host_validation_or_hold(self):
+        self.manifest['preflight']['original_service_disposition'] = 'invalid'
+        with self.assertRaisesRegex(RuntimeError, 'disposition'): self.run_window()
+        self.assertFalse(self.directory.exists())
+        self.assertFalse(self.hold.exists())
+        self.assertEqual(self.ops.commands, [])
+
     def test_guard_or_watchdog_failure_never_stops_service(self):
         for fault in ("check:before_hold", "watchdog:spawn", "watchdog:ready",
                       "check:before_stop"):
@@ -1008,6 +1117,30 @@ class WatchdogFaultTests(unittest.TestCase):
 
     def step(self):
         return self.watch.Watchdog(self.capsule, self.ops).step()
+
+    def test_keep_stopped_terminal_requires_explicit_capsule_policy(self):
+        state = {'phase': 'closed-stopped', 'original_kept_stopped': True,
+                 'restored': False, 'hold_released': True}
+        self.ops.state = lambda: dict(state)
+        self.assertEqual(self.step(), 'waiting')
+        self.capsule['manifest'] = {'preflight': {'original_service_disposition': 'keep-stopped'}}
+        self.assertEqual(self.step(), 'stopped')
+        self.assertNotIn('recover', self.ops.events)
+
+    def test_keep_stopped_watchdog_recovery_accepts_drained_closure(self):
+        self.capsule.update(manifest={'preflight': {'original_service_disposition': 'keep-stopped'}},
+                            recovery_timeout_s=100)
+        self.ops.alive = False
+        closed = {'phase': 'closed-stopped', 'original_kept_stopped': True,
+                  'restored': False, 'hold_released': True}
+        state = {'phase': 'held-ready', 'restored': False, 'hold_released': False}
+        self.ops.state = lambda: dict(state)
+        def recover():
+            self.ops.event('recover'); state.update(closed)
+        self.ops.recover = recover
+        self.assertEqual(self.step(), 'stopped')
+        self.assertEqual(self.ops.events.count('recover'), 1)
+        self.assertNotIn('terminate', self.ops.events)
 
     def test_fresh_live_core_waits_without_recovery(self):
         self.assertEqual(self.step(), "waiting")

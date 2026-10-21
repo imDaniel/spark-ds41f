@@ -334,6 +334,10 @@ def run(args):
     require(policy_path == Path(pre['policy_path']), 'unexpected registered policy path')
     require(args.policy_sha256 == pre['policy_sha256']
             and args.spark_sha256 == pre['spark_sha256'], 'private expectations differ')
+    disposition = pre.get('original_service_disposition', 'restore')
+    require(disposition in ('restore', 'keep-stopped'), 'unknown service disposition')
+    require(not (disposition == 'keep-stopped' and args.action == 'start'),
+            'immutable capsule forbids original service START')
     policy = json.loads(verify_hash(policy_path, args.policy_sha256))
     expected = pre['registered_policy']
     required = {'repository', 'cluster_config', 'config_sha256', 'revision', 'image_id', 'container'}
