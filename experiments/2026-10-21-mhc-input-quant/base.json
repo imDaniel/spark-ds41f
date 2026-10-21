@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "status": "source replay and CPU/static checks complete; image, GPU, capacity and performance unqualified",
+  "deployment_base": "3ff57762036fc72c2221c3845a39e70850fd2d7e",
+  "deployment_base_tree": "96934c70e223427df79142653a4e5c65aba35efb",
+  "source_base": "19f2c20ed4d64ae22bd009ceacadd85e2a81e354",
+  "inherited_source_manifest": "experiments/2026-10-19-r6x-steering/source.json",
+  "inherited_patch_head": "ebb44766d6f04d3a9272b712778d7f2fa2cec1fd",
+  "inherited_tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4",
+  "inherited_patchset_sha256": "327d35a7e86cab34ade289e030d2fcf13e84b034a6a9a121c154702235594cf8",
+  "author_patch_count": 176,
+  "inherited_downstream_patch_count": 12,
+  "candidate_patch_count": 4,
+  "candidate_export_complete": true,
+  "patch_head": "dd0d8326d31456a6038ac2f244f765e8d783ce59",
+  "expected_tree": "9cee307fa4fcfca0b907bafc192a7866ea77ec83",
+  "patchset_sha256": "5a918aefd8a12c5c36aae9117ba7059e976a4503efae3362fd41da1df3dddd7e",
+  "image_built": false,
+  "gpu_tests_run": false,
+  "four_node_operations_run": false,
+  "weights_modified": false,
+  "total_patch_count": 192,
+  "validation_results": {
+    "full_replay": true,
+    "host_static": {
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "receipt": "runs/host-final/identity.json",
+      "scope": "actual candidate AST-adapted host/static; no Torch dispatcher/numerical/GPU"
+    },
+    "syntax_files": 10,
+    "release_test_classification": {
+      "selected": 125,
+      "gate": 68,
+      "periodic": 0,
+      "excluded": 57,
+      "problems": 0
+    },
+    "candidate_doctor": true,
+    "build_inputs_check": false,
+    "build_inputs_blocker": "complete build input directory not prepared in cloud worktree"
+  }
+}

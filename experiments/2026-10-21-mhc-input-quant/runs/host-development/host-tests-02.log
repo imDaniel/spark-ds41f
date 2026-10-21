@@ -1,0 +1,29 @@
+test_lease_bounds_nesting_and_duplicate_release (__main__.ArenaHostContracts.test_lease_bounds_nesting_and_duplicate_release) ... ok
+test_two_fixed_allocations_have_exact_budget_and_stable_slices (__main__.ArenaHostContracts.test_two_fixed_allocations_have_exact_budget_and_stable_slices) ... ok
+test_zero_budget_is_arithmetic_only_not_an_allocated_arena (__main__.ArenaHostContracts.test_zero_budget_is_arithmetic_only_not_an_allocated_arena) ... ok
+test_ffn_failure_releases_actual_model_lease (__main__.ModelBoundaryContracts.test_ffn_failure_releases_actual_model_lease) ... ok
+test_target_routes_pair_but_draft_sp_zero_and_oversize_do_not (__main__.ModelBoundaryContracts.test_target_routes_pair_but_draft_sp_zero_and_oversize_do_not) ... ok
+test_both_real_opaque_entries_preserve_source_scope_and_empty_path (__main__.OpaqueBoundaryContracts.test_both_real_opaque_entries_preserve_source_scope_and_empty_path) ... ok
+test_candidate_eligibility_rejects_each_transform_and_parallel_mode (__main__.OpaqueBoundaryContracts.test_candidate_eligibility_rejects_each_transform_and_parallel_mode) ... ok
+test_real_plan_selects_pair_without_cast_or_copy (__main__.PlanHostContracts.test_real_plan_selects_pair_without_cast_or_copy) ... ok
+test_dual_schema_declares_sinks_and_fake_signature_matches (__main__.ProducerHostContracts.test_dual_schema_declares_sinks_and_fake_signature_matches) ... ok
+test_false_key_is_exact_legacy_six_arguments_no_kwargs (__main__.ProducerHostContracts.test_false_key_is_exact_legacy_six_arguments_no_kwargs) ... ok
+test_invalid_quant_config_rejected_before_factory (__main__.ProducerHostContracts.test_invalid_quant_config_rejected_before_factory) ... ok
+test_true_key_contains_actual_config_and_distinguishes_clamp (__main__.ProducerHostContracts.test_true_key_contains_actual_config_and_distinguishes_clamp) ... ok
+test_zero_row_sink_metadata_is_still_validated (__main__.ProducerHostContracts.test_zero_row_sink_metadata_is_still_validated) ... ok
+test_reference_mapping_covers_every_column_and_scale_once (__main__.QuartetMappingContracts.test_reference_mapping_covers_every_column_and_scale_once)
+Integer design enumeration only, not execution of the GPU kernel. ... ok
+test_xor_four_mutant_crosses_scale_group (__main__.QuartetMappingContracts.test_xor_four_mutant_crosses_scale_group) ... ok
+test_exactly_once_consumption_and_baseline_reset (__main__.RoutedInputContracts.test_exactly_once_consumption_and_baseline_reset) ... ok
+test_exception_at_each_stage_resets_scope (__main__.RoutedInputContracts.test_exception_at_each_stage_resets_scope) ... ok
+test_fake_metadata_does_not_access_storage (__main__.RoutedInputContracts.test_fake_metadata_does_not_access_storage) ... ok
+test_invalid_pairs_fail_even_for_zero_rows (__main__.RoutedInputContracts.test_invalid_pairs_fail_even_for_zero_rows) ... ok
+test_storage_alias_and_alignment_rejected (__main__.RoutedInputContracts.test_storage_alias_and_alignment_rejected) ... ok
+test_unconsumed_and_nested_scope_fail_then_recover (__main__.RoutedInputContracts.test_unconsumed_and_nested_scope_fail_then_recover) ... ok
+test_valid_pair_keeps_identity (__main__.RoutedInputContracts.test_valid_pair_keeps_identity) ... ok
+test_wrong_owner_and_same_address_replacement_rejected (__main__.RoutedInputContracts.test_wrong_owner_and_same_address_replacement_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 0.069s
+
+OK

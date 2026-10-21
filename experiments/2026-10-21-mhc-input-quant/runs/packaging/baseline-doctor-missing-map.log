@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/packaging/bin/spark", line 6092, in <module>
+    raise SystemExit(arguments.func(arguments))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/packaging/bin/spark", line 1323, in command_doctor
+    cluster, nodes, upstreams = configuration(args)
+                                ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/packaging/bin/spark", line 104, in configuration
+    nodes = site_nodes() if nodes_path == ROOT / NODES_FILE else json.loads(nodes_path.read_text())
+                                                                            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/packaging/config/nodes-ring4.local.json'

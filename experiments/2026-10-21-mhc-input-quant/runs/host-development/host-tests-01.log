@@ -1,0 +1,69 @@
+test_lease_bounds_nesting_and_duplicate_release (__main__.ArenaHostContracts.test_lease_bounds_nesting_and_duplicate_release) ... ok
+test_two_fixed_allocations_have_exact_budget_and_stable_slices (__main__.ArenaHostContracts.test_two_fixed_allocations_have_exact_budget_and_stable_slices) ... FAIL
+test_zero_budget_is_arithmetic_only_not_an_allocated_arena (__main__.ArenaHostContracts.test_zero_budget_is_arithmetic_only_not_an_allocated_arena) ... ok
+test_real_plan_selects_pair_without_cast_or_copy (__main__.PlanHostContracts.test_real_plan_selects_pair_without_cast_or_copy) ... ERROR
+test_dual_schema_declares_sinks_and_fake_signature_matches (__main__.ProducerHostContracts.test_dual_schema_declares_sinks_and_fake_signature_matches) ... FAIL
+test_false_key_is_exact_legacy_six_arguments_no_kwargs (__main__.ProducerHostContracts.test_false_key_is_exact_legacy_six_arguments_no_kwargs) ... ok
+test_invalid_quant_config_rejected_before_factory (__main__.ProducerHostContracts.test_invalid_quant_config_rejected_before_factory) ... ok
+test_true_key_contains_actual_config_and_distinguishes_clamp (__main__.ProducerHostContracts.test_true_key_contains_actual_config_and_distinguishes_clamp) ... ok
+test_zero_row_sink_metadata_is_still_validated (__main__.ProducerHostContracts.test_zero_row_sink_metadata_is_still_validated) ... ok
+test_reference_mapping_covers_every_column_and_scale_once (__main__.QuartetMappingContracts.test_reference_mapping_covers_every_column_and_scale_once)
+Integer design enumeration only, not execution of the GPU kernel. ... ok
+test_xor_four_mutant_crosses_scale_group (__main__.QuartetMappingContracts.test_xor_four_mutant_crosses_scale_group) ... ok
+test_exactly_once_consumption_and_baseline_reset (__main__.RoutedInputContracts.test_exactly_once_consumption_and_baseline_reset) ... ok
+test_exception_at_each_stage_resets_scope (__main__.RoutedInputContracts.test_exception_at_each_stage_resets_scope) ... ok
+test_fake_metadata_does_not_access_storage (__main__.RoutedInputContracts.test_fake_metadata_does_not_access_storage) ... ok
+test_invalid_pairs_fail_even_for_zero_rows (__main__.RoutedInputContracts.test_invalid_pairs_fail_even_for_zero_rows) ... ok
+test_storage_alias_and_alignment_rejected (__main__.RoutedInputContracts.test_storage_alias_and_alignment_rejected) ... ok
+test_unconsumed_and_nested_scope_fail_then_recover (__main__.RoutedInputContracts.test_unconsumed_and_nested_scope_fail_then_recover) ... ok
+test_valid_pair_keeps_identity (__main__.RoutedInputContracts.test_valid_pair_keeps_identity) ... ok
+test_wrong_owner_and_same_address_replacement_rejected (__main__.RoutedInputContracts.test_wrong_owner_and_same_address_replacement_rejected) ... ok
+
+======================================================================
+ERROR: test_real_plan_selects_pair_without_cast_or_copy (__main__.PlanHostContracts.test_real_plan_selects_pair_without_cast_or_copy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/tests/tests/models/test_deepseek_v41_q03_host.py", line 451, in test_real_plan_selects_pair_without_cast_or_copy
+    native.run(plan, x, SimpleNamespace(dtype="ids"), object(),
+  File "/workspace/shared/q03-development/bridge/vllm/models/deepseek_v4_1/tilelang/moe.py", line 1306, in run
+    validate_input_quant_disjoint(input_quant, workspace, out)
+  File "/workspace/shared/q03-development/bridge/vllm/models/deepseek_v4_1/tilelang/routed_input.py", line 68, in validate_input_quant_disjoint
+    storage = tensor.untyped_storage()
+              ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'MetadataTensor' object has no attribute 'untyped_storage'
+
+======================================================================
+FAIL: test_two_fixed_allocations_have_exact_budget_and_stable_slices (__main__.ArenaHostContracts.test_two_fixed_allocations_have_exact_budget_and_stable_slices)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/tests/tests/models/test_deepseek_v41_q03_host.py", line 394, in test_two_fixed_allocations_have_exact_budget_and_stable_slices
+    self.assertEqual(self.retained, [arena] * 8)
+AssertionError: Lists differ: [] != [<q03_host_1.RoutedInputQuantArena object [441 chars]990>]
+
+Second list contains 8 additional elements.
+First extra element 0:
+<q03_host_1.RoutedInputQuantArena object at 0x7f738d73e990>
+
+- []
++ [<q03_host_1.RoutedInputQuantArena object at 0x7f738d73e990>,
++  <q03_host_1.RoutedInputQuantArena object at 0x7f738d73e990>,
++  <q03_host_1.RoutedInputQuantArena object at 0x7f738d73e990>,
++  <q03_host_1.RoutedInputQuantArena object at 0x7f738d73e990>,
++  <q03_host_1.RoutedInputQuantArena object at 0x7f738d73e990>,
++  <q03_host_1.RoutedInputQuantArena object at 0x7f738d73e990>,
++  <q03_host_1.RoutedInputQuantArena object at 0x7f738d73e990>,
++  <q03_host_1.RoutedInputQuantArena object at 0x7f738d73e990>]
+
+======================================================================
+FAIL: test_dual_schema_declares_sinks_and_fake_signature_matches (__main__.ProducerHostContracts.test_dual_schema_declares_sinks_and_fake_signature_matches)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/tests/tests/models/test_deepseek_v41_q03_host.py", line 349, in test_dual_schema_declares_sinks_and_fake_signature_matches
+    self.assertEqual(ast.dump(real.args), ast.dump(fake.args))
+AssertionError: "argu[41 chars]dual', annotation=Attribute(value=Name(id='tor[2761 chars]0)])" != "argu[41 chars]dual'), arg(arg='fn'), arg(arg='scale'), arg(a[620 chars]0)])"
+Diff is 3578 characters long. Set self.maxDiff to None to see it.
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.040s
+
+FAILED (failures=2, errors=1)

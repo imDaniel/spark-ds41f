@@ -1,0 +1,10 @@
+test_frozen_candidate_source_identity_is_consistent (test_mhc_input_packaging.MHCInputPackagingTest.test_frozen_candidate_source_identity_is_consistent) ... ok
+test_inherited_fingerprint_and_file_map_are_unchanged (test_mhc_input_packaging.MHCInputPackagingTest.test_inherited_fingerprint_and_file_map_are_unchanged) ... ok
+test_inherited_series_is_applied_once_in_original_order (test_mhc_input_packaging.MHCInputPackagingTest.test_inherited_series_is_applied_once_in_original_order) ... ok
+test_other_component_sources_and_cpu_history_are_preserved (test_mhc_input_packaging.MHCInputPackagingTest.test_other_component_sources_and_cpu_history_are_preserved) ... ok
+test_profile_preserves_steering_and_capacity (test_mhc_input_packaging.MHCInputPackagingTest.test_profile_preserves_steering_and_capacity) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.040s
+
+OK

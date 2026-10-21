@@ -1,0 +1,15 @@
+{
+  "parsed": [
+    "tests/kernels/test_deepseek_v41_tilelang_mhc.py",
+    "tests/models/test_deepseek_v41_q03_host.py",
+    "vllm/model_executor/layers/fused_moe/runner/moe_runner.py",
+    "vllm/model_executor/layers/fused_moe/tilelang.py",
+    "vllm/models/deepseek_v4/nvidia/model.py",
+    "vllm/models/deepseek_v4_1/nvidia/model.py",
+    "vllm/models/deepseek_v4_1/tilelang/input_quant_arena.py",
+    "vllm/models/deepseek_v4_1/tilelang/mhc.py",
+    "vllm/models/deepseek_v4_1/tilelang/moe.py",
+    "vllm/models/deepseek_v4_1/tilelang/routed_input.py"
+  ],
+  "count": 10
+}

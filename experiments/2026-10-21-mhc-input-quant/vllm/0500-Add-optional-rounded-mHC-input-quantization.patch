@@ -1,0 +1,934 @@
+From e23a2379da154d72f352039fc832ae2bb7377418 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 05:34:15 +0000
+Subject: [PATCH 500/503] Add optional rounded mHC input quantization
+
+Base: vLLM 19f2c20ed4d64ae22bd009ceacadd85e2a81e354 plus the immutable 188-patch r6x steering series (ebb44766d6f04d3a9272b712778d7f2fa2cec1fd).
+
+Rationale: Emit a routed MXFP8 input pair from the existing normalization result while retaining BF16 consumers and a separate explicit mutating operation.
+
+Quality: preserve BF16 boundaries, steering and the existing routed/shared arithmetic. Candidate disabled by default; non-SP target TP4 SM121 scope only. No adoption or performance claim.
+
+Tests: source AST, standalone CPU host contracts and diff checks. Torch dispatcher, TileLang compilation, GPU differential/capture, model quality and capacity/performance gates remain unexecuted.
+
+Upstream status: isolated downstream experiment in imDaniel/spark-ds41f; not submitted upstream.
+---
+ .../kernels/test_deepseek_v41_tilelang_mhc.py | 285 +++++++++++
+ vllm/models/deepseek_v4_1/tilelang/mhc.py     | 449 +++++++++++++++++-
+ 2 files changed, 711 insertions(+), 23 deletions(-)
+
+diff --git a/tests/kernels/test_deepseek_v41_tilelang_mhc.py b/tests/kernels/test_deepseek_v41_tilelang_mhc.py
+index f5bdc9575..837ead123 100644
+--- a/tests/kernels/test_deepseek_v41_tilelang_mhc.py
++++ b/tests/kernels/test_deepseek_v41_tilelang_mhc.py
+@@ -241,3 +241,288 @@ def test_post_and_collapse(mhc):
+     _close_bf16(mhc.collapse(residual, mix), weighted)
+     mean = residual.float().mean(1).bfloat16()
+     _close_bf16(mhc.collapse(residual), mean)
++
++
++# These are executable correctness gates for a separately authorized GPU window.
++# CPU parsing or module-level skips are not evidence that any Q03 kernel passed.
++@pytest.fixture(scope="module")
++def q03_sm121():
++    if not current_platform.is_device_capability(121):
++        pytest.skip("Q03 qualification requires SM121; a skip is not a pass")
++
++
++@pytest.fixture(scope="module")
++def q03_finalize_kernels(q03_sm121):
++    from vllm.models.deepseek_v4_1.tilelang.mhc import _mxfp8_config, finalize
++
++    args = (
++        HIDDEN,
++        4 * HIDDEN,
++        CONFIG.rms_norm_eps,
++        CONFIG.hc_eps,
++        CONFIG.hc_sinkhorn_iters,
++        CONFIG.rms_norm_eps,
++    )
++    return (
++        finalize(*args),
++        finalize(*args, emit_mxfp8=True, quant_config=_mxfp8_config()),
++    )
++
++
++def _q03_finalize_inputs(tokens):
++    """Isolate finalize with fixed finite norm partials, even for nonfinite C."""
++    splits = HIDDEN // BLOCK_H
++    generator = torch.Generator(device=DEVICE).manual_seed(3021 + tokens)
++    collapsed = torch.randn(
++        tokens, HIDDEN, generator=generator, device=DEVICE, dtype=torch.bfloat16
++    )
++    return (
++        torch.zeros(splits, tokens, 1, MIXES, device=DEVICE),
++        torch.ones(splits, tokens, 1, device=DEVICE),
++        collapsed,
++        torch.full((splits, tokens), 1.25 * HIDDEN / splits, device=DEVICE),
++        torch.ones(3, device=DEVICE),
++        torch.zeros(MIXES, device=DEVICE),
++        torch.linspace(0.5, 0.75, HIDDEN, device=DEVICE).bfloat16(),
++    )
++
++
++def _q03_finalize_outputs(tokens):
++    return (
++        torch.empty(tokens, 4, device=DEVICE),
++        torch.empty(tokens, 4, 4, device=DEVICE),
++        torch.empty(tokens, 4, device=DEVICE),
++        torch.empty(tokens, HIDDEN, device=DEVICE, dtype=torch.bfloat16),
++    )
++
++
++def _q03_sinks(tokens):
++    """Independent aligned allocations, with prefix and suffix write canaries."""
++    allocations, views = [], []
++    for width, dtype in ((HIDDEN, torch.float8_e4m3fn), (HIDDEN // 32, torch.uint8)):
++        storage = torch.full(
++            (256 + tokens * width + 256,), 0xA5, device=DEVICE, dtype=torch.uint8
++        )
++        views.append(storage[256:-256].view(dtype).view(tokens, width))
++        allocations.append(storage)
++    return tuple(views), tuple(allocations)
++
++
++def _q03_assert_canaries(allocations):
++    for storage in allocations:
++        assert torch.all(storage[:256] == 0xA5).item()
++        assert torch.all(storage[-256:] == 0xA5).item()
++
++
++def _q03_assert_bytes(actual, expected):
++    assert actual.shape == expected.shape
++    assert actual.dtype == expected.dtype
++    assert torch.equal(
++        actual.contiguous().view(torch.uint8),
++        expected.contiguous().view(torch.uint8),
++    )
++
++
++def _q03_assert_cast(y, q, sf):
++    """The patched CUDA cast, not a CPU codec, owns all bytes including NaNs."""
++    import tile_kernels
++
++    expected_q = torch.empty_like(q)
++    expected_sf = torch.empty_like(sf)
++    tile_kernels.quant.per_token_cast(
++        y,
++        "e4m3",
++        32,
++        round_sf=True,
++        use_packed_ue8m0=True,
++        out=(expected_q, expected_sf),
++    )
++    _q03_assert_bytes(q, expected_q)
++    _q03_assert_bytes(sf, expected_sf)
++    assert sf.view(torch.uint32).shape == (y.shape[0], HIDDEN // 128)
++
++
++@pytest.mark.parametrize("tokens", [1, 6, 16, 96, 4096, 4097, 8192])
++def test_q03_finalize_exact_cuda_cast(q03_finalize_kernels, tokens):
++    """Both cast buckets and the 8192-row capacity preserve every live byte."""
++    stock, dual = q03_finalize_kernels
++    inputs = _q03_finalize_inputs(tokens)
++    # Distinct quartet/warp/iteration/tail edges expose misplaced stores.
++    columns = [0, 7, 8, 15, 16, 23, 24, 31, 32, 767, 768, 4607, 4608, 5119]
++    inputs[2][:, columns] = torch.arange(
++        1, len(columns) + 1, device=DEVICE, dtype=torch.bfloat16
++    )
++    expected, actual = _q03_finalize_outputs(tokens), _q03_finalize_outputs(tokens)
++    (q, sf), allocations = _q03_sinks(tokens)
++    stock(*inputs, *expected)
++    dual(*inputs, *actual, q, sf)
++    for got, before in zip(actual, expected):
++        _q03_assert_bytes(got, before)
++    _q03_assert_cast(expected[-1], q, sf)
++    _q03_assert_canaries(allocations)
++
++
++def test_q03_finalize_signed_zero_and_finite_boundaries(q03_finalize_kernels):
++    stock, dual = q03_finalize_kernels
++    inputs = _q03_finalize_inputs(6)
++    collapsed = inputs[2]
++    collapsed.zero_()
++    collapsed[:, 1:32:2] = -0.0
++    # BF16 min subnormal/min normal, FP8 ties, clamp/scale edges and max finite.
++    values = torch.tensor(
++        [
++            2**-133, 2**-126, 1e-4, 1.0625, 1.0626, 448.0, 449.0,
++            torch.finfo(torch.bfloat16).max,
++        ],
++        device=DEVICE,
++        dtype=torch.bfloat16,
++    )
++    for row in range(6):
++        collapsed[row, 32:40] = values if row % 2 == 0 else -values
++        collapsed[row, -8:] = values.roll(row)
++    expected, actual = _q03_finalize_outputs(6), _q03_finalize_outputs(6)
++    (q, sf), allocations = _q03_sinks(6)
++    stock(*inputs, *expected)
++    dual(*inputs, *actual, q, sf)
++    for got, before in zip(actual, expected):
++        _q03_assert_bytes(got, before)
++    assert torch.signbit(actual[-1][:, 1:32:2]).all().item()
++    _q03_assert_cast(expected[-1], q, sf)
++    _q03_assert_canaries(allocations)
++
++
++@pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf")])
++def test_q03_finalize_nonfinite_cuda_oracle(q03_finalize_kernels, value):
++    """No xfail or tolerance: an unexplained nonfinite byte mismatch blocks Q03."""
++    stock, dual = q03_finalize_kernels
++    tokens = 36
++    inputs = _q03_finalize_inputs(tokens)
++    collapsed = inputs[2]
++    for position in range(32):
++        collapsed[position, position] = value
++    collapsed[32, :32] = value
++    collapsed[33, :32:2] = value
++    collapsed[34, -32:] = value
++    expected, actual = _q03_finalize_outputs(tokens), _q03_finalize_outputs(tokens)
++    (q, sf), allocations = _q03_sinks(tokens)
++    stock(*inputs, *expected)
++    dual(*inputs, *actual, q, sf)
++    assert torch.equal(torch.isnan(actual[-1]), torch.isnan(expected[-1]))
++    assert torch.equal(torch.isinf(actual[-1]), torch.isinf(expected[-1]))
++    for got, before in zip(actual, expected):
++        _q03_assert_bytes(got, before)
++    _q03_assert_cast(expected[-1], q, sf)
++    _q03_assert_canaries(allocations)
++
++
++@pytest.fixture(scope="module")
++def q03_mhc(mhc, q03_sm121):
++    candidate = TileKernelsMHC(CONFIG)
++    candidate.q03_enabled = True
++    candidate.steering_enabled = True
++    candidate.declare_kernels()
++    return candidate
++
++
++@pytest.mark.parametrize("tokens", [1, 6, 16, 96])
++@pytest.mark.parametrize("steering", ["off", "loaded_zero", "active"])
++def test_q03_post_pre_exact_with_steering(mhc, q03_mhc, tokens, steering):
++    from vllm.models.deepseek_v4_1.steering.ops import prepare_consumer
++
++    residual, fn, scale, base, weight, incoming = _inputs(tokens, 8000 + tokens)
++    generator = torch.Generator(device=DEVICE).manual_seed(tokens)
++    x = torch.randn(tokens, HIDDEN, generator=generator, device=DEVICE).bfloat16()
++    post = torch.rand(tokens, 4, generator=generator, device=DEVICE)
++    comb = torch.softmax(
++        torch.randn(tokens, 4, 4, generator=generator, device=DEVICE), dim=-1
++    )
++    controls = {}
++    if steering != "off":
++        direction = F.normalize(
++            torch.randn(HIDDEN, generator=generator, device=DEVICE), dim=0
++        )
++        doses = torch.zeros(tokens, device=DEVICE)
++        if steering == "active":
++            doses[:] = torch.tensor([0.0, 2.5, 4.0], device=DEVICE).repeat(
++                (tokens + 2) // 3
++            )[:tokens]
++            doses[-1] = 4.0
++        writer, controls = prepare_consumer(
++            x,
++            direction,
++            doses,
++            torch.empty(tokens, 2, device=DEVICE),
++            torch.empty_like(x),
++            2.5,
++        )
++        assert writer is x
++    args = (x, residual, post, comb, fn, scale, base, weight, incoming)
++    expected = mhc.post_pre(*args, **controls)
++    (q, sf), allocations = _q03_sinks(tokens)
++    actual = q03_mhc.post_pre(*args, **controls, q_out=q, sf_out=sf)
++    assert len(actual) == len(expected) == 5
++    for got, before in zip(actual, expected):
++        _q03_assert_bytes(got, before)
++    _q03_assert_cast(expected[3], q, sf)
++    _q03_assert_canaries(allocations)
++
++
++def test_q03_zero_rows_validate_without_launch(mhc, q03_sm121, monkeypatch):
++    from vllm.models.deepseek_v4_1.tilelang import mhc as module
++
++    def forbidden(*args, **kwargs):
++        pytest.fail("zero-row mHC must not launch or acquire scratch")
++
++    candidate = TileKernelsMHC(CONFIG)
++    candidate.q03_enabled = True
++    candidate._q03_quant_config = module._mxfp8_config()
++    for name in ("_project", "_finalize", "current_workspace_manager"):
++        monkeypatch.setattr(module, name, forbidden)
++    residual, fn, scale, base, weight, incoming = _inputs(0, 8000)
++    x = torch.empty(0, HIDDEN, device=DEVICE, dtype=torch.bfloat16)
++    post = torch.empty(0, 4, device=DEVICE)
++    comb = torch.empty(0, 4, 4, device=DEVICE)
++    args = (x, residual, post, comb, fn, scale, base, weight, incoming)
++    (q, sf), allocations = _q03_sinks(0)
++    actual = candidate.post_pre(*args, q_out=q, sf_out=sf)
++    assert len(actual) == 5 and actual[3].shape == (0, HIDDEN)
++    with pytest.raises(ValueError, match="both q_out and sf_out"):
++        candidate.post_pre(*args, q_out=q)
++    with pytest.raises(ValueError, match="dtype, device, shape or stride"):
++        candidate.post_pre(*args, q_out=q, sf_out=sf.to(torch.float32))
++    _q03_assert_canaries(allocations)
++
++
++def test_q03_finalize_alternating_graphs(q03_finalize_kernels):
++    """Finalize-only graphs share sinks; this is not model/owner-lifetime coverage."""
++    stock, dual = q03_finalize_kernels
++    capacity = 96
++    capacity_pair, allocations = _q03_sinks(capacity)
++    cases = {}
++    for tokens in (1, 16, 96):
++        inputs = _q03_finalize_inputs(tokens)
++        outputs = _q03_finalize_outputs(tokens)
++        pair = tuple(tensor[:tokens] for tensor in capacity_pair)
++        # Each graph has its own static row shape but uses the same sink bases.
++        # Compile and initialize before capture; retain every allocation here.
++        dual(*inputs, *outputs, *pair)
++        torch.cuda.synchronize()
++        graph = torch.cuda.CUDAGraph()
++        with torch.cuda.graph(graph):
++            dual(*inputs, *outputs, *pair)
++        cases[tokens] = inputs, outputs, pair, allocations, graph
++    for index, tokens in enumerate((96, 1, 16, 1, 96, 16)):
++        inputs, actual, (q, sf), allocations, graph = cases[tokens]
++        inputs[2].mul_(-0.5)
++        inputs[2][:, -1] = index + 1
++        for storage in allocations:
++            storage.fill_(0xA5)
++        graph.replay()
++        expected = _q03_finalize_outputs(tokens)
++        stock(*inputs, *expected)
++        for got, before in zip(actual, expected):
++            _q03_assert_bytes(got, before)
++        _q03_assert_cast(expected[-1], q, sf)
++        _q03_assert_canaries(allocations)
++        for tensor in capacity_pair:
++            assert torch.all(tensor[tokens:].view(torch.uint8) == 0xA5).item()
+diff --git a/vllm/models/deepseek_v4_1/tilelang/mhc.py b/vllm/models/deepseek_v4_1/tilelang/mhc.py
+index d238757bb..6668264d7 100644
+--- a/vllm/models/deepseek_v4_1/tilelang/mhc.py
++++ b/vllm/models/deepseek_v4_1/tilelang/mhc.py
+@@ -34,6 +34,7 @@ that reading them once matters. Two TileLang kernels make each entry:
+ """
+ 
+ from functools import cache
++from math import isfinite
+ 
+ import torch
+ from torch import nn
+@@ -55,6 +56,9 @@ BLOCK_H = 128  # hidden columns per projection split, fixed for batch invariance
+ BLOCK_M = 16  # token tile of project_streams; larger tiles measured slower
+ VEC = 8  # BF16 elements per vector access
+ 
++# Scalar compile configuration only; activation tensors stay explicit op operands.
++_MXFP8_CONFIGS: dict[tuple[int, int, float, float, int], object] = {}
++
+ _PASS_CONFIGS = {
+     tilelang.PassConfigKey.TL_DISABLE_WARP_SPECIALIZED: True,
+     tilelang.PassConfigKey.TL_DISABLE_VECTORIZE_256: True,
+@@ -344,6 +348,8 @@ def finalize(
+     post_mult: float = 2.0,
+     block_H: int = BLOCK_H,
+     threads: int = 128,
++    emit_mxfp8: bool = False,
++    quant_config=None,
+ ):
+     """One token per CTA: warp 0 turns the projection partials into the new
+     pre-mix, the post-mix and the Sinkhorn combination (TileKernels'
+@@ -354,19 +360,16 @@ def finalize(
+     workers = threads - 32
+     M = T.dynamic("M")
+ 
+-    @T.prim_func
+-    def mhc_finalize(
+-        P: T.Tensor((splits, M, 1, MIXES), T.float32),
+-        S: T.Tensor((splits, M, 1), T.float32),
+-        C: T.Tensor((M, hidden_size), T.bfloat16),
+-        Q: T.Tensor((splits, M), T.float32),
+-        scale: T.Tensor((3,), T.float32),
+-        base: T.Tensor((MIXES,), T.float32),
+-        weight: T.Tensor((hidden_size,), T.bfloat16),
+-        post: T.Tensor((M, MULT), T.float32),
+-        comb: T.Tensor((M, MULT, MULT), T.float32),
+-        pre_out: T.Tensor((M, MULT), T.float32),
+-        y: T.Tensor((M, hidden_size), T.bfloat16),
++    if emit_mxfp8:
++        from tile_kernels.quant.common import get_sf_and_inv
++
++        _validate_mxfp8_config(quant_config)
++        assert hidden_size == 5120 and rms_group_size == MULT * hidden_size
++        assert threads == 128 and VEC == 8
++
++    @T.macro
++    def finalize_body(
++        P, S, C, Q, scale, base, weight, post, comb, pre_out, y, q_out, sf_out
+     ):
+         with T.Kernel(M, threads=threads) as pid:
+             tx = T.get_thread_binding()
+@@ -375,6 +378,8 @@ def finalize(
+             wv = T.alloc_local((VEC,), T.bfloat16)
+             yv = T.alloc_local((VEC,), T.bfloat16)
+             total = T.alloc_local((1,), T.float32)
++            if emit_mxfp8:
++                amax = T.alloc_local((1,), T.float32)
+ 
+             if tx < 32:
+                 # Reduce the split partials; RMS over the flattened streams.
+@@ -437,6 +442,8 @@ def finalize(
+                 total[0] = T.rsqrt(total[0] / hidden_size + norm_eps)
+                 for step in T.serial(T.ceildiv(chunks, workers)):
+                     chunk = step * workers + worker
++                    if emit_mxfp8:
++                        amax[0] = 0.0
+                     if chunk < chunks:
+                         for v in T.vectorized(VEC):
+                             yv[v] = C[pid, chunk * VEC + v]
+@@ -451,10 +458,151 @@ def finalize(
+                             )
+                         for v in T.vectorized(VEC):
+                             y[pid, chunk * VEC + v] = xv[v]
++                        if emit_mxfp8:
++                            for v in T.unroll(VEC):
++                                amax[0] = T.max(
++                                    amax[0], T.abs(T.Cast(T.float32, xv[v]))
++                                )
++                    if emit_mxfp8:
++                        # All norm lanes participate, including inactive tail quartets.
++                        amax[0] = T.max(amax[0], T.shfl_xor(amax[0], 1))
++                        amax[0] = T.max(amax[0], T.shfl_xor(amax[0], 2))
++                        if chunk < chunks:
++                            sf, inv = get_sf_and_inv(amax[0], quant_config, T.bfloat16)
++                            if worker % 4 == 0:
++                                sf_out[pid, chunk // 4] = sf
++                            for v in T.vectorized(VEC):
++                                q_out[pid, chunk * VEC + v] = xv[v] * inv
++
++    if emit_mxfp8:
++
++        @T.prim_func
++        def mhc_finalize(
++            P: T.Tensor((splits, M, 1, MIXES), T.float32),
++            S: T.Tensor((splits, M, 1), T.float32),
++            C: T.Tensor((M, hidden_size), T.bfloat16),
++            Q: T.Tensor((splits, M), T.float32),
++            scale: T.Tensor((3,), T.float32),
++            base: T.Tensor((MIXES,), T.float32),
++            weight: T.Tensor((hidden_size,), T.bfloat16),
++            post: T.Tensor((M, MULT), T.float32),
++            comb: T.Tensor((M, MULT, MULT), T.float32),
++            pre_out: T.Tensor((M, MULT), T.float32),
++            y: T.Tensor((M, hidden_size), T.bfloat16),
++            q_out: T.Tensor((M, hidden_size), T.float8_e4m3fn),
++            sf_out: T.Tensor((M, hidden_size // 32), T.uint8),
++        ):
++            finalize_body(
++                P, S, C, Q, scale, base, weight, post, comb, pre_out, y,
++                q_out, sf_out,
++            )
++    else:
++
++        @T.prim_func
++        def mhc_finalize(
++            P: T.Tensor((splits, M, 1, MIXES), T.float32),
++            S: T.Tensor((splits, M, 1), T.float32),
++            C: T.Tensor((M, hidden_size), T.bfloat16),
++            Q: T.Tensor((splits, M), T.float32),
++            scale: T.Tensor((3,), T.float32),
++            base: T.Tensor((MIXES,), T.float32),
++            weight: T.Tensor((hidden_size,), T.bfloat16),
++            post: T.Tensor((M, MULT), T.float32),
++            comb: T.Tensor((M, MULT, MULT), T.float32),
++            pre_out: T.Tensor((M, MULT), T.float32),
++            y: T.Tensor((M, hidden_size), T.bfloat16),
++        ):
++            finalize_body(P, S, C, Q, scale, base, weight, post, comb, pre_out, y, y, y)
+ 
+     return mhc_finalize
+ 
+ 
++def _validate_mxfp8_config(config) -> None:
++    if (
++        config is None
++        or config.torch_dtype != torch.float8_e4m3fn
++        or config.sf_block != (1, 32)
++        or config.use_tma_aligned_col_major_sf
++        or not config.round_sf
++        or not config.use_packed_ue8m0
++        or config.use_e4m3_sf
++        or config.clamp_min_value is None
++        or not isfinite(config.clamp_min_value)
++        or config.clamp_min_value <= 0
++    ):
++        raise ValueError("Invalid MXFP8 mHC quantization config")
++
++
++def _mxfp8_config():
++    from tile_kernels.quant.common import get_cast_output_config
++
++    config = get_cast_output_config(
++        "e4m3", (1, 32), round_sf=True, use_packed_ue8m0=True
++    )
++    _validate_mxfp8_config(config)
++    return config
++
++
++def _validate_mxfp8_outputs(y, q_out, sf_out) -> None:
++    """Metadata-only checks, also safe for fake tensors."""
++    if q_out is None or sf_out is None:
++        raise ValueError("MXFP8 mHC requires both q_out and sf_out")
++    if (
++        y.ndim != 2
++        or y.shape[1] != 5120
++        or y.dtype != torch.bfloat16
++        or y.device.type != "cuda"
++        or y.stride() != (5120, 1)
++        or not y.is_contiguous()
++    ):
++        raise ValueError("MXFP8 mHC requires contiguous CUDA BF16 [M, 5120]")
++    for tensor, dtype, width in (
++        (q_out, torch.float8_e4m3fn, 5120),
++        (sf_out, torch.uint8, 160),
++    ):
++        if (
++            tensor.dtype != dtype
++            or tensor.device != y.device
++            or tensor.shape != (y.shape[0], width)
++            or tensor.stride() != (width, 1)
++            or not tensor.is_contiguous()
++        ):
++            raise ValueError("Invalid MXFP8 mHC output dtype, device, shape or stride")
++
++
++def _validate_mxfp8_storage(q_out, sf_out, *live) -> None:
++    """Real-op storage checks; never read activation values or fake pointers."""
++
++    def span(tensor):
++        if tensor is None or tensor.numel() == 0:
++            return None
++        start = tensor.data_ptr()
++        extent = 1 + sum(
++            (n - 1) * abs(s) for n, s in zip(tensor.shape, tensor.stride())
++        )
++        return start, start + extent * tensor.element_size()
++
++    if q_out.numel() and sf_out.numel() and (
++        q_out.untyped_storage().data_ptr() == sf_out.untyped_storage().data_ptr()
++    ):
++        raise ValueError("MXFP8 mHC outputs require independent allocations")
++    sinks = (q_out, sf_out)
++    for i, tensor in enumerate(sinks):
++        bounds = span(tensor)
++        if bounds is None:
++            continue
++        if bounds[0] % 256:
++            raise ValueError("MXFP8 mHC output base must be 256-byte aligned")
++        for other in (*sinks[i + 1 :], *live):
++            if other is None or other.device != tensor.device:
++                continue
++            other_bounds = span(other)
++            if other_bounds is not None and (
++                bounds[0] < other_bounds[1] and other_bounds[0] < bounds[1]
++            ):
++                raise ValueError("MXFP8 mHC output overlaps a live tensor")
++
++
+ def _project_call(
+     hidden: int, mode: str, world: int, steering: bool = False
+ ) -> prepare.TileLangCall:
+@@ -465,9 +613,22 @@ def _project_call(
+ 
+ 
+ def _finalize_call(
+-    hidden: int, k: int, rms_eps: float, hc_eps: float, iterations: int
++    hidden: int,
++    k: int,
++    rms_eps: float,
++    hc_eps: float,
++    iterations: int,
++    emit_mxfp8: bool = False,
++    quant_config=None,
+ ) -> prepare.TileLangCall:
+     """The ``finalize`` call of a sublayer entry projecting ``k`` stream columns."""
++    if emit_mxfp8:
++        _validate_mxfp8_config(quant_config)
++        return prepare.call(
++            finalize, hidden, k, rms_eps, hc_eps, iterations, rms_eps,
++            emit_mxfp8=True,
++            quant_config=quant_config,
++        )
+     return prepare.call(finalize, hidden, k, rms_eps, hc_eps, iterations, rms_eps)
+ 
+ 
+@@ -482,7 +643,22 @@ def _project(hidden: int, mode: str, world: int, steering: bool = False):
+ 
+ 
+ @cache
+-def _finalize(hidden: int, k: int, rms_eps: float, hc_eps: float, iterations: int):
++def _finalize(
++    hidden: int,
++    k: int,
++    rms_eps: float,
++    hc_eps: float,
++    iterations: int,
++    emit_mxfp8: bool = False,
++    quant_config=None,
++):
++    if emit_mxfp8:
++        return _make(
++            _finalize_call(
++                hidden, k, rms_eps, hc_eps, iterations,
++                emit_mxfp8=True, quant_config=quant_config,
++            )
++        )
+     return _make(_finalize_call(hidden, k, rms_eps, hc_eps, iterations))
+ 
+ 
+@@ -492,11 +668,7 @@ def _tile_kernels_mhc():
+     return tile_kernels.mhc
+ 
+ 
+-@torch.library.custom_op(
+-    "vllm::dsv41_tilelang_mhc_pre",
+-    mutates_args=("residual_out", "y", "post", "comb", "pre_out"),
+-)
+-def _mhc_pre(
++def _mhc_pre_impl(
+     residual: torch.Tensor,
+     fn: torch.Tensor,
+     scale: torch.Tensor,
+@@ -518,10 +690,55 @@ def _mhc_pre(
+     steering_scales: torch.Tensor | None = None,
+     steering_dots: torch.Tensor | None = None,
+     steering_alpha: float = 0.0,
++    q_out: torch.Tensor | None = None,
++    sf_out: torch.Tensor | None = None,
+ ) -> None:
+     tokens, hidden = int(residual.shape[0]), int(residual.shape[-1])
++    if q_out is not None:
++        _validate_mxfp8_outputs(y, q_out, sf_out)
++        _validate_mxfp8_storage(
++            q_out, sf_out, residual, fn, scale, base, norm, pre,
++            residual_out, y, post, comb, pre_out, previous_output,
++            previous_post, previous_comb, steering_direction,
++            steering_scales, steering_dots,
++        )
++        if previous_output is None or previous_output.ndim != 2:
++            raise ValueError("MXFP8 mHC requires a non-SP post_pre entry")
++        for tensor, shape, dtype in (
++            (y, (tokens, 5120), torch.bfloat16),
++            (residual, (tokens, MULT, 5120), torch.bfloat16),
++            (residual_out, (tokens, MULT, 5120), torch.bfloat16),
++            (previous_output, (tokens, 5120), torch.bfloat16),
++            (norm, (5120,), torch.bfloat16),
++            (fn, (MIXES, MULT * 5120), torch.float32),
++            (scale, (3,), torch.float32),
++            (base, (MIXES,), torch.float32),
++            (pre, (tokens, MULT), torch.float32),
++            (previous_post, (tokens, MULT), torch.float32),
++            (previous_comb, (tokens, MULT, MULT), torch.float32),
++            (post, (tokens, MULT), torch.float32),
++            (comb, (tokens, MULT, MULT), torch.float32),
++            (pre_out, (tokens, MULT), torch.float32),
++        ):
++            if (
++                tensor is None
++                or tensor.shape != shape
++                or tensor.dtype != dtype
++                or tensor.device != y.device
++                or not tensor.is_contiguous()
++            ):
++                raise ValueError("Invalid MXFP8 mHC operand metadata")
+     if tokens == 0:
+         return
++    quant_config = None
++    if q_out is not None:
++        key = (hidden, MULT * hidden, rms_eps, hc_eps, iterations)
++        quant_config = _MXFP8_CONFIGS.get(key)
++        if quant_config is None or quant_config != _mxfp8_config():
++            raise RuntimeError(
++                "MXFP8 mHC config is unprepared or changed; prepare again"
++            )
++        retain_cuda_graph_capture_resource((q_out, sf_out))
+     streams = MULT * hidden
+     world = 1
+     # Unused operands of a mode take a buffer of the right shape; none is read.
+@@ -553,6 +770,8 @@ def _mhc_pre(
+     )
+     retain_cuda_graph_capture_resource(scratch)
+     P, S, C, Q = scratch
++    if q_out is not None:
++        _validate_mxfp8_storage(q_out, sf_out, P, S, C, Q)
+     steering_args: tuple[torch.Tensor | float, ...] = ()
+     if steering_direction is not None:
+         if (
+@@ -595,8 +814,124 @@ def _mhc_pre(
+         Q,
+         *steering_args,
+     )
+-    _finalize(hidden, k, rms_eps, hc_eps, iterations)(
+-        P, S, C, Q, scale, base, norm, post, comb, pre_out, y
++    if q_out is None:
++        _finalize(hidden, k, rms_eps, hc_eps, iterations)(
++            P, S, C, Q, scale, base, norm, post, comb, pre_out, y
++        )
++    else:
++        _finalize(
++            hidden, k, rms_eps, hc_eps, iterations,
++            emit_mxfp8=True, quant_config=quant_config,
++        )(
++            P, S, C, Q, scale, base, norm, post, comb, pre_out, y, q_out, sf_out
++        )
++
++
++@torch.library.custom_op(
++    "vllm::dsv41_tilelang_mhc_pre",
++    mutates_args=("residual_out", "y", "post", "comb", "pre_out"),
++)
++def _mhc_pre(
++    residual: torch.Tensor,
++    fn: torch.Tensor,
++    scale: torch.Tensor,
++    base: torch.Tensor,
++    norm: torch.Tensor,
++    pre: torch.Tensor,
++    residual_out: torch.Tensor | None,
++    y: torch.Tensor,
++    post: torch.Tensor,
++    comb: torch.Tensor,
++    pre_out: torch.Tensor,
++    rms_eps: float,
++    hc_eps: float,
++    iterations: int,
++    previous_output: torch.Tensor | None = None,
++    previous_post: torch.Tensor | None = None,
++    previous_comb: torch.Tensor | None = None,
++    steering_direction: torch.Tensor | None = None,
++    steering_scales: torch.Tensor | None = None,
++    steering_dots: torch.Tensor | None = None,
++    steering_alpha: float = 0.0,
++) -> None:
++    _mhc_pre_impl(
++        residual,
++        fn,
++        scale,
++        base,
++        norm,
++        pre,
++        residual_out,
++        y,
++        post,
++        comb,
++        pre_out,
++        rms_eps,
++        hc_eps,
++        iterations,
++        previous_output,
++        previous_post,
++        previous_comb,
++        steering_direction,
++        steering_scales,
++        steering_dots,
++        steering_alpha,
++    )
++
++
++@torch.library.custom_op(
++    "vllm::dsv41_tilelang_mhc_pre_mxfp8",
++    mutates_args=("residual_out", "y", "post", "comb", "pre_out", "q_out", "sf_out"),
++)
++def _mhc_pre_mxfp8(
++    residual: torch.Tensor,
++    fn: torch.Tensor,
++    scale: torch.Tensor,
++    base: torch.Tensor,
++    norm: torch.Tensor,
++    pre: torch.Tensor,
++    residual_out: torch.Tensor | None,
++    y: torch.Tensor,
++    post: torch.Tensor,
++    comb: torch.Tensor,
++    pre_out: torch.Tensor,
++    rms_eps: float,
++    hc_eps: float,
++    iterations: int,
++    q_out: torch.Tensor,
++    sf_out: torch.Tensor,
++    previous_output: torch.Tensor | None = None,
++    previous_post: torch.Tensor | None = None,
++    previous_comb: torch.Tensor | None = None,
++    steering_direction: torch.Tensor | None = None,
++    steering_scales: torch.Tensor | None = None,
++    steering_dots: torch.Tensor | None = None,
++    steering_alpha: float = 0.0,
++) -> None:
++    _mhc_pre_impl(
++        residual,
++        fn,
++        scale,
++        base,
++        norm,
++        pre,
++        residual_out,
++        y,
++        post,
++        comb,
++        pre_out,
++        rms_eps,
++        hc_eps,
++        iterations,
++        previous_output,
++        previous_post,
++        previous_comb,
++        steering_direction,
++        steering_scales,
++        steering_dots,
++        steering_alpha,
++        q_out,
++        sf_out,
+     )
+ 
+ 
+@@ -627,6 +962,36 @@ def _mhc_pre_fake(
+     return None
+ 
+ 
++@_mhc_pre_mxfp8.register_fake
++def _mhc_pre_mxfp8_fake(
++    residual,
++    fn,
++    scale,
++    base,
++    norm,
++    pre,
++    residual_out,
++    y,
++    post,
++    comb,
++    pre_out,
++    rms_eps,
++    hc_eps,
++    iterations,
++    q_out,
++    sf_out,
++    previous_output=None,
++    previous_post=None,
++    previous_comb=None,
++    steering_direction=None,
++    steering_scales=None,
++    steering_dots=None,
++    steering_alpha=0.0,
++):
++    _validate_mxfp8_outputs(y, q_out, sf_out)
++    return None
++
++
+ @torch.library.custom_op("vllm::dsv41_tilelang_mhc_post", mutates_args=("out",))
+ def _mhc_post(
+     x: torch.Tensor,
+@@ -688,6 +1053,8 @@ class TileKernelsMHC(nn.Module):
+         self.rms_eps = config.rms_norm_eps
+         self.hc_eps = config.hc_eps
+         self.iterations = config.hc_sinkhorn_iters
++        self.q03_enabled = False
++        self._q03_quant_config = None
+ 
+     def _entries(self) -> list[tuple[str, int]]:
+         """The (mode, world) of every sublayer entry this layer can launch."""
+@@ -716,7 +1083,19 @@ class TileKernelsMHC(nn.Module):
+         mix = (self.rms_eps, self.hc_eps, self.iterations)
+ 
+         def calls() -> list[prepare.TileLangCall]:
++            dual = []
++            if self.q03_enabled:
++                if hidden != 5120:
++                    raise ValueError("MXFP8 mHC requires hidden size 5120")
++                self._q03_quant_config = _mxfp8_config()
++                dual.append(
++                    _finalize_call(
++                        hidden, MULT * hidden, *mix,
++                        emit_mxfp8=True, quant_config=self._q03_quant_config,
++                    )
++                )
+             return [
++                *dual,
+                 *(_project_call(hidden, mode, world) for mode, world in entries),
+                 *(
+                     _project_call(hidden, mode, world, True)
+@@ -733,6 +1112,16 @@ class TileKernelsMHC(nn.Module):
+                 _project(hidden, mode, world, True)
+             for k in widths:
+                 _finalize(hidden, k, *mix)
++            if self.q03_enabled:
++                if self._q03_quant_config != _mxfp8_config():
++                    raise RuntimeError(
++                        "MXFP8 mHC quantization config changed; prepare again"
++                    )
++                _finalize(
++                    hidden, MULT * hidden, *mix,
++                    emit_mxfp8=True, quant_config=self._q03_quant_config,
++                )
++                _MXFP8_CONFIGS[(hidden, MULT * hidden, *mix)] = self._q03_quant_config
+ 
+         prepare.declare(calls, bind=bind, warm=lambda: _warm_post_and_collapse(hidden))
+ 
+@@ -752,7 +1141,14 @@ class TileKernelsMHC(nn.Module):
+         steering_scales=None,
+         steering_dots=None,
+         steering_alpha=0.0,
++        q_out=None,
++        sf_out=None,
+     ):
++        if (q_out is None) != (sf_out is None):
++            raise ValueError("MXFP8 mHC requires both q_out and sf_out")
++        if q_out is not None:
++            if not self.q03_enabled or self._q03_quant_config is None:
++                raise RuntimeError("MXFP8 mHC kernels have not been prepared")
+         tokens, device = int(residual.shape[0]), residual.device
+         if isinstance(previous_output, RankOrderParts):
+             # Added inside the projection kernel, in rank order.
+@@ -772,7 +1168,9 @@ class TileKernelsMHC(nn.Module):
+         post = torch.empty((tokens, MULT), dtype=torch.float32, device=device)
+         comb = torch.empty((tokens, MULT, MULT), dtype=torch.float32, device=device)
+         pre_out = torch.empty((tokens, MULT), dtype=torch.float32, device=device)
+-        _mhc_pre(
++        op = _mhc_pre if q_out is None else _mhc_pre_mxfp8
++        quant_args = () if q_out is None else (q_out, sf_out)
++        op(
+             residual,
+             fn,
+             scale,
+@@ -787,6 +1185,7 @@ class TileKernelsMHC(nn.Module):
+             self.rms_eps,
+             self.hc_eps,
+             self.iterations,
++            *quant_args,
+             previous_output,
+             previous_post,
+             previous_comb,
+@@ -813,6 +1212,8 @@ class TileKernelsMHC(nn.Module):
+         steering_scales=None,
+         steering_dots=None,
+         steering_alpha=0.0,
++        q_out=None,
++        sf_out=None,
+     ):
+         return self.pre(
+             residual,
+@@ -828,6 +1229,8 @@ class TileKernelsMHC(nn.Module):
+             steering_scales=steering_scales,
+             steering_dots=steering_dots,
+             steering_alpha=steering_alpha,
++            q_out=q_out,
++            sf_out=sf_out,
+         )
+ 
+     def post(self, x, residual, post, comb):
+-- 
+2.52.0
+

@@ -1,0 +1,346 @@
+From f2f0bb386d91900304141a364df8ba68b2611fba Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 05:34:15 +0000
+Subject: [PATCH 502/503] Own target quantization buffers before profiling
+
+Base: vLLM 19f2c20ed4d64ae22bd009ceacadd85e2a81e354 plus the immutable 188-patch r6x steering series (ebb44766d6f04d3a9272b712778d7f2fa2cec1fd).
+
+Rationale: Reserve disjoint target buffers before profiling and keep SP, drafter and unsupported topology/device paths unchanged.
+
+Quality: preserve BF16 boundaries, steering and the existing routed/shared arithmetic. Candidate disabled by default; non-SP target TP4 SM121 scope only. No adoption or performance claim.
+
+Tests: source AST, standalone CPU host contracts and diff checks. Torch dispatcher, TileLang compilation, GPU differential/capture, model quality and capacity/performance gates remain unexecuted.
+
+Upstream status: isolated downstream experiment in imDaniel/spark-ds41f; not submitted upstream.
+---
+ vllm/models/deepseek_v4/nvidia/model.py       |  21 +++
+ vllm/models/deepseek_v4_1/nvidia/model.py     | 136 ++++++++++++++----
+ .../tilelang/input_quant_arena.py             |  77 ++++++++++
+ 3 files changed, 210 insertions(+), 24 deletions(-)
+ create mode 100644 vllm/models/deepseek_v4_1/tilelang/input_quant_arena.py
+
+diff --git a/vllm/models/deepseek_v4/nvidia/model.py b/vllm/models/deepseek_v4/nvidia/model.py
+index a5a36f12a..56761ea9f 100644
+--- a/vllm/models/deepseek_v4/nvidia/model.py
++++ b/vllm/models/deepseek_v4/nvidia/model.py
+@@ -1070,6 +1070,7 @@ class DeepseekV4MoE(nn.Module):
+         input_ids: torch.Tensor | None = None,
+         *,
+         reduce_scatter_rows: int | None = None,
++        routed_input_quant: tuple[torch.Tensor, torch.Tensor] | None = None,
+     ) -> torch.Tensor:
+         """Route ``hidden_states`` through the experts.
+ 
+@@ -1084,7 +1085,17 @@ class DeepseekV4MoE(nn.Module):
+         if bias_vl is not None and input_ids is None:
+             raise ValueError("DeepSeek V4 vision MoE routing requires input_ids.")
+ 
++        if routed_input_quant is not None and (
++            self.use_mega_moe or reduce_scatter_rows is not None
++        ):
++            raise ValueError("Prequantized routed inputs require non-SP fused MoE")
+         if not self.use_mega_moe:
++            if routed_input_quant is not None:
++                return self._forward_fused_moe(
++                    hidden_states,
++                    input_ids,
++                    routed_input_quant=routed_input_quant,
++                )
+             return self._forward_fused_moe(
+                 hidden_states, input_ids, reduce_scatter_rows
+             )
+@@ -1133,19 +1144,29 @@ class DeepseekV4MoE(nn.Module):
+         hidden_states: torch.Tensor,
+         input_ids: torch.Tensor | None = None,
+         reduce_scatter_rows: int | None = None,
++        *,
++        routed_input_quant: tuple[torch.Tensor, torch.Tensor] | None = None,
+     ) -> torch.Tensor:
+         org_shape = hidden_states.shape
+         if reduce_scatter_rows is not None:
++            if routed_input_quant is not None:
++                raise ValueError("Prequantized routed inputs cannot be gathered for SP")
+             return self.experts(
+                 hidden_states=hidden_states,
+                 router_logits=hidden_states,
+                 input_ids=input_ids,
+                 reduce_scatter_rows=reduce_scatter_rows,
+             ).to(hidden_states.dtype)
++        quant_kwargs = (
++            {}
++            if routed_input_quant is None
++            else {"routed_input_quant": routed_input_quant}
++        )
+         final_hidden_states = self.experts(
+             hidden_states=hidden_states,
+             router_logits=hidden_states,
+             input_ids=input_ids,
++            **quant_kwargs,
+         )
+ 
+         return final_hidden_states.to(hidden_states.dtype).view(org_shape)
+diff --git a/vllm/models/deepseek_v4_1/nvidia/model.py b/vllm/models/deepseek_v4_1/nvidia/model.py
+index 767967185..8de642b9f 100644
+--- a/vllm/models/deepseek_v4_1/nvidia/model.py
++++ b/vllm/models/deepseek_v4_1/nvidia/model.py
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ import copy
++import os
+ import typing
+ from collections.abc import Callable, Iterable
+ from itertools import islice
+@@ -137,6 +138,8 @@ class DeepseekV4DecoderLayer(nn.Module):
+         if getattr(config, "gate_temp", 1.0) != 1.0:
+             raise ValueError("V4.1 requires gate_temp=1")
+         is_draft = extract_layer_index(prefix) >= config.num_hidden_layers
++        self.is_draft = is_draft
++        self.q03_input_arena = None
+         moe_config = vllm_config
+         if is_draft:
+             # Only the expert counts differ; use the same DSV4 TP implementation.
+@@ -375,30 +378,50 @@ class DeepseekV4DecoderLayer(nn.Module):
+                 steering_scratch,
+                 self.steering_alpha,
+             )
+-        residual, post_mix, res_mix, x, ffn_pre = self.mhc.post_pre(
+-            x,
+-            residual,
+-            post_mix,
+-            res_mix,
+-            self.hc_ffn_fn,
+-            self.hc_ffn_scale,
+-            self.hc_ffn_base,
+-            self.ffn_norm.weight,
+-            attn_pre,
+-            **steering,
+-        )
+-        if sp_rows is None:
+-            x = self.ffn(x, input_ids)
+-        else:
+-            # SP: route every row; the TP partial sum is reduce-scattered.
+-            with sp_prefill.activate(sp_rows):
+-                x = self.ffn(
+-                    sp_rows.gather(x),
+-                    input_ids,
+-                    reduce_scatter_rows=sp_rows.padded_rows,
+-                )
+-            if sp_rows.unreduced:
+-                x = sp_prefill.unreduced_parts(x)
++        lease = None
++        arena = self.q03_input_arena
++        if (
++            arena is not None
++            and not self.is_draft
++            and sp_rows is None
++            and 0 < residual.shape[0] <= arena.capacity
++        ):
++            lease = arena.borrow(residual.shape[0])
++        try:
++            sinks = {} if lease is None else {"q_out": lease.q, "sf_out": lease.sf}
++            residual, post_mix, res_mix, x, ffn_pre = self.mhc.post_pre(
++                x,
++                residual,
++                post_mix,
++                res_mix,
++                self.hc_ffn_fn,
++                self.hc_ffn_scale,
++                self.hc_ffn_base,
++                self.ffn_norm.weight,
++                attn_pre,
++                **steering,
++                **sinks,
++            )
++            if sp_rows is None:
++                if lease is None:
++                    x = self.ffn(x, input_ids)
++                else:
++                    x = self.ffn(
++                        x, input_ids, routed_input_quant=(lease.q, lease.sf)
++                    )
++            else:
++                # SP: route every row; the TP partial sum is reduce-scattered.
++                with sp_prefill.activate(sp_rows):
++                    x = self.ffn(
++                        sp_rows.gather(x),
++                        input_ids,
++                        reduce_scatter_rows=sp_rows.padded_rows,
++                    )
++                if sp_rows.unreduced:
++                    x = sp_prefill.unreduced_parts(x)
++        finally:
++            if lease is not None:
++                lease.release()
+         return x, residual, post_mix, res_mix, ffn_pre
+ 
+ 
+@@ -433,6 +456,10 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+         self.ced_decoder_start = ced_decoder_start(config)
+         self.quant_config = quant_config
+         self.parallel_config = vllm_config.parallel_config
++        self.q03_enabled = os.environ.get("VLLM_DS41_Q03_MHC_MXFP8", "0") == "1"
++        self.q03_capacity = vllm_config.scheduler_config.max_num_batched_tokens
++        self.q03_input_arena = None
++        self.q03_input_layers = ()
+         self.use_mega_moe = False
+         self.use_sequence_parallel = _use_sequence_parallel(vllm_config)
+         # Per-forward prefill sequence parallelism (0 = off); see sp_prefill.
+@@ -600,6 +627,66 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+             spec_config is not None and spec_config.use_dspark()
+         )
+ 
++    def prepare_q03_input_arena(self) -> None:
++        """Reserve the target slot after loading, before profiling and capture."""
++        if not self.q03_enabled or not kernels.uses_tilelang():
++            return
++        if (
++            self.parallel_config.tensor_parallel_size != 4
++            or self.parallel_config.use_ubatching
++            or self.use_sequence_parallel
++        ):
++            return
++        if self.config.hidden_size != 5120 or self.hc_mult != 4:
++            return
++        layers = []
++        for layer in islice(self.layers, self.start_layer, self.end_layer):
++            eligible = getattr(layer.ffn.experts, "q03_input_quant_eligible", None)
++            if (
++                not layer.is_draft
++                and not layer.use_sequence_parallel
++                and layer.ffn_norm.weight.dtype == torch.bfloat16
++                and eligible is not None
++                and eligible()
++            ):
++                layers.append(layer)
++        if self.q03_input_arena is not None:
++            if tuple(layers) != self.q03_input_layers:
++                raise RuntimeError("Cannot change prepared Q03 target layer bindings")
++            if self.q03_input_arena.capacity != self.q03_capacity:
++                raise RuntimeError("Cannot resize a prepared Q03 input arena")
++        if not layers or self.q03_capacity <= 0:
++            return
++        from vllm.platforms import current_platform
++
++        from ..tilelang.input_quant_arena import RoutedInputQuantArena
++
++        device = layers[0].ffn_norm.weight.device
++        if any(layer.ffn_norm.weight.device != device for layer in layers):
++            raise ValueError("Q03 target layers must share one device")
++        if device.type != "cuda":
++            raise ValueError("Q03 input arena requires loaded CUDA weights")
++        # This candidate is scoped only to the four-rank SM121 target.
++        if not current_platform.is_device_capability(121, device_id=device.index):
++            return
++        arena = self.q03_input_arena
++        if arena is None:
++            arena = RoutedInputQuantArena(self.q03_capacity, device)
++            self.q03_input_arena = arena
++            self.q03_input_layers = tuple(layers)
++            logger.info(
++                "Q03 routed input arena: %d rows, %d bytes, one target slot",
++                arena.capacity,
++                sum(arena.storage_sizes(arena.capacity)),
++            )
++        elif arena.capacity != self.q03_capacity or arena.device != device:
++            raise RuntimeError("Cannot rebind a prepared Q03 input arena")
++        for layer in layers:
++            if layer.q03_input_arena not in (None, arena):
++                raise RuntimeError("Cannot replace a target layer's Q03 input arena")
++            layer.q03_input_arena = arena
++            layer.mhc.q03_enabled = True
++
+     def prepare_disk_engram(
+         self, input_ids, query_start_loc, lookback_token_ids, early=None
+     ):
+@@ -1204,3 +1291,4 @@ class DeepseekV41LLMForCausalLM(UpstreamDeepseekV41LLMForCausalLM):
+                 module.setup_wo_projection()
+             if isinstance(module, Engram):
+                 module.process_weights_after_loading()
++        self.model.prepare_q03_input_arena()
+diff --git a/vllm/models/deepseek_v4_1/tilelang/input_quant_arena.py b/vllm/models/deepseek_v4_1/tilelang/input_quant_arena.py
+new file mode 100644
+index 000000000..f511ab401
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/tilelang/input_quant_arena.py
+@@ -0,0 +1,77 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Persistent, routed-only input storage shared by sequential target layers."""
++
++import torch
++
++
++class RoutedInputQuantLease:
++    def __init__(
++        self, owner: "RoutedInputQuantArena", q: torch.Tensor, sf: torch.Tensor
++    ) -> None:
++        self.owner = owner
++        self.q = q
++        self.sf = sf
++        self.slot = 0
++        self._released = False
++
++    def release(self) -> None:
++        if self._released:
++            raise RuntimeError("Q03 input lease was already released")
++        self._released = True
++        self.owner._busy = False
++
++
++class RoutedInputQuantArena:
++    """One fixed-capacity slot, never borrowed from transient workspace.
++
++    The target runtime already excludes DBO. Writers and routed readers must
++    remain ordered on its execution stream, including alternating graph replays.
++    Host lease exclusion is not synchronization for concurrent graph replays.
++    """
++
++    hidden_size = 5120
++    scale_columns = hidden_size // 32
++
++    def __init__(self, capacity: int, device: torch.device) -> None:
++        if capacity <= 0:
++            raise ValueError("Q03 input arena requires a positive capacity")
++        device = torch.device(device)
++        if device.type != "cuda":
++            raise ValueError("Q03 input arena requires loaded CUDA weights")
++        self.capacity = capacity
++        self.device = device
++        self._busy = False
++        q_bytes, sf_bytes = self.storage_sizes(capacity)
++        # Separate allocations avoid cross-operand mutation aliases in the op.
++        self.q_storage = torch.empty(q_bytes, dtype=torch.uint8, device=device)
++        self.sf_storage = torch.empty(sf_bytes, dtype=torch.uint8, device=device)
++        if self.q_storage.data_ptr() % 256 or self.sf_storage.data_ptr() % 256:
++            raise RuntimeError("Q03 input arena allocations must be 256-byte aligned")
++        self.q = (
++            self.q_storage[: capacity * self.hidden_size]
++            .view(torch.float8_e4m3fn)
++            .view(capacity, self.hidden_size)
++        )
++        self.sf = self.sf_storage[: capacity * self.scale_columns].view(
++            capacity, self.scale_columns
++        )
++
++    @classmethod
++    def storage_sizes(cls, capacity: int) -> tuple[int, int]:
++        if capacity < 0:
++            raise ValueError("Q03 input arena capacity cannot be negative")
++        q_bytes = (capacity * cls.hidden_size + 255) // 256 * 256
++        sf_bytes = (capacity * cls.scale_columns + 255) // 256 * 256
++        return q_bytes, sf_bytes
++
++    def borrow(self, rows: int, slot: int = 0) -> RoutedInputQuantLease:
++        if slot != 0:
++            raise ValueError("Q03 input arena has no reserved slot for this execution")
++        if rows <= 0 or rows > self.capacity:
++            raise ValueError("Q03 input rows exceed the prepared nonempty capacity")
++        if self._busy:
++            raise RuntimeError("Q03 input arena slot is already borrowed")
++        q, sf = self.q[:rows], self.sf[:rows]
++        self._busy = True
++        return RoutedInputQuantLease(self, q, sf)
+-- 
+2.52.0
+

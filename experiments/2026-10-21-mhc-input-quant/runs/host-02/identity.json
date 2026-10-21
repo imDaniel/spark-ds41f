@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "component_commit": "f61c8865e97e4ab5115f3f0cd919fcca6befa5c6",
+  "scope": "actual candidate AST-adapted host/static; no Torch dispatcher/numerical/GPU",
+  "tests": 30,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "files": {
+    "host.json": "6fd4294b9318f2a254a68b19b7c96a3cd0701cf1e2103040ab6de76f8eaa6a06",
+    "host.log": "c63db4179ae87750852cde4ab575e827aee4bb9ce4c340c6caa5721485439df6",
+    "host.xml": "96cacb47a611e84260d1adbefac33323022e071630bc14774f56d21039e0dde1"
+  }
+}

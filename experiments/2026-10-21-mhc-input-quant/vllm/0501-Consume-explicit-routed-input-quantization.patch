@@ -1,0 +1,507 @@
+From c7086ddae76382a12adfb77b826882fb501b2302 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 05:34:15 +0000
+Subject: [PATCH 501/503] Consume explicit routed input quantization
+
+Base: vLLM 19f2c20ed4d64ae22bd009ceacadd85e2a81e354 plus the immutable 188-patch r6x steering series (ebb44766d6f04d3a9272b712778d7f2fa2cec1fd).
+
+Rationale: Expose q and scale dependencies through opaque MoE entries and reuse them only for a verified row-preserving consumer.
+
+Quality: preserve BF16 boundaries, steering and the existing routed/shared arithmetic. Candidate disabled by default; non-SP target TP4 SM121 scope only. No adoption or performance claim.
+
+Tests: source AST, standalone CPU host contracts and diff checks. Torch dispatcher, TileLang compilation, GPU differential/capture, model quality and capacity/performance gates remain unexecuted.
+
+Upstream status: isolated downstream experiment in imDaniel/spark-ds41f; not submitted upstream.
+---
+ .../layers/fused_moe/runner/moe_runner.py     | 211 +++++++++++++++++-
+ .../layers/fused_moe/tilelang.py              |  27 ++-
+ vllm/models/deepseek_v4_1/tilelang/moe.py     |  35 ++-
+ .../deepseek_v4_1/tilelang/routed_input.py    | 115 ++++++++++
+ 4 files changed, 381 insertions(+), 7 deletions(-)
+ create mode 100644 vllm/models/deepseek_v4_1/tilelang/routed_input.py
+
+diff --git a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+index c4eea9ff9..27ca83dc8 100644
+--- a/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
++++ b/vllm/model_executor/layers/fused_moe/runner/moe_runner.py
+@@ -225,6 +225,150 @@ direct_register_custom_op(
+ )
+ 
+ 
++def _dsv41_moe_forward_mxfp8(
++    hidden_states: torch.Tensor,
++    router_logits: torch.Tensor,
++    shared_experts_input: torch.Tensor | None,
++    input_ids: torch.Tensor | None,
++    layer_name: _layer_name_type,
++    hidden_dim_unpadded: int,
++    routed_output_dtype: torch.dtype,
++    q: torch.Tensor,
++    sf: torch.Tensor,
++) -> torch.Tensor:
++    from vllm.models.deepseek_v4_1.tilelang.routed_input import (
++        scoped_routed_input,
++        validate_input_quant,
++    )
++
++    layer = get_layer_from_name(_resolve_layer_name(layer_name))
++    if not isinstance(layer, MoERunner) or not layer.q03_input_quant_eligible():
++        raise ValueError("unsupported explicit routed input quantization path")
++    validate_input_quant(hidden_states, (q, sf))
++    if hidden_states.shape[0] == 0:
++        return cast(
++            torch.Tensor,
++            layer._forward_impl(
++                hidden_states, router_logits, shared_experts_input, input_ids
++            ),
++        )
++    consumer = layer._quant_method.moe_kernel.fused_experts
++    with scoped_routed_input(consumer, hidden_states, (q, sf)):
++        return cast(
++            torch.Tensor,
++            layer._forward_impl(
++                hidden_states, router_logits, shared_experts_input, input_ids
++            ),
++        )
++
++
++def _dsv41_moe_forward_mxfp8_fake(
++    hidden_states: torch.Tensor,
++    router_logits: torch.Tensor,
++    shared_experts_input: torch.Tensor | None,
++    input_ids: torch.Tensor | None,
++    layer_name: _layer_name_type,
++    hidden_dim_unpadded: int,
++    routed_output_dtype: torch.dtype,
++    q: torch.Tensor,
++    sf: torch.Tensor,
++) -> torch.Tensor:
++    from vllm.models.deepseek_v4_1.tilelang.routed_input import (
++        validate_input_quant_metadata,
++    )
++
++    validate_input_quant_metadata(hidden_states, (q, sf))
++    return _moe_forward_fake(
++        hidden_states,
++        router_logits,
++        shared_experts_input,
++        input_ids,
++        layer_name,
++        hidden_dim_unpadded,
++        routed_output_dtype,
++    )
++
++
++direct_register_custom_op(
++    op_name="dsv41_moe_forward_mxfp8",
++    op_func=_dsv41_moe_forward_mxfp8,
++    mutates_args=["hidden_states"],
++    fake_impl=_dsv41_moe_forward_mxfp8_fake,
++    tags=(torch.Tag.needs_fixed_stride_order,),
++)
++
++
++def _dsv41_moe_forward_shared_mxfp8(
++    hidden_states: torch.Tensor,
++    router_logits: torch.Tensor,
++    shared_experts_input: torch.Tensor | None,
++    input_ids: torch.Tensor | None,
++    layer_name: _layer_name_type,
++    hidden_dim_unpadded: int,
++    routed_output_dtype: torch.dtype,
++    q: torch.Tensor,
++    sf: torch.Tensor,
++) -> tuple[torch.Tensor, torch.Tensor]:
++    from vllm.models.deepseek_v4_1.tilelang.routed_input import (
++        scoped_routed_input,
++        validate_input_quant,
++    )
++
++    layer = get_layer_from_name(_resolve_layer_name(layer_name))
++    if not isinstance(layer, MoERunner) or not layer.q03_input_quant_eligible():
++        raise ValueError("unsupported explicit routed input quantization path")
++    validate_input_quant(hidden_states, (q, sf))
++    if hidden_states.shape[0] == 0:
++        return cast(
++            tuple[torch.Tensor, torch.Tensor],
++            layer._forward_impl(
++                hidden_states, router_logits, shared_experts_input, input_ids
++            ),
++        )
++    consumer = layer._quant_method.moe_kernel.fused_experts
++    with scoped_routed_input(consumer, hidden_states, (q, sf)):
++        return cast(
++            tuple[torch.Tensor, torch.Tensor],
++            layer._forward_impl(
++                hidden_states, router_logits, shared_experts_input, input_ids
++            ),
++        )
++
++
++def _dsv41_moe_forward_shared_mxfp8_fake(
++    hidden_states: torch.Tensor,
++    router_logits: torch.Tensor,
++    shared_experts_input: torch.Tensor | None,
++    input_ids: torch.Tensor | None,
++    layer_name: _layer_name_type,
++    hidden_dim_unpadded: int,
++    routed_output_dtype: torch.dtype,
++    q: torch.Tensor,
++    sf: torch.Tensor,
++) -> tuple[torch.Tensor, torch.Tensor]:
++    from vllm.models.deepseek_v4_1.tilelang.routed_input import (
++        validate_input_quant_metadata,
++    )
++
++    validate_input_quant_metadata(hidden_states, (q, sf))
++    return _moe_forward_shared_fake(
++        hidden_states,
++        router_logits,
++        shared_experts_input,
++        input_ids,
++        layer_name,
++        hidden_dim_unpadded,
++        routed_output_dtype,
++    )
++
++
++direct_register_custom_op(
++    op_name="dsv41_moe_forward_shared_mxfp8",
++    op_func=_dsv41_moe_forward_shared_mxfp8,
++    fake_impl=_dsv41_moe_forward_shared_mxfp8_fake,
++    tags=(torch.Tag.needs_fixed_stride_order,),
++)
++
+ def _unpack(
+     result: torch.Tensor
+     | UnfinalizedMoEOutput
+@@ -863,6 +1007,44 @@ class MoERunner(MoERunnerInterface):
+             result = result + zero_expert_output
+         return result
+ 
++    def q03_input_quant_eligible(self) -> bool:
++        """Whether this loaded runner preserves the mHC source through prepare."""
++        from vllm.model_executor.layers.fused_moe.modular_kernel import (
++            FusedMoEKernelModularImpl,
++        )
++        from vllm.model_executor.layers.fused_moe.prepare_finalize.no_dp_ep import (
++            MoEPrepareAndFinalizeNoDPEPModular,
++        )
++        from vllm.model_executor.layers.fused_moe.tilelang import TileLangExperts
++
++        config = self.moe_config
++        parallel = config.moe_parallel_config
++        kernel = self._quant_method.moe_kernel
++        return (
++            kernel is not None
++            and type(kernel.impl) is FusedMoEKernelModularImpl
++            and type(kernel.prepare_finalize) is MoEPrepareAndFinalizeNoDPEPModular
++            and type(kernel.fused_experts) is TileLangExperts
++            and kernel.fused_experts._plan is not None
++            and kernel.fused_experts.expects_unquantized_inputs
++            and self.routed_input_transform is None
++            and self.routed_output_transform is None
++            and config.hidden_dim == 5120
++            and config.in_dtype == torch.bfloat16
++            and config.dp_size == 1
++            and config.pcp_size == 1
++            and parallel.ep_size == 1
++            and not parallel.use_ep
++            and not parallel.use_all2all_kernels
++            and not parallel.enable_eplb
++            and not config.is_sequence_parallel
++            and not config.is_lora_enabled
++            and not self.enable_dbo
++            and not self.routed_experts.apply_router_weight_on_input
++            and not self._quant_method.has_unpadded_output
++            and not self.do_naive_dispatch_combine
++        )
++
+     def forward(
+         self,
+         hidden_states: torch.Tensor,
+@@ -871,6 +1053,7 @@ class MoERunner(MoERunnerInterface):
+         shared_experts_input: torch.Tensor | None = None,
+         *,
+         reduce_scatter_rows: int | None = None,
++        routed_input_quant: tuple[torch.Tensor, torch.Tensor] | None = None,
+     ) -> torch.Tensor:
+         """Invoke the fused moe layer.
+ 
+@@ -894,6 +1077,22 @@ class MoERunner(MoERunnerInterface):
+            _moe_forward and _moe_forward_shared must be split.
+         """
+ 
++        if routed_input_quant is not None:
++            from vllm.models.deepseek_v4_1.tilelang.routed_input import (
++                validate_input_quant_metadata,
++            )
++
++            if not self.q03_input_quant_eligible() or reduce_scatter_rows is not None:
++                raise ValueError("unsupported explicit routed input quantization path")
++            if (
++                shared_experts_input is not None
++                and shared_experts_input is not hidden_states
++            ):
++                raise ValueError(
++                    "routed input quantization requires the original source"
++                )
++            validate_input_quant_metadata(hidden_states, routed_input_quant)
++
+         # Apply transform for routed experts (e.g., latent projection for
+         # latent MoE). When the caller pre-applies the routed input transform
+         # outside the runner (e.g. to overlap it on a separate stream), it
+@@ -925,7 +1124,16 @@ class MoERunner(MoERunnerInterface):
+         if fold is not None:
+             fold.fold_shared = True
+         try:
+-            result = self._forward_entry(
++            forward_entry = self._forward_entry
++            quant_args = ()
++            if routed_input_quant is not None:
++                forward_entry = (
++                    torch.ops.vllm.dsv41_moe_forward_mxfp8
++                    if self._shared_experts is None
++                    else torch.ops.vllm.dsv41_moe_forward_shared_mxfp8
++                )
++                quant_args = routed_input_quant
++            result = forward_entry(
+                 hidden_states,
+                 router_logits,
+                 shared_experts_input,
+@@ -935,6 +1143,7 @@ class MoERunner(MoERunnerInterface):
+                 if self._quant_method.has_unpadded_output
+                 else 0,
+                 self._quant_method.output_dtype,
++                *quant_args,
+             )
+         finally:
+             if fold is not None:
+diff --git a/vllm/model_executor/layers/fused_moe/tilelang.py b/vllm/model_executor/layers/fused_moe/tilelang.py
+index 6b96eb6cf..e152bd756 100644
+--- a/vllm/model_executor/layers/fused_moe/tilelang.py
++++ b/vllm/model_executor/layers/fused_moe/tilelang.py
+@@ -288,9 +288,32 @@ class TileLangExperts(mk.FusedMoEExpertsModular):
+         if self.fold_shared:
+             assert self.combine_addend is not None, "the shared output must be given"
+             shared = self.combine_addend
+-        self._plan.run(
+-            hidden_states, topk_ids, topk_weights, weights, output, workspace, shared
++        from vllm.models.deepseek_v4_1.tilelang.routed_input import (
++            consume_routed_input,
+         )
+ 
++        input_quant = consume_routed_input(self, hidden_states)
++        if input_quant is None:
++            self._plan.run(
++                hidden_states,
++                topk_ids,
++                topk_weights,
++                weights,
++                output,
++                workspace,
++                shared,
++            )
++        else:
++            self._plan.run(
++                hidden_states,
++                topk_ids,
++                topk_weights,
++                weights,
++                output,
++                workspace,
++                shared,
++                input_quant=input_quant,
++            )
++
+     def moe_sum(self, input: torch.Tensor, output: torch.Tensor) -> None:
+         raise NotImplementedError("LoRA is not supported for TileLangExperts")
+diff --git a/vllm/models/deepseek_v4_1/tilelang/moe.py b/vllm/models/deepseek_v4_1/tilelang/moe.py
+index 6145c211d..ddabda402 100644
+--- a/vllm/models/deepseek_v4_1/tilelang/moe.py
++++ b/vllm/models/deepseek_v4_1/tilelang/moe.py
+@@ -1268,7 +1268,18 @@ class MoeExpertsV41Plan:
+             ((layout_rows, hidden), torch.bfloat16),  # down output
+         )
+ 
+-    def run(self, x, topk_ids, topk_weights, weights, out, workspace=None, shared=None):
++    def run(
++        self,
++        x,
++        topk_ids,
++        topk_weights,
++        weights,
++        out,
++        workspace=None,
++        shared=None,
++        *,
++        input_quant=None,
++    ):
+         """``out[t] = sum_k w[t, k] * down_e(swiglu(gate_up_e(x[t]))) (+ shared[t])``.
+ 
+         ``e`` is the token's k-th expert. ``weights`` comes from
+@@ -1278,6 +1289,10 @@ class MoeExpertsV41Plan:
+         ``shared`` is called just before the combine launch (it may wait for
+         another stream) and returns those rows.
+         """
++        if input_quant is not None:
++            from .routed_input import validate_input_quant
++
++            input_quant = validate_input_quant(x, input_quant)
+         rows = x.shape[0]
+         dispatch = self.dispatch[topk_ids.dtype]
+         specs = self.workspace_specs(rows, topk_ids.dtype)
+@@ -1285,14 +1300,26 @@ class MoeExpertsV41Plan:
+             workspace = torch.empty(
+                 workspace_bytes(specs), dtype=torch.uint8, device=x.device
+             )
++        if input_quant is not None:
++            from .routed_input import validate_input_quant_disjoint
++
++            validate_input_quant_disjoint(input_quant, workspace, out)
+         buffers = carve(workspace, specs)
+         count = len(dispatch.workspace_specs(rows))
+         xq, x_sf, h, hq, h_sf, y = buffers[count:]
+         gate_up, down = weights
+         layout = dispatch.dispatch(topk_ids, topk_weights, buffers[:count])
+-        self.tk.quant.per_token_cast(
+-            x, "e4m3", SF_BLOCK, round_sf=True, use_packed_ue8m0=True, out=(xq, x_sf)
+-        )
++        if input_quant is None:
++            self.tk.quant.per_token_cast(
++                x,
++                "e4m3",
++                SF_BLOCK,
++                round_sf=True,
++                use_packed_ue8m0=True,
++                out=(xq, x_sf),
++            )
++        else:
++            xq, x_sf = input_quant
+         order, tile_expert = layout["order"], layout["tile_expert"]
+         x_words, h_words = x_sf.view(torch.uint32), h_sf.view(torch.uint32)
+         self.gate_up(xq, x_words, *_present(gate_up), order, tile_expert, h)
+diff --git a/vllm/models/deepseek_v4_1/tilelang/routed_input.py b/vllm/models/deepseek_v4_1/tilelang/routed_input.py
+new file mode 100644
+index 000000000..2500aef56
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/tilelang/routed_input.py
+@@ -0,0 +1,115 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Explicit routed-input contracts, scoped inside the opaque MoE operators."""
++
++from contextlib import contextmanager
++from contextvars import ContextVar
++from dataclasses import dataclass
++
++import torch
++
++InputQuant = tuple[torch.Tensor, torch.Tensor]
++
++
++def validate_input_quant_metadata(x: torch.Tensor, pair: InputQuant) -> InputQuant:
++    """Validate metadata without reading tensor data or storage (also fake-safe)."""
++    if not isinstance(pair, tuple) or len(pair) != 2:
++        raise ValueError("routed input quantization requires a q/sf pair")
++    q, sf = pair
++    if not isinstance(q, torch.Tensor) or not isinstance(sf, torch.Tensor):
++        raise ValueError("both routed input quantization tensors are required")
++    if x.ndim != 2 or x.shape[1] != 5120 or x.dtype != torch.bfloat16:
++        raise ValueError("routed input requires BF16 [rows, 5120]")
++    if x.device.type != "cuda" or x.stride() != (5120, 1):
++        raise ValueError("routed input requires contiguous CUDA rows")
++    formats = ((q, torch.float8_e4m3fn, 5120), (sf, torch.uint8, 160))
++    for tensor, dtype, width in formats:
++        if (
++            tensor.dtype != dtype
++            or tensor.device != x.device
++            or tensor.shape != (x.shape[0], width)
++            or tensor.stride() != (width, 1)
++        ):
++            raise ValueError(
++                "invalid routed input quantization shape/dtype/device/stride"
++            )
++    return q, sf
++
++
++def _span(tensor: torch.Tensor) -> tuple[int, int]:
++    start = tensor.data_ptr()
++    return start, start + tensor.numel() * tensor.element_size()
++
++
++def validate_input_quant(
++    x: torch.Tensor, pair: InputQuant, *, check_storage: bool = True
++) -> InputQuant:
++    q, sf = validate_input_quant_metadata(x, pair)
++    if check_storage and x.numel():
++        if q.data_ptr() % 256 or sf.data_ptr() % 256:
++            raise ValueError("routed quantization allocations must be 256-byte aligned")
++        spans = [_span(tensor) for tensor in (x, q, sf)]
++        for i, (start, end) in enumerate(spans):
++            if any(
++                start < other_end and other_start < end
++                for other_start, other_end in spans[i + 1:]
++            ):
++                raise ValueError("routed input quantization overlaps a live tensor")
++    return q, sf
++
++
++def validate_input_quant_disjoint(pair: InputQuant, *tensors: torch.Tensor) -> None:
++    """Reject overlap with workspaces/outputs before any candidate launches."""
++    for quant in pair:
++        if not quant.numel():
++            continue
++        start, end = _span(quant)
++        for tensor in tensors:
++            storage = tensor.untyped_storage()
++            other_start = storage.data_ptr()
++            if start < other_start + storage.nbytes() and other_start < end:
++                raise ValueError(
++                    "routed quantization overlaps workspace/output storage"
++                )
++
++
++@dataclass
++class _RoutedInput:
++    consumer: object
++    source: torch.Tensor
++    pair: InputQuant
++    consumed: bool = False
++
++
++_routed_input: ContextVar[_RoutedInput | None] = ContextVar(
++    "dsv41_routed_input", default=None
++)
++
++
++@contextmanager
++def scoped_routed_input(consumer: object, source: torch.Tensor, pair: InputQuant):
++    """Enter only inside a real opaque op with explicit q and sf operands."""
++    if _routed_input.get() is not None:
++        raise RuntimeError("nested routed input quantization scope")
++    validate_input_quant(source, pair)
++    record = _RoutedInput(consumer, source, pair)
++    token = _routed_input.set(record)
++    try:
++        yield
++        if not record.consumed:
++            raise RuntimeError("routed input quantization was not consumed")
++    finally:
++        _routed_input.reset(token)
++
++
++def consume_routed_input(consumer: object, source: torch.Tensor) -> InputQuant | None:
++    record = _routed_input.get()
++    if record is None:
++        return None
++    if record.consumer is not consumer or record.source is not source:
++        raise RuntimeError("routed input quantization consumer/source mismatch")
++    if record.consumed:
++        raise RuntimeError("routed input quantization consumed more than once")
++    validate_input_quant(source, record.pair)
++    record.consumed = True
++    return record.pair
+-- 
+2.52.0
+

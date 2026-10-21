@@ -1,0 +1,639 @@
+..................................................warning: filtering not recognized by server, ignoring
+warning: filtering not recognized by server, ignoring
+................................................................................................................................................fixture: prepared aee0a3a292b3 (tree ad32e9268984)
+fixture: prepared aee0a3a292b3 (tree ad32e9268984)
+2026-10-21T05:42:07Z analysed results/private/lab/r: PASSED
+2026-10-21T05:42:07Z done
+.2026-10-21T05:42:07Z analysed results/private/lab/r: DIFFERENCES
+2026-10-21T05:42:07Z run stopped: analysis of results/private/lab/r found differences
+2026-10-21T05:42:07Z done
+.2026-10-21T05:42:07Z analysed results/private/lab/r: DIFFERENCES
+2026-10-21T05:42:07Z run stopped: analysis of results/private/lab/r found differences
+2026-10-21T05:42:07Z done
+.2026-10-21T05:42:07Z analysed results/private/lab/r: DIFFERENCES
+2026-10-21T05:42:07Z run stopped: analysis of results/private/lab/r found differences
+2026-10-21T05:42:07Z done
+.................................E.EEEE.....................2026-10-21T05:42:14Z profile candidate prefill exit 1
+.2026-10-21T05:42:14Z profile candidate decode exit 0
+.........................2026-10-21T05:42:14Z telemetry not started: 'NoneType' object has no attribute 'write'
+.............................................................................................................{"summary": "servebench model", "label": "base", "acceptance_length": 2.4, "outputs_sha256": "c7e226b71b9b04dcda367dca959cd9721da553285079f1a09e3aac76779150fb", "rank1_fraction": 1.0, "perplexity": 1.9999999999999998, "generate_s": 0.02, "score_s": 0.02, "failed": 0, "output": "/tmp/tmpilxehxm9/base.json.gz"}
+{"summary": "servebench model", "label": "again", "acceptance_length": 2.4, "outputs_sha256": "c7e226b71b9b04dcda367dca959cd9721da553285079f1a09e3aac76779150fb", "rank1_fraction": null, "perplexity": null, "generate_s": 0.02, "score_s": 0.02, "failed": 0, "output": "/tmp/tmpilxehxm9/again.json.gz"}
+{"summary": "servebench model", "label": "other", "acceptance_length": 2.4, "outputs_sha256": "142699eb121085c43091b40e68ee0cc4ff8aa528d1d22a39ce77da47ae59c835", "rank1_fraction": null, "perplexity": null, "generate_s": 0.02, "score_s": 0.02, "failed": 0, "output": "/tmp/tmpilxehxm9/other.json.gz"}
+......servebench: closed warm-up 0 s, then 1 s in 3 windows
+servebench: window 1/3 done
+servebench: window 2/3 done
+servebench: window 3/3 done
+{"summary": "servebench closed", "label": "base", "mode": "closed", "concurrency": 2, "rate": null, "tps_mean": 873.3333333353706, "ci95_pct": 1.6423664069759023, "windows": 3, "steps_per_s": 436.6708919250521, "tokens_per_step": 2.0, "context_tokens": null, "prefix_cache_hit_rate": null, "ttft_p50_s": 0.005183326997212134, "tpot_p50_ms": 1.817935143273124, "failed": 0, "foreign_requests": 0, "output": "/tmp/tmphitifz59/base.json"}
+servebench: closed warm-up 0 s, then 1 s in 3 windows
+servebench: window 1/3 done
+servebench: window 2/3 done
+servebench: window 3/3 done
+{"summary": "servebench closed", "label": "candidate", "mode": "closed", "concurrency": 2, "rate": null, "tps_mean": 900.0000000021828, "ci95_pct": 5.218074268959227e-09, "windows": 3, "steps_per_s": 451.67000996753853, "tokens_per_step": 2.0, "context_tokens": null, "prefix_cache_hit_rate": null, "ttft_p50_s": 0.0049313519994029775, "tpot_p50_ms": 1.7949462853721343, "failed": 0, "foreign_requests": 0, "output": "/tmp/tmphitifz59/candidate.json"}
+............servebench suite stall-only: step stall (stall)
+servebench: stall 3000 repeat 1/2: worst 0.20 s, decode p50 0.004 s (baseline 0.004 s)
+servebench: stall 3000 repeat 2/2: worst 0.20 s, decode p50 0.005 s (baseline 0.004 s)
+{"summary": "servebench stall", "label": null, "stall_s": {"3000": 0.19942737149904133}, "during_p50_s": {"3000": 0.004512031500780722}, "before_p50_s": {"3000": 0.004130067496589618}, "tps": {"3000": 34.699307036783196}, "skipped": [], "failed": 0, "output": "/tmp/tmp9c_87dv9/base/stall.json"}
+{"summary": "servebench suite", "suite": "stall-only", "suite_sha256": "fe97e9ccde89", "label": null, "out": "/tmp/tmp9c_87dv9/base", "seconds": {"stall": 0.8}, "failed": []}
+servebench suite stall-only: step stall (stall)
+servebench: stall 3000 repeat 1/2: worst 0.20 s, decode p50 0.004 s (baseline 0.004 s)
+servebench: stall 3000 repeat 2/2: worst 0.20 s, decode p50 0.004 s (baseline 0.004 s)
+{"summary": "servebench stall", "label": null, "stall_s": {"3000": 0.19739714899696992}, "during_p50_s": {"3000": 0.0042009594981209375}, "before_p50_s": {"3000": 0.004151128996454645}, "tps": {"3000": 34.4499993563672}, "skipped": [], "failed": 0, "output": "/tmp/tmp9c_87dv9/cand/stall.json"}
+{"summary": "servebench suite", "suite": "stall-only", "suite_sha256": "fe97e9ccde89", "label": null, "out": "/tmp/tmp9c_87dv9/cand", "seconds": {"stall": 0.8}, "failed": []}
+.servebench: stall 3000 repeat 1/2: worst 0.20 s, decode p50 0.005 s (baseline 0.004 s)
+servebench: stall 3000 repeat 2/2: worst 0.20 s, decode p50 0.004 s (baseline 0.004 s)
+{"summary": "servebench stall", "label": null, "stall_s": {"3000": 0.19719402550254017}, "during_p50_s": {"3000": 0.004688111999712419}, "before_p50_s": {"3000": 0.0041343514967593364}, "tps": {"3000": 34.56455513096476}, "skipped": [], "failed": 0, "output": "/tmp/tmpux87xkgx/stall.json"}
+.............servebench suite tiny: step model (model)
+metric                                     /tmp/tmpux87 /tmp/tmpux87   change    ±95%  verdict
+worst decode wait during 3,000 prefill (s)        0.197        0.197   +0.00%   1.39%  same
+decode step p99 during 3,000 prefill (s)          0.197        0.197   +0.00%   1.39%  same
+decode step p50 during 3,000 prefill (s)          0.005        0.005   +0.00%  47.41%  same
+prefill 3,000 tok/s under decode                 34.565       34.565   +0.00%   3.10%  same
+{"summary": "servebench model", "label": "base-model", "acceptance_length": 2.428571428571429, "outputs_sha256": "3cdeb9e61db1d60e9a283317b685a2526344b378d5bd9f9f65db174eec491aba", "rank1_fraction": 1.0, "perplexity": 2.0, "generate_s": 0.01, "score_s": 0.01, "failed": 0, "output": "/tmp/tmpe1r1voov/base/model.json.gz"}
+servebench suite tiny: step grid (engine)
+decode 1x2 rows @4K                 10.236 ms ±0.54%
+decode 4x8 rows @4K                 10.830 ms ±0.41%
+decode 8x16 rows @4K                11.653 ms ±0.41%
+decode 16x32 rows @4K               13.248 ms ±0.54%
+decode 1x3 rows @4K                 10.341 ms ±0.58%
+decode 4x12 rows @4K                11.235 ms ±0.54%
+decode 8x24 rows @4K                12.429 ms ±0.41%
+decode 16x48 rows @4K               14.856 ms ±0.41%
+decode 1x6 rows @4K                 10.646 ms ±0.54%
+decode 2x12 rows @4K                11.241 ms ±0.58%
+decode 4x24 rows @4K                12.435 ms ±0.54%
+decode 8x48 rows @4K                14.826 ms ±0.41%
+decode 12x72 rows @4K               17.258 ms ±0.41%
+decode 16x96 rows @4K               19.651 ms ±0.54%
+decode 1x3 rows @64K                10.955 ms ±0.58%
+decode 8x24 rows @64K               13.049 ms ±0.54%
+decode 16x48 rows @64K              15.440 ms ±0.41%
+decode 1x3 rows @256K               12.934 ms ±0.41%
+decode 8x24 rows @256K              15.029 ms ±0.54%
+decode 1x3 rows @1016K              20.704 ms ±0.58%
+{"summary": "servebench engine", "label": "base-grid", "shapes": 20, "widest_ci95_pct": 0.5809510593271513, "prefix_cache_reset": true, "output": "/tmp/tmpe1r1voov/base/grid.json"}
+servebench suite tiny: step c2 (run)
+servebench: closed warm-up 0 s, then 0 s in 2 windows
+servebench: window 1/2 done
+servebench: window 2/2 done
+{"summary": "servebench closed", "label": "base-c2", "mode": "closed", "concurrency": 2, "rate": null, "tps_mean": 884.9999999968713, "ci95_pct": 7.178531096557669, "windows": 2, "steps_per_s": 446.46877929128937, "tokens_per_step": 2.0, "context_tokens": null, "prefix_cache_hit_rate": null, "ttft_p50_s": 0.004929419999825768, "tpot_p50_ms": 1.8013528575206041, "failed": 0, "foreign_requests": 0, "output": "/tmp/tmpe1r1voov/base/c2.json"}
+servebench suite tiny: step prefill (prefill)
+servebench: prefill 2000 repeat 1/2: 1474 tok/s
+servebench: prefill 4000 repeat 1/2: 1299 tok/s
+servebench: prefill 2000 repeat 2/2: 1392 tok/s
+servebench: prefill 4000 repeat 2/2: 1245 tok/s
+{"summary": "servebench prefill", "label": "base-prefill", "tps": {"2000": 1433.1298574481548, "4000": 1272.0367539052822}, "ci95_pct": {"2000": 36.31032858057498, "4000": 26.67967523946803}, "skipped": [], "failed": 0, "output": "/tmp/tmpe1r1voov/base/prefill.json"}
+{"summary": "servebench suite", "suite": "tiny", "suite_sha256": "8ed8ef3a3c44", "label": "base", "out": "/tmp/tmpe1r1voov/base", "seconds": {"model": 0.0, "grid": 0.0, "c2": 0.5, "prefill": 0.1}, "failed": []}
+servebench suite tiny: step model (model)
+{"summary": "servebench model", "label": "cand-model", "acceptance_length": 2.428571428571429, "outputs_sha256": "2109c86cb4ef5e1cf80ceeddeee25143577165e43a8b45856342e88f3ecf630b", "rank1_fraction": null, "perplexity": null, "generate_s": 0.0, "score_s": 0.01, "failed": 0, "output": "/tmp/tmpe1r1voov/cand/model.json.gz"}
+servebench suite tiny: step grid (engine)
+decode 1x2 rows @4K                 10.236 ms ±0.54%
+decode 4x8 rows @4K                 10.830 ms ±0.41%
+decode 8x16 rows @4K                11.653 ms ±0.41%
+decode 16x32 rows @4K               13.248 ms ±0.54%
+decode 1x3 rows @4K                 10.341 ms ±0.58%
+decode 4x12 rows @4K                11.235 ms ±0.54%
+decode 8x24 rows @4K                12.429 ms ±0.41%
+decode 16x48 rows @4K               14.856 ms ±0.41%
+decode 1x6 rows @4K                 10.646 ms ±0.54%
+decode 2x12 rows @4K                11.241 ms ±0.58%
+decode 4x24 rows @4K                12.435 ms ±0.54%
+decode 8x48 rows @4K                14.826 ms ±0.41%
+decode 12x72 rows @4K               17.258 ms ±0.41%
+decode 16x96 rows @4K               19.651 ms ±0.54%
+decode 1x3 rows @64K                10.955 ms ±0.58%
+decode 8x24 rows @64K               13.049 ms ±0.54%
+decode 16x48 rows @64K              15.440 ms ±0.41%
+decode 1x3 rows @256K               12.934 ms ±0.41%
+decode 8x24 rows @256K              15.029 ms ±0.54%
+decode 1x3 rows @1016K              20.704 ms ±0.58%
+{"summary": "servebench engine", "label": "cand-grid", "shapes": 20, "widest_ci95_pct": 0.5809510593271513, "prefix_cache_reset": true, "output": "/tmp/tmpe1r1voov/cand/grid.json"}
+servebench suite tiny: step c2 (run)
+servebench: closed warm-up 0 s, then 0 s in 2 windows
+servebench: window 1/2 done
+servebench: window 2/2 done
+{"summary": "servebench closed", "label": "cand-c2", "mode": "closed", "concurrency": 2, "rate": null, "tps_mean": 859.9999999968713, "ci95_pct": 2.311207936153773e-08, "windows": 2, "steps_per_s": 432.59709730698853, "tokens_per_step": 2.0, "context_tokens": null, "prefix_cache_hit_rate": null, "ttft_p50_s": 0.005316221999237314, "tpot_p50_ms": 1.8315111426220807, "failed": 0, "foreign_requests": 0, "output": "/tmp/tmpe1r1voov/cand/c2.json"}
+servebench suite tiny: step prefill (prefill)
+servebench: prefill 2000 repeat 1/2: 1414 tok/s
+servebench: prefill 4000 repeat 1/2: 1337 tok/s
+servebench: prefill 2000 repeat 2/2: 1339 tok/s
+servebench: prefill 4000 repeat 2/2: 1406 tok/s
+{"summary": "servebench prefill", "label": "cand-prefill", "tps": {"2000": 1376.5743936078238, "4000": 1371.3801008884157}, "ci95_pct": {"2000": 34.22604145978518, "4000": 31.860411408203376}, "skipped": [], "failed": 0, "output": "/tmp/tmpe1r1voov/cand/prefill.json"}
+{"summary": "servebench suite", "suite": "tiny", "suite_sha256": "8ed8ef3a3c44", "label": "cand", "out": "/tmp/tmpe1r1voov/cand", "seconds": {"model": 0.0, "grid": 0.0, "c2": 0.5, "prefill": 0.1}, "failed": []}
+...........EEEEEEEEEEEEEEEEEEEEEEEEEE........................
+======================================================================
+ERROR: test_bad_arguments_missing_files_and_configs (test_lab.PlanProblemsTest.test_bad_arguments_missing_files_and_configs)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_lab.py", line 638, in test_bad_arguments_missing_files_and_configs
+    problems = lab.plan_problems(lab.plan(spec))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/scripts/lab.py", line 1013, in plan_problems
+    problems.extend(f"{step['config']}: {problem}" for problem in arm_problems(step["config"]))
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/scripts/lab.py", line 1044, in arm_problems
+    cluster, nodes, upstreams = spark.configuration(argparse.Namespace(cluster_config=config))
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 104, in configuration
+    nodes = site_nodes() if nodes_path == ROOT / NODES_FILE else json.loads(nodes_path.read_text())
+                                                                            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes-ring4.local.json'
+
+======================================================================
+ERROR: test_good_servebench_arguments_pass (test_lab.PlanProblemsTest.test_good_servebench_arguments_pass)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_lab.py", line 564, in test_good_servebench_arguments_pass
+    self.assertEqual(lab.plan_problems(lab.plan(spec)), [])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/scripts/lab.py", line 1013, in plan_problems
+    problems.extend(f"{step['config']}: {problem}" for problem in arm_problems(step["config"]))
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/scripts/lab.py", line 1044, in arm_problems
+    cluster, nodes, upstreams = spark.configuration(argparse.Namespace(cluster_config=config))
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 104, in configuration
+    nodes = site_nodes() if nodes_path == ROOT / NODES_FILE else json.loads(nodes_path.read_text())
+                                                                            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes-ring4.local.json'
+
+======================================================================
+ERROR: test_queue_rejects_without_a_sync_and_warns_with_one (test_lab.PlanProblemsTest.test_queue_rejects_without_a_sync_and_warns_with_one)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_lab.py", line 649, in test_queue_rejects_without_a_sync_and_warns_with_one
+    lab.queue_add(str(path))
+  File "/workspace/shared/q03-development/integration/scripts/lab.py", line 1750, in queue_add
+    problems = plan_problems(plan(spec))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/scripts/lab.py", line 1013, in plan_problems
+    problems.extend(f"{step['config']}: {problem}" for problem in arm_problems(step["config"]))
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/scripts/lab.py", line 1044, in arm_problems
+    cluster, nodes, upstreams = spark.configuration(argparse.Namespace(cluster_config=config))
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 104, in configuration
+    nodes = site_nodes() if nodes_path == ROOT / NODES_FILE else json.loads(nodes_path.read_text())
+                                                                            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes-ring4.local.json'
+
+======================================================================
+ERROR: test_suite_job (test_lab.PlanProblemsTest.test_suite_job)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_lab.py", line 588, in test_suite_job
+    self.assertEqual(lab.plan_problems(steps), [])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/scripts/lab.py", line 1013, in plan_problems
+    problems.extend(f"{step['config']}: {problem}" for problem in arm_problems(step["config"]))
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/scripts/lab.py", line 1044, in arm_problems
+    cluster, nodes, upstreams = spark.configuration(argparse.Namespace(cluster_config=config))
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 104, in configuration
+    nodes = site_nodes() if nodes_path == ROOT / NODES_FILE else json.loads(nodes_path.read_text())
+                                                                            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes-ring4.local.json'
+
+======================================================================
+ERROR: test_suite_job_with_a_companion_suite (test_lab.PlanProblemsTest.test_suite_job_with_a_companion_suite)
+A list of suites: the release suite first, a companion (single-stream) on the same
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_lab.py", line 618, in test_suite_job_with_a_companion_suite
+    self.assertEqual(lab.plan_problems(steps), [])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/scripts/lab.py", line 1013, in plan_problems
+    problems.extend(f"{step['config']}: {problem}" for problem in arm_problems(step["config"]))
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/scripts/lab.py", line 1044, in arm_problems
+    cluster, nodes, upstreams = spark.configuration(argparse.Namespace(cluster_config=config))
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 104, in configuration
+    nodes = site_nodes() if nodes_path == ROOT / NODES_FILE else json.loads(nodes_path.read_text())
+                                                                            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes-ring4.local.json'
+
+======================================================================
+ERROR: test_cli_accepts_a_fourth_node_and_validates_against_selected_map (test_topology.TopologyTest.test_cli_accepts_a_fourth_node_and_validates_against_selected_map)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_create_never_overwrites_an_existing_configuration (test_topology.TopologyTest.test_create_never_overwrites_an_existing_configuration)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_duplicate_ranks_and_missing_head_rejected (test_topology.TopologyTest.test_duplicate_ranks_and_missing_head_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_ep_and_multiple_parallel_groups_rejected (test_topology.TopologyTest.test_ep_and_multiple_parallel_groups_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_former_repository_url_names_the_renamed_repository (test_topology.TopologyTest.test_former_repository_url_names_the_renamed_repository)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_four_node_candidate_has_consistent_target_and_draft_sizes (test_topology.TopologyTest.test_four_node_candidate_has_consistent_target_and_draft_sizes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_four_nodes_cannot_use_direct_peer_transport (test_topology.TopologyTest.test_four_nodes_cannot_use_direct_peer_transport)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_fourth_node_is_rendered_headless_without_rocenante_peer_map (test_topology.TopologyTest.test_fourth_node_is_rendered_headless_without_rocenante_peer_map)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_live_gid_matches_declared_cable_and_per_node_index (test_topology.TopologyTest.test_live_gid_matches_declared_cable_and_per_node_index)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_nodes_path_round_trip_and_escape_rejected (test_topology.TopologyTest.test_nodes_path_round_trip_and_escape_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_oneshot_refuses_b12x_settings_and_mismatched_images (test_topology.TopologyTest.test_oneshot_refuses_b12x_settings_and_mismatched_images)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_oneshot_ring4_runs_sparknet_under_its_own_names (test_topology.TopologyTest.test_oneshot_ring4_runs_sparknet_under_its_own_names)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_probe_is_bounded_and_does_not_share_serving_ipc (test_topology.TopologyTest.test_probe_is_bounded_and_does_not_share_serving_ipc)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_promoted_environment_and_commands_are_unchanged (test_topology.TopologyTest.test_promoted_environment_and_commands_are_unchanged)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_qualified_ring_channels_preserve_neighbor_constraints (test_topology.TopologyTest.test_qualified_ring_channels_preserve_neighbor_constraints)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_relay_base_can_generate_nccl_control (test_topology.TopologyTest.test_relay_base_can_generate_nccl_control)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_relay_stripe_order_must_match_the_remote_cable (test_topology.TopologyTest.test_relay_stripe_order_must_match_the_remote_cable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_ring_policy_rejects_each_unsafe_override (test_topology.TopologyTest.test_ring_policy_rejects_each_unsafe_override)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_ring_rejects_missing_or_shared_cable_subnets (test_topology.TopologyTest.test_ring_rejects_missing_or_shared_cable_subnets)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_ring_rejects_reused_interface_and_asymmetric_stripes (test_topology.TopologyTest.test_ring_rejects_reused_interface_and_asymmetric_stripes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_ring_requires_neighbours_in_rank_order (test_topology.TopologyTest.test_ring_requires_neighbours_in_rank_order)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_rocenante_ring4_candidate_and_source_lock (test_topology.TopologyTest.test_rocenante_ring4_candidate_and_source_lock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_rocenante_ring4_rejects_old_image_or_lock (test_topology.TopologyTest.test_rocenante_ring4_rejects_old_image_or_lock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_rocenante_ring4_requires_matching_mode_and_backend (test_topology.TopologyTest.test_rocenante_ring4_requires_matching_mode_and_backend)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_stale_three_node_argument_and_draft_config_rejected (test_topology.TopologyTest.test_stale_three_node_argument_and_draft_config_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+======================================================================
+ERROR: test_three_node_candidate_stays_on_existing_fast_path (test_topology.TopologyTest.test_three_node_candidate_stays_on_existing_fast_path)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/shared/q03-development/integration/tests/test_topology.py", line 30, in setUp
+    self.three = spark.read_json("config/nodes.json")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/q03-development/integration/bin/spark", line 46, in read_json
+    with (ROOT / relative).open(encoding="utf-8") as handle:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/q03-development/integration/config/nodes.json'
+
+----------------------------------------------------------------------
+Ran 485 tests in 98.998s
+
+FAILED (errors=31)

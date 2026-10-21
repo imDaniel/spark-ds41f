@@ -1,0 +1,126 @@
+..................................................warning: filtering not recognized by server, ignoring
+warning: filtering not recognized by server, ignoring
+................................................................................................................................................fixture: prepared 3383a8291230 (tree ad32e9268984)
+fixture: prepared 3383a8291230 (tree ad32e9268984)
+2026-10-21T05:47:25Z analysed results/private/lab/r: PASSED
+2026-10-21T05:47:25Z done
+.2026-10-21T05:47:25Z analysed results/private/lab/r: DIFFERENCES
+2026-10-21T05:47:25Z run stopped: analysis of results/private/lab/r found differences
+2026-10-21T05:47:25Z done
+.2026-10-21T05:47:25Z analysed results/private/lab/r: DIFFERENCES
+2026-10-21T05:47:25Z run stopped: analysis of results/private/lab/r found differences
+2026-10-21T05:47:25Z done
+.2026-10-21T05:47:25Z analysed results/private/lab/r: DIFFERENCES
+2026-10-21T05:47:25Z run stopped: analysis of results/private/lab/r found differences
+2026-10-21T05:47:25Z done
+............................................................2026-10-21T05:48:20Z profile candidate prefill exit 1
+.2026-10-21T05:48:20Z profile candidate decode exit 0
+.........................2026-10-21T05:48:20Z telemetry not started: 'NoneType' object has no attribute 'write'
+.............................................................................................................{"summary": "servebench model", "label": "base", "acceptance_length": 2.4, "outputs_sha256": "c7e226b71b9b04dcda367dca959cd9721da553285079f1a09e3aac76779150fb", "rank1_fraction": 1.0, "perplexity": 1.9999999999999998, "generate_s": 0.01, "score_s": 0.01, "failed": 0, "output": "/tmp/tmpf8wvyb27/base.json.gz"}
+{"summary": "servebench model", "label": "again", "acceptance_length": 2.4, "outputs_sha256": "c7e226b71b9b04dcda367dca959cd9721da553285079f1a09e3aac76779150fb", "rank1_fraction": null, "perplexity": null, "generate_s": 0.01, "score_s": 0.01, "failed": 0, "output": "/tmp/tmpf8wvyb27/again.json.gz"}
+{"summary": "servebench model", "label": "other", "acceptance_length": 2.4, "outputs_sha256": "142699eb121085c43091b40e68ee0cc4ff8aa528d1d22a39ce77da47ae59c835", "rank1_fraction": null, "perplexity": null, "generate_s": 0.01, "score_s": 0.01, "failed": 0, "output": "/tmp/tmpf8wvyb27/other.json.gz"}
+......servebench: closed warm-up 0 s, then 1 s in 3 windows
+servebench: window 1/3 done
+servebench: window 2/3 done
+servebench: window 3/3 done
+{"summary": "servebench closed", "label": "base", "mode": "closed", "concurrency": 2, "rate": null, "tps_mean": 880.000000002013, "ci95_pct": 2.8231115958312873, "windows": 3, "steps_per_s": 440.2976675917086, "tokens_per_step": 2.0, "context_tokens": null, "prefix_cache_hit_rate": null, "ttft_p50_s": 0.005166094997548498, "tpot_p50_ms": 1.7994311419897713, "failed": 0, "foreign_requests": 0, "output": "/tmp/tmpk092pdai/base.json"}
+servebench: closed warm-up 0 s, then 1 s in 3 windows
+servebench: window 1/3 done
+servebench: window 2/3 done
+servebench: window 3/3 done
+{"summary": "servebench closed", "label": "candidate", "mode": "closed", "concurrency": 2, "rate": null, "tps_mean": 893.3333333354191, "ci95_pct": 8.496020813670714, "windows": 3, "steps_per_s": 446.67269776905573, "tokens_per_step": 2.0, "context_tokens": null, "prefix_cache_hit_rate": null, "ttft_p50_s": 0.004917805999866687, "tpot_p50_ms": 1.7926551434876663, "failed": 0, "foreign_requests": 0, "output": "/tmp/tmpk092pdai/candidate.json"}
+............servebench suite stall-only: step stall (stall)
+servebench: stall 3000 repeat 1/2: worst 0.20 s, decode p50 0.005 s (baseline 0.004 s)
+servebench: stall 3000 repeat 2/2: worst 0.20 s, decode p50 0.004 s (baseline 0.004 s)
+{"summary": "servebench stall", "label": null, "stall_s": {"3000": 0.1978154464995896}, "during_p50_s": {"3000": 0.004322623499319889}, "before_p50_s": {"3000": 0.004123201499169227}, "tps": {"3000": 34.75682972427876}, "skipped": [], "failed": 0, "output": "/tmp/tmpsb1dice7/base/stall.json"}
+{"summary": "servebench suite", "suite": "stall-only", "suite_sha256": "fe97e9ccde89", "label": null, "out": "/tmp/tmpsb1dice7/base", "seconds": {"stall": 0.8}, "failed": []}
+servebench suite stall-only: step stall (stall)
+servebench: stall 3000 repeat 1/2: worst 0.20 s, decode p50 0.004 s (baseline 0.004 s)
+servebench: stall 3000 repeat 2/2: worst 0.20 s, decode p50 0.004 s (baseline 0.004 s)
+{"summary": "servebench stall", "label": null, "stall_s": {"3000": 0.19745683400105918}, "during_p50_s": {"3000": 0.004214493998006219}, "before_p50_s": {"3000": 0.004132310499699088}, "tps": {"3000": 34.72799366128618}, "skipped": [], "failed": 0, "output": "/tmp/tmpsb1dice7/cand/stall.json"}
+{"summary": "servebench suite", "suite": "stall-only", "suite_sha256": "fe97e9ccde89", "label": null, "out": "/tmp/tmpsb1dice7/cand", "seconds": {"stall": 0.8}, "failed": []}
+.servebench: stall 3000 repeat 1/2: worst 0.20 s, decode p50 0.005 s (baseline 0.004 s)
+servebench: stall 3000 repeat 2/2: worst 0.20 s, decode p50 0.004 s (baseline 0.004 s)
+{"summary": "servebench stall", "label": null, "stall_s": {"3000": 0.19907088100080728}, "during_p50_s": {"3000": 0.00450030499996501}, "before_p50_s": {"3000": 0.004153299498284468}, "tps": {"3000": 34.76963615704909}, "skipped": [], "failed": 0, "output": "/tmp/tmpw9eaf6al/stall.json"}
+.............servebench suite tiny: step model (model)
+metric                                     /tmp/tmpw9ea /tmp/tmpw9ea   change    ±95%  verdict
+worst decode wait during 3,000 prefill (s)        0.199        0.199   +0.00%   4.04%  same
+decode step p99 during 3,000 prefill (s)          0.199        0.199   +0.00%   4.04%  same
+decode step p50 during 3,000 prefill (s)          0.005        0.005   +0.00%   9.47%  same
+prefill 3,000 tok/s under decode                 34.770       34.770   +0.00%   0.61%  same
+{"summary": "servebench model", "label": "base-model", "acceptance_length": 2.428571428571429, "outputs_sha256": "3cdeb9e61db1d60e9a283317b685a2526344b378d5bd9f9f65db174eec491aba", "rank1_fraction": 1.0, "perplexity": 2.0, "generate_s": 0.0, "score_s": 0.01, "failed": 0, "output": "/tmp/tmpmni_u973/base/model.json.gz"}
+servebench suite tiny: step grid (engine)
+decode 1x2 rows @4K                 10.236 ms ±0.54%
+decode 4x8 rows @4K                 10.830 ms ±0.41%
+decode 8x16 rows @4K                11.653 ms ±0.41%
+decode 16x32 rows @4K               13.248 ms ±0.54%
+decode 1x3 rows @4K                 10.341 ms ±0.58%
+decode 4x12 rows @4K                11.235 ms ±0.54%
+decode 8x24 rows @4K                12.429 ms ±0.41%
+decode 16x48 rows @4K               14.856 ms ±0.41%
+decode 1x6 rows @4K                 10.646 ms ±0.54%
+decode 2x12 rows @4K                11.241 ms ±0.58%
+decode 4x24 rows @4K                12.435 ms ±0.54%
+decode 8x48 rows @4K                14.826 ms ±0.41%
+decode 12x72 rows @4K               17.258 ms ±0.41%
+decode 16x96 rows @4K               19.651 ms ±0.54%
+decode 1x3 rows @64K                10.955 ms ±0.58%
+decode 8x24 rows @64K               13.049 ms ±0.54%
+decode 16x48 rows @64K              15.440 ms ±0.41%
+decode 1x3 rows @256K               12.934 ms ±0.41%
+decode 8x24 rows @256K              15.029 ms ±0.54%
+decode 1x3 rows @1016K              20.704 ms ±0.58%
+{"summary": "servebench engine", "label": "base-grid", "shapes": 20, "widest_ci95_pct": 0.5809510593271513, "prefix_cache_reset": true, "output": "/tmp/tmpmni_u973/base/grid.json"}
+servebench suite tiny: step c2 (run)
+servebench: closed warm-up 0 s, then 0 s in 2 windows
+servebench: window 1/2 done
+servebench: window 2/2 done
+{"summary": "servebench closed", "label": "base-c2", "mode": "closed", "concurrency": 2, "rate": null, "tps_mean": 874.9999999965439, "ci95_pct": 21.781714262608997, "windows": 2, "steps_per_s": 439.9856428095911, "tokens_per_step": 2.0, "context_tokens": null, "prefix_cache_hit_rate": null, "ttft_p50_s": 0.0050682469955063425, "tpot_p50_ms": 1.8046878571372613, "failed": 0, "foreign_requests": 0, "output": "/tmp/tmpmni_u973/base/c2.json"}
+servebench suite tiny: step prefill (prefill)
+servebench: prefill 2000 repeat 1/2: 1470 tok/s
+servebench: prefill 4000 repeat 1/2: 1462 tok/s
+servebench: prefill 2000 repeat 2/2: 1468 tok/s
+servebench: prefill 4000 repeat 2/2: 1516 tok/s
+{"summary": "servebench prefill", "label": "base-prefill", "tps": {"2000": 1469.1223941677788, "4000": 1489.1144980795657}, "ci95_pct": {"2000": 0.6196001125106689, "4000": 22.857442080018075}, "skipped": [], "failed": 0, "output": "/tmp/tmpmni_u973/base/prefill.json"}
+{"summary": "servebench suite", "suite": "tiny", "suite_sha256": "8ed8ef3a3c44", "label": "base", "out": "/tmp/tmpmni_u973/base", "seconds": {"model": 0.0, "grid": 0.0, "c2": 0.5, "prefill": 0.0}, "failed": []}
+servebench suite tiny: step model (model)
+{"summary": "servebench model", "label": "cand-model", "acceptance_length": 2.428571428571429, "outputs_sha256": "2109c86cb4ef5e1cf80ceeddeee25143577165e43a8b45856342e88f3ecf630b", "rank1_fraction": null, "perplexity": null, "generate_s": 0.0, "score_s": 0.0, "failed": 0, "output": "/tmp/tmpmni_u973/cand/model.json.gz"}
+servebench suite tiny: step grid (engine)
+decode 1x2 rows @4K                 10.236 ms ±0.54%
+decode 4x8 rows @4K                 10.830 ms ±0.41%
+decode 8x16 rows @4K                11.653 ms ±0.41%
+decode 16x32 rows @4K               13.248 ms ±0.54%
+decode 1x3 rows @4K                 10.341 ms ±0.58%
+decode 4x12 rows @4K                11.235 ms ±0.54%
+decode 8x24 rows @4K                12.429 ms ±0.41%
+decode 16x48 rows @4K               14.856 ms ±0.41%
+decode 1x6 rows @4K                 10.646 ms ±0.54%
+decode 2x12 rows @4K                11.241 ms ±0.58%
+decode 4x24 rows @4K                12.435 ms ±0.54%
+decode 8x48 rows @4K                14.826 ms ±0.41%
+decode 12x72 rows @4K               17.258 ms ±0.41%
+decode 16x96 rows @4K               19.651 ms ±0.54%
+decode 1x3 rows @64K                10.955 ms ±0.58%
+decode 8x24 rows @64K               13.049 ms ±0.54%
+decode 16x48 rows @64K              15.440 ms ±0.41%
+decode 1x3 rows @256K               12.934 ms ±0.41%
+decode 8x24 rows @256K              15.029 ms ±0.54%
+decode 1x3 rows @1016K              20.704 ms ±0.58%
+{"summary": "servebench engine", "label": "cand-grid", "shapes": 20, "widest_ci95_pct": 0.5809510593271513, "prefix_cache_reset": true, "output": "/tmp/tmpmni_u973/cand/grid.json"}
+servebench suite tiny: step c2 (run)
+servebench: closed warm-up 0 s, then 0 s in 2 windows
+servebench: window 1/2 done
+servebench: window 2/2 done
+{"summary": "servebench closed", "label": "cand-c2", "mode": "closed", "concurrency": 2, "rate": null, "tps_mean": 849.9999999965439, "ci95_pct": 29.896470565136006, "windows": 2, "steps_per_s": 425.00250409199975, "tokens_per_step": 2.0, "context_tokens": null, "prefix_cache_hit_rate": null, "ttft_p50_s": 0.005101165996165946, "tpot_p50_ms": 1.8080078578870078, "failed": 0, "foreign_requests": 0, "output": "/tmp/tmpmni_u973/cand/c2.json"}
+servebench suite tiny: step prefill (prefill)
+servebench: prefill 2000 repeat 1/2: 1488 tok/s
+servebench: prefill 4000 repeat 1/2: 1397 tok/s
+servebench: prefill 2000 repeat 2/2: 1467 tok/s
+servebench: prefill 4000 repeat 2/2: 1476 tok/s
+{"summary": "servebench prefill", "label": "cand-prefill", "tps": {"2000": 1477.2622670552882, "4000": 1436.4593299163682}, "ci95_pct": {"2000": 8.879028210158861, "4000": 35.04959597323699}, "skipped": [], "failed": 0, "output": "/tmp/tmpmni_u973/cand/prefill.json"}
+{"summary": "servebench suite", "suite": "tiny", "suite_sha256": "8ed8ef3a3c44", "label": "cand", "out": "/tmp/tmpmni_u973/cand", "seconds": {"model": 0.0, "grid": 0.0, "c2": 0.5, "prefill": 0.0}, "failed": []}
+.............................................................
+----------------------------------------------------------------------
+Ran 485 tests in 180.064s
+
+OK

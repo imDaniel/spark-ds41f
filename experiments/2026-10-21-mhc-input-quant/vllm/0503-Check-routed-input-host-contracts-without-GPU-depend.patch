@@ -1,0 +1,909 @@
+From dd0d8326d31456a6038ac2f244f765e8d783ce59 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 05:34:15 +0000
+Subject: [PATCH 503/503] Check routed input host contracts without GPU
+ dependencies
+
+Base: vLLM 19f2c20ed4d64ae22bd009ceacadd85e2a81e354 plus the immutable 188-patch r6x steering series (ebb44766d6f04d3a9272b712778d7f2fa2cec1fd).
+
+Rationale: Exercise actual host bodies with explicitly bounded AST and metadata adapters, without claiming device or numerical execution.
+
+Quality: preserve BF16 boundaries, steering and the existing routed/shared arithmetic. Candidate disabled by default; non-SP target TP4 SM121 scope only. No adoption or performance claim.
+
+Tests: source AST, standalone CPU host contracts and diff checks. Torch dispatcher, TileLang compilation, GPU differential/capture, model quality and capacity/performance gates remain unexecuted.
+
+Upstream status: isolated downstream experiment in imDaniel/spark-ds41f; not submitted upstream.
+---
+ tests/models/test_deepseek_v41_q03_host.py | 880 +++++++++++++++++++++
+ 1 file changed, 880 insertions(+)
+ create mode 100644 tests/models/test_deepseek_v41_q03_host.py
+
+diff --git a/tests/models/test_deepseek_v41_q03_host.py b/tests/models/test_deepseek_v41_q03_host.py
+new file mode 100644
+index 000000000..31b6e2a87
+--- /dev/null
++++ b/tests/models/test_deepseek_v41_q03_host.py
+@@ -0,0 +1,880 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""CPU-only source/host contracts; NOT kernel, dispatcher or CUDA graph tests.
++
++Run directly with Python/unittest, not vLLM's GPU-loading pytest conftest.
++The real candidate Python source is AST-loaded without its torch import. A
++metadata-only tensor double supplies dtype/shape/stride/address fields; no GPU
++is represented by this double. Function bodies, ContextVar and exception paths
++are unchanged. Kernel factories are never imported or called.
++
++Q03_SOURCE_ROOT optionally selects a candidate checkout. During worktree
++integration, Q03_BRIDGE_ROOT, Q03_MODEL_ROOT and Q03_KERNEL_ROOT can independently
++select source checkouts. These overrides affect reads only.
++"""
++
++import ast
++import contextlib
++import hashlib
++import json
++import os
++from pathlib import Path
++import socket
++import sys
++from types import ModuleType, SimpleNamespace
++import unittest
++
++ROOT = Path(os.environ.get("Q03_SOURCE_ROOT", Path(__file__).resolve().parents[2]))
++REL = Path("vllm/models/deepseek_v4_1/tilelang")
++SOURCE_LOADS = []
++
++
++def source_path(part, relative):
++    return Path(os.environ.get(f"Q03_{part}_ROOT", ROOT)) / relative
++
++
++class MetadataTensor:
++    """No payload/driver: integer addresses are explicit test fixtures only."""
++
++    def __init__(self, shape, dtype="bf16", address=0x100000, strides=None,
++                 device="cuda:0"):
++        self.shape = tuple(shape)
++        self.ndim = len(shape)
++        self.dtype = dtype
++        self.address = address
++        expected, product = [], 1
++        for dimension in reversed(shape):
++            expected.insert(0, product)
++            product *= dimension
++        self._stride = strides or tuple(expected)
++        self.device = Device(device)
++
++    def is_contiguous(self):
++        expected, product = [], 1
++        for dimension in reversed(self.shape):
++            expected.insert(0, product)
++            product *= dimension
++        return self._stride == tuple(expected)
++
++    def __getitem__(self, key):
++        assert isinstance(key, slice) and key.start in (None, 0)
++        rows = self.shape[0] if key.stop is None else key.stop
++        return MetadataTensor((rows, *self.shape[1:]), self.dtype,
++                              self.address, device=self.device.value)
++
++    def unsqueeze(self, dimension):
++        assert dimension == 0
++        return MetadataTensor((1, *self.shape), self.dtype, self.address,
++                              device=self.device.value)
++
++    def view(self, *args):
++        if len(args) == 1 and isinstance(args[0], str):
++            dtype = args[0]
++            shape = self.shape
++            if dtype == "uint32":
++                shape = (*shape[:-1], shape[-1] // 4)
++            return MetadataTensor(shape, dtype, self.address, device=self.device.value)
++        return MetadataTensor(args, self.dtype, self.address, device=self.device.value)
++
++    def stride(self):
++        return self._stride
++
++    def numel(self):
++        result = 1
++        for dimension in self.shape:
++            result *= dimension
++        return result
++
++    def element_size(self):
++        return {"bf16": 2, "fp32": 4, "uint32": 4}.get(self.dtype, 1)
++
++    def untyped_storage(self):
++        return SimpleNamespace(data_ptr=self.data_ptr,
++                               nbytes=lambda: self.numel() * self.element_size())
++
++    def data_ptr(self):
++        return self.address
++
++
++class Device:
++    def __init__(self, value):
++        self.value = value
++        self.type = value.split(":")[0]
++
++    def __eq__(self, other):
++        return isinstance(other, Device) and self.value == other.value
++
++
++TORCH_METADATA = SimpleNamespace(
++    Tensor=MetadataTensor, bfloat16="bf16", float8_e4m3fn="e4m3",
++    uint8="u8", uint32="uint32", float32="fp32",
++)
++
++
++def load_host(path, env=None, definitions=None):
++    """Keep selected source bodies exact; omit imports/decorators only as stated."""
++    tree = ast.parse(path.read_text())
++    if definitions is None:
++        tree.body = [node for node in tree.body if not (
++            isinstance(node, ast.Import)
++            and any(alias.name == "torch" for alias in node.names)
++        )]
++    else:
++        selected = []
++        for node in tree.body:
++            if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
++                if node.name in definitions:
++                    node.decorator_list = []
++                    selected.append(node)
++                if isinstance(node, ast.ClassDef):
++                    for method in node.body:
++                        if (isinstance(method, ast.FunctionDef)
++                                and f"{node.name}.{method.name}" in definitions):
++                            method.decorator_list = []
++                            selected.append(method)
++        assert len(selected) == len(definitions), (path, definitions)
++        tree.body = selected
++    class OmitRuntimeImports(ast.NodeTransformer):
++        def visit_ImportFrom(self, node):
++            if node.level or (node.module or "").startswith("vllm"):
++                return ast.copy_location(ast.Pass(), node)
++            return node
++    # Selected bodies retain logic; project-local imports bind explicit env adapters.
++    tree = OmitRuntimeImports().visit(tree)
++    tree.body.insert(0, ast.ImportFrom(
++        module="__future__", names=[ast.alias(name="annotations")], level=0
++    ))
++    module = ModuleType(f"q03_host_{len(SOURCE_LOADS)}")
++    sys.modules[module.__name__] = module
++    module.__dict__.update(torch=TORCH_METADATA)
++    module.__dict__.update(env or {})
++    exec(compile(ast.fix_missing_locations(tree), str(path), "exec"), module.__dict__)
++    SOURCE_LOADS.append((str(path), hashlib.sha256(path.read_bytes()).hexdigest()))
++    return module
++
++
++def buffers(rows=6):
++    return (MetadataTensor((rows, 5120)),
++            MetadataTensor((rows, 5120), "e4m3", 0x200000),
++            MetadataTensor((rows, 160), "u8", 0x300000))
++
++
++class RoutedInputContracts(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.host = load_host(source_path("BRIDGE", REL / "routed_input.py"))
++
++    def test_valid_pair_keeps_identity(self):
++        x, q, sf = buffers()
++        self.assertEqual(self.host.validate_input_quant(x, (q, sf)), (q, sf))
++
++    def test_invalid_pairs_fail_even_for_zero_rows(self):
++        for rows in (0, 1, 6, 8192):
++            for field in ("half", "list", "q_dtype", "sf_dtype", "q_shape",
++                          "sf_shape", "q_stride", "sf_stride", "device",
++                          "source_dtype", "source_stride", "source_width"):
++                with self.subTest(rows=rows, field=field):
++                    x, q, sf = buffers(rows)
++                    pair = (q, sf)
++                    if field == "half":
++                        pair = (q, None)
++                    elif field == "list":
++                        pair = [q, sf]
++                    elif field == "q_dtype":
++                        q.dtype = "bf16"
++                    elif field == "sf_dtype":
++                        sf.dtype = "uint32"
++                    elif field == "q_shape":
++                        q.shape = (rows + 1, 5120)
++                    elif field == "sf_shape":
++                        sf.shape = (rows, 40)
++                    elif field == "q_stride":
++                        q._stride = (1, max(rows, 1))
++                    elif field == "sf_stride":
++                        sf._stride = (320, 2)
++                    elif field == "device":
++                        sf.device = Device("cuda:1")
++                    elif field == "source_dtype":
++                        x.dtype = "float32"
++                    elif field == "source_stride":
++                        x._stride = (10240, 2)
++                    elif field == "source_width":
++                        x.shape = (rows, 576)
++                    with self.assertRaises(ValueError):
++                        self.host.validate_input_quant(x, pair)
++
++    def test_storage_alias_and_alignment_rejected(self):
++        for kind in ("q_sf", "q_x", "sf_x", "q_alignment", "sf_alignment"):
++            with self.subTest(kind=kind):
++                x, q, sf = buffers()
++                if kind == "q_sf":
++                    sf.address = q.address + 256
++                elif kind == "q_x":
++                    q.address = x.address + 256
++                elif kind == "sf_x":
++                    sf.address = x.address
++                elif kind == "q_alignment":
++                    q.address += 1
++                else:
++                    sf.address += 4
++                with self.assertRaises(ValueError):
++                    self.host.validate_input_quant(x, (q, sf))
++
++    def test_fake_metadata_does_not_access_storage(self):
++        x, q, sf = buffers()
++        def forbidden():
++            raise AssertionError("metadata validation read storage")
++        for tensor in (x, q, sf):
++            tensor.data_ptr = forbidden
++        self.host.validate_input_quant_metadata(x, (q, sf))
++
++    def test_exactly_once_consumption_and_baseline_reset(self):
++        x, q, sf = buffers()
++        owner = object()
++        with self.host.scoped_routed_input(owner, x, (q, sf)):
++            self.assertEqual(self.host.consume_routed_input(owner, x), (q, sf))
++            with self.assertRaises(RuntimeError):
++                self.host.consume_routed_input(owner, x)
++        self.assertIsNone(self.host.consume_routed_input(owner, x))
++
++    def test_wrong_owner_and_same_address_replacement_rejected(self):
++        x, q, sf = buffers()
++        owner = object()
++        for consumer, source in ((object(), x), (owner, buffers()[0])):
++            with self.subTest(same_owner=consumer is owner):
++                with self.assertRaises(RuntimeError):
++                    with self.host.scoped_routed_input(owner, x, (q, sf)):
++                        self.host.consume_routed_input(consumer, source)
++                self.assertIsNone(self.host.consume_routed_input(owner, x))
++
++    def test_scoped_helper_resets_for_injected_stage_exceptions(self):
++        x, q, sf = buffers()
++        owner = object()
++        for stage in ("router", "dispatch", "expert", "shared_wait"):
++            with self.subTest(stage=stage):
++                with self.assertRaisesRegex(LookupError, stage):
++                    with self.host.scoped_routed_input(owner, x, (q, sf)):
++                        if stage == "shared_wait":
++                            self.host.consume_routed_input(owner, x)
++                        raise LookupError(stage)
++                self.assertIsNone(self.host.consume_routed_input(owner, x))
++                with self.host.scoped_routed_input(owner, x, (q, sf)):
++                    self.host.consume_routed_input(owner, x)
++
++    def test_unconsumed_and_nested_scope_fail_then_recover(self):
++        x, q, sf = buffers()
++        owner = object()
++        with self.assertRaisesRegex(RuntimeError, "not consumed"):
++            with self.host.scoped_routed_input(owner, x, (q, sf)):
++                pass
++        with self.host.scoped_routed_input(owner, x, (q, sf)):
++            with self.assertRaisesRegex(RuntimeError, "nested"):
++                with self.host.scoped_routed_input(owner, x, (q, sf)):
++                    pass
++            self.host.consume_routed_input(owner, x)
++        self.assertIsNone(self.host.consume_routed_input(owner, x))
++
++
++class QuartetMappingContracts(unittest.TestCase):
++    def test_reference_mapping_covers_every_column_and_scale_once(self):
++        """Integer design enumeration only, not execution of the GPU kernel."""
++        columns, scale_writers = [], []
++        for step in range(7):
++            valid_workers = 0
++            for worker in range(96):
++                chunk = step * 96 + worker
++                if chunk >= 640:
++                    continue
++                valid_workers += 1
++                columns.extend(chunk * 8 + v for v in range(8))
++                if worker % 4 == 0:
++                    scale_writers.append(chunk // 4)
++                quartet = {worker, worker ^ 1, worker ^ 2, worker ^ 3}
++                self.assertEqual({lane // 4 for lane in quartet}, {worker // 4})
++                self.assertEqual({(lane + 32) // 32 for lane in quartet},
++                                 {(worker + 32) // 32})
++            self.assertEqual(valid_workers, 64 if step == 6 else 96)
++        self.assertEqual(sorted(columns), list(range(5120)))
++        self.assertEqual(sorted(scale_writers), list(range(160)))
++
++    def test_xor_four_mutant_crosses_scale_group(self):
++        self.assertNotEqual({0 // 4, (0 ^ 4) // 4}, {0})
++
++
++class ProducerHostContracts(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        import math
++        cls.host = load_host(
++            source_path("KERNEL", REL / "mhc.py"),
++            {"isfinite": math.isfinite, "finalize": object(),
++             "prepare": SimpleNamespace(call=lambda f, *a, **k: (f, a, k))},
++            {"_validate_mxfp8_config", "_validate_mxfp8_outputs",
++             "_validate_mxfp8_storage", "_finalize_call"},
++        )
++
++    def config(self, clamp=1e-4):
++        return SimpleNamespace(
++            torch_dtype="e4m3", sf_block=(1, 32),
++            use_tma_aligned_col_major_sf=False, round_sf=True,
++            use_packed_ue8m0=True, use_e4m3_sf=False, clamp_min_value=clamp,
++        )
++
++    def test_false_key_is_exact_legacy_six_arguments_no_kwargs(self):
++        args = (5120, 20480, 1e-20, 1e-6, 20)
++        call = self.host._finalize_call(*args)
++        self.assertEqual(call[1], (*args, args[2]))
++        self.assertEqual(call[2], {})
++        self.assertEqual(call, self.host._finalize_call(
++            *args, emit_mxfp8=False, quant_config=self.config()
++        ))
++
++    def test_true_key_contains_actual_config_and_distinguishes_clamp(self):
++        calls = []
++        for clamp in (1e-4, 2e-4):
++            config = self.config(clamp)
++            call = self.host._finalize_call(
++                5120, 20480, 1e-20, 1e-6, 20,
++                emit_mxfp8=True, quant_config=config,
++            )
++            self.assertEqual(set(call[2]), {"emit_mxfp8", "quant_config"})
++            self.assertIs(call[2]["quant_config"], config)
++            self.assertIs(call[2]["emit_mxfp8"], True)
++            calls.append(call)
++        self.assertNotEqual(calls[0], calls[1])
++
++    def test_invalid_quant_config_rejected_before_factory(self):
++        for clamp in (0, -1, float("nan"), float("inf"), None):
++            with self.subTest(clamp=clamp), self.assertRaises(ValueError):
++                self.host._finalize_call(
++                    5120, 20480, 1e-20, 1e-6, 20,
++                    emit_mxfp8=True, quant_config=self.config(clamp),
++                )
++
++    def test_producer_rejects_disjoint_views_with_shared_backing_allocation(self):
++        x, q, sf = buffers()
++        sf.untyped_storage = q.untyped_storage
++        with self.assertRaises(ValueError):
++            self.host._validate_mxfp8_storage(q, sf, x)
++
++    def test_zero_row_sink_metadata_is_still_validated(self):
++        x, q, sf = buffers(0)
++        self.host._validate_mxfp8_outputs(x, q, sf)
++        for pair in ((q, None), (None, sf)):
++            with self.assertRaises(ValueError):
++                self.host._validate_mxfp8_outputs(x, *pair)
++        sf._stride = (320, 2)
++        with self.assertRaises(ValueError):
++            self.host._validate_mxfp8_outputs(x, q, sf)
++
++    def test_dual_schema_declares_sinks_and_fake_signature_matches(self):
++        tree = ast.parse(source_path("KERNEL", REL / "mhc.py").read_text())
++        functions = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
++        real = functions["_mhc_pre_mxfp8"]
++        fake = functions["_mhc_pre_mxfp8_fake"]
++        for signature in (real.args, fake.args):
++            for argument in (*signature.args, *signature.kwonlyargs):
++                argument.annotation = None
++        self.assertEqual(ast.dump(real.args), ast.dump(fake.args))
++        decorator = real.decorator_list[0]
++        mutations = next(k.value for k in decorator.keywords
++                         if k.arg == "mutates_args")
++        self.assertEqual(set(ast.literal_eval(mutations)), {
++            "residual_out", "y", "post", "comb", "pre_out", "q_out", "sf_out",
++        })
++        legacy = functions["_mhc_pre"]
++        self.assertNotIn("q_out", {a.arg for a in legacy.args.args})
++        self.assertNotIn("sf_out", {a.arg for a in legacy.args.args})
++
++
++class ArenaHostContracts(unittest.TestCase):
++    def setUp(self):
++        self.allocations = []
++        self.retained = []
++        def allocate(size, dtype, device):
++            address = 0x10000000 + len(self.allocations) * 0x10000000
++            tensor = MetadataTensor((size,), dtype, address, device=device.value)
++            self.allocations.append(tensor)
++            return tensor
++        facade = SimpleNamespace(**vars(TORCH_METADATA))
++        facade.empty = allocate
++        facade.device = lambda d: d if isinstance(d, Device) else Device(d)
++        self.host = load_host(
++            source_path("MODEL", REL / "input_quant_arena.py"),
++            {"torch": facade,
++             "retain_cuda_graph_capture_resource": self.retained.append},
++            {"RoutedInputQuantArena", "RoutedInputQuantLease"},
++        )
++
++    def test_two_fixed_allocations_have_exact_budget_and_stable_slices(self):
++        arena = self.host.RoutedInputQuantArena(8192, "cuda:0")
++        self.assertEqual(len(self.allocations), 2)
++        self.assertEqual(sum(arena.storage_sizes(8192)), 43253760)
++        self.assertIsNot(arena.q_storage, arena.sf_storage)
++        bases = (arena.q.data_ptr(), arena.sf.data_ptr())
++        for rows in (1, 6, 16, 96, 4096, 4097, 8192, 6):
++            lease = arena.borrow(rows)
++            self.assertIs(lease.owner, arena)
++            self.assertEqual((lease.q.data_ptr(), lease.sf.data_ptr()), bases)
++            self.assertEqual(lease.q.shape, (rows, 5120))
++            self.assertEqual(lease.sf.shape, (rows, 160))
++            lease.release()
++        self.assertEqual(len(self.allocations), 2)
++        self.assertEqual(self.retained, [])  # No ContextVar call outside opaque op.
++
++    def test_lease_bounds_nesting_and_duplicate_release(self):
++        arena = self.host.RoutedInputQuantArena(6, "cuda:0")
++        for rows, slot in ((0, 0), (-1, 0), (7, 0), (1, 1)):
++            with self.assertRaises(ValueError):
++                arena.borrow(rows, slot)
++        lease = arena.borrow(6)
++        with self.assertRaises(RuntimeError):
++            arena.borrow(1)
++        lease.release()
++        with self.assertRaises(RuntimeError):
++            lease.release()
++        arena.borrow(1).release()
++
++    def test_zero_budget_is_arithmetic_only_not_an_allocated_arena(self):
++        self.assertEqual(self.host.RoutedInputQuantArena.storage_sizes(0), (0, 0))
++        for capacity, device in ((0, "cuda:0"), (-1, "cuda:0"), (1, "cpu")):
++            with self.assertRaises(ValueError):
++                self.host.RoutedInputQuantArena(capacity, device)
++        self.assertEqual(self.allocations, [])
++
++
++class PlanHostContracts(unittest.TestCase):
++    def test_real_plan_selects_pair_without_cast_or_copy(self):
++        events = []
++        host = load_host(
++            source_path("BRIDGE", REL / "routed_input.py")
++        )
++        def record(name):
++            return lambda *args, **kwargs: events.append((name, args, kwargs))
++        dispatch = SimpleNamespace(
++            workspace_specs=lambda rows: (),
++            dispatch=lambda *a: {"order": "order", "tile_expert": "expert",
++                                 "layout_weights": "weights"},
++            combine=lambda *a, **k: events.append(("combine", a, k)),
++        )
++        x, q, sf = buffers()
++        old_q, old_sf = buffers()[1:]
++        old_q.address, old_sf.address = 0x400000, 0x500000
++        h = MetadataTensor((6, 5120), address=0x600000)
++        hq = MetadataTensor((6, 5120), "e4m3", 0x700000)
++        hs = MetadataTensor((6, 160), "u8", 0x800000)
++        y = MetadataTensor((6, 5120), address=0x900000)
++        plan = SimpleNamespace(
++            dispatch={"ids": dispatch}, workspace_specs=lambda *a: (),
++            tk=SimpleNamespace(quant=SimpleNamespace(per_token_cast=record("cast"))),
++            gate_up=record("gate_up"), swiglu=record("swiglu"), down=record("down"),
++        )
++        env = {"carve": lambda *a: (old_q, old_sf, h, hq, hs, y),
++               "_present": lambda w: w, "SF_BLOCK": 32,
++               "validate_input_quant": host.validate_input_quant,
++               "validate_input_quant_disjoint": host.validate_input_quant_disjoint}
++        native = load_host(source_path("BRIDGE", REL / "moe.py"), env,
++                           {"MoeExpertsV41Plan.run"})
++        for pair in (None, (q, sf)):
++            events.clear()
++            native.run(plan, x, SimpleNamespace(dtype="ids"), object(),
++                       ((), ()), MetadataTensor((6, 5120), address=0xA00000),
++                       workspace=MetadataTensor((100,), "u8", 0xB00000),
++                       shared=lambda: "shared-bf16", input_quant=pair)
++            self.assertEqual(sum(e[0] == "cast" for e in events), int(pair is None))
++            gate = next(e for e in events if e[0] == "gate_up")
++            self.assertIs(gate[1][0], old_q if pair is None else q)
++            self.assertEqual(gate[1][1].dtype, "uint32")
++            self.assertEqual(events[-1][2]["shared"], "shared-bf16")
++
++
++class ModelBoundaryContracts(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        path = source_path("MODEL", "vllm/models/deepseek_v4_1/nvidia/model.py")
++        tree = ast.parse(path.read_text())
++        decoder = next(n for n in tree.body if isinstance(n, ast.ClassDef)
++                       and n.name == "DeepseekV4DecoderLayer")
++        forward = next(n for n in decoder.body if isinstance(n, ast.FunctionDef)
++                       and n.name == "forward")
++        start = next(i for i, n in enumerate(forward.body)
++                     if isinstance(n, ast.Assign) and any(
++                         isinstance(t, ast.Name) and t.id == "lease"
++                         for t in n.targets))
++        # Execute unchanged FFN suffix; attention/steering prefix is not simulated.
++        args = "self residual x post_mix res_mix attn_pre input_ids sp_rows steering"
++        suffix = ast.FunctionDef(
++            name="ffn_suffix", args=ast.arguments(
++                posonlyargs=[], args=[ast.arg(arg=a) for a in args.split()],
++                kwonlyargs=[], kw_defaults=[], defaults=[]),
++            body=forward.body[start:], decorator_list=[],
++        )
++        cls.namespace = {"sp_prefill": SimpleNamespace(
++            activate=lambda rows: contextlib.nullcontext(),
++            unreduced_parts=lambda x: x,
++        )}
++        exec(compile(ast.fix_missing_locations(ast.Module(
++            body=[suffix], type_ignores=[])), str(path), "exec"), cls.namespace)
++        SOURCE_LOADS.append((str(path), hashlib.sha256(path.read_bytes()).hexdigest()))
++
++    def test_target_routes_pair_but_draft_sp_zero_and_oversize_do_not(self):
++        for kind in ("target", "draft", "sp", "zero", "oversize", "unprepared"):
++            with self.subTest(kind=kind):
++                events = []
++                rows = 0 if kind == "zero" else 7 if kind == "oversize" else 6
++                x, q, sf = buffers(rows)
++                lease = SimpleNamespace(q=q, sf=sf,
++                                        release=lambda: events.append(("release",)))
++                def borrow(rows):
++                    events.append(("borrow", rows))
++                    return lease
++                def producer(*args, **kwargs):
++                    events.append(("producer", kwargs))
++                    return args[1], "post", "mix", x, "pre"
++                def ffn(source, ids, **kwargs):
++                    events.append(("ffn", source, kwargs))
++                    return source
++                owner = SimpleNamespace(
++                    q03_input_arena=None if kind == "unprepared" else
++                    SimpleNamespace(capacity=6, borrow=borrow),
++                    is_draft=kind == "draft", mhc=SimpleNamespace(post_pre=producer),
++                    ffn=ffn, hc_ffn_fn=None, hc_ffn_scale=None, hc_ffn_base=None,
++                    ffn_norm=SimpleNamespace(weight=None),
++                )
++                gathered = object()
++                sp = SimpleNamespace(gather=lambda source: gathered,
++                                     padded_rows=8, unreduced=False)
++                if kind != "sp":
++                    sp = None
++                result = self.namespace["ffn_suffix"](
++                    owner, x, x, None, None, None, None, sp, {}
++                )
++                self.assertEqual(len(result), 5)
++                producer_event = next(e for e in events if e[0] == "producer")
++                ffn_event = next(e for e in events if e[0] == "ffn")
++                if kind == "target":
++                    self.assertEqual(producer_event[1], {"q_out": q, "sf_out": sf})
++                    self.assertEqual(ffn_event[2], {"routed_input_quant": (q, sf)})
++                    self.assertEqual([e[0] for e in events],
++                                     ["borrow", "producer", "ffn", "release"])
++                else:
++                    self.assertEqual(producer_event[1], {})
++                    self.assertNotIn("routed_input_quant", ffn_event[2])
++                    self.assertNotIn("borrow", [e[0] for e in events])
++                self.assertIs(ffn_event[1], gathered if kind == "sp" else x)
++
++    def test_ffn_failure_releases_actual_model_lease(self):
++        for stage in ("producer", "ffn"):
++            released = []
++            x, q, sf = buffers()
++            lease = SimpleNamespace(q=q, sf=sf, release=lambda: released.append(True))
++            def producer(*args, **kwargs):
++                if stage == "producer":
++                    raise LookupError(stage)
++                return x, None, None, x, None
++            def ffn(*args, **kwargs):
++                raise LookupError(stage)
++            owner = SimpleNamespace(
++                q03_input_arena=SimpleNamespace(capacity=6, borrow=lambda r: lease),
++                is_draft=False, mhc=SimpleNamespace(post_pre=producer), ffn=ffn,
++                hc_ffn_fn=None, hc_ffn_scale=None, hc_ffn_base=None,
++                ffn_norm=SimpleNamespace(weight=None),
++            )
++            with self.subTest(stage=stage), self.assertRaisesRegex(LookupError, stage):
++                self.namespace["ffn_suffix"](
++                    owner, x, x, None, None, None, None, None, {}
++                )
++            self.assertEqual(released, [True])
++
++
++class OpaqueBoundaryContracts(unittest.TestCase):
++    def test_both_real_opaque_entries_preserve_source_scope_and_empty_path(self):
++        path = source_path("BRIDGE",
++                           "vllm/model_executor/layers/fused_moe/runner/moe_runner.py")
++        bridge = load_host(source_path("BRIDGE", REL / "routed_input.py"))
++        class Runner:
++            def q03_input_quant_eligible(self):
++                return True
++        runner = Runner()
++        consumer = object()
++        runner._quant_method = SimpleNamespace(
++            moe_kernel=SimpleNamespace(fused_experts=consumer)
++        )
++        env = dict(
++            MoERunner=Runner, get_layer_from_name=lambda name: runner,
++            _resolve_layer_name=lambda name: name, cast=lambda dtype, value: value,
++            scoped_routed_input=bridge.scoped_routed_input,
++            validate_input_quant=bridge.validate_input_quant,
++        )
++        names = {"_dsv41_moe_forward_mxfp8", "_dsv41_moe_forward_shared_mxfp8"}
++        native = load_host(path, env, names)
++        for name in names:
++            for rows in (0, 6):
++                x, q, sf = buffers(rows)
++                seen = []
++                def impl(source, router, shared, ids):
++                    self.assertIs(source, x)
++                    seen.append(bridge.consume_routed_input(consumer, source))
++                    return "baseline-result"
++                runner._forward_impl = impl
++                with self.subTest(name=name, rows=rows):
++                    result = getattr(native, name)(
++                        x, None, None, None, "layer", 5120, "bf16", q, sf
++                    )
++                    self.assertEqual(result, "baseline-result")
++                    self.assertEqual(seen, [None if rows == 0 else (q, sf)])
++                    self.assertIsNone(bridge.consume_routed_input(consumer, x))
++
++    def test_candidate_eligibility_rejects_each_transform_and_parallel_mode(self):
++        path = source_path("BRIDGE",
++                           "vllm/model_executor/layers/fused_moe/runner/moe_runner.py")
++        class Impl:
++            pass
++        class Prepare:
++            pass
++        class Experts:
++            _plan = object()
++            expects_unquantized_inputs = True
++        native = load_host(path, {
++            "FusedMoEKernelModularImpl": Impl,
++            "MoEPrepareAndFinalizeNoDPEPModular": Prepare,
++            "TileLangExperts": Experts,
++        }, {"MoERunner.q03_input_quant_eligible"})
++        def runner():
++            parallel = SimpleNamespace(ep_size=1, use_ep=False,
++                                       use_all2all_kernels=False, enable_eplb=False)
++            config = SimpleNamespace(
++                moe_parallel_config=parallel, hidden_dim=5120, in_dtype="bf16",
++                dp_size=1, pcp_size=1, is_sequence_parallel=False,
++                is_lora_enabled=False,
++            )
++            return SimpleNamespace(
++                moe_config=config, routed_input_transform=None,
++                routed_output_transform=None, enable_dbo=False,
++                routed_experts=SimpleNamespace(apply_router_weight_on_input=False),
++                do_naive_dispatch_combine=False,
++                _quant_method=SimpleNamespace(has_unpadded_output=False,
++                    moe_kernel=SimpleNamespace(impl=Impl(), prepare_finalize=Prepare(),
++                                               fused_experts=Experts())),
++            )
++        self.assertTrue(native.q03_input_quant_eligible(runner()))
++        changes = {
++            "routed_input_transform": object(), "routed_output_transform": object(),
++            "enable_dbo": True, "do_naive_dispatch_combine": True,
++            "moe_config.hidden_dim": 576, "moe_config.in_dtype": "fp32",
++            "moe_config.dp_size": 2, "moe_config.pcp_size": 2,
++            "moe_config.is_sequence_parallel": True, "moe_config.is_lora_enabled": True,
++            "moe_config.moe_parallel_config.ep_size": 2,
++            "moe_config.moe_parallel_config.use_ep": True,
++            "moe_config.moe_parallel_config.use_all2all_kernels": True,
++            "moe_config.moe_parallel_config.enable_eplb": True,
++            "routed_experts.apply_router_weight_on_input": True,
++            "_quant_method.has_unpadded_output": True,
++            "_quant_method.moe_kernel.prepare_finalize": object(),
++            "_quant_method.moe_kernel.fused_experts": object(),
++        }
++        for name, value in changes.items():
++            target = root = runner()
++            fields = name.split(".")
++            for field in fields[:-1]:
++                target = getattr(target, field)
++            setattr(target, fields[-1], value)
++            with self.subTest(name=name):
++                self.assertFalse(native.q03_input_quant_eligible(root))
++
++
++class ProducerExecutionContracts(unittest.TestCase):
++    def test_actual_host_config_guard_zero_rows_and_pair_launch(self):
++        import math
++        for rows, state in ((0, "missing"), (6, "missing"), (6, "drift"),
++                            (6, "bound"), (6, "legacy")):
++            with self.subTest(rows=rows, state=state):
++                events = []
++                counter = iter(range(1, 100))
++                def tensor(shape, dtype="bf16"):
++                    return MetadataTensor(shape, dtype, next(counter) * 0x100000)
++                def launch(kind):
++                    def factory(*a, **k):
++                        events.append((kind + "_key", a, k))
++                        return lambda *a: events.append((kind + "_launch", a))
++                    return factory
++                scratch = SimpleNamespace(get_simultaneous=lambda *specs:
++                    tuple(tensor(shape, dtype) for shape, dtype in specs))
++                config = object()
++                key = (5120, 20480, 1e-20, 1e-6, 20)
++                native = load_host(source_path("KERNEL", REL / "mhc.py"), {
++                    "MULT": 4, "MIXES": 24, "BLOCK_H": 128,
++                    "isfinite": math.isfinite,
++                    "_MXFP8_CONFIGS": {} if state == "missing" else {key: config},
++                    "_mxfp8_config": lambda: object() if state == "drift" else config,
++                    "retain_cuda_graph_capture_resource": lambda value:
++                        events.append(("retain", value)),
++                    "current_workspace_manager": lambda: scratch,
++                    "_project": launch("project"), "_finalize": launch("finalize"),
++                }, {"_mhc_pre_impl", "_validate_mxfp8_outputs",
++                    "_validate_mxfp8_storage"})
++                args = dict(
++                    residual=tensor((rows, 4, 5120)), fn=tensor((24, 20480), "fp32"),
++                    scale=tensor((3,), "fp32"), base=tensor((24,), "fp32"),
++                    norm=tensor((5120,)), pre=tensor((rows, 4), "fp32"),
++                    residual_out=tensor((rows, 4, 5120)), y=tensor((rows, 5120)),
++                    post=tensor((rows, 4), "fp32"), comb=tensor((rows, 4, 4), "fp32"),
++                    pre_out=tensor((rows, 4), "fp32"),
++                    rms_eps=1e-20, hc_eps=1e-6, iterations=20,
++                    previous_output=tensor((rows, 5120)),
++                    previous_post=tensor((rows, 4), "fp32"),
++                    previous_comb=tensor((rows, 4, 4), "fp32"),
++                )
++                q, sf = tensor((rows, 5120), "e4m3"), tensor((rows, 160), "u8")
++                if state != "legacy":
++                    args.update(q_out=q, sf_out=sf)
++                if rows and state in ("missing", "drift"):
++                    with self.assertRaisesRegex(RuntimeError, "unprepared or changed"):
++                        native._mhc_pre_impl(**args)
++                    self.assertEqual(events, [])
++                    continue
++                native._mhc_pre_impl(**args)
++                if rows == 0:
++                    self.assertEqual(events, [])
++                    args["sf_out"] = None
++                    with self.assertRaises(ValueError):
++                        native._mhc_pre_impl(**args)
++                    continue
++                final = next(e for e in events if e[0] == "finalize_launch")
++                self.assertEqual(len(final[1]), 11 if state == "legacy" else 13)
++                if state == "bound":
++                    self.assertEqual(events[0], ("retain", (q, sf)))
++                    self.assertEqual(final[1][-2:], (q, sf))
++                else:
++                    self.assertEqual(next(e for e in events
++                                          if e[0] == "finalize_key")[2], {})
++
++    def test_steering_precedes_producer_and_capture_retention_stays_opaque(self):
++        model = ast.parse(source_path(
++            "MODEL", "vllm/models/deepseek_v4_1/nvidia/model.py"
++        ).read_text())
++        decoder = next(n for n in model.body if isinstance(n, ast.ClassDef)
++                       and n.name == "DeepseekV4DecoderLayer")
++        forward = next(n for n in decoder.body if isinstance(n, ast.FunctionDef)
++                       and n.name == "forward")
++        calls = [n for n in ast.walk(forward) if isinstance(n, ast.Call)]
++        steering = [n.lineno for n in calls if isinstance(n.func, ast.Name)
++                    and n.func.id == "prepare_consumer"]
++        producer = [n.lineno for n in calls if isinstance(n.func, ast.Attribute)
++                    and n.func.attr == "post_pre"]
++        self.assertTrue(steering and producer)
++        self.assertLess(max(steering), max(producer))
++        arena = source_path("MODEL", REL / "input_quant_arena.py").read_text()
++        self.assertNotIn("retain_cuda_graph_capture_resource", arena)
++        self.assertNotIn("ContextVar", arena)
++
++
++class ModelPreparationContracts(unittest.TestCase):
++    def fixture(self, tp, capability):
++        from itertools import islice
++        allocations, queries = [], []
++
++        def allocate(capacity, device):
++            owner = SimpleNamespace(
++                capacity=capacity, device=device,
++                storage_sizes=lambda rows: (rows * 5120, rows * 160),
++            )
++            allocations.append(owner)
++            return owner
++
++        def query(expected, *, device_id):
++            queries.append((expected, device_id))
++            return capability == expected
++
++        native = load_host(source_path(
++            "MODEL", "vllm/models/deepseek_v4_1/nvidia/model.py"
++        ), {
++            "islice": islice,
++            "kernels": SimpleNamespace(uses_tilelang=lambda: True),
++            "current_platform": SimpleNamespace(is_device_capability=query),
++            "RoutedInputQuantArena": allocate,
++            "logger": SimpleNamespace(info=lambda *a: None),
++        }, {"DeepseekV4Model.prepare_q03_input_arena"})
++        device = Device("cuda:2")
++        device.index = 2
++        layers = [SimpleNamespace(
++            ffn=SimpleNamespace(experts=SimpleNamespace(
++                q03_input_quant_eligible=lambda: True)),
++            is_draft=False, use_sequence_parallel=False,
++            ffn_norm=SimpleNamespace(weight=SimpleNamespace(
++                dtype="bf16", device=device)),
++            q03_input_arena=None, mhc=SimpleNamespace(q03_enabled=False),
++        ) for _ in range(2)]
++        model = SimpleNamespace(
++            q03_enabled=True,
++            parallel_config=SimpleNamespace(tensor_parallel_size=tp,
++                                            use_ubatching=False),
++            use_sequence_parallel=False, config=SimpleNamespace(hidden_size=5120),
++            hc_mult=4, layers=layers, start_layer=0, end_layer=len(layers),
++            q03_input_arena=None, q03_input_layers=(), q03_capacity=8192,
++        )
++        return native.prepare_q03_input_arena, model, allocations, queries
++
++    def test_tp4_sm121_prepares_one_shared_owner_idempotently(self):
++        prepare, model, allocations, queries = self.fixture(4, 121)
++        prepare(model)
++        owner = model.q03_input_arena
++        self.assertEqual(queries, [(121, 2)])
++        self.assertEqual(len(allocations), 1)
++        self.assertIs(owner, allocations[0])
++        self.assertEqual(owner.capacity, 8192)
++        prepare(model)
++        self.assertIs(model.q03_input_arena, owner)
++        self.assertEqual(len(allocations), 1)
++        for layer in model.layers:
++            self.assertIs(layer.q03_input_arena, owner)
++            self.assertTrue(layer.mhc.q03_enabled)
++
++    def test_other_tp_sizes_fall_back_without_query_or_allocation(self):
++        for tp in (1, 3, 8):
++            with self.subTest(tp=tp):
++                prepare, model, allocations, queries = self.fixture(tp, 121)
++                prepare(model)
++                self.assertEqual(queries, [])
++                self.assertEqual(allocations, [])
++                self.assertIsNone(model.q03_input_arena)
++                self.assertTrue(all(not layer.mhc.q03_enabled
++                                    for layer in model.layers))
++
++    def test_sm120_and_unknown_capability_fall_back_without_allocation(self):
++        for capability in (120, None):
++            with self.subTest(capability=capability):
++                prepare, model, allocations, queries = self.fixture(4, capability)
++                prepare(model)
++                self.assertEqual(queries, [(121, 2)])
++                self.assertEqual(allocations, [])
++                self.assertIsNone(model.q03_input_arena)
++                self.assertTrue(all(layer.q03_input_arena is None
++                                    for layer in model.layers))
++
++    def test_prepared_owner_cannot_resize_or_change_layer_bindings(self):
++        for change in ("capacity", "layers"):
++            with self.subTest(change=change):
++                prepare, model, allocations, _ = self.fixture(4, 121)
++                prepare(model)
++                owner = model.q03_input_arena
++                if change == "capacity":
++                    model.q03_capacity += 1
++                else:
++                    model.layers[0].is_draft = True
++                with self.assertRaises(RuntimeError):
++                    prepare(model)
++                self.assertEqual(len(allocations), 1)
++                self.assertIs(model.q03_input_arena, owner)
++
++
++if __name__ == "__main__":
++    # No network operation is needed, including loopback. Fail before connect.
++    def forbidden_network(*args, **kwargs):
++        raise RuntimeError("network forbidden in CPU host-contract tests")
++    socket.create_connection = forbidden_network
++    socket.socket.connect = forbidden_network
++    result = unittest.main(verbosity=2, exit=False).result
++    print(json.dumps({"evidence": "AST-adapted host/static only; no GPU",
++                      "source_sha256": dict(sorted(SOURCE_LOADS))}, sort_keys=True))
++    sys.exit(not result.wasSuccessful())
+-- 
+2.52.0
+

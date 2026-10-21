@@ -1,0 +1,389 @@
+1: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0001-engram-projection-tp-padding.patch']
+Applying: fix(deepseek-v4.1): shard the Engram projection at any TP size
+2: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0002-engram-async-disk-rows.patch']
+Applying: perf(deepseek-v4.1): read disk Engram rows beside the forward launch
+3: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0004-mm-block-hash-window.patch']
+Applying: fix(v1): hash every image in a block completed by generated tokens
+4: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0005-dspark-pinned-cost-curves.patch']
+Applying: feat(spec-decode): pin DSpark adaptive verification cost curves
+5: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0007-dspark-v41-gathered-markov-bias.patch']
+Applying: perf(deepseek-v4.1): allow the gathered DSpark Markov bias
+6: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0010-dspark-dead-verification-rows.patch']
+Applying: perf(spec-decode): dead DSpark verification rows below a confidence cut
+7: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0012-dspark-vocab-parallel-greedy.patch']
+Applying: perf(spec-decode): vocabulary-parallel greedy DSpark drafts
+8: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0013-dspark-main-proj-column-parallel.patch']
+Applying: perf(spec-decode): column-sharded DSpark main_proj
+9: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0014-deepseek-v41-prefill-sp-state.patch']
+Applying: feat(deepseek-v4.1): prefill sequence-parallel state and embedding reduce-scatter
+10: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0015-deepseek-v41-prefill-sp-dataflow.patch']
+Applying: perf(deepseek-v4.1): sequence-parallel prefill decoder dataflow
+11: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0016-deepseek-v41-prefill-sp-ced-encoder.patch']
+Applying: perf(deepseek-v4.1): sequence-parallel prefill through the CED encoder
+12: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0017-deepseek-v41-prefill-sp-local-attention-front.patch']
+Applying: perf(deepseek-v4.1): local attention front under sequence-parallel prefill
+13: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0018-deepseek-v41-prefill-sp-transport-threshold.patch']
+Applying: perf(deepseek-v4.1): sequence-parallel prefill wherever it can pay
+14: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0019-custom-op-fill-defaults-one-read.patch']
+Applying: perf: read the custom-op schema once in fill_defaults
+15: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0020-spec-decode-dead-row-kernel-warmup.patch']
+Applying: perf(spec-decode): compile the dead-row draft kernels at warmup
+16: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0021-worker-display-carveout-weights.patch']
+Applying: feat(worker): keep embedding and output-head weights in the GB10 display carve-out
+17: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0024-deepseek-v41-compressor-ring-decode.patch']
+Applying: fix(deepseek-v4.1): write the ratio-2 compressor ring during decode
+18: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0025-deepseek-v41-indexer-sp-split.patch']
+Applying: perf(deepseek-v4.1): split the indexer's rows across ranks in SP prefill
+19: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0026-worker-display-carveout-integrity.patch']
+Applying: feat(worker): debug-mode integrity check of the display carve-out weights
+20: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0027-explicit-collective-policy.patch']
+Applying: Make the requested RoCE collective policy explicit and fail-stop
+21: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0028-deepseek-v41-packed-bf16-lm-head.patch']
+Applying: Serve the DeepSeek V4.1 target head from exact 12-bit packed BF16
+22: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0030-worker-display-carveout-streamed-weights.patch']
+Applying: Load the vocabulary weights straight into the display carve-out
+23: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0029-deepseek-v41-tilelang-kernels.patch']
+Applying: feat(deepseek-v4.1): TileLang kernel backend
+24: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0032-deepseek-v41-tilekernels-router.patch']
+Applying: Route DeepSeek V4.1 with TileKernels' TileLang top-k gate
+25: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0033-tilelang-splitk-row-tiles.patch']
+Applying: Size the TileLang split-K row tile to the decode rows
+26: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0034-tilelang-fused-gate-router.patch']
+Applying: Fuse the TileLang gate's split-K reduction into the router
+27: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0035-tilelang-routing-skips-padding.patch']
+Applying: Skip CUDA-graph padding rows in TileLang routing
+28: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0036-tilelang-vocab-heads.patch']
+Applying: Project DS4.1's vocabulary heads with TileLang in the TileLang backend
+29: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0037-tilelang-tilekernels-mhc.patch']
+Applying: Run DS4.1's lagged mHC on TileKernels in the TileLang backend
+30: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0038-tilelang-sparknet-collectives.patch']
+Applying: Use sparknet's one-shot collectives for DS4.1's TileLang family
+31: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0039-dummy-context-disjoint-blocks.patch']
+Applying: Give fabricated profiling context its own blocks per group and request
+32: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0040-tilelang-mhc-register-fold.patch']
+Applying: Fold the mHC streams in registers in project_streams
+33: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0041-dummy-blocks-per-group.patch']
+Applying: Give each KV cache group its own blocks in every dummy layout
+34: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0042-dspark-drafter-padding-rows.patch']
+Applying: Mark the DSpark drafter's padding rows for the MoE routers
+35: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0043-tilelang-decode-tiles.patch']
+Applying: Serve TileLang FP8 decode rows on race-free 16, 32 and 64-row tiles
+36: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0044-tilelang-prefetch-scale-words.patch']
+Applying: Prefetch the TileLang scale words with each projection's weight
+37: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-05-ced-decoder-routing-mask/vllm/0045-tilelang-ced-decoder-routing-mask.patch']
+Applying: Route the CED decoder's MoE with its own padding mask in TileLang
+38: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0046-tilelang-router-test-forward-context.patch']
+Applying: Give the padded-step router test a forward context's attn_metadata
+39: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-08-lil-rebase/vllm/0047-deepseek-v41-head-dtype-env.patch']
+Applying: feat(deepseek-v4.1): choose the default head dtype by environment
+40: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0048-tilelang-l2-prefetch-family.patch']
+Applying: L2 prefetch: a TileLang kernel family beside the CuTe one
+41: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0049-tilelang-split-bf16-linear.patch']
+Applying: TileLang split BF16 linear method for row-block weights
+42: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0050-tilelang-block32-row-gemm.patch']
+Applying: TileLang block-32 GEMM over a loaded weight's rows
+43: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0051-tilelang-engram-gate-kernel.patch']
+Applying: TileLang Engram gate kernel
+44: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0052-tilelang-rope-kernel.patch']
+Applying: TileLang RoPE kernel
+45: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0053-tilelang-engram-hash-kernel.patch']
+Applying: TileLang Engram hash kernel
+46: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0054-tilelang-wo-projection-kernels.patch']
+Applying: TileLang WO projection kernels
+47: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0055-tilelang-scaled-linear.patch']
+Applying: TileLang linear method with a power-of-two output scale folded in
+48: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0056-tilelang-splitk-narrow-projections.patch']
+Applying: TileLang split-K for narrow projections
+49: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0057-tilelang-splitk-one-launch.patch']
+Applying: TileLang split-K in one launch, blocked accumulation, per-bucket tiles
+50: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0058-tilelang-rope-one-head-blocks.patch']
+Applying: TileLang RoPE: one-head roles share a block between tokens
+51: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0059-tilelang-wide-decode-rows.patch']
+Applying: TileLang decode rows past 64 and BF16 split rows by shape
+52: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0060-tilelang-rank-order-reduce-scatter.patch']
+Applying: TileLang rank-order reduce-scatter
+53: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0061-tilelang-split-bf16-decode-tiles.patch']
+Applying: TileLang split BF16 decode tiles by row tile
+54: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0062-tilelang-context-kv-tiles.patch']
+Applying: TileLang context-KV split-K tiles from the window 4 sweep
+55: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0063-scheduler-aligned-prefill-chunks.patch']
+Applying: Scheduler: prefill chunks aligned to the long-prefill threshold, off
+56: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0064-tilelang-engram-hash-int32-history.patch']
+Applying: TileLang Engram hash: int32 or int64 history
+57: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0065-tilelang-wo-decode-tiles.patch']
+Applying: TileLang WO decode tiles from the WO sweep
+58: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0066-tilelang-compressor-decode-tiles.patch']
+Applying: TileLang compressor projection decode tiles from the window 5 sweep
+59: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0067-tilelang-kv-cache-writers.patch']
+Applying: TileLang V4.1 KV-cache record writers
+60: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0068-deepseek-v41-cache-write-helper.patch']
+Applying: V4.1 attention: cache writes through one helper
+61: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0069-tilelang-rank-order-exchange.patch']
+Applying: TileLang rank-order reduce-scatter: the exchange as its own function
+62: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0070-tilelang-kv-cache-writers-coalesced.patch']
+Applying: TileLang V4.1 cache writers: coalesced threads
+63: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0071-scheduler-aligned-chunks-fit.patch']
+Applying: Scheduler: aligned prefill chunks must fit beside the decode rows
+64: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0072-tilelang-router-text-mask-rows.patch']
+Applying: TileLang router: the text-only mask covers the gate's split rows
+65: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0073-tilelang-compressor-projection.patch']
+Applying: Compressor projection: the TileLang BF16 GEMM under the TileLang kernel backend
+66: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0074-tilelang-engram-gate.patch']
+Applying: Engram gate: TileLang under the TileLang kernel backend
+67: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0075-tilelang-rope.patch']
+Applying: RoPE: TileLang under the TileLang kernel backend
+68: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0076-tilelang-engram-hash.patch']
+Applying: Engram hash: TileLang under the TileLang kernel backend
+69: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0077-tilelang-index-weights-scale.patch']
+Applying: Index head weights: the scale folded into the TileLang projection
+70: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0078-tilelang-decode-rows.patch']
+Applying: Decode rows: decode tiles and split-K for 16-stream steps
+71: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0079-tilelang-rank-order-collectives.patch']
+Applying: Collectives: the rank-order reduce-scatter under the TileLang kernel backend
+72: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-10-r6d-deterministic/vllm/0080-tilelang-aligned-prefill-chunks.patch']
+Applying: Chunk alignment: aligned prefill chunks under the TileLang kernel backend
+73: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0081-DeepSeek-V4.1-prefill-SP-a-projection-reduce-scatter.patch']
+Applying: DeepSeek V4.1 prefill SP: a projection reduce-scattered in slices
+74: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0082-Attention-the-SP-WO-projection-reduce-scattered-in-t.patch']
+Applying: Attention: the SP WO projection reduce-scattered in two slices
+75: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0083-DeepSeek-V4.1-prefill-SP-unreduced-results-that-Tile.patch']
+Applying: DeepSeek V4.1 prefill SP: unreduced results that TileLang mHC adds in rank order
+76: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0084-TileLang-V4.1-rank-order-sum-the-torch-path-no-longe.patch']
+Applying: TileLang V4.1 rank-order sum: the torch path no longer adds into its first input
+77: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0085-DeepSeek-V4.1-prefill-SP-one-projection-for-a-single.patch']
+Applying: DeepSeek V4.1 prefill SP: one projection for a single-slice unreduced step
+78: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0086-Prefill-SP-TileLang-mHC-adds-the-rank-order-parts-of.patch']
+Applying: Prefill SP: TileLang mHC adds the rank-order parts of SP results
+79: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0087-TileLang-V4.1-collectives-a-rank-order-all-reduce-of.patch']
+Applying: TileLang V4.1 collectives: a rank-order all-reduce of any size
+80: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0088-Collectives-all-reduces-past-the-one-shot-limit-add-.patch']
+Applying: Collectives: all-reduces past the one-shot limit add in rank order under the TileLang kernel backend
+81: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0089-TileLang-V4.1-MoE-one-rounding-of-each-rank-s-partia.patch']
+Applying: TileLang V4.1 MoE: one rounding of each rank's partial (switch off)
+82: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0090-MoE-FP32-combine-on-under-the-TileLang-kernel-backen.patch']
+Applying: MoE FP32 combine: on under the TileLang kernel backend
+83: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0091-TileLang-V4.1-vocabulary-heads-FP32-logits-when-the-.patch']
+Applying: TileLang V4.1 vocabulary heads: FP32 logits when the head dtype is FP32
+84: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0092-TileLang-V4.1-mHC-the-stream-projection-at-FP32-prec.patch']
+Applying: TileLang V4.1 mHC: the stream projection at FP32 precision
+85: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0093-TileLang-V4.1-the-shared-expert-s-clamped-SwiGLU-at-.patch']
+Applying: TileLang V4.1: the shared expert's clamped SwiGLU at the reference's precision
+86: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0094-Shared-experts-the-reference-precision-SwiGLU-under-.patch']
+Applying: Shared experts: the reference-precision SwiGLU under the TileLang kernel backend
+87: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0095-TileLang-V4.1-cache-writers-whole-word-payload-store.patch']
+Applying: TileLang V4.1 cache writers: whole-word payload stores
+88: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0096-TileLang-V4.1-cache-writers-four-lanes-per-indexed-g.patch']
+Applying: TileLang V4.1 cache writers: four lanes per indexed group
+89: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0097-TileLang-V4.1-cache-writers-hardware-E2M1-conversion.patch']
+Applying: TileLang V4.1 cache writers: hardware E2M1 conversion for indexed records
+90: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0098-TileLang-V4.1-cache-writers-paired-E4M3-conversion-f.patch']
+Applying: TileLang V4.1 cache writers: paired E4M3 conversion for SWA records
+91: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0099-Cache-writes-TileLang-under-the-TileLang-kernel-back.patch']
+Applying: Cache writes: TileLang under the TileLang kernel backend
+92: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0100-TileLang-V4.1-CSA-compression-pooling-rounding-and-R.patch']
+Applying: TileLang V4.1 CSA compression: pooling, rounding and RMSNorm in one launch
+93: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0101-Compressor-TileLang-compression-under-the-TileLang-k.patch']
+Applying: Compressor: TileLang compression under the TileLang kernel backend
+94: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0102-TileLang-V4.1-compression-tests-distinct-ring-blocks.patch']
+Applying: TileLang V4.1 compression tests: distinct ring blocks, two-ulp tolerance
+95: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0103-TileLang-V4.1-compression-the-state-ring-as-a-stride.patch']
+Applying: TileLang V4.1 compression: the state ring as a strided tensor
+96: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0104-TileLang-V4.1-sparse-MLA-metadata-the-four-Triton-me.patch']
+Applying: TileLang V4.1 sparse-MLA metadata: the four Triton metadata kernels, exact
+97: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0105-Sparse-MLA-metadata-TileLang-under-the-TileLang-kern.patch']
+Applying: Sparse-MLA metadata: TileLang under the TileLang kernel backend
+98: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0106-Sparse-MLA-metadata-the-window-metadata-and-main-pag.patch']
+Applying: Sparse-MLA metadata: the window metadata and main page table in one launch
+99: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0107-Sparse-MLA-metadata-two-blocks-a-row-in-the-fused-de.patch']
+Applying: Sparse-MLA metadata: two blocks a row in the fused decode metadata
+100: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0108-Sparse-MLA-metadata-fused-blocks-as-wide-as-the-wind.patch']
+Applying: Sparse-MLA metadata: fused blocks as wide as the window part
+101: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0109-TileLang-V4.1-MoE-the-combine-adds-the-shared-expert.patch']
+Applying: TileLang V4.1 MoE: the combine adds the shared expert's output when it runs first
+102: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-11-r6f/vllm/0110-DeepSeek-V4.1-attention-a-mixed-step-s-decode-reques.patch']
+Applying: DeepSeek V4.1 attention: a mixed step's decode requests keep the decode plan
+103: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-12-r6g/vllm/0111-MoE-fold-the-aux-stream-shared-expert-into-the-TileL.patch']
+Applying: MoE: fold the aux-stream shared expert into the TileLang combine
+104: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-12-r6g/vllm/0112-Spec-decode-greedy-verification-from-vocabulary-shar.patch']
+Applying: Spec decode: greedy verification from vocabulary shards
+105: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-12-r6g/vllm/0113-Greedy-verification-compile-its-kernels-in-the-dummy.patch']
+Applying: Greedy verification: compile its kernels in the dummy sampler run
+106: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-12-r6g/vllm/0114-Greedy-verification-find-the-LM-head-through-a-multi.patch']
+Applying: Greedy verification: find the LM head through a multimodal wrapper
+107: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-12-r6h/vllm/0115-TileLang-V4.1-mHC-split-fn-into-its-TF32-parts-while.patch']
+Applying: TileLang V4.1 mHC: split fn into its TF32 parts while loading it
+108: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-12-r6h/vllm/0116-TileLang-V4.1-MoE-request-the-shared-row-before-the-.patch']
+Applying: TileLang V4.1 MoE: request the shared row before the routes' loads in the folded combine
+109: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-12-r6h/vllm/0117-TileLang-V4.1-vocabulary-heads-token-tiles-vary-fast.patch']
+Applying: TileLang V4.1 vocabulary heads: token tiles vary fastest in the grid
+110: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-kernel-names/vllm/0118-TileLang-V4.1-name-every-kernel-after-its-file-and-w.patch']
+Applying: TileLang V4.1: name every kernel after its file and what it computes
+111: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-kernel-names/vllm/0119-L2-prefetch-refuse-to-run-without-the-TileLang-kerne.patch']
+Applying: L2 prefetch: refuse to run without the TileLang kernel when it is requested
+112: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0120-TileLang-V4.1-WO-WO-A-on-BF16-activations-as-DeepSee.patch']
+Applying: TileLang V4.1 WO: WO-A on BF16 activations, as DeepSeek's reference
+113: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0121-TileLang-V4.1-WO-decode-each-tile-s-UE8M0-scales-onc.patch']
+Applying: TileLang V4.1 WO: decode each tile's UE8M0 scales once
+114: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0122-TileLang-V4.1-WO-the-W8A16-GEMM-without-warp-special.patch']
+Applying: TileLang V4.1 WO: the W8A16 GEMM without warp specialization
+115: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0123-TileLang-V4.1-WO-WO-A-tiles-from-the-sweep.patch']
+Applying: TileLang V4.1 WO: WO-A tiles from the sweep
+116: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0124-TileLang-V4.1-WO-WO-A-in-four-K-shards-split-over-CT.patch']
+Applying: TileLang V4.1 WO: WO-A in four K shards, split over CTAs at decode
+117: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0125-TileLang-V4.1-WO-WO-A-path-and-tile-per-bucket-from-.patch']
+Applying: TileLang V4.1 WO: WO-A path and tile per bucket from the split sweep
+118: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0126-WO-projection-TileLang-under-the-TileLang-kernel-bac.patch']
+Applying: WO projection: TileLang under the TileLang kernel backend
+119: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0127-TileLang-V4.1-WO-sequence-parallel-steps-through-the.patch']
+Applying: TileLang V4.1 WO: sequence-parallel steps through the rank-order projection
+120: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0128-TileLang-V4.1-the-W8A16-GEMM-s-kernels-follow-the-na.patch']
+Applying: TileLang V4.1: the W8A16 GEMM's kernels follow the naming scheme
+121: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0129-TileLang-V4.1-WO-B-s-decode-tiles-to-96-rows.patch']
+Applying: TileLang V4.1: WO-B's decode tiles to 96 rows
+122: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0130-TileLang-V4.1-WO-WO-A-tiles-as-tall-as-the-bucket-fr.patch']
+Applying: TileLang V4.1 WO: WO-A tiles as tall as the bucket from 65 rows
+123: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0131-DSpark-context-KV-TileLang-under-the-TileLang-kernel.patch']
+Applying: DSpark context KV: TileLang under the TileLang kernel backend
+124: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0132-TileLang-V4.1-sparse-MLA-every-route-folds-a-segment.patch']
+Applying: TileLang V4.1 sparse MLA: every route folds a segment with the same rounding
+125: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-13-r6k/vllm/0133-TileLang-V4.1-WO-WO-A-hands-WO-B-the-reference-s-MXF.patch']
+Applying: TileLang V4.1 WO: WO-A hands WO-B the reference's MXFP8 cast directly
+126: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0134-TileLang-V4.1-tests-non-finite-contracts.patch']
+.git/rebase-apply/patch:422: new blank line at EOF.
++
+warning: 1 line adds whitespace errors.
+Applying: TileLang V4.1 tests: non-finite contracts
+127: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0135-TileLang-V4.1-tests-DeepSeek-s-arithmetic-for-compre.patch']
+Applying: TileLang V4.1 tests: DeepSeek's arithmetic for compression and the Engram hash
+128: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0136-TileLang-V4.1-MoE-test-calibrate-the-reference-again.patch']
+Applying: TileLang V4.1 MoE test: calibrate the reference against injected defects
+129: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0137-TileLang-V4.1-shared-SwiGLU-the-clamps-keep-a-NaN.patch']
+Applying: TileLang V4.1 shared SwiGLU: the clamps keep a NaN
+130: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0138-TileLang-V4.1-Engram-gate-the-magnitude-floor-keeps-.patch']
+Applying: TileLang V4.1 Engram gate: the magnitude floor keeps a NaN
+131: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0139-Engine-cost-grid-time-the-cost-profile-s-dummy-steps.patch']
+Applying: Engine cost grid: time the cost profile's dummy steps on demand
+132: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0140-Engine-grid-settle-each-timed-step-with-an-untimed-r.patch']
+Applying: Engine grid: settle each timed step with an untimed run of the same shape
+133: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0141-TileLang-V4.1-tests-the-routed-experts-keep-a-NaN-Ti.patch']
+Applying: TileLang V4.1 tests: the routed experts keep a NaN (TileKernels clamp patch); the indexer's NaN contract waits for a vectorizable fix
+134: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0142-RoCE-policy-no-fallback-in-any-collective.patch']
+Applying: RoCE policy: no fallback in any collective
+135: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0143-One-shot-collectives-name-a-stopped-collective-rende.patch']
+Applying: One-shot collectives: name a stopped collective; rendezvous at startup
+136: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0144-Adaptive-verification-run-the-draft-budget-eagerly-r.patch']
+Applying: Adaptive verification: run the draft budget eagerly; report torch.compile in serving
+137: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0145-DeepSeek-V4.1-Engram-read-disk-rows-with-a-native-wo.patch']
+Applying: DeepSeek-V4.1 Engram: read disk rows with a native worker; one wait per table before the gather
+138: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0146-DeepSeek-V4.1-Engram-model-test-compare-the-disk-rea.patch']
+Applying: DeepSeek-V4.1 Engram model test: compare the disk readers' counters once they are idle (the worker updates them after publishing, so the snapshot raced)
+139: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0147-Weight-transfer-copy-pageable-checkpoint-tensors-thr.patch']
+Applying: Weight transfer: copy pageable checkpoint tensors through anonymous memory
+140: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0148-DeepSeek-V4.1-Engram-read-the-rows-the-host-can-hash.patch']
+Applying: DeepSeek-V4.1 Engram: read the rows the host can hash before the step
+141: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0149-DeepSeek-V4.1-SP-tests-fixtures-for-the-unreduced-mo.patch']
+Applying: DeepSeek V4.1 SP tests: fixtures for the unreduced mode and the MoE input dtype
+142: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0150-DeepSeek-V4.1-prefill-SP-Engram-s-wkv-product-exchan.patch']
+Applying: DeepSeek V4.1 prefill SP: Engram's wkv product exchanged all-to-all
+143: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0151-DeepSeek-V4.1-Engram-a-debug-timeline-of-each-step-s.patch']
+Applying: DeepSeek-V4.1 Engram: a debug timeline of each step's rows
+144: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0152-DeepSeek-V4.1-prefill-SP-Engram-s-exchanged-blocks-r.patch']
+Applying: DeepSeek V4.1 prefill SP: Engram's exchanged blocks read in place
+145: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6r/vllm/0153-DeepSeek-V4.1-Engram-disk-shards-on-whole-hash-colum.patch']
+Applying: DeepSeek-V4.1 Engram: disk shards on whole hash columns, rows joined by an all-gather
+146: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6s/vllm/0154-DeepSeek-V4.1-Engram-interleave-disk-shards-hash-col.patch']
+Applying: DeepSeek-V4.1 Engram: interleave disk shards' hash columns across ranks
+147: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-16-r6s/vllm/0155-DeepSeek-V4.1-Engram-tests-a-disk-rank-gathers-only-.patch']
+Applying: DeepSeek-V4.1 Engram tests: a disk rank gathers only its hash columns
+148: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0156-Profiling-and-warm-up-name-a-stopped-one-shot-collec.patch']
+Applying: Profiling and warm-up name a stopped one-shot collective
+149: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0157-Kernel-preparation-compile-declared-kernels-before-a.patch']
+Applying: Kernel preparation: compile declared kernels before any distributed work; a startup rendezvous on liveness
+150: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0158-Kernel-preparation-owners-declare-from-a-walk-of-the.patch']
+Applying: Kernel preparation: owners declare from a walk of the loaded model; TileLang linear methods declare, bind and warm
+151: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0159-Sampler-warmup-compile-the-unaligned-stride-variants.patch']
+Applying: Sampler warmup: compile the unaligned-stride variants only when they are reachable
+152: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0160-Kernel-preparation-the-JIT-monitor-watches-from-the-.patch']
+Applying: Kernel preparation: the JIT monitor watches from the freeze on
+153: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0161-TileLang-linear-tests-declare-the-layer-s-kernels-st.patch']
+Applying: TileLang linear tests: declare the layer's kernels (standalone: prepared and bound at once)
+154: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0162-Kernel-preparation-WO-vocabulary-heads-and-DSpark-co.patch']
+Applying: Kernel preparation: WO, vocabulary heads and DSpark context KV declare their TileLang kernels
+155: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0163-Kernel-preparation-TileLang-MoE-experts-and-mHC-decl.patch']
+Applying: Kernel preparation: TileLang MoE experts and mHC declare, bind and warm
+156: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0164-Kernel-preparation-the-V4.1-attention-layer-declares.patch']
+Applying: Kernel preparation: the V4.1 attention layer declares its TileLang kernels; plans build and reserve scratch in bind
+157: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0165-V4.1-TileLang-attention-plans-exist-only-once-bound-.patch']
+Applying: V4.1 TileLang attention: plans exist only once bound; no lazy build in the forward
+158: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0166-Kernel-preparation-routing-activation-norm-Engram-co.patch']
+Applying: Kernel preparation: routing, activation, norm, Engram, collective and L2-prefetch kernels declare from configuration
+159: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0167-Kernel-preparation-runs-under-the-worker-s-vLLM-conf.patch']
+Applying: Kernel preparation runs under the worker's vLLM config (declarations read scheduler sizing)
+160: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0168-Kernel-preparation-compile-with-the-deployment-s-com.patch']
+Applying: Kernel preparation: compile with the deployment's compile parallelism; return the compile threads' heap
+161: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0169-Kernel-preparation-a-step-s-Triton-kernels-compile-w.patch']
+Applying: Kernel preparation: a step's Triton kernels compile with the runner's JIT warmup
+162: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0170-Kernel-preparation-register-a-step-s-Triton-kernels-.patch']
+Applying: Kernel preparation: register a step's Triton kernels while preparing, after the KV cache layout is set
+163: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0171-Test-that-the-worker-registers-a-step-s-kernels-whil.patch']
+Applying: Test that the worker registers a step's kernels while preparing, before the registry compiles
+164: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0172-Kernel-preparation-the-TileLang-compressor-offers-no.patch']
+Applying: Kernel preparation: the TileLang compressor offers no B12X unit
+165: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0173-CED-metadata-tests-give-the-hand-built-model-state-a.patch']
+Applying: CED metadata tests: give the hand-built model state and drafter the attributes they now read
+166: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0174-Tests-hand-built-drafter-and-model-stubs-read-what-t.patch']
+Applying: Tests: hand-built drafter and model stubs read what the code now reads; no deployment environment
+167: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0175-Tests-cover-the-TileLang-kernel-family-where-only-B1.patch']
+Applying: Tests: cover the TileLang kernel family where only B12X was covered
+168: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0176-Tests-DS4.1-s-configuration-tests-in-their-own-file.patch']
+Applying: Tests: DS4.1's configuration tests in their own file
+169: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0177-DeepSeek-V4.1-WO-A-quantizes-its-input-as-the-refere.patch']
+Applying: DeepSeek V4.1 WO-A quantizes its input as the reference does
+170: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0178-DeepSeek-V4.1-encoding-current-turn-thinking-across-.patch']
+Applying: DeepSeek V4.1 encoding: current-turn thinking across tool results, tool images in prompt order
+171: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6u/vllm/0179-DeepSeek-V4.1-WO-A-s-input-is-prepared-once-in-the-a.patch']
+Applying: DeepSeek V4.1 WO-A's input is prepared once, in the attention's output store
+172: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-17-r6v/vllm/0180-PyNCCL-row-all-to-all-over-a-four-node-ring-the-far-.patch']
+Applying: PyNCCL row all-to-all over a four-node ring: the far rank through a neighbour
+173: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-18-r6w-swiglu/vllm/0181-DeepSeek-V4.1-MoE-the-routed-SwiGLU-and-MXFP8-cast-o.patch']
+Applying: DeepSeek V4.1 MoE: the routed SwiGLU and MXFP8 cast over the live tiles
+174: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-18-r6x/vllm/0182-DeepSeek-V4.1-MoE-routed-expert-scales-as-a-row-base.patch']
+Applying: DeepSeek V4.1 MoE: routed-expert scales as a row base and 4-bit codes
+175: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-18-r6x/vllm/0183-DeepSeek-V4.1-MoE-serve-the-routed-experts-scales-as.patch']
+Applying: DeepSeek V4.1 MoE: serve the routed experts' scales as row bases and 4-bit codes
+176: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-18-r6x/vllm/0184-DSpark-adaptive-verification-budget-the-drafts-by-a-.patch']
+Applying: DSpark adaptive verification: budget the drafts by a fixed linear step cost, nothing timed
+177: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0500-checkpoint-bound-profile.patch']
+Applying: Add bounded checkpoint-bound steering profiles
+178: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0501-request-contract-and-cache-identity.patch']
+Applying: Admit request steering and isolate prefix cache identity
+179: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0502-v2-request-control-data.patch']
+Applying: Track fixed-capacity request steering controls in V2 state
+180: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0503-target-writer-projection.patch']
+Applying: Project target attention writers with graph-safe row controls
+181: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0504-dummy-controls-and-wire-validation.patch']
+Applying: Separate profiling controls and validate raw steering booleans
+182: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0505-client-admission-errors.patch']
+Applying: Classify steering admission failures as client request errors
+183: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0506-top-level-request-contract.patch']
+Applying: Expose steering fields without silent request fallback
+184: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0507-profile-artifact-and-provenance.patch']
+Applying: Package immutable attention profiles with explicit import provenance
+185: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0508-stock-route-and-consumer-fusion.patch']
+Applying: Separate stock graph topology and fuse ordinary-writer steering at mHC consume
+186: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0509-stock-and-consume-validation.patch']
+Applying: Cover stock routing and fused-consumer host and CUDA contracts
+187: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0510-preserve-manager-less-profiling.patch']
+Applying: Preserve manager-less profiling before steering graph dispatch
+188: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-19-r6x-steering/vllm/0511-consumer-region-stores.patch']
+Applying: Keep fused steering stores within TileLang branch regions
+Inherited checkpoint ebb44766d6f04d3a9272b712778d7f2fa2cec1fd ac79557915e3ee2778f8f6353a3d35f848f564e4
+189: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-21-mhc-input-quant/vllm/0500-Add-optional-rounded-mHC-input-quantization.patch']
+Applying: Add optional rounded mHC input quantization
+190: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-21-mhc-input-quant/vllm/0501-Consume-explicit-routed-input-quantization.patch']
+Applying: Consume explicit routed input quantization
+191: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-21-mhc-input-quant/vllm/0502-Own-target-quantization-buffers-before-profiling.patch']
+Applying: Own target quantization buffers before profiling
+192: ['git', '-c', 'user.name=Christopher Owen', '-c', 'user.email=3221756+christopherowen@users.noreply.github.com', 'am', '--committer-date-is-author-date', '/workspace/shared/q03-development/packaging/experiments/2026-10-21-mhc-input-quant/vllm/0503-Check-routed-input-host-contracts-without-GPU-depend.patch']
+Applying: Check routed input host contracts without GPU dependencies
+Final checkpoint dd0d8326d31456a6038ac2f244f765e8d783ce59 9cee307fa4fcfca0b907bafc192a7866ea77ec83
