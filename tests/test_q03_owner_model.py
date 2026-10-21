@@ -942,8 +942,10 @@ class OwnerControllerIntegrationTests(NoExternalOperations):
                 events.append(phase)
                 if phase == 'restore_drained' and reason == 'gpu':
                     raise RuntimeError('UNKNOWN GPU drain')
+            manifest = {'preflight': {'original_service_disposition': 'keep-stopped'},
+                        'jobs': [{'kind': 'owner_model'}]}
             session = SimpleNamespace(state=state, owns_hold=lambda: True,
-                manifest={'jobs': [{'kind': 'owner_model'}]},
+                manifest=manifest, capsule={'manifest': manifest},
                 update=lambda **fields: state.update(fields), check=check,
                 release=lambda: events.append('release'),
                 ops=SimpleNamespace(terminate_owned_process=lambda p: events.append('terminate'),
