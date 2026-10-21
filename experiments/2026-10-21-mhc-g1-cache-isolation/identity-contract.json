@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "review-only; not an executable controller selection",
+  "status": "implemented identity contract; exact integrated verification pending; no GPU qualification",
   "installed_runtime": {
     "head": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
     "tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a"
@@ -28,8 +28,7 @@
     "count": 12
   },
   "blockers": [
-    "Separate G1 test/runtime identity admission not implemented",
-    "Continuously held-window lifecycle not implemented or fault-tested",
+    "Exact integrated verification pending",
     "Real independent compilation and numerical comparison unexecuted"
   ]
 }

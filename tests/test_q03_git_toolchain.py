@@ -123,6 +123,10 @@ class BundleContracts(unittest.TestCase):
 
 
 class GitMetadataContracts(unittest.TestCase):
+    def setUp(self):
+        binding=mock.patch.dict(sys.modules,{'q03_git_toolchain':M})
+        binding.start();self.addCleanup(binding.stop)
+
     def test_config_hash_and_executable_redirections_are_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve(); git = root / '.git'; git.mkdir()
@@ -172,6 +176,7 @@ class GitMetadataContracts(unittest.TestCase):
             ops.run = mock.Mock(side_effect=[SimpleNamespace(stdout=selection['source_head']),
                 SimpleNamespace(stdout=selection['source_tree']), SimpleNamespace(stdout='')])
             ops.validate_candidate_image = mock.Mock(); ops.validate_git_toolchain = mock.Mock()
+            ops.validate_g1_test_source = lambda manifest, selection: CORE.RuntimeOps.validate_g1_test_source(ops, manifest, selection)
             with mock.patch.object(M, 'validate_git_metadata'):
                 CORE.RuntimeOps.validate_host(ops, manifest)
             calls = [call.args[0] for call in ops.run.call_args_list]
@@ -332,12 +337,13 @@ class LaunchContracts(unittest.TestCase):
                 self.assertNotIn(git_mount, argv)
                 self.assertFalse(any(item.startswith('PATH=') for item in env))
 
-    def test_recovery_capsule_requires_the_ninth_toolchain_source_pin(self):
+    def test_recovery_capsule_requires_exact_toolchain_and_held_source_pins(self):
         watchdog = load('q03_window_watchdog')
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             sources = CORE.RuntimeOps().recovery_sources()
-            self.assertEqual(len(sources), 9)
+            self.assertEqual(len(sources), 10)
+            self.assertIn('q03_held_window.py', sources)
             self.assertIn('q03_git_toolchain.py', sources)
             capsule = {'session_dir': str(root), 'deadline_epoch': 100,
                 'heartbeat_timeout_s': 20, 'recovery_timeout_s': 30,

@@ -18,6 +18,8 @@ C=load('q03_window'); G=sys.modules.get('q03_git_toolchain') or load('q03_git_to
 P=sys.modules.get('q03_window_preflight') or load('q03_window_preflight')
 class IdentityContracts(unittest.TestCase):
     def setUp(self):
+        binding=mock.patch.dict(sys.modules,{'q03_git_toolchain':G,'q03_window_preflight':P})
+        binding.start();self.addCleanup(binding.stop)
         self.selection={'source_head':'154159dc3e38ca8b2321c01a153a1b2ccaf8663b','source_tree':'a'*40}
         self.test={'path':'/synthetic/tests-new','head':'e'*40,'tree':'f'*40,'fixture_sha256':'d'*64,'git_config_sha256':'b'*64}
         self.test['artifact']={'checkout':'/synthetic/artifact','publication':{'url':'https://github.com/imDaniel/spark-ds41f.git','ref':'refs/heads/test','sha':'a'*40},'source_path':'review/source.json','source_sha256':'c'*64,'git_config_sha256':'b'*64}

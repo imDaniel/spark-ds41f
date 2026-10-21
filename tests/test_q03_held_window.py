@@ -186,6 +186,25 @@ class HeldContracts(unittest.TestCase):
             descriptor=self.descriptor();descriptor['schema_version']=value
             with self.subTest(value=value),self.assertRaises(ValueError):H.build_attempt(self.s,descriptor,self.core)
 
+    def test_p0_prefix_drops_only_inherited_unused_g1_binding(self):
+        (self.s.directory/'plans').mkdir()
+        binding={'path':str(self.root/'new-tests'),'head':'a'*40,'tree':'b'*40,'fixture_sha256':'c'*64,'git_config_sha256':'d'*64,'artifact':{'source_path':'review/source.json'}}
+        self.s.manifest['candidate']['g1_tests']=binding
+        before=copy.deepcopy(self.s.manifest)
+        plan=H.plan_attempt(self.s,self.core,through='p0')
+        descriptor=json.loads(Path(plan['attempt_path']).read_bytes())
+        attempt=H.build_attempt(self.s,descriptor,self.core)
+        self.assertNotIn('g1_tests',attempt['manifest']['candidate'])
+        self.assertEqual(self.s.manifest,before)
+        both=H.derive_attempt_manifest(self.s,'2'*32,self.s.manifest['jobs'][:2],{})
+        self.assertEqual(both['candidate']['g1_tests'],binding)
+        path=self.root/'new-binding.json';path.write_bytes(H.canonical_bytes(binding))
+        with self.assertRaisesRegex(ValueError,'requires a G1 gate'):
+            H.plan_attempt(self.s,self.core,through='p0',g1_tests_path=str(path),g1_tests_sha256=H.sha256(path.read_bytes()))
+        descriptor['candidate_updates']={'g1_tests':binding}
+        with self.assertRaisesRegex(ValueError,'requires a G1 gate'):H.build_attempt(self.s,descriptor,self.core)
+        self.assertEqual(self.s.manifest,before)
+
 class HeldCoreContracts(unittest.TestCase):
     """Actual core+held loop, with existing explicit inert service/process ops."""
     @classmethod
@@ -280,5 +299,68 @@ class HeldCoreContracts(unittest.TestCase):
         self.assertEqual(commands,self.ops.commands)
         self.assertEqual(before,{p.name:p.read_bytes() for p in self.directory.iterdir() if p.is_file()})
         self.assertFalse(self.hold.exists())
+
+    def test_mount_and_ulimit_permutations_do_not_change_identity(self):
+        item={'Image':'sha256:'+'a'*64,'Config':{'Cmd':['first','second'],'Env':['A=1','B=2']},
+              'HostConfig':{'Ulimits':[{'Name':'stack','Soft':2,'Hard':3},{'Name':'memlock','Soft':-1,'Hard':-1}]},
+              'Mounts':[{'Source':'/a','Destination':'/input','RW':False},{'Source':'/b','Destination':'/out','RW':True}]}
+        before=copy.deepcopy(item);digest=self.core.held_container_sha256(item)
+        permuted=copy.deepcopy(item);permuted['Mounts'].reverse();permuted['HostConfig']['Ulimits'].reverse()
+        self.assertEqual(digest,self.core.held_container_sha256(permuted));self.assertEqual(item,before)
+        for key,value in (('Source','/foreign'),('Destination','/different'),('RW',True)):
+            changed=copy.deepcopy(item);changed['Mounts'][0][key]=value
+            with self.subTest(key=key):self.assertNotEqual(digest,self.core.held_container_sha256(changed))
+        for key in ('Cmd','Env'):
+            changed=copy.deepcopy(item);changed['Config'][key].reverse()
+            self.assertNotEqual(digest,self.core.held_container_sha256(changed))
+        changed=copy.deepcopy(item);changed['Mounts'].append(copy.deepcopy(changed['Mounts'][0]))
+        self.assertNotEqual(digest,self.core.held_container_sha256(changed))
+        changed=copy.deepcopy(item);changed['HostConfig']['Ulimits'][0]['Hard']=99
+        self.assertNotEqual(digest,self.core.held_container_sha256(changed))
+    def test_interrupted_attempt_cleared_only_after_registered_drain(self):
+        execute=self.ops.execute
+        def interrupt(s,argv,**kw):
+            if argv[:2]==['docker','start']:raise KeyboardInterrupt('synthetic core interruption')
+            return execute(s,argv,**kw)
+        self.ops.execute=interrupt
+        with self.assertRaises(KeyboardInterrupt):self.run_controlled()
+        state=json.loads((self.directory/'state.json').read_text())
+        self.assertTrue(state['restored']);self.assertIsNone(state['active_attempt'])
+        self.assertIsNone(state['active_gate']);self.assertIn('interrupted_attempt',state)
+        self.assertEqual(self.ops.events.count('restore:start'),1);self.assertFalse(self.hold.exists())
+
+    def test_exact_id_cleanup_accepts_mount_order_but_rejects_content_drift(self):
+        ident='c'*64;window='b'*32;attempt='a'*32;plan='d'*64
+        item={'Id':ident,'Image':'sha256:'+'a'*64,'Config':{'Labels':{'q03.window':window,'q03.attempt':attempt,'q03.job':'g1','q03.plan':plan}},'HostConfig':{'Ulimits':[{'Name':'stack','Soft':2},{'Name':'memlock','Soft':-1}]},'Mounts':[{'Source':'/a','Destination':'/in','RW':False},{'Source':'/b','Destination':'/out','RW':True}]}
+        row={'attempt_id':attempt,'container_id':ident,'image_id':item['Image'],'kind':'g1','plan_sha256':plan,'config_sha256':self.core.held_container_sha256(item)}
+        state={'held_candidates':[row]};session=SimpleNamespace(state=state,capsule={'window_id':window},update=lambda **v:state.update(v))
+        observed=copy.deepcopy(item);observed['Mounts'].reverse();observed['HostConfig']['Ulimits'].reverse()
+        absent=SimpleNamespace(returncode=1,stdout='',stderr='No such container: '+ident)
+        ops=SimpleNamespace(run=mock.Mock(side_effect=[SimpleNamespace(returncode=0,stdout=json.dumps([observed])),SimpleNamespace(returncode=0),absent]))
+        self.core.RuntimeOps.cleanup_held_candidates(ops,session)
+        self.assertEqual(ops.run.call_args_list[1].args[0],['docker','rm','--force',ident]);self.assertTrue(state['held_candidates'][0]['removed'])
+        state['held_candidates']=[row];observed['Mounts'][0]['RW']=False
+        ops.run=mock.Mock(return_value=SimpleNamespace(returncode=0,stdout=json.dumps([observed])))
+        with self.assertRaisesRegex(RuntimeError,'identity/configuration'):self.core.RuntimeOps.cleanup_held_candidates(ops,session)
+        self.assertEqual(ops.run.call_count,1);self.assertNotIn('removed',row)
+        observed=copy.deepcopy(item)
+        for removal in (absent, SimpleNamespace(returncode=1,stdout='',stderr='No such container: foreign'),
+                        SimpleNamespace(returncode=1,stdout='',stderr='permission denied'),
+                        SimpleNamespace(returncode=1,stdout='',stderr='cannot connect to daemon'),
+                        SimpleNamespace(returncode=1,stdout='unexpected',stderr='No such container: '+ident),TimeoutError('rm timeout')):
+            state['held_candidates']=[dict(row)]
+            ops.run=mock.Mock(side_effect=[SimpleNamespace(returncode=0,stdout=json.dumps([observed])),removal,absent])
+            with self.subTest(removal=str(removal)):
+                if removal is absent:
+                    self.core.RuntimeOps.cleanup_held_candidates(ops,session)
+                    self.assertTrue(state['held_candidates'][0]['removed']);self.assertEqual(ops.run.call_count,3)
+                else:
+                    with self.assertRaises((RuntimeError,TimeoutError)):self.core.RuntimeOps.cleanup_held_candidates(ops,session)
+                    self.assertNotIn('removed',state['held_candidates'][0]);self.assertEqual(ops.run.call_count,2)
+        for final in (SimpleNamespace(returncode=0,stdout=json.dumps([observed])),SimpleNamespace(returncode=0,stdout='[]')):
+            state['held_candidates']=[dict(row)]
+            ops.run=mock.Mock(side_effect=[SimpleNamespace(returncode=0,stdout=json.dumps([observed])),absent,final])
+            with self.subTest(final=final.stdout),self.assertRaises(RuntimeError):self.core.RuntimeOps.cleanup_held_candidates(ops,session)
+            self.assertNotIn('removed',state['held_candidates'][0])
 
 if __name__=='__main__':unittest.main(verbosity=2)

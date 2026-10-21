@@ -1063,6 +1063,68 @@ class WatchdogFaultTests(unittest.TestCase):
                 self.assertFalse(self.ops.restored)
                 self.assertNotIn("journal:restored", self.ops.events)
 
+    def test_termination_completion_does_not_inspect_replacement_hold(self):
+        for phase in ("restored", "aborted-before-mutation"):
+            with self.subTest(phase=phase):
+                self.ops = WatchOps(self.watch)
+                self.ops.heartbeat = self.watch.utc(900)
+                state = {"phase": "running", "restored": False,
+                         "hold_released": False}
+                self.ops.state = lambda: dict(state)
+                def finish():
+                    self.ops.event("terminate")
+                    self.ops.alive = False
+                    state.update(phase=phase, restored=phase == "restored",
+                                 hold_released=True)
+                    self.ops.failure = "hold"  # Foreign replacement must not be read.
+                self.ops.terminate_core = finish
+                self.assertEqual(self.step(), "restored")
+                self.assertEqual(self.ops.events.count("hold"), 1)
+                self.assertEqual(self.ops.events.count("verify"), 2)
+                self.assertNotIn("mark", self.ops.events)
+                self.assertNotIn("recover", self.ops.events)
+
+    def test_termination_unfinished_state_still_requires_owned_hold(self):
+        self.ops.heartbeat = self.watch.utc(900)
+        def finish():
+            self.ops.event("terminate")
+            self.ops.alive = False
+            self.ops.failure = "hold"
+        self.ops.terminate_core = finish
+        self.assertEqual(self.step(), "failed")
+        self.assertEqual(self.ops.events.count("hold"), 2)
+        self.assertNotIn("mark", self.ops.events)
+        self.assertNotIn("recover", self.ops.events)
+
+    def test_termination_restored_without_release_recomputes_reconcile(self):
+        self.ops.heartbeat = self.watch.utc(900)
+        state = {"restored": False, "hold_released": False}
+        self.ops.state = lambda: dict(state)
+        def finish():
+            self.ops.event("terminate")
+            self.ops.alive = False
+            state.update(restored=True)
+            self.ops.failure = "hold"
+        def recover():
+            self.ops.event("recover")
+            state.update(hold_released=True)
+        self.ops.terminate_core = finish
+        self.ops.recover = recover
+        self.assertEqual(self.step(), "restored")
+        self.assertEqual(self.ops.events.count("hold"), 1)
+        self.assertEqual(self.ops.events.count("recover"), 1)
+
+    def test_termination_completion_still_revalidates_capsule(self):
+        self.ops.heartbeat = self.watch.utc(900)
+        def finish():
+            self.ops.event("terminate")
+            self.ops.alive = False
+            self.ops.restored = True
+            self.ops.failure = "verify"
+        self.ops.terminate_core = finish
+        self.assertEqual(self.step(), "failed")
+        self.assertNotIn("recover", self.ops.events)
+
     def test_actual_hold_helpers_preserve_foreign_records_and_reject_symlinks(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "hold.json"

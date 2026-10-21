@@ -210,9 +210,19 @@ class Watchdog:
                 ops.terminate_core()
             if ops.core_alive():
                 raise RuntimeError("core remains alive; recovery is unsafe")
+            # Termination may let the core finish its finally block, including
+            # restoration and hold release. Re-read only after exact core death;
+            # never use the pre-signal snapshot to inspect a replacement hold.
+            ops.verify_capsule()
+            state = ops.state()
+            reconcile = bool(state.get("restored")
+                             or state.get("phase") == "aborted-before-mutation")
+            if reconcile and state.get("hold_released"):
+                self.terminal = True
+                ops.journal("core_completed_during_termination")
+                return "restored"
             if not reconcile:
                 ops.owned_hold()
-            ops.verify_capsule()
             if ops.recovery_attempted():
                 raise RuntimeError("recovery already attempted; manual review required")
             ops.mark_recovery_attempted()

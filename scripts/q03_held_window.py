@@ -162,6 +162,22 @@ def attempt_commands(manifest, window_id, attempt_id, core):
                                   attempt_id=attempt_id)) for job in manifest["jobs"]]
 
 
+def derive_attempt_manifest(session, attempt_id, jobs, updates):
+    """One derivation for planning and admission; the outer manifest is untouched."""
+    manifest = copy.deepcopy(session.manifest)
+    manifest.pop("held_window")
+    manifest["jobs"] = copy.deepcopy(jobs)
+    manifest["candidate"].update(copy.deepcopy(updates))
+    if not any(job["kind"] == "g1" for job in jobs):
+        require("g1_tests" not in updates, "a new G1 binding requires a G1 gate")
+        # The initial outer binding was validated before STOP. P0 still uses
+        # native197 tests_path; an unused G1 mount must not make P0-only invalid.
+        manifest["candidate"].pop("g1_tests", None)
+    for key in ("cache_path", "output_path"):
+        manifest["candidate"][key] = str(Path(session.manifest["candidate"][key]) / attempt_id)
+    return manifest
+
+
 def plan_attempt(session, core, *, through=None, g1_tests_path=None, g1_tests_sha256=None):
     """Prepare only a typed descriptor; no test, container or service operation."""
     check_open(session)
@@ -185,12 +201,7 @@ def plan_attempt(session, core, *, through=None, g1_tests_path=None, g1_tests_sh
                   "attempt_id": attempt_id,
                   "previous_receipt_sha256": session.state.get("last_attempt_receipt_sha256"),
                   "candidate_updates": updates, "jobs": jobs}
-    manifest = copy.deepcopy(session.manifest)
-    manifest.pop("held_window")
-    manifest["jobs"] = jobs
-    manifest["candidate"].update(updates)
-    for key in ("cache_path", "output_path"):
-        manifest["candidate"][key] = str(Path(session.manifest["candidate"][key]) / attempt_id)
+    manifest = derive_attempt_manifest(session, attempt_id, jobs, updates)
     commands = attempt_commands(manifest, session.capsule["window_id"], attempt_id, core)
     descriptor["command_plan_sha256"] = sha256(canonical_bytes(commands))
     build_attempt(session, descriptor, core)
@@ -237,12 +248,7 @@ def build_attempt(session, descriptor, core):
                 job["kind"] == allowed["kind"] and type(job["timeout_seconds"]) is int and
                 1 <= job["timeout_seconds"] <= allowed["timeout_seconds"],
                 "attempt changes gate order or exceeds reviewed job budget")
-    manifest = copy.deepcopy(session.manifest)
-    manifest.pop("held_window")
-    manifest["jobs"] = copy.deepcopy(jobs)
-    manifest["candidate"].update(copy.deepcopy(updates))
-    for key in ("cache_path", "output_path"):
-        manifest["candidate"][key] = str(Path(session.manifest["candidate"][key]) / attempt_id)
+    manifest = derive_attempt_manifest(session, attempt_id, jobs, updates)
     commands = attempt_commands(manifest, session.capsule["window_id"], attempt_id, core)
     require(descriptor["command_plan_sha256"] == sha256(canonical_bytes(commands)),
             "typed command plan digest differs")

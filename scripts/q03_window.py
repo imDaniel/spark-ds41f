@@ -118,6 +118,33 @@ class SessionInterrupted(RuntimeError):
     """Signals close a held outer window; they are never a repair pause."""
 
 
+def held_container_projection(item):
+    """Normalize known unordered Docker lists; retain all fields and duplicates."""
+    projection = {key: item[key] for key in ("Image", "Config", "HostConfig", "Mounts")}
+    mounts = projection["Mounts"]
+    if not isinstance(mounts, list) or not all(isinstance(mount, dict) for mount in mounts):
+        raise ValueError("held container mount projection is invalid")
+    # Docker 29 GetMountPoints iterates a Go map. sort_keys affects object keys,
+    # not this array, so normalize before both pre-start and cleanup digests.
+    projection["Mounts"] = sorted(mounts, key=lambda mount: json.dumps(
+        mount, sort_keys=True, separators=(",", ":"), allow_nan=False))
+    host = dict(projection["HostConfig"])
+    if host.get("Ulimits") is not None:
+        limits = host["Ulimits"]
+        if not isinstance(limits, list) or not all(isinstance(limit, dict) for limit in limits):
+            raise ValueError("held container ulimit projection is invalid")
+        # Docker 29 merges daemon-default Ulimits by map iteration during inspect.
+        host["Ulimits"] = sorted(limits, key=lambda limit: json.dumps(
+            limit, sort_keys=True, separators=(",", ":"), allow_nan=False))
+    projection["HostConfig"] = host
+    return projection
+
+
+def held_container_sha256(item):
+    return hashlib.sha256(json.dumps(held_container_projection(item), sort_keys=True,
+                                    separators=(",", ":"), allow_nan=False).encode()).hexdigest()
+
+
 TBLIB_WHEEL = "tblib-3.1.0-py3-none-any.whl"
 TBLIB_SHA256 = "670bb4582578134b3d81a84afa1b016128b429f3d48e6cbbaecc9d15675e984e"
 # This fixed bootstrap is part of the already capsule-pinned controller source.
@@ -681,10 +708,8 @@ class RuntimeOps:
                     labels.get("q03.job") != held_attempt["kind"] or
                     labels.get("q03.plan") != held_attempt["plan_sha256"]):
                 raise RuntimeError("held candidate image/attempt/plan identity differs")
-            projection = {key: item[key] for key in ("Image", "Config", "HostConfig", "Mounts")}
             rows = [dict(row) for row in session.state["held_candidates"]]
-            rows[-1].update(container_id=item["Id"], config_sha256=hashlib.sha256(
-                json.dumps(projection, sort_keys=True, separators=(",", ":")).encode()).hexdigest())
+            rows[-1].update(container_id=item["Id"], config_sha256=held_container_sha256(item))
             session.update(held_candidates=rows)
             # Even a rejected, inert configuration has a durable exact identity
             # for safe cleanup. No start is returned before plan validation.
@@ -756,14 +781,16 @@ class RuntimeOps:
             expected_id = row.get("container_id")
             if not re.fullmatch(r"[0-9a-f]{64}", expected_id or ""):
                 raise RuntimeError("held candidate create has no durable exact ID; outcome uncertain")
+            def exact_absence(result):
+                missing = (r'(?i:(?:error: |error response from daemon: )?no such (?:object|container): )'
+                           + re.escape(expected_id))
+                return (result.returncode == 1 and result.stdout.strip() in ("", "[]")
+                        and re.fullmatch(missing, result.stderr.strip()) is not None)
             def inspect():
                 result = self.run(["docker", "container", "inspect", expected_id],
                                   timeout=30, check=False)
                 if result.returncode:
-                    missing = (r'(?i:(?:error: |error response from daemon: )?no such (?:object|container): )'
-                               + re.escape(expected_id))
-                    if (result.returncode == 1 and result.stdout.strip() in ("", "[]")
-                            and re.fullmatch(missing, result.stderr.strip())):
+                    if exact_absence(result):
                         return None
                     raise RuntimeError("held exact-ID daemon state is unknown")
                 observed = json.loads(result.stdout)
@@ -771,9 +798,7 @@ class RuntimeOps:
                     raise RuntimeError("held exact-ID inspection is ambiguous")
                 item = observed[0]
                 labels = item.get("Config", {}).get("Labels", {})
-                projection = {key: item[key] for key in ("Image", "Config", "HostConfig", "Mounts")}
-                digest = hashlib.sha256(json.dumps(
-                    projection, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                digest = held_container_sha256(item)
                 if (item.get("Id") != expected_id or item.get("Image") != row["image_id"]
                         or labels.get("q03.window") != session.capsule["window_id"]
                         or labels.get("q03.attempt") != row["attempt_id"]
@@ -783,9 +808,12 @@ class RuntimeOps:
                     raise RuntimeError("held candidate identity/configuration changed")
                 return item
             if inspect() is not None:
-                # A nonzero/timeout response is not converted into successful
-                # cleanup even if a later probe might observe disappearance.
-                self.run(["docker", "rm", "--force", expected_id], timeout=90)
+                removed = self.run(["docker", "rm", "--force", expected_id], timeout=90, check=False)
+                # --rm may finish between inspection and explicit removal. Only
+                # the exact-ID no-such response gets a fresh absence check below;
+                # permission/daemon/timeout/other failures remain UNKNOWN.
+                if removed.returncode and not exact_absence(removed):
+                    raise RuntimeError("held exact-ID removal outcome is unknown")
             if inspect() is not None:
                 raise RuntimeError("held exact-ID candidate still exists after cleanup")
             row["removed"] = True
@@ -917,6 +945,14 @@ def restore(session):
     # Clean a partial original launch through its coordinated policy command.
     transition_original(session, "stop", 210)
     session.check("restore_drained")
+    if "held_window" in session.manifest:
+        interrupted = session.state.get("active_attempt")
+        fields = {"active_attempt": None, "active_gate": None}
+        if interrupted is not None:
+            fields["interrupted_attempt"] = interrupted
+        # Historical work is no longer active only after positive all-node drain.
+        # A failed/unknown drain never clears its ownership or attempt evidence.
+        session.update(**fields)
     transition_original(session, "start", 3650)
     session.check("restored")
     session.update(phase="restored", restored=True)

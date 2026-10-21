@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "review-only; replay verified; execution binding not implemented",
+  "status": "replay verified; identity and held-window implementation present; integrated verification pending; no GPU qualification",
   "deployment_base": "b2ece257945baee479ab42d8b8d69b285543d4df",
   "component_base": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
   "component_base_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a",
