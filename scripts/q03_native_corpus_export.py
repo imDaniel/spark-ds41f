@@ -27,6 +27,10 @@ from typing import Any, Dict, List, Optional, Union
 BYTECODE_PREFIX = '/__q03_cpu_export_unused_bytecode__'
 if Path(BYTECODE_PREFIX).exists():
     raise RuntimeError('isolated unused bytecode prefix already exists')
+# In Python 3.15 spec.cached may still be lazy when a helper is pre-imported;
+# evaluating it after changing the prefix would not prove source-only loading.
+_preimported_helpers = any(name in sys.modules for name in
+                           ('q03_qualification', 'q03_owner_model', 'q03_held_window'))
 _caller_bytecode_settings = sys.dont_write_bytecode, sys.pycache_prefix
 sys.dont_write_bytecode = True
 sys.pycache_prefix = BYTECODE_PREFIX
@@ -84,15 +88,24 @@ def offline_audit(event, args):
 def isolate():
     require(not any(name.split('.')[0] in FORBIDDEN_IMPORTS for name in sys.modules),
             'use a fresh interpreter without model/GPU modules')
+    require(not _preimported_helpers,
+            'task helper loaded before source-only isolation; use a fresh interpreter')
     os.environ.update(ENVIRONMENT)
     sys.dont_write_bytecode = True
     require(not Path(BYTECODE_PREFIX).exists(), 'isolated unused bytecode prefix already exists')
     sys.pycache_prefix = BYTECODE_PREFIX
     os.environ['PYTHONPYCACHEPREFIX'] = BYTECODE_PREFIX
     for module in (Q, Q.owner, sys.modules['q03_held_window']):
-        require(str(getattr(module, '__cached__', '')).startswith(BYTECODE_PREFIX + '/'),
+        # Python 3.15 no longer sets module.__cached__; never trust its value.
+        cached = getattr(getattr(module, '__spec__', None), 'cached', None)
+        require(isinstance(cached, str) and cached.startswith(BYTECODE_PREFIX + '/'),
                 'task helper loaded before source-only isolation; use a fresh interpreter')
     sys.meta_path.insert(0, PreparationIsolation())
+    # Standard negative import-cache entries report unavailable to find_spec()
+    # while real imports fail. No fabricated module or tokenizer is installed.
+    # Keep the raising finder too: returning None there would try later finders.
+    for name in FORBIDDEN_IMPORTS:
+        sys.modules[name] = None
     sys.addaudithook(offline_audit)
 
 
@@ -119,26 +132,45 @@ def plain_relative(name):
 
 
 def weight_inventory(raw):
-    """Read the existing manifest, never open or rehash any weight shard."""
+    """Validate retained inventory content without opening any weight shard.
+
+    Rich-manifest replica metadata stays opaque, pinned by the original raw
+    manifest hash. It is neither normalized away nor used as content identity.
+    """
     text = raw.decode('utf-8')
     if text.lstrip().startswith('{'):
         value = Q.json_bytes(raw)
-        # Explicit supported existing JSON form: {"files": {relative: sha256}}.
-        require(isinstance(value, dict) and set(value) == {'files'}
-                and isinstance(value['files'], dict), 'unsupported existing weights manifest JSON')
-        pairs = list(value['files'].items())
+        require(isinstance(value, dict) and isinstance(value.get('files'), dict),
+                'unsupported existing weights manifest JSON')
+        inventory = value['files']
+        if set(value) == {'files'}:
+            # Existing compact form: {"files": {relative: sha256}}.
+            pairs = list(inventory.items())
+        else:
+            require(set(value) == {'generator', 'schema_version', 'algorithm', 'root_directory',
+                                   'hostname', 'coverage', 'timestamp_utc', 'files'}
+                    and type(value['schema_version']) is int and value['schema_version'] == 1
+                    and value['algorithm'] == 'sha256' and value['coverage'] == 'complete',
+                    'unsupported existing weights manifest JSON')
+            # Existing checkpoint consumer binds size/hash, not replica inode,
+            # root, host, timestamp or generator semantics. Preserve all fields.
+            require(all(isinstance(entry, dict) and set(entry) == {'size', 'sha256', 'file_identity'}
+                        and type(entry['size']) is int and entry['size'] > 0
+                        for entry in inventory.values()), 'invalid existing weight manifest entry')
+            pairs = [(name, entry['sha256']) for name, entry in inventory.items()]
     else:
         pairs = []
         for line in text.splitlines():
             match = re.fullmatch(r'([0-9a-f]{64}) [ *](.+)', line)
             require(match is not None, 'existing weights manifest must be SHA256SUMS or files JSON')
             pairs.append((match[2], match[1]))
+        inventory = dict(pairs)
     require(len(pairs) == 83 and len({name for name, _ in pairs}) == 83,
             'existing weights manifest must retain exactly 83 distinct files')
     require(all(plain_relative(name) and isinstance(sha, str)
                 and re.fullmatch('[0-9a-f]{64}', sha) for name, sha in pairs),
             'invalid existing weight manifest inventory')
-    return dict(pairs)
+    return inventory
 
 
 def read_sources(native_root):
@@ -417,6 +449,7 @@ def run(bindings_path, output_directory):
                             'weight_bytes_rehashed': False},
                 'environment': {key: os.environ.get(key) for key in ENVIRONMENT},
                 'python_version': sys.version, 'bytecode_prefix': sys.pycache_prefix,
+                'blocked_import_roots': sorted(FORBIDDEN_IMPORTS),
                 'rendered_rows': rendered_rows}
     evidence_pin = {'path': str(directory / 'cpu-evidence.json'),
                     'sha256': Q.exclusive_json(directory / 'cpu-evidence.json', evidence)}
