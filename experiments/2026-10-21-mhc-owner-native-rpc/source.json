@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "deployment_base": "7403bc6014e959af6e4087b48e05f43e3ccb59e6",
+  "runtime_head": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+  "runtime_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a",
+  "runtime_image": "sha256:90bd2bbc4709b14a2210a6752c707d9d16661180248949e183fa0c25b6691ff6",
+  "runtime_manifest_sha256": "24315da1b6138aef8acccb7244000feceef71b74486eeddce31bec25264919b9",
+  "test_head": "141f8647e885812095060ff9e7f8b991316ae538",
+  "test_tree": "0990e860d8c3c621f2889176cd38ff1600600646",
+  "fixture_path": "tests/compile/fullgraph/test_deepseek_v41_q03_owner.py",
+  "fixture_sha256": "6b33c8026bfc2b5e18274235473cf1c5c6620981ddf2f433817c40408c05f5ad",
+  "patch_sha256": "7a0573b5748ab453273d79be6499060a6672468fc6dcc354b87d56cb2a254a93",
+  "series_sha256": "3f2c6dffdfab9111842798c9b5ae8dc0b119a576c353d9e90c7ec5dfca700d35",
+  "worker_extension_cls": "tests.compile.fullgraph.test_deepseek_v41_q03_owner.Q03OwnerWorkerExtension",
+  "old_test_tree": "be18f33ae704f078dc8c22600e8d2bd431a99e4c",
+  "status": "CPU/source validated; actual owner execution pending"
+}

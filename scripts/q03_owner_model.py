@@ -31,9 +31,51 @@ SOURCE_HEAD = "154159dc3e38ca8b2321c01a153a1b2ccaf8663b"
 SOURCE_TREE = "ae15047b376c7792062a2607c4ef1dfbc78df18a"
 IMAGE = "sha256:90bd2bbc4709b14a2210a6752c707d9d16661180248949e183fa0c25b6691ff6"
 RUNTIME_SHA = "24315da1b6138aef8acccb7244000feceef71b74486eeddce31bec25264919b9"
-TEST_TREE = "be18f33ae704f078dc8c22600e8d2bd431a99e4c"
+TEST_TREE = "0990e860d8c3c621f2889176cd38ff1600600646"
 TEST_FILE = "tests/compile/fullgraph/test_deepseek_v41_q03_owner.py"
-TEST_SHA = "1cd3614b3e4a714892521978d120dfe09d5e27ad5dee26dcf09d31bd66f7de74"
+TEST_SHA = "6b33c8026bfc2b5e18274235473cf1c5c6620981ddf2f433817c40408c05f5ad"
+WORKER_EXTENSION_CLS = "tests.compile.fullgraph.test_deepseek_v41_q03_owner.Q03OwnerWorkerExtension"
+# One fixed tests-only bootstrap is shared by leader and followers. Runtime
+# vLLM stays on the baked image path; no test source vLLM overlay is mounted.
+OWNER_BOOTSTRAP = r"""
+import hashlib, importlib, os, pathlib, runpy, sys
+if os.environ.get('PYTHONPATH') != os.environ['Q03_EXPECTED_PYTHONPATH']:
+    raise RuntimeError('image PYTHONPATH binding mismatch')
+if (os.environ.get('PYTHONPYCACHEPREFIX') != '/cache/owner-bytecode'
+        or sys.pycache_prefix != '/cache/owner-bytecode'
+        or not sys.dont_write_bytecode
+        or pathlib.Path('/cache/owner-bytecode').exists()):
+    raise RuntimeError('owner imports require a fresh isolated bytecode prefix')
+if os.environ.get('VLLM_ALLOW_INSECURE_SERIALIZATION', '0') != '0':
+    raise RuntimeError('owner RPC requires native safe serialization')
+root = pathlib.Path('/validation')
+if root.resolve() != root or not (root / 'tests').is_dir() or (root / 'vllm').exists():
+    raise RuntimeError('owner bootstrap requires a tests-only validation root')
+fixture = root / 'tests/compile/fullgraph/test_deepseek_v41_q03_owner.py'
+if fixture.resolve() != fixture or hashlib.sha256(fixture.read_bytes()).hexdigest() != '__FIXTURE_SHA__':
+    raise RuntimeError('owner fixture source differs before import')
+wheel = pathlib.Path('/pytest-dependency/tblib-3.1.0-py3-none-any.whl')
+if hashlib.sha256(wheel.read_bytes()).hexdigest() != '670bb4582578134b3d81a84afa1b016128b429f3d48e6cbbaecc9d15675e984e':
+    raise RuntimeError('tblib wheel hash mismatch')
+sys.path.insert(0, str(root))
+sys.path.append(str(wheel))
+import tblib
+if tblib.__version__ != '3.1.0' or tblib.__file__ != str(wheel) + '/tblib/__init__.py':
+    raise RuntimeError('tblib version or import origin mismatch')
+module = importlib.import_module('tests.compile.fullgraph.test_deepseek_v41_q03_owner')
+if pathlib.Path(module.__file__).resolve() != fixture:
+    raise RuntimeError('owner extension import origin differs')
+if not isinstance(module.Q03OwnerWorkerExtension, type):
+    raise RuntimeError('owner extension class is missing')
+mode = sys.argv[1]
+if mode == 'pytest':
+    import pytest
+    sys.exit(pytest.main(sys.argv[2:]))
+if mode != 'serve':
+    raise RuntimeError('unknown fixed owner bootstrap role')
+sys.argv = ['vllm.entrypoints.cli.main', *sys.argv[1:]]
+runpy.run_module('vllm.entrypoints.cli.main', run_name='__main__', alter_sys=True)
+""".replace('__FIXTURE_SHA__', TEST_SHA)
 PROFILE_SHA = "e935b492d1f76eeae09fe5a57b094c3bfbf8e63e83b37fe1be0e42fa46170a36"
 MODES = ("off", "dual")
 STEERING = ("off", "loaded_zero", "active")
@@ -384,6 +426,7 @@ def validate_owner_binding(manifest, ops):
 
 def engine_kwargs(binding, selection):
     value = copy.deepcopy(FIXED_ENGINE_KWARGS)
+    value["worker_extension_cls"] = WORKER_EXTENSION_CLS
     value.update(master_addr=binding["profile_value"]["distributed"]["master_addr"],
                  master_port=binding["master_port"])
     if selection["steering"] == "off":
@@ -392,7 +435,7 @@ def engine_kwargs(binding, selection):
 
 
 def follower_arguments(kwargs, rank):
-    args = ["-B", "-m", "vllm.entrypoints.cli.main", "serve", "/models"]
+    args = ["-B", "-c", OWNER_BOOTSTRAP, "serve", "/models"]
     values = dict(kwargs, node_rank=rank)
     for key, value in values.items():
         key = "tokenizer" if key == "tokenizer_name" else key.replace("_", "-")
@@ -411,7 +454,6 @@ def owner_plan(binding, window_id, attempt_id, selection):
     validate_selection(selection)
     for value in (window_id, attempt_id):
         require(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{32}", value), "canonical owner UUID required")
-    from q03_window import TBLIB_BOOTSTRAP
     spark = load_spark()
     profile = copy.deepcopy(binding["profile_value"])
     profile["container"]["image"] = IMAGE
@@ -449,7 +491,8 @@ def owner_plan(binding, window_id, attempt_id, selection):
         env.pop("PYTHONPATH")  # Preserve the baked image setting, never overlay it.
         env.update(VLLM_Q03_PRODUCTION_OWNER_TEST="1", VLLM_Q03_PRODUCTION_OWNER_SPEC="/runtime/owner-spec.json",
                    VLLM_DS41_Q03_MHC_MXFP8="1" if selection["mode"] == "dual" else "0",
-                   PYTHONDONTWRITEBYTECODE="1", Q03_EXPECTED_PYTHONPATH=candidate["pytest_base_pythonpath"])
+                   PYTHONDONTWRITEBYTECODE="1", PYTHONPYCACHEPREFIX="/cache/owner-bytecode",
+                   Q03_EXPECTED_PYTHONPATH=candidate["pytest_base_pythonpath"])
         root = str(Path(resources) / str(rank))
         mounts = [[s.format(home=profile["host"]["home"]), d, m] for s, d, m in profile["container"]["mounts"] if d != "/cache"]
         require(all(m == "ro" for _, _, m in mounts), "profile contains unapproved writable mount")
@@ -458,7 +501,7 @@ def owner_plan(binding, window_id, attempt_id, selection):
                    [root + "/spec.json", "/runtime/owner-spec.json", "ro"],
                    [candidate["tblib_path"], "/pytest-dependency", "ro"],
                    [root + "/cache", "/cache", "rw"], [root + "/results", "/results", "rw"]]
-        python = (["-B", "-c", TBLIB_BOOTSTRAP, "-p", "no:cacheprovider", "-q",
+        python = (["-B", "-c", OWNER_BOOTSTRAP, "pytest", "-p", "no:cacheprovider", "-q",
                    TEST_FILE + "::test_real_model_owner_and_capture_retention", "--junitxml=/results/owner.xml"]
                   if rank == 0 else follower_arguments(kwargs, rank))
         name = "q03-owner-" + window_id + "-" + attempt_id + "-" + str(rank)

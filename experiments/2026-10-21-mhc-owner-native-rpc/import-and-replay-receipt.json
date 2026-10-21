@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "checks": [
+    "Real pytest-backed import resolves the pinned tests-only fixture",
+    "Four real multiprocessing-spawn children inherit the tests import root and exact source SHA",
+    "All original runtime, configuration, readiness, steering, owner and collector helper function ASTs are unchanged",
+    "Spec validator adds only exact worker-extension identity admission",
+    "Main fixture differs only in extension/source binding and three transport sites; all assertions and off/dual control flow remain identical",
+    "Missing/foreign extension identities fail before engine construction; exact identity passes that admission",
+    "Fresh sparse full-index replay from component197 reproduces exact head/tree/source SHA and changes only the fixture"
+  ],
+  "fixture_sha256": "6b33c8026bfc2b5e18274235473cf1c5c6620981ddf2f433817c40408c05f5ad",
+  "component_head": "141f8647e885812095060ff9e7f8b991316ae538",
+  "component_tree": "0990e860d8c3c621f2889176cd38ff1600600646",
+  "base_head": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+  "unchanged_helpers": [
+    "_check_runtime",
+    "_model_owner",
+    "_observe_graph_resources",
+    "_owner_snapshot",
+    "await_steady_guard",
+    "canonical_json",
+    "project_effective_config",
+    "steering_request_args",
+    "validate_handshake",
+    "validate_rank_configs"
+  ],
+  "limits": [
+    "No native vLLM worker process, full native module import, GPU, model, CUDA graph, numerical or performance execution occurred",
+    "Spawn import proves Python path inheritance only; actual four-node launcher must enforce its tests-only read-only mount and baked runtime identity"
+  ]
+}
