@@ -264,4 +264,47 @@ class ImagePreparationTests(unittest.TestCase):
                 fixture.doCleanups()
 
 
+class ContainerProjectionTypeTests(unittest.TestCase):
+    def item(self, value):
+        return {'Id': 'a' * 64, 'Image': 'sha256:' + 'b' * 64,
+                'Config': {}, 'HostConfig': {'OomKillDisable': value},
+                'Mounts': [], 'State': {'Running': False}}
+
+    def test_nullable_false_alias_is_symmetric_and_nonmutating(self):
+        for before, after in ((None, False), (False, None), (False, False), (None, None)):
+            with self.subTest(before=before, after=after):
+                old, new = [self.item(before)], [self.item(after)]
+                frozen = copy.deepcopy((old, new))
+                self.assertTrue(M.same_containers(old, new))
+                self.assertEqual((old, new), frozen)
+
+    def test_non_alias_values_missing_and_other_fields_are_rejected(self):
+        for original in (None, False):
+            for value in (0, 0.0, True, 1, '', 'false', [], {}):
+                with self.subTest(original=original, value=value):
+                    self.assertFalse(M.same_containers([self.item(original)], [self.item(value)]))
+                    self.assertFalse(M.same_containers([self.item(value)], [self.item(original)]))
+            changed = self.item(original)
+            del changed['HostConfig']['OomKillDisable']
+            self.assertFalse(M.same_containers([self.item(original)], [changed]))
+            changed = self.item(original)
+            changed['State']['Running'] = 0
+            self.assertFalse(M.same_containers([self.item(original)], [changed]))
+            changed = self.item(original)
+            changed['Config']['Unknown'] = False
+            self.assertFalse(M.same_containers([self.item(original)], [changed]))
+
+    def test_order_normalization_preserves_duplicate_and_unknown_fields(self):
+        old = self.item(None)
+        old['Mounts'] = [{'Source': '/one'}, {'Source': '/two'}]
+        old['HostConfig']['Ulimits'] = [{'Name': 'one'}, {'Name': 'two'}]
+        new = copy.deepcopy(old)
+        new['Mounts'].reverse()
+        new['HostConfig']['Ulimits'].reverse()
+        new['HostConfig']['OomKillDisable'] = False
+        self.assertTrue(M.same_containers([old], [new]))
+        new['Mounts'].append(copy.deepcopy(new['Mounts'][0]))
+        self.assertFalse(M.same_containers([old], [new]))
+
+
 if __name__ == '__main__': unittest.main()

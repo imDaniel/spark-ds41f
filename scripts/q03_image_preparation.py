@@ -125,12 +125,12 @@ def preserve_images(before, after):
 
 
 def same_containers(before, after):
-    """Retain the full inspect objects; normalize only known unordered lists."""
+    """Compare full normalized inspect bytes, preserving JSON value types."""
     from q03_window import held_container_projection
     def normalize(values):
         return sorted((dict(item, **held_container_projection(item)) for item in values),
                       key=lambda item: canonical(item))
-    return normalize(before) == normalize(after)
+    return canonical(normalize(before)) == canonical(normalize(after))
 
 
 class Preparation:
