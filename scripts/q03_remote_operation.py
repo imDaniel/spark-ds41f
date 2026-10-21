@@ -15,6 +15,7 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 import signal
 import subprocess
@@ -43,6 +44,28 @@ def operation_environment(inherited):
 def bound_command(command):
     # Preserve original argv exactly, changing only its inherited environment.
     return ['python3', '-I', '-B', '-c', REMOTE_ENV_EXEC, *command]
+
+
+def acknowledged_memguard_absence(argv, receipt, stdout, stderr, expected_unit=None):
+    """Recognize only the original stop's benign, already-unloaded memguard case.
+
+    This does not turn the action into success or rewrite its terminal receipt.
+    The adapter additionally binds the unit to its registered original service.
+    """
+    prefix = bound_command(['sudo', '-n', 'systemctl', 'stop'])
+    if not isinstance(argv, list) or argv[:-1] != prefix:
+        return False
+    unit = argv[-1]
+    if (not isinstance(unit, str) or
+            re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*-memguard\.service', unit) is None or
+            (expected_unit is not None and unit != expected_unit)):
+        return False
+    return (type(receipt.get('exit_code')) is int and receipt['exit_code'] == 5 and
+            receipt.get('group_quiescent') is True and
+            receipt.get('cancelled') is False and receipt.get('timed_out') is False and
+            stdout == '' and isinstance(stderr, str) and
+            stderr in (f'Failed to stop {unit}: Unit {unit} not loaded.',
+                       f'Failed to stop {unit}: Unit {unit} not loaded.\n'))
 
 
 def atomic(path, value):
@@ -223,15 +246,20 @@ def status(root, window, operation, alive=None):
         safe = (result.get('cancelled') is False and result.get('timed_out') is False
                 and type(result.get('exit_code')) is int and result['exit_code'] == 0)
         # A shell's normal nonzero exit can hide an interrupted Docker client.
-        # Unknown/mutating commands therefore never authorize overlap on error.
+        # Unknown/mutating errors never authorize overlap; the exact unloaded
+        # memguard lifecycle case below is classified separately, not successful.
         with epoch_lock(root, window, m['epoch']) as (_, record):
             sealed = record['sealed'] and operation in record['operations']
         def output(name):
             path = directory / name
             return path.read_text(errors='replace') if path.exists() else ''
-        return dict(status='terminal', safe_to_overlap=(safe and sealed),
+        stdout, stderr = output('output.log'), output('error.log')
+        acknowledged = acknowledged_memguard_absence(m['argv'], result, stdout, stderr)
+        return dict(status='terminal', safe_to_overlap=((safe or acknowledged) and sealed),
                     action_succeeded=safe, epoch_sealed=sealed,
-                    stdout=output('output.log'), stderr=output('error.log'), **result)
+                    lifecycle_acknowledged=acknowledged,
+                    lifecycle_unit=m['argv'][-1] if acknowledged else None,
+                    stdout=stdout, stderr=stderr, **result)
     alive = alive or (lambda rec: identity(rec['pid']) == rec)
     supervisor = state.get('supervisor')
     health = 'running' if supervisor and alive(supervisor) else 'uncertain'

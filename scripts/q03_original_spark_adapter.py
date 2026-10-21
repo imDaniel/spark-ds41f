@@ -248,6 +248,11 @@ class RemoteOperations:
                 for node in self.nodes['nodes']:
                     value = results[node['name']]
                     require(value.get('sealed') is True, 'remote epoch was not sealed')
+                    for item in value.get('operations', []):
+                        if item.get('lifecycle_acknowledged') is True:
+                            require(item.get('lifecycle_unit') ==
+                                    self.cluster['container']['name'] + '-memguard.service',
+                                    'acknowledged memguard belongs to another service')
                     if value.get('safe_to_overlap') is True:
                         continue
                     operations = value.get('operations', [])
@@ -292,7 +297,10 @@ class RemoteOperations:
             require(type(value.get('exit_code')) is int and
                     isinstance(value.get('stdout'), str) and isinstance(value.get('stderr'), str),
                     'terminal receipt missing original command result')
-            if value.get('action_succeeded') is not True:
+            acknowledged = self.helper_module.acknowledged_memguard_absence(
+                argv, value, value['stdout'], value['stderr'],
+                expected_unit=self.cluster['container']['name'] + '-memguard.service')
+            if value.get('action_succeeded') is not True and not acknowledged:
                 self.blocked = True
             return subprocess.CompletedProcess(command, value['exit_code'],
                                                value['stdout'], value['stderr'])
