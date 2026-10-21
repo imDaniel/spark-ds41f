@@ -85,3 +85,33 @@ owner-controlled origin in addition to the same immutable native image/test
 identity. Positive all-four epoch seals are retained only after all receipts
 are durable; unfinished seals are retried during drain. Previously sealed
 epochs permanently reject late launch and need not be polled quadratically.
+
+## Optional same-image preparation in the new capsule
+
+When peer images are missing, the new immutable manifest may name
+`image_preparation` with schema_version1, exact `archive_path`, `archive_sha256`,
+`archive_size`, `export_receipt_path`, and `export_receipt_sha256`. The receipt
+must bind the successful measured tagless single-image export of native197.
+The source archive is fully hashed before admission; site files stay private.
+
+After the original coordinated STOP and watchdog readiness, the sole core runs
+the fixed preparation child before entering the held loop. It prepares ranks
+1/2/3 only, uses fresh independent directories, verifies complete bytes before
+Docker load, and preserves all existing images, tags and containers. An already
+present exact image is inspected and verified without reloading it. Preparation
+then undergoes full four-rank image/input admission; it is not model readiness.
+
+Every remote mkdir/transfer/load has a fsynced intent in the session's
+`image-preparation` journal before dispatch through the existing pinned helper.
+The same journal is read by normal cleanup and final/watchdog restoration.
+Restoration fences delayed launches and waits for positive terminal completion
+of accepted operations, including a load already accepted by the daemon. It
+does not kill a Docker CLI and infer daemon quiescence. Failed or unknown remote
+outcomes retain the hold and block original restart. A request prevents the
+next peer from starting; recovery drains earlier work before handing back the
+cluster. This does not add a job or replace source in an existing capsule.
+
+The owner fixture creates new resources under umask077. Registered read-only
+model/profile assets keep their existing operator-group modes; new experiment,
+source and dependency paths remain private, with world-write/foreign ownership
+and alias checks retained. No original asset is chmodded for admission.

@@ -794,6 +794,7 @@ def quiesce_owner(session, attempt_id, ops=None):
 PREPARE = r'''
 import hashlib,json,os,pathlib,stat,sys
 v=json.loads(sys.argv[1]); root=pathlib.Path(v['root']); base=pathlib.Path(v['independent_root'])
+os.umask(0o077)
 assert root.is_absolute() and root.resolve()==root and root.is_relative_to(base) and root!=base
 for p in (base,*base.parents):
  s=p.stat(); assert s.st_uid in (0,os.getuid()) and not s.st_mode&0o022
@@ -930,12 +931,22 @@ for text in v['protected_roots']+v['immutable_paths']:
  protected=pathlib.Path(text); need(protected.is_absolute(),'relative protected path')
  for target in (protected,protected.resolve()):
   need(not path.is_relative_to(target) and not target.is_relative_to(path),'derived resource overlaps protected/immutable path')
+site_roots=[pathlib.Path(text) for text in v.get('site_readonly_roots',[])]
+for site in site_roots:
+ need(site.is_absolute() and site.resolve()==site and any(site.is_relative_to(pathlib.Path(p)) for p in v['authority_protected_roots']),'unregistered readonly site input')
 for text in v['input_directories']+[item['path'] for item in v['input_files']]:
  p=pathlib.Path(text); need(p.is_absolute() and p.resolve()==p and '..' not in p.parts,'immutable input alias')
  need(p.exists(),'immutable input missing')
  for parent in (p,*p.parents):
   need(not parent.is_symlink(),'immutable input ancestor symlink')
-  s=parent.stat(); need(s.st_uid in (0,os.getuid()) and not s.st_mode&0o022,'immutable input ownership/mode')
+  s=parent.stat()
+  # Registered model/profile assets retain their existing operator-group modes.
+  # New code, test, dependency and writable namespaces remain strict. Never
+  # chmod an original asset to satisfy an experimental guard.
+  site_parent=any(p.is_relative_to(site) for site in site_roots)
+  authorized_group=(site_parent and any(parent.is_relative_to(pathlib.Path(q)) for q in v['authority_protected_roots'])
+                    and s.st_uid==os.getuid() and s.st_gid==os.getgid())
+  need(s.st_uid in (0,os.getuid()) and not s.st_mode&0o002 and (not s.st_mode&0o020 or authorized_group),'immutable input ownership/mode')
 for text in v['input_directories']: need(pathlib.Path(text).is_dir(),'immutable input directory type')
 for item in v['input_files']:
  p=pathlib.Path(item['path']); need(p.is_file(),'immutable input file type')
@@ -972,6 +983,7 @@ def boundary_contract(binding, node, resource_path):
     directories = inputs["directories"] + [binding["tests"]["path"], candidate["tblib_path"]]
     return dict(independent_root=binding["independent_root"], resource_path=resource_path,
                 input_files=inputs["files"], input_directories=directories,
+                site_readonly_roots=inputs["directories"],
                 hostname=node["expected_hostname"], authority_path=pre["remote_authority_path"],
                 authority_sha256=pre["remote_authority_sha256"],
                 authority_protected_roots=pre["protected_roots"], protected_roots=protected,

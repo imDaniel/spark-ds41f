@@ -342,12 +342,12 @@ class RuntimeOps:
                  "q03_original_spark_adapter.py", "q03_remote_operation.py", "q03_build_adapter.py",
                  "q03_window_build.py", "q03_buildkit_plan.py", "q03_git_toolchain.py",
                  "q03_held_window.py")
-        owner_sources = ("q03_owner_model.py", "memguard-start.sh", "memguard.sh", "../bin/spark",
+        owner_sources = ("q03_owner_model.py", "q03_image_preparation.py", "memguard-start.sh", "memguard.sh", "../bin/spark",
                          "mesh_fabric.py", "kernel_backend.py", "kernel_readiness.py", "topology.py",
                          "transport_profiles.py", "model_layout.py", "recipe.py")
         return {name: self.sha256(Path(__file__).parent / name) for name in (*names, *owner_sources)}
 
-    def validate_host(self, manifest):
+    def validate_host(self, manifest, *, prepare_images=False):
         checkout = Path(manifest["preflight"]["independent_checkout"]).resolve()
         if Path(__file__).resolve() != checkout / "scripts/q03_window.py":
             raise ValueError("running controller is not from the pinned independent checkout")
@@ -396,7 +396,22 @@ class RuntimeOps:
         from q03_owner_model import is_owner, validate_owner_binding, validate_remote_inputs
         if is_owner(manifest):
             binding = validate_owner_binding(manifest, self)
-            validate_remote_inputs(manifest, binding, self)
+            if prepare_images:
+                from q03_image_preparation import validate_binding
+                validate_binding(manifest)
+            else:
+                validate_remote_inputs(manifest, binding, self)
+
+    def image_preparation(self, session, *, quiesce=False):
+        if "image_preparation" not in session.manifest:
+            return
+        if quiesce and not (session.directory / "image-preparation").exists():
+            return  # No remote intent can precede this durable journal.
+        argv = [sys.executable, "-B", str(Path(__file__).with_name("q03_image_preparation.py")),
+                "quiesce" if quiesce else "run", "--session-dir", str(session.directory)]
+        result = self.execute(session, argv, cwd=str(session.directory), timeout=7200)
+        self.require_receipt(result, {"window_id": session.capsule["window_id"], **(
+            {"quiescent": True, "positive_remote_epoch_drain": True} if quiesce else {"result": "passed"})})
 
     def validate_g1_test_source(self, manifest, selection):
         candidate = manifest["candidate"]
@@ -955,6 +970,8 @@ def restore(session):
         raise RuntimeError("recovery refuses foreign or missing hold")
     session.update(phase="restoring", restoring_started_epoch=session.state.get("restoring_started_epoch", time.time()))
     session.ops.terminate_owned_process(session.state.get("active_process"))
+    if "image_preparation" in session.manifest:
+        session.ops.image_preparation(session, quiesce=True)
     from q03_owner_model import is_owner
     if is_owner(session.manifest):
         session.ops.cleanup_owner(session)
@@ -1230,7 +1247,13 @@ def run_session(manifest, directory, ops=None):
     ops = RuntimeOps() if ops is None else ops
     directory = Path(directory)
     validate_layout(manifest, directory)
-    ops.validate_host(manifest)
+    if "image_preparation" in manifest:
+        from q03_owner_model import is_owner
+        if not is_owner(manifest) or "held_window" not in manifest:
+            raise ValueError("image preparation requires a new owner held capsule")
+        ops.validate_host(manifest, prepare_images=True)
+    else:
+        ops.validate_host(manifest)
     build_plan = ops.prepare_build(manifest) if build_only(manifest) else None
     if build_plan and (build_plan.get("requires_supervised_quiescence") or
                        build_plan.get("uses_supervised_adapter") is not True):
@@ -1299,6 +1322,14 @@ def run_session(manifest, directory, ops=None):
             session.update(phase="stopping", mutation_started=True)
             transition_original(session, "stop", 210)
             session.check("stopped")
+            if "image_preparation" in manifest:
+                session.update(phase="image-preparation")
+                ops.image_preparation(session)
+                ops.image_preparation(session, quiesce=True)
+                # Preparation is never model readiness: re-run the complete
+                # all-four image/input admission before the first held attempt.
+                ops.validate_host(manifest)
+                session.check("stopped")
             if "held_window" in manifest:
                 from q03_held_window import held_loop
                 held_loop(session, sys.modules[__name__])

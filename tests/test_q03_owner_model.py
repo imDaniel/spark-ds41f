@@ -1047,6 +1047,45 @@ class PhysicalResourceBoundaryTests(NoExternalOperations):
         self.assertTrue(result['paths_safe'])
         self.assertFalse(Path(self.contract['resource_path']).exists())
 
+    def test_prepare_under_permissive_inherited_umask_keeps_every_new_ancestor_private(self):
+        import contextlib
+        import io
+        root = Path(self.contract['independent_root'])
+        target = root / 'owner-resources' / ('a' * 32) / ('b' * 32) / '0'
+        spec = '{}'
+        payload = dict(root=str(target), independent_root=str(root), files=[], directories=[],
+                       spec=spec, spec_sha256=hashlib.sha256(spec.encode()).hexdigest())
+        previous = os.umask(0o002)
+        try:
+            with mock.patch.object(sys, 'argv', ['prepare', json.dumps(payload)]), contextlib.redirect_stdout(io.StringIO()):
+                exec(compile(self.owner.PREPARE, '<actual-fixed-prepare>', 'exec'), {'__name__': '_prepare_test'})
+        finally:
+            os.umask(previous)
+        for path in (target, target.parent, target.parent.parent, target.parent.parent.parent,
+                     target / 'cache', target / 'results'):
+            self.assertEqual(path.stat().st_mode & 0o777, 0o700)
+        contract = dict(self.contract, resource_path=str(target))
+        self.assertTrue(self.owner.validate_boundary(contract)['paths_safe'])
+
+    def test_registered_readonly_original_modes_are_preserved_but_new_namespaces_remain_strict(self):
+        model = self.base / 'production' / 'model'
+        model.mkdir(parents=True)
+        model.parent.chmod(0o775)
+        model.chmod(0o775)
+        contract = dict(self.contract, input_directories=[str(model)], site_readonly_roots=[str(model)])
+        before = (model.stat().st_mode, model.parent.stat().st_mode)
+        self.assertTrue(self.owner.validate_boundary(contract)['paths_safe'])
+        self.assertEqual(before, (model.stat().st_mode, model.parent.stat().st_mode))
+        with self.assertRaisesRegex(RuntimeError, 'ownership/mode'):
+            self.owner.validate_boundary(dict(contract, site_readonly_roots=[]))
+        model.chmod(0o777)
+        with self.assertRaisesRegex(RuntimeError, 'ownership/mode'):
+            self.owner.validate_boundary(contract)
+        model.chmod(0o775)
+        root = Path(contract['independent_root'])
+        with self.assertRaisesRegex(RuntimeError, 'unregistered readonly'):
+            self.owner.validate_boundary(dict(contract, site_readonly_roots=[str(root)]))
+
     def test_real_remote_guard_rejects_aliases_foreign_host_and_protected_output(self):
         link = self.base / 'alias'
         link.symlink_to(Path(self.contract['independent_root']), target_is_directory=True)
