@@ -656,6 +656,17 @@ class WindowRecoveryTests(unittest.TestCase):
         self.assertFalse(self.hold.exists())
         self.assertNotIn('restore:start', self.ops.events)
 
+    def test_keep_stopped_recovery_rejects_contradictory_restored_marker(self):
+        self.manifest['preflight']['original_service_disposition'] = 'keep-stopped'
+        self.run_window()
+        session = self.core.Session(self.directory, self.ops)
+        session.update(phase='restored', restored=True)
+        before = len(self.ops.commands)
+        with self.assertRaisesRegex(RuntimeError, 'contradicts keep-stopped'):
+            self.core.recover(self.directory, self.ops)
+        self.assertEqual(len(self.ops.commands), before)
+        self.assertNotIn('restore:start', self.ops.events)
+
     def test_keep_stopped_release_race_recovery_does_not_repeat_transition(self):
         self.manifest['preflight']['original_service_disposition'] = 'keep-stopped'
         self.run_window()
@@ -1118,11 +1129,26 @@ class WatchdogFaultTests(unittest.TestCase):
     def step(self):
         return self.watch.Watchdog(self.capsule, self.ops).step()
 
+    def test_completion_markers_cannot_override_capsule_disposition(self):
+        for policy, value in (
+            ('keep-stopped', {'restored': True, 'phase': 'restored', 'hold_released': True}),
+            ('keep-stopped', {'restored': 1, 'phase': 'held-ready', 'hold_released': True}),
+            ('keep-stopped', {'restored': False, 'phase': 'restored', 'hold_released': True}),
+            ('restore', {'restored': True, 'phase': 'closed-stopped', 'original_kept_stopped': True, 'hold_released': True})):
+            with self.subTest(policy=policy, value=value):
+                self.ops = WatchOps(self.watch)
+                self.ops.state = lambda: dict(value)
+                self.capsule['manifest'] = {'preflight': {'original_service_disposition': policy}}
+                self.assertEqual(self.step(), 'failed')
+                self.assertNotIn('recover', self.ops.events)
+                self.assertNotIn('terminate', self.ops.events)
+
     def test_keep_stopped_terminal_requires_explicit_capsule_policy(self):
         state = {'phase': 'closed-stopped', 'original_kept_stopped': True,
                  'restored': False, 'hold_released': True}
         self.ops.state = lambda: dict(state)
-        self.assertEqual(self.step(), 'waiting')
+        self.assertEqual(self.step(), 'failed')
+        self.ops.events.clear()
         self.capsule['manifest'] = {'preflight': {'original_service_disposition': 'keep-stopped'}}
         self.assertEqual(self.step(), 'stopped')
         self.assertNotIn('recover', self.ops.events)

@@ -968,6 +968,8 @@ def transition_original(session, action, timeout):
 def restore(session):
     if not session.owns_hold():
         raise RuntimeError("recovery refuses foreign or missing hold")
+    from q03_window_watchdog import reconciled
+    reconciled(session.capsule, session.state)  # Reject contradictory policy markers before effects.
     session.update(phase="restoring", restoring_started_epoch=session.state.get("restoring_started_epoch", time.time()))
     session.ops.terminate_owned_process(session.state.get("active_process"))
     if "image_preparation" in session.manifest:
@@ -1034,7 +1036,8 @@ def recover(directory, ops=None):
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         session = Session(directory, ops)
         locks.enter_context(ops.acquire_gpu_lock())
-        from q03_window_watchdog import original_stopped_complete
+        from q03_window_watchdog import original_stopped_complete, reconciled
+        reconciled(session.capsule, session.state)
         kept_stopped = original_stopped_complete(session.capsule, session.state)
         if session.state.get("restored") or kept_stopped:
             if session.owns_hold():

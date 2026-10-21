@@ -177,10 +177,17 @@ def original_stopped_complete(capsule, state):
 
 
 def reconciled(capsule, state):
-    return bool(state.get("restored") or original_stopped_complete(capsule, state)
-                or (state.get("phase") == "aborted-before-mutation"
-                    and capsule.get("manifest", {}).get("preflight", {}).get(
-                        "original_service_disposition", "restore") == "restore"))
+    policy = capsule.get("manifest", {}).get("preflight", {}).get(
+        "original_service_disposition", "restore")
+    if policy not in ("restore", "keep-stopped"):
+        raise RuntimeError("unknown original service disposition")
+    if policy == "keep-stopped":
+        if state.get("restored", False) is not False or state.get("phase") == "restored":
+            raise RuntimeError("restored marker contradicts keep-stopped capsule")
+        return original_stopped_complete(capsule, state)
+    if state.get("original_kept_stopped", False) is not False or state.get("phase") == "closed-stopped":
+        raise RuntimeError("stopped marker contradicts restore capsule")
+    return bool(state.get("restored") or state.get("phase") == "aborted-before-mutation")
 
 
 class Watchdog:
