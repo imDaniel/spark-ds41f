@@ -934,16 +934,21 @@ for text in v['protected_roots']+v['immutable_paths']:
 site_roots=[pathlib.Path(text) for text in v.get('site_readonly_roots',[])]
 for site in site_roots:
  need(site.is_absolute() and site.resolve()==site and any(site.is_relative_to(pathlib.Path(p)) for p in v['authority_protected_roots']),'unregistered readonly site input')
+strict_directories=[pathlib.Path(text) for text in v.get('strict_input_directories',[])]
 for text in v['input_directories']+[item['path'] for item in v['input_files']]:
  p=pathlib.Path(text); need(p.is_absolute() and p.resolve()==p and '..' not in p.parts,'immutable input alias')
  need(p.exists(),'immutable input missing')
+ # A code/dependency/file role wins even when placed under a data mount.
+ # Only the exact two registered data-directory inputs receive the exception.
+ data_directory=(text in v['input_directories'] and not any(item['path']==text for item in v['input_files'])
+                 and p in site_roots and p not in strict_directories)
  for parent in (p,*p.parents):
   need(not parent.is_symlink(),'immutable input ancestor symlink')
   s=parent.stat()
   # Registered model/profile assets retain their existing operator-group modes.
   # New code, test, dependency and writable namespaces remain strict. Never
   # chmod an original asset to satisfy an experimental guard.
-  site_parent=any(p.is_relative_to(site) for site in site_roots)
+  site_parent=data_directory
   authorized_group=(site_parent and any(parent.is_relative_to(pathlib.Path(q)) for q in v['authority_protected_roots'])
                     and s.st_uid==os.getuid() and s.st_gid==os.getgid())
   need(s.st_uid in (0,os.getuid()) and not s.st_mode&0o002 and (not s.st_mode&0o020 or authorized_group),'immutable input ownership/mode')
@@ -983,7 +988,13 @@ def boundary_contract(binding, node, resource_path):
     directories = inputs["directories"] + [binding["tests"]["path"], candidate["tblib_path"]]
     return dict(independent_root=binding["independent_root"], resource_path=resource_path,
                 input_files=inputs["files"], input_directories=directories,
-                site_readonly_roots=inputs["directories"],
+                site_readonly_roots=[s.format(home=binding["profile_value"]["host"]["home"])
+                    for s,d,m in binding["profile_value"]["container"]["mounts"]
+                    if m == "ro" and d in ("/models", "/steering")],
+                strict_input_directories=[binding["tests"]["path"], candidate["tblib_path"]] + [
+                    s.format(home=binding["profile_value"]["host"]["home"])
+                    for s,d,m in binding["profile_value"]["container"]["mounts"]
+                    if m == "ro" and d not in ("/models", "/steering")],
                 hostname=node["expected_hostname"], authority_path=pre["remote_authority_path"],
                 authority_sha256=pre["remote_authority_sha256"],
                 authority_protected_roots=pre["protected_roots"], protected_roots=protected,

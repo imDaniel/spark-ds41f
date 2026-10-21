@@ -123,6 +123,21 @@ class ImagePreparationTests(unittest.TestCase):
                       old + [{'Id': 'unrelated', 'RepoTags': []}]):
             with self.subTest(after=after), self.assertRaises(RuntimeError): M.preserve_images(old, after)
 
+    def test_full_container_inspect_normalizes_only_unordered_fields_and_keeps_duplicates(self):
+        original = {'Id': 'original', 'Image': 'fixed', 'Config': {'Env': ['A=1']},
+                    'HostConfig': {'Ulimits': [{'Name': 'stack', 'Soft': 1}, {'Name': 'core', 'Soft': 0}]},
+                    'Mounts': [{'Destination': '/models'}, {'Destination': '/cache'}],
+                    'State': {'Running': False}, 'Extra': {'unknown': ['ordered', 'values']}}
+        changed = copy.deepcopy(original)
+        changed['Mounts'].reverse(); changed['HostConfig']['Ulimits'].reverse()
+        self.assertTrue(M.same_containers([original], [changed]))
+        changed['State']['Running'] = True
+        self.assertFalse(M.same_containers([original], [changed]))
+        changed = copy.deepcopy(original); changed['Extra']['unknown'].reverse()
+        self.assertFalse(M.same_containers([original], [changed]))
+        changed = copy.deepcopy(original); changed['Mounts'].append(changed['Mounts'][0])
+        self.assertFalse(M.same_containers([original], [changed]))
+
     def test_unknown_preparation_blocks_registered_original_restore(self):
         import q03_window as core
         self.session.state = {'active_process': None}

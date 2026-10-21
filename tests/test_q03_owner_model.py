@@ -1086,6 +1086,20 @@ class PhysicalResourceBoundaryTests(NoExternalOperations):
         with self.assertRaisesRegex(RuntimeError, 'unregistered readonly'):
             self.owner.validate_boundary(dict(contract, site_readonly_roots=[str(root)]))
 
+    def test_executable_file_and_test_dependency_roles_never_inherit_readonly_data_exception(self):
+        model = self.base / 'production' / 'model'
+        model.mkdir(parents=True); model.parent.chmod(0o775); model.chmod(0o775)
+        contract = dict(self.contract, input_directories=[str(model)], site_readonly_roots=[str(model)])
+        self.assertTrue(self.owner.validate_boundary(contract)['paths_safe'])
+        script = model / 'control.py'; script.write_bytes(b'code'); script.chmod(0o664)
+        test_dir = model / 'tests'; test_dir.mkdir(); test_dir.chmod(0o775)
+        variants = [dict(contract, input_files=[{'path':str(script),'sha256':hashlib.sha256(b'code').hexdigest()}]),
+                    dict(contract, input_directories=[str(model), str(test_dir)]),
+                    dict(contract, strict_input_directories=[str(model)])]
+        for value in variants:
+            with self.subTest(value=value), self.assertRaisesRegex(RuntimeError, 'ownership/mode'):
+                self.owner.validate_boundary(value)
+
     def test_real_remote_guard_rejects_aliases_foreign_host_and_protected_output(self):
         link = self.base / 'alias'
         link.symlink_to(Path(self.contract['independent_root']), target_is_directory=True)

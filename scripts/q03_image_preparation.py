@@ -124,6 +124,15 @@ def preserve_images(before, after):
     require(all(new[key] == item for key, item in old.items()), "original image/tag identity changed")
 
 
+def same_containers(before, after):
+    """Retain the full inspect objects; normalize only known unordered lists."""
+    from q03_window import held_container_projection
+    def normalize(values):
+        return sorted((dict(item, **held_container_projection(item)) for item in values),
+                      key=lambda item: canonical(item))
+    return normalize(before) == normalize(after)
+
+
 class Preparation:
     def __init__(self, session, *, recovery=False):
         self.session, self.recovery = session, recovery
@@ -240,12 +249,12 @@ class Preparation:
                 self.mutate(0, "transfer-" + str(rank), ["sh", "-c", transfer], 1200)
                 received = self.probe(rank, target, binding, file=True)
                 preserve_images(before["images"], received["images"])
-                require(before["containers"] == received["containers"], "containers changed during transfer")
+                require(same_containers(before["containers"], received["containers"]), "containers changed during transfer")
                 self.mutate(rank, "load", DOCKER + ["image", "load", "--platform", "linux/arm64",
                                                    "--input", str(target / "candidate.tar.partial")], 600)
             after = self.probe(rank, target, binding, file=existing is None)
             preserve_images(before["images"], after["images"])
-            require(before["containers"] == after["containers"], "containers changed during image preparation")
+            require(same_containers(before["containers"], after["containers"]), "containers changed during image preparation")
             item = next(item for item in after["images"] if item["Id"] == IMAGE)
             require(item["Config"] == source["Config"] and item["RootFS"] == source["RootFS"]
                     and item["Os"] == "linux" and item["Architecture"] == "arm64" and not item.get("RepoTags"),
