@@ -118,6 +118,72 @@ class ExporterTest(unittest.TestCase):
                     json.dumps({'files': dict(list(pairs.items())[:82])}).encode()):
             with self.assertRaises(RuntimeError): E.weight_inventory(bad)
 
+    def rich_weight_manifest_fixture(self):
+        # Schema/content fixture only, not the operator's original manifest.
+        return {'generator': 'synthetic-fixture', 'schema_version': 1, 'algorithm': 'sha256',
+                'root_directory': '/replica/one', 'hostname': 'fixture-host',
+                'coverage': 'complete', 'timestamp_utc': 'retained-opaque-timestamp',
+                'files': {f'model-{i:05}.safetensors':
+                          {'size': i + 1, 'sha256': 'a' * 64,
+                           'file_identity': {'synthetic_replica_metadata': [i, 'opaque']}}
+                          for i in range(83)}}
+
+    def test_rich_existing_manifest_preserves_full_entries_without_weight_reads(self):
+        value = self.rich_weight_manifest_fixture()
+        path = self.root / 'original-manifest.json'
+        raw = (json.dumps(value, indent=2) + '\n').encode()
+        path.write_bytes(raw)
+        digest = Q.digest(raw)
+        with patch.object(E, 'sha_file', side_effect=AssertionError('no weight scan')):
+            inventory = E.weight_inventory(raw)
+        self.assertEqual(inventory, value['files'])
+        self.assertEqual(path.read_bytes(), raw)
+        self.assertEqual(Q.digest(path.read_bytes()), digest)
+
+    def test_rich_manifest_schema_content_and_cardinality_fail_closed(self):
+        original = self.rich_weight_manifest_fixture()
+        first = next(iter(original['files']))
+        mutations = [lambda value: value.update(schema_version=True),
+                     lambda value: value.update(schema_version=2),
+                     lambda value: value.update(algorithm='sha512'),
+                     lambda value: value.update(coverage='partial'),
+                     lambda value: value.update(extra='unexpected'),
+                     lambda value: value.pop('generator'),
+                     lambda value: value['files'].pop(first),
+                     lambda value: value['files'].update({'extra': copy.deepcopy(value['files'][first])}),
+                     lambda value: value['files'][first].pop('file_identity'),
+                     lambda value: value['files'][first].update(extra='unexpected')]
+        for bad in (True, 0, -1, 1.0, '1', None):
+            mutations.append(lambda value, bad=bad: value['files'][first].update(size=bad))
+        for bad in (True, 'a' * 63, 'A' * 64, 'g' * 64):
+            mutations.append(lambda value, bad=bad: value['files'][first].update(sha256=bad))
+        for bad in ('../escape', '/absolute', 'nested/../escape', 'nested//file'):
+            mutations.append(lambda value, bad=bad: value['files'].update({bad: value['files'].pop(first)}))
+        for index, mutate in enumerate(mutations):
+            value = copy.deepcopy(original); mutate(value)
+            with self.subTest(case=index), self.assertRaises(RuntimeError):
+                E.weight_inventory(json.dumps(value).encode())
+
+    def test_rich_manifest_duplicate_and_nonfinite_provenance_rejected(self):
+        value = self.rich_weight_manifest_fixture()
+        raw = json.dumps(value)
+        for duplicate in (raw.replace('"schema_version": 1', '"schema_version": 1, "schema_version": 1'),
+                          raw.replace('"size": 1,', '"size": 1, "size": 1,', 1)):
+            with self.assertRaisesRegex(RuntimeError, 'duplicate JSON field'):
+                E.weight_inventory(duplicate.encode())
+        value['files'][next(iter(value['files']))]['file_identity'] = float('nan')
+        with self.assertRaisesRegex(ValueError, 'nonfinite JSON'):
+            E.weight_inventory(json.dumps(value).encode())
+
+    def test_rich_replica_provenance_is_preserved_not_reinterpreted(self):
+        value = self.rich_weight_manifest_fixture()
+        first = next(iter(value['files']))
+        for identity in ([1, 2, 100], {'device': 123, 'inode': 'opaque'}, 'retained opaque identity'):
+            value.update(generator={'retained': 'opaque'}, root_directory='/different/replica',
+                         hostname='different-host', timestamp_utc='different-retained-time')
+            value['files'][first]['file_identity'] = identity
+            self.assertEqual(E.weight_inventory(json.dumps(value).encode()), value['files'])
+
     def test_actual_source_hash_drift_precedes_execution(self):
         name = next(iter(E.SOURCE_FILES))
         path = self.root / name
@@ -205,11 +271,134 @@ except RuntimeError as error:
 else:
     raise AssertionError("network allowed")
 assert E.os.environ['USE_TORCH'] == '0'
-assert not any(n.split('.')[0] in E.FORBIDDEN_IMPORTS for n in sys.modules)
+assert not any(n.split('.')[0] in E.FORBIDDEN_IMPORTS and module is not None
+               for n, module in sys.modules.items())
 '''
         result = subprocess.run([sys.executable, '-B', '-c', code, str(ROOT / 'scripts')],
                                 capture_output=True, text=True, timeout=20)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def run_isolation_child(self, code):
+        result = subprocess.run(
+            [sys.executable, '-B', '-c',
+             "import sys\nsys.path.insert(0, sys.argv[1])\n" + code, str(ROOT / 'scripts')],
+            capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_availability_queries_are_unavailable_but_real_imports_still_fail(self):
+        # Even discoverable packages must not run merely to answer a probe.
+        for name in E.FORBIDDEN_IMPORTS:
+            package = self.root / name
+            package.mkdir()
+            (package / '__init__.py').write_text('raise AssertionError("forbidden package executed")\n')
+        self.run_isolation_child(f"""import importlib
+import importlib.util
+import q03_native_corpus_export as E
+sys.path.insert(0, {str(self.root)!r})
+E.isolate()
+for name in E.FORBIDDEN_IMPORTS:
+    assert importlib.util.find_spec(name) is None
+    assert sys.modules[name] is None
+    for importer in (__import__, importlib.import_module):
+        for target in (name, name + '.child'):
+            try:
+                importer(target)
+            except ModuleNotFoundError:
+                pass
+            else:
+                raise AssertionError('forbidden import allowed: ' + target)
+assert importlib.util.find_spec('json') is not None
+assert importlib.import_module('json').loads('[1]') == [1]
+""")
+
+    def test_raising_finder_still_blocks_after_negative_cache_entry_is_removed(self):
+        self.run_isolation_child("""import importlib
+import q03_native_corpus_export as E
+E.isolate()
+for name in E.FORBIDDEN_IMPORTS:
+    del sys.modules[name]
+    try:
+        importlib.import_module(name)
+    except RuntimeError as error:
+        assert 'CPU-only preparation refuses runtime/GPU import' in str(error)
+    else:
+        raise AssertionError('later finder could load forbidden package')
+""")
+
+    def test_isolation_accepts_lazy_helper_specs_without_legacy_cached(self):
+        # Model the 3.15 metadata change, not a claim of running Python 3.15.
+        self.run_isolation_child("""import q03_native_corpus_export as E
+for module in (E.Q, E.Q.owner, sys.modules['q03_held_window']):
+    module.__dict__.pop('__cached__', None)
+    module.__spec__.cached = None  # Real ModuleSpec recomputes this lazily.
+E.isolate()
+for module in (E.Q, E.Q.owner, sys.modules['q03_held_window']):
+    assert '__cached__' not in module.__dict__
+    assert module.__spec__.cached.startswith(E.BYTECODE_PREFIX + '/')
+import socket
+try:
+    socket.socket()
+except RuntimeError as error:
+    assert 'offline CPU' in str(error)
+else:
+    raise AssertionError('network allowed')
+""")
+
+    def test_invalid_helper_specs_rejected_despite_forged_legacy_cached(self):
+        for name in ('q03_qualification', 'q03_owner_model', 'q03_held_window'):
+            for spec in ("MISSING", "None", "SimpleNamespace()", "SimpleNamespace(cached=None)",
+                         "SimpleNamespace(cached='')", "SimpleNamespace(cached='/tmp/stale.pyc')",
+                         "SimpleNamespace(cached=E.BYTECODE_PREFIX + '-other/helper.pyc')",
+                         "SimpleNamespace(cached=123)"):
+                with self.subTest(helper=name, spec=spec):
+                    self.run_isolation_child(f"""from types import SimpleNamespace
+import q03_native_corpus_export as E
+module = sys.modules[{name!r}]
+module.__cached__ = E.BYTECODE_PREFIX + '/forged.pyc'
+{"del module.__spec__" if spec == "MISSING" else "module.__spec__ = " + spec}
+try:
+    E.isolate()
+except RuntimeError as error:
+    assert 'fresh interpreter' in str(error)
+else:
+    raise AssertionError('invalid spec accepted via legacy cache')
+""")
+
+    def test_preimported_helpers_rejected_even_with_lazy_spec_and_forged_cache(self):
+        for name in ('q03_qualification', 'q03_owner_model', 'q03_held_window'):
+            with self.subTest(helper=name):
+                self.run_isolation_child(f"""import importlib
+importlib.import_module({name!r})
+for helper in ('q03_qualification', 'q03_owner_model', 'q03_held_window'):
+    if helper in sys.modules:
+        module = sys.modules[helper]
+        module.__spec__.cached = None
+        module.__cached__ = '/__q03_cpu_export_unused_bytecode__/forged.pyc'
+import q03_native_corpus_export as E
+try:
+    E.isolate()
+except RuntimeError as error:
+    assert 'fresh interpreter' in str(error)
+else:
+    raise AssertionError('pre-imported helper accepted')
+""")
+
+    def test_existing_bytecode_prefix_still_rejected(self):
+        self.run_isolation_child("""from unittest.mock import patch
+import q03_native_corpus_export as E
+with patch.object(E.Path, 'exists', return_value=True):
+    try:
+        E.isolate()
+    except RuntimeError as error:
+        assert 'unused bytecode prefix already exists' in str(error)
+    else:
+        raise AssertionError('existing bytecode prefix allowed')
+""")
+
+    def test_preparation_helper_origin_guard_remains_enforced(self):
+        with patch.object(E.Q, '__file__', str(self.root / 'q03_qualification.py')):
+            with self.assertRaisesRegex(RuntimeError, 'preparation helper import origin differs'):
+                E.preparation_sources()
 
     def test_library_import_preserves_callers_bytecode_settings(self):
         code = """import sys
@@ -316,6 +505,7 @@ assert (sys.dont_write_bytecode, sys.pycache_prefix) == before
             self.assertFalse(evidence['weights']['weight_bytes_rehashed'])
             self.assertEqual(evidence['native_runtime_metadata'], export['artifacts']['runtime_metadata'])
             self.assertEqual(evidence['scope'], 'CPU_PREPARATION_ONLY_NOT_FIELD_QUALIFICATION')
+            self.assertEqual(evidence['blocked_import_roots'], sorted(E.FORBIDDEN_IMPORTS))
             with self.assertRaisesRegex(RuntimeError, 'new canonical'):
                 E.run(path, self.root / 'result')
             with self.assertRaisesRegex(RuntimeError, 'overlaps immutable'):

@@ -32,10 +32,21 @@ model snapshot itself may contain its existing Hugging Face blob symlinks.
   mappings, or alternate vocabulary/model files outside this single-file native
   backend closure. It does not silently substitute another tokenizer.
 - The existing **83-file** weights manifest and its retained SHA-256. Supported
-  retained formats are ordinary `sha256sum` lines (`HASH  relative/path`) or a
-  JSON object `{"files": {"relative/path": "sha256", ...}}`. The manifest is
-  read and hash-checked, its 83 distinct relative entries are checked for local
-  existence, and its raw provenance is retained. Weight file contents are
+  retained formats are ordinary `sha256sum` lines (`HASH  relative/path`), a
+  compact JSON object `{"files": {"relative/path": "sha256", ...}}`, or the
+  existing checkpoint-inventory JSON envelope with exactly `generator`,
+  `schema_version`, `algorithm`, `root_directory`, `hostname`, `coverage`,
+  `timestamp_utc`, and `files`. The latter requires schema 1, algorithm `sha256`,
+  coverage `complete`, and entries containing exactly `size`, `sha256`, and
+  `file_identity`, with positive integer sizes and lowercase SHA-256 digests.
+  Duplicate JSON fields and nonfinite values are rejected. Complete entries
+  are retained, not reduced to a replacement hash-only manifest.
+  Generator, root, host, timestamp, and file identities remain opaque provenance
+  pinned by the **original raw manifest hash**. Their semantics are not validated
+  or used to derive portable content identity; no live inode/root equality is
+  imposed. The manifest is read and hash-checked again before publication, its
+  83 distinct safe relative entries are checked for local existence, and its
+  original path/hash binding stays authoritative. Weight file contents are
   **not opened or rehashed**. An unsupported existing manifest format fails
   explicitly; do not fabricate a new manifest and call it the old evidence.
 - A complete native197 source root, with five files matching the exact pins in
@@ -100,11 +111,22 @@ GPU/model imports, and installs a Python audit guard against socket operations,
 child processes, and direct GPU device opens. These are defense in depth, not a
 claim that Python audit hooks constitute an operating-system security sandbox.
 It never creates a namespace, container, service, or environment itself.
+For optional-dependency probes such as Transformers 5.17's
+`importlib.util.find_spec('torch')`, the dedicated process installs standard
+`sys.modules[name] = None` negative import-cache entries for the forbidden roots.
+Probes therefore report unavailable while real imports fail; the raising finder
+remains active as defense in depth. These are explicit import-policy entries,
+not fabricated Torch modules, a substituted tokenizer, or a claim that the
+packages are uninstalled. The evidence records the blocked roots.
 
 The source-only bytecode prefix is set **before importing task-owned helpers**,
 with bytecode writes disabled, so old timestamp-valid `.pyc` files cannot replace
 recorded helper or tokenizer package source. A process that imported helpers
 before isolation must be replaced by a fresh interpreter, not silently reused.
+The cache-path guard uses `module.__spec__.cached`, not the legacy `__cached__`
+attribute that Python 3.15 no longer sets. Pre-imported helpers are recorded
+before changing the prefix, since a lazy `ModuleSpec.cached` evaluated afterward
+cannot prove how an earlier import loaded its code.
 
 ## Exact native semantics and bounded construction
 
@@ -192,5 +214,7 @@ The focused suite uses explicitly synthetic test doubles to exercise exact-lengt
 construction, nonmonotonic candidate lengths, HTTP/native drift, truncation,
 bounded failure, source/asset/version drift, missing/redirected assets,
 byte identity and import origins, CPU/no-network guards, immutable output, and
-complete export-to-preparation wiring. It does not provide or claim real
+complete export-to-preparation wiring. Rich-manifest fixtures validate the
+structural/content boundary, not the semantics of an operator's original replica
+metadata or acceptance of original bytes unavailable to the test. It does not provide or claim real
 registered tokenizer assets, real model IDs, or a field execution result.
