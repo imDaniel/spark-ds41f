@@ -41,6 +41,34 @@ class FrozenToolbox(importlib.abc.MetaPathFinder, importlib.abc.Loader):
         exec(compile(self.sources[relative], str(self.root / relative), 'exec'), module.__dict__)
 
 
+class FrozenQualification(FrozenToolbox):
+    """The three fixed controller imports, source-only even with stale .pyc."""
+    @staticmethod
+    def relative(name):
+        return name + '.py'
+
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname not in ('q03_qualification', 'q03_owner_model', 'q03_held_window'):
+            return None
+        return importlib.util.spec_from_file_location(fullname, self.root / self.relative(fullname), loader=self)
+
+
+def load_qualification(client):
+    names = ('q03_qualification', 'q03_owner_model', 'q03_held_window')
+    pins = client.get('qualification_sources')
+    if not isinstance(pins, dict) or set(pins) != set(names) or any(name in sys.modules for name in names):
+        raise RuntimeError('qualification source closure differs or was preloaded')
+    root, sources = Path(__file__).resolve().parent, {}
+    for name in names:
+        raw = (root / (name + '.py')).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != pins[name]:
+            raise RuntimeError('frozen qualification source changed: ' + name)
+        sources[name + '.py'] = raw
+    sys.meta_path.insert(0, FrozenQualification(root, sources))
+    from q03_qualification import run_client
+    return run_client
+
+
 def run(plan):
     # No supplied argv/import path. The frozen plan has been admitted and is
     # rehashed by the controller and remote boundary before this fixed program.
@@ -70,7 +98,10 @@ def run(plan):
             'steering_scale': 0 if plan['selection']['steering'] == 'loaded_zero' else 1}}).decode()]
     error = None
     try:
-        code = main(argv)
+        if 'qualification' in client:
+            code = load_qualification(client)(plan, main)
+        else:
+            code = main(argv)
     except Exception as exc:
         code, error = 1, f'{type(exc).__name__}: {exc}'
     receipt = {'window_id': plan['window_id'], 'attempt_id': plan['attempt_id'],
