@@ -21,6 +21,103 @@ import select
 
 sys.dont_write_bytecode = True
 
+G1_TEST_FILE = "tests/kernels/test_deepseek_v41_mhc_three_way.py"
+G1_PRESERVED_FILES = (
+    "tests/conftest.py", "tests/kernels/conftest.py",
+    "tests/kernels/deepseek_v41_mhc_baseline.py",
+    "tests/kernels/fixtures/mhc_188/mhc.py.txt",
+    "tests/kernels/fixtures/mhc_188/provenance.json",
+    "tests/kernels/test_deepseek_v41_q03_owner.py",
+    "tests/kernels/test_deepseek_v41_tilelang_mhc.py",
+    "tests/kernels/q03_result_receipt.py",
+)
+
+
+def g1_tests_path(candidate):
+    return candidate["g1_tests"]["path"] if "g1_tests" in candidate else candidate["tests_path"]
+
+
+def g1_artifact_evidence(candidate, selection):
+    """Read pinned publication metadata, without importing test or artifact code."""
+    test = candidate["g1_tests"]
+    artifact = test["artifact"]
+    relative = Path(artifact["source_path"])
+    if relative.is_absolute() or ".." in relative.parts or relative.name != "source.json":
+        raise ValueError("G1 artifact source must be a repository-relative source.json")
+    source_path = Path(artifact["checkout"]) / relative
+    if source_path.resolve() != source_path or not source_path.is_relative_to(Path(artifact["checkout"])):
+        raise ValueError("G1 artifact source path is not canonical inside its checkout")
+    raw = source_path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != artifact["source_sha256"]:
+        raise ValueError("G1 artifact source hash differs")
+    source = json.loads(raw)
+    proof = source["q03_g1_test"]
+    if (source["vllm"]["patch_head"] != test["head"]
+            or source["vllm"]["expected_tree"] != test["tree"]
+            or proof["fixture_path"] != G1_TEST_FILE
+            or proof["fixture_sha256"] != test["fixture_sha256"]
+            or proof["runtime_head"] != selection["source_head"]
+            or proof["runtime_tree"] != selection["source_tree"]
+            or type(proof["count"]) is not int or proof["count"] != 20):
+        raise ValueError("G1 publication does not bind test/runtime identities")
+    expected_relative = Path(proof["expected_path"])
+    if expected_relative.is_absolute() or ".." in expected_relative.parts:
+        raise ValueError("G1 expected inventory must stay inside artifact directory")
+    expected_path = source_path.parent / expected_relative
+    if expected_path.resolve() != expected_path or not expected_path.is_relative_to(source_path.parent):
+        raise ValueError("G1 expected inventory path is not canonical inside its artifact")
+    expected_raw = expected_path.read_bytes()
+    if hashlib.sha256(expected_raw).hexdigest() != proof["expected_sha256"]:
+        raise ValueError("G1 published expected inventory hash differs")
+    expected = json.loads(expected_raw)
+    original_spec = selection["expected"]["G1"]
+    original_path = Path(__file__).resolve().parents[1] / "experiments/2026-10-21-mhc-input-validation" / original_spec["path"]
+    original_raw = original_path.read_bytes()
+    if hashlib.sha256(original_raw).hexdigest() != original_spec["sha256"]:
+        raise ValueError("original197 G1 expected inventory changed")
+    original = json.loads(original_raw)
+    if (expected.get("schema_version") != 1 or expected.get("stage") != "G1"
+            or expected.get("source_tree") != test["tree"]
+            or expected.get("nodeids") != original["nodeids"]
+            or len(expected["nodeids"]) != 20):
+        raise ValueError("G1 test revision changes the original20-case inventory")
+    return source_path, expected_path, expected_raw, proof
+
+
+def validate_g1_ast(original, corrected):
+    import ast
+    def functions(raw):
+        nodes = [node for node in ast.parse(raw).body
+                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        if len({node.name for node in nodes}) != len(nodes):
+            raise ValueError("duplicate G1 function definitions")
+        return {node.name: ast.dump(node, include_attributes=False) for node in nodes}
+    before, after = functions(original), functions(corrected)
+    def fixture(raw):
+        return next(node for node in ast.parse(raw).body
+                    if isinstance(node, ast.FunctionDef) and node.name == "three_way_kernels")
+    old_fixture, new_fixture = fixture(original), fixture(corrected)
+    dump = lambda node: ast.dump(node, include_attributes=False)
+    if ([dump(node) for node in old_fixture.decorator_list] !=
+            [dump(node) for node in new_fixture.decorator_list]
+            or dump(old_fixture.args) != dump(new_fixture.args)):
+        raise ValueError("G1 compilation fixture interface or scope changed")
+    old_assertions = {dump(node) for node in ast.walk(old_fixture) if isinstance(node, ast.Assert)}
+    new_assertions = {dump(node) for node in ast.walk(new_fixture) if isinstance(node, ast.Assert)}
+    if not old_assertions.issubset(new_assertions):
+        raise ValueError("G1 compilation fixture identity assertions removed or changed")
+    if {name for name in after if name.startswith("test_")} != {
+            name for name in before if name.startswith("test_")}:
+        raise ValueError("G1 test-function inventory changed")
+    for name, node in before.items():
+        if name != "three_way_kernels" and after.get(name) != node:
+            raise ValueError("G1 numerical test/helper body or decorators changed: " + name)
+
+
+class SessionInterrupted(RuntimeError):
+    """Signals close a held outer window; they are never a repair pause."""
+
+
 TBLIB_WHEEL = "tblib-3.1.0-py3-none-any.whl"
 TBLIB_SHA256 = "670bb4582578134b3d81a84afa1b016128b429f3d48e6cbbaecc9d15675e984e"
 # This fixed bootstrap is part of the already capsule-pinned controller source.
@@ -197,9 +294,9 @@ class RuntimeOps:
     sleep = staticmethod(time.sleep)
     process_identity = staticmethod(process_identity)
 
-    def run(self, argv, *, cwd=None, timeout=60):
+    def run(self, argv, *, cwd=None, timeout=60, check=True):
         return subprocess.run(argv, cwd=cwd, timeout=timeout, text=True,
-                              capture_output=True, check=True,
+                              capture_output=True, check=check,
                               env=command_environment())
 
     def acquire_gpu_lock(self):
@@ -216,7 +313,8 @@ class RuntimeOps:
     def recovery_sources(self):
         names = ("q03_window.py", "q03_window_preflight.py", "q03_window_watchdog.py",
                  "q03_original_spark_adapter.py", "q03_remote_operation.py", "q03_build_adapter.py",
-                 "q03_window_build.py", "q03_buildkit_plan.py", "q03_git_toolchain.py")
+                 "q03_window_build.py", "q03_buildkit_plan.py", "q03_git_toolchain.py",
+                 "q03_held_window.py")
         return {name: self.sha256(Path(__file__).with_name(name)) for name in names}
 
     def validate_host(self, manifest):
@@ -260,10 +358,72 @@ class RuntimeOps:
             raise ValueError("tests must be the clean exact materialized component")
         if not (Path(tests) / ".git").is_dir():
             raise ValueError("test mount requires a self-contained git checkout")
+        self.validate_g1_test_source(manifest, selection)
         self.validate_candidate_image(manifest, selection)
         self.validate_git_toolchain(manifest)
         if needs_tblib(manifest):
             validate_tblib_dependency(candidate)
+
+    def validate_g1_test_source(self, manifest, selection):
+        candidate = manifest["candidate"]
+        if "g1_tests" not in candidate:
+            return
+        test = candidate["g1_tests"]
+        if not isinstance(test, dict) or set(test) != {
+                "path", "head", "tree", "fixture_sha256", "git_config_sha256", "artifact"}:
+            raise ValueError("G1 test identity descriptor is incomplete")
+        for key, size in (("head", 40), ("tree", 40), ("fixture_sha256", 64)):
+            if not re.fullmatch(r"[0-9a-f]{%d}" % size, test.get(key, "")):
+                raise ValueError("invalid G1 identity pin: " + key)
+        if not any(job.get("kind") == "g1" for job in manifest["jobs"]):
+            raise ValueError("G1 test override requires a G1 job")
+        artifact = test["artifact"]
+        if not isinstance(artifact, dict) or set(artifact) != {
+                "checkout", "publication", "source_path", "source_sha256", "git_config_sha256"}:
+            raise ValueError("G1 published artifact binding is incomplete")
+        from q03_git_toolchain import validate_git_metadata
+        from q03_window_preflight import verify_build_publication
+        def git_at(path, config_sha):
+            validate_git_metadata(path, config_sha)
+            return ["git", "--no-replace-objects", "-c", "core.fsmonitor=false",
+                    "-c", "core.hooksPath=/dev/null", "-C", path]
+        def run(git, *args):
+            return self.run([*git, *args]).stdout.strip()
+        artifact_git = git_at(artifact["checkout"], artifact["git_config_sha256"])
+        publication = artifact["publication"]
+        verify_build_publication(publication, self)
+        if (run(artifact_git, "remote", "get-url", "origin") != publication["url"]
+                or run(artifact_git, "rev-parse", "HEAD") != publication["sha"]
+                or run(artifact_git, "status", "--porcelain")):
+            raise ValueError("G1 artifact checkout differs from published own-fork source")
+        source_path, expected_path, _, _ = g1_artifact_evidence(candidate, selection)
+        for path in (source_path, expected_path):
+            relative = path.relative_to(Path(artifact["checkout"]))
+            published = self.run([*artifact_git, "show", publication["sha"] + ":" + relative.as_posix()]).stdout.encode()
+            if hashlib.sha256(published).hexdigest() != self.sha256(path):
+                raise ValueError("G1 artifact bytes differ from published Git blob")
+        git = git_at(test["path"], test["git_config_sha256"])
+        if (run(git, "rev-parse", "HEAD") != test["head"]
+                or run(git, "rev-parse", "HEAD^{tree}") != test["tree"]
+                or run(git, "status", "--porcelain")):
+            raise ValueError("G1 tests must be a clean exact materialized checkout")
+        base = selection["source_head"]
+        if run(git, "rev-parse", base + "^{tree}") != selection["source_tree"]:
+            raise ValueError("G1 checkout lacks the exact197 base")
+        if run(git, "diff", "--name-only", "--no-renames", base, "HEAD", "--").splitlines() != [G1_TEST_FILE]:
+            raise ValueError("G1 correction changes more than its sole reviewed test file")
+        root = Path(test["path"])
+        if self.sha256(root / G1_TEST_FILE) != test["fixture_sha256"]:
+            raise ValueError("G1 working-file bytes differ from the reviewed correction")
+        original_root = Path(candidate["tests_path"])
+        validate_g1_ast((original_root / G1_TEST_FILE).read_text(), (root / G1_TEST_FILE).read_text())
+        for name in G1_PRESERVED_FILES:
+            if self.sha256(root / name) != self.sha256(original_root / name):
+                raise ValueError("G1 preserved source bytes differ: " + name)
+        for name in ("pyproject.toml", "pytest.ini", "setup.cfg", "tox.ini"):
+            original = original_root / name
+            if original.exists() and self.sha256(root / name) != self.sha256(original):
+                raise ValueError("G1 project configuration differs: " + name)
 
     def validate_git_toolchain(self, manifest):
         from q03_git_toolchain import validate_toolchain
@@ -340,7 +500,9 @@ class RuntimeOps:
         from q03_window_watchdog import wait_ready
         return wait_ready(directory, process)
 
-    def execute(self, session, argv, *, cwd, timeout):
+    def execute(self, session, argv, *, cwd, timeout, poll=None):
+        if poll is not None:
+            poll()
         session.beat()
         limit = session.capsule["deadline_epoch"]
         if session.state.get("phase") == "restoring":
@@ -369,6 +531,8 @@ class RuntimeOps:
             try:
                 while process.poll() is None:
                     session.beat()
+                    if poll is not None:
+                        poll()
                     if time.monotonic() >= deadline:
                         raise TimeoutError("command exceeded its reviewed timeout")
                     limit = session.capsule["deadline_epoch"]
@@ -412,9 +576,23 @@ class RuntimeOps:
         spec = importlib.util.spec_from_file_location("q03_receipt", source)
         receipt = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(receipt)
+        expected_bytes = (experiment / expected["path"]).read_bytes()
+        expected_sha256 = expected["sha256"]
+        test_tree = selection["source_tree"]
+        if kind == "g1" and "g1_tests" in candidate:
+            _, _, expected_bytes, proof = g1_artifact_evidence(candidate, selection)
+            expected_sha256 = proof["expected_sha256"]
+            test_tree = candidate["g1_tests"]["tree"]
         report = receipt.check_evidence(
-            kind.upper(), (experiment / expected["path"]).read_bytes(), expected["sha256"],
-            selection["source_tree"], (output / (kind + ".xml")).read_bytes(), 0)
+            kind.upper(), expected_bytes, expected_sha256,
+            test_tree, (output / (kind + ".xml")).read_bytes(), 0)
+        if kind == "g1" and "g1_tests" in candidate:
+            report.update(runtime_source_head=selection["source_head"],
+                          runtime_source_tree=selection["source_tree"],
+                          test_source_head=candidate["g1_tests"]["head"], test_source_tree=test_tree,
+                          test_file_sha256=candidate["g1_tests"]["fixture_sha256"],
+                          test_artifact_publication=candidate["g1_tests"]["artifact"]["publication"],
+                          test_artifact_source_sha256=candidate["g1_tests"]["artifact"]["source_sha256"])
         path = output / (kind + "-receipt.json")
         with path.open("x") as stream:
             json.dump(report, stream, indent=2)
@@ -467,11 +645,25 @@ class RuntimeOps:
         result = self.execute(session, argv, cwd=str(session.directory), timeout=180)
         self.require_receipt(result, {"window_id": session.capsule["window_id"], "safe_to_restore": True})
 
-    def prepare_candidate(self, session, name, argv):
+    def prepare_candidate(self, session, name, argv, *, held_attempt=None):
         # Create cannot run GPU work. Record its exact immutable container ID
         # before a separate start; removal then fences even delayed start RPCs.
         if argv[:2] != ["docker", "run"]:
             raise ValueError("unexpected typed container template")
+        if held_attempt is not None:
+            from q03_held_window import is_held_manifest
+            if not is_held_manifest(session.manifest):
+                raise ValueError("held candidate requires a held outer window")
+            if any(row["name"] == name for row in session.state.get("held_candidates", [])):
+                raise ValueError("held candidate name cannot be reused")
+            argv = [*argv[:2], "--label", "q03.plan=" + held_attempt["plan_sha256"], *argv[2:]]
+            intent = dict(held_attempt, name=name, node_rank=1,
+                          window_id=session.capsule["window_id"], container_id=None,
+                          create_argv_sha256=hashlib.sha256(json.dumps(
+                              argv, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
+                          removed=False)
+            # Durable before even an inert Docker create can be dispatched.
+            session.update(held_candidates=session.state.get("held_candidates", []) + [intent])
         create = ["docker", "create", *argv[2:]]
         self.execute(session, create, cwd=str(session.directory), timeout=90)
         observed = json.loads(self.run(["docker", "container", "inspect", name]).stdout)
@@ -482,6 +674,21 @@ class RuntimeOps:
             item["State"].get("Running") is not False or
             not re.fullmatch(r"[0-9a-f]{64}", item.get("Id", ""))):
             raise RuntimeError("candidate creation identity/state differs")
+        if held_attempt is not None:
+            labels = item["Config"].get("Labels", {})
+            if (item.get("Image") != held_attempt["image_id"] or
+                    labels.get("q03.attempt") != held_attempt["attempt_id"] or
+                    labels.get("q03.job") != held_attempt["kind"] or
+                    labels.get("q03.plan") != held_attempt["plan_sha256"]):
+                raise RuntimeError("held candidate image/attempt/plan identity differs")
+            projection = {key: item[key] for key in ("Image", "Config", "HostConfig", "Mounts")}
+            rows = [dict(row) for row in session.state["held_candidates"]]
+            rows[-1].update(container_id=item["Id"], config_sha256=hashlib.sha256(
+                json.dumps(projection, sort_keys=True, separators=(",", ":")).encode()).hexdigest())
+            session.update(held_candidates=rows)
+            # Even a rejected, inert configuration has a durable exact identity
+            # for safe cleanup. No start is returned before plan validation.
+            self.validate_held_container(item, argv)
         if capture_only(session.manifest):
             host = item.get("HostConfig", {})
             environment = item["Config"].get("Env", [])
@@ -507,6 +714,82 @@ class RuntimeOps:
         ids[name] = item["Id"]
         session.update(candidate_container_ids=ids)
         return ["docker", "start", "--attach", item["Id"]]
+
+    def validate_held_container(self, item, argv):
+        """Validate the closed P0/G1/G2 factory result, not arbitrary Docker argv."""
+        config, host = item["Config"], item["HostConfig"]
+        entry = argv.index("--entrypoint")
+        image_index = entry + 2
+        if (config.get("Entrypoint") != ["python3"] or config.get("Cmd") != argv[image_index + 1:]
+                or config.get("WorkingDir") != "/validation"
+                or host.get("NetworkMode") != "none" or host.get("Privileged") is not False
+                or host.get("RestartPolicy", {}).get("Name") not in ("", "no")
+                or host.get("AutoRemove") is not True or host.get("ShmSize") != 1073741824):
+            raise RuntimeError("held candidate command/resource configuration differs")
+        devices = host.get("DeviceRequests")
+        if not (isinstance(devices, list) and len(devices) == 1 and devices[0].get("Count") == -1
+                and devices[0].get("Capabilities") == [["gpu"]] and not host.get("Devices")):
+            raise RuntimeError("held candidate GPU request differs")
+        environment = config.get("Env", [])
+        expected_mounts = []
+        for index, token in enumerate(argv[:entry]):
+            if token == "--env":
+                value = argv[index + 1]
+                key = value.split("=", 1)[0] + "="
+                if [v for v in environment if v.startswith(key)] != [value]:
+                    raise RuntimeError("held candidate environment differs")
+            elif token == "--mount":
+                parts = argv[index + 1].split(",")
+                fields = dict(part.split("=", 1) for part in parts if "=" in part)
+                expected_mounts.append((fields["src"], fields["dst"], "readonly" not in parts))
+        actual = sorted((m.get("Source"), m.get("Destination"), m.get("RW"))
+                        for m in item.get("Mounts", []) if m.get("Type") == "bind")
+        if actual != sorted(expected_mounts) or len(actual) != len(item.get("Mounts", [])):
+            raise RuntimeError("held candidate readonly/writable mount plan differs")
+
+    def cleanup_held_candidates(self, session, attempt_id=None):
+        """Positive exact-ID removal proof. Unknown daemon outcomes never pause."""
+        rows = [dict(row) for row in session.state.get("held_candidates", [])]
+        for row in rows:
+            if attempt_id is not None and row["attempt_id"] != attempt_id:
+                continue
+            expected_id = row.get("container_id")
+            if not re.fullmatch(r"[0-9a-f]{64}", expected_id or ""):
+                raise RuntimeError("held candidate create has no durable exact ID; outcome uncertain")
+            def inspect():
+                result = self.run(["docker", "container", "inspect", expected_id],
+                                  timeout=30, check=False)
+                if result.returncode:
+                    missing = (r'(?i:(?:error: |error response from daemon: )?no such (?:object|container): )'
+                               + re.escape(expected_id))
+                    if (result.returncode == 1 and result.stdout.strip() in ("", "[]")
+                            and re.fullmatch(missing, result.stderr.strip())):
+                        return None
+                    raise RuntimeError("held exact-ID daemon state is unknown")
+                observed = json.loads(result.stdout)
+                if not isinstance(observed, list) or len(observed) != 1:
+                    raise RuntimeError("held exact-ID inspection is ambiguous")
+                item = observed[0]
+                labels = item.get("Config", {}).get("Labels", {})
+                projection = {key: item[key] for key in ("Image", "Config", "HostConfig", "Mounts")}
+                digest = hashlib.sha256(json.dumps(
+                    projection, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                if (item.get("Id") != expected_id or item.get("Image") != row["image_id"]
+                        or labels.get("q03.window") != session.capsule["window_id"]
+                        or labels.get("q03.attempt") != row["attempt_id"]
+                        or labels.get("q03.job") != row["kind"]
+                        or labels.get("q03.plan") != row["plan_sha256"]
+                        or digest != row.get("config_sha256")):
+                    raise RuntimeError("held candidate identity/configuration changed")
+                return item
+            if inspect() is not None:
+                # A nonzero/timeout response is not converted into successful
+                # cleanup even if a later probe might observe disappearance.
+                self.run(["docker", "rm", "--force", expected_id], timeout=90)
+            if inspect() is not None:
+                raise RuntimeError("held exact-ID candidate still exists after cleanup")
+            row["removed"] = True
+            session.update(held_candidates=rows)
 
     def cleanup_candidates(self, session):
         for name in session.state.get("candidate_containers", []):
@@ -621,6 +904,10 @@ def restore(session):
         raise RuntimeError("recovery refuses foreign or missing hold")
     session.update(phase="restoring", restoring_started_epoch=session.state.get("restoring_started_epoch", time.time()))
     session.ops.terminate_owned_process(session.state.get("active_process"))
+    if "held_window" in session.manifest:
+        from q03_held_window import verify_outer
+        verify_outer(session)
+        session.ops.cleanup_held_candidates(session)
     if build_only(session.manifest):
         session.ops.cleanup_build(session)
     session.ops.quiesce_original(session)
@@ -667,7 +954,7 @@ def recover(directory, ops=None):
         return session.state
 
 
-def job_command(manifest, kind, window_id):
+def job_command(manifest, kind, window_id, *, attempt_id=None):
     if kind == "capture":
         if not capture_only(manifest):
             raise ValueError("native capture must be a separate capture-only window")
@@ -679,7 +966,12 @@ def job_command(manifest, kind, window_id):
     if not re.fullmatch(r"sha256:[0-9a-f]{64}", candidate["image"]):
         raise ValueError("candidate image must be an immutable OCI image ID")
     name = "q03-window-" + window_id[:12] + "-" + kind
-    test_source = candidate["tests_path"] + ("/tests" if kind != "p0" else "")
+    if attempt_id is not None:
+        if not re.fullmatch(r"[0-9a-f]{32}", attempt_id):
+            raise ValueError("invalid held attempt identity")
+        name = "q03-held-" + window_id + "-" + attempt_id + "-" + kind
+    selected_tests = g1_tests_path(candidate) if kind == "g1" else candidate["tests_path"]
+    test_source = selected_tests + ("/tests" if kind != "p0" else "")
     test_destination = "/validation/tests" if kind != "p0" else "/validation"
     argv = ["docker", "run", "--pull", "never", "--rm", "--name", name, "--label", "q03.window=" + window_id,
             "--gpus", "all", "--network", "none", "--shm-size", "1g",
@@ -691,6 +983,8 @@ def job_command(manifest, kind, window_id):
             "--env", "PYTHONDONTWRITEBYTECODE=1",
             "--env", "XDG_CACHE_HOME=/cache", "--env", "TRITON_CACHE_DIR=/cache/triton",
             "--env", "VLLM_DS41_Q03_MHC_MXFP8=1"]
+    if attempt_id is not None:
+        argv += ["--label", "q03.attempt=" + attempt_id, "--label", "q03.job=" + kind]
     if kind == "p0":
         base_path = candidate["git_toolchain_base_path"]
         if (not isinstance(base_path, str) or not base_path
@@ -748,6 +1042,11 @@ def build_only(manifest):
 
 def validate_layout(manifest, directory):
     """Reject unsafe paths before creating even the session evidence directory."""
+    if "held_window" in manifest:
+        from q03_held_window import validate_held_policy
+        validate_held_policy(manifest)
+        if "g1_tests" in manifest.get("candidate", {}) and "g1_tests_path" not in globals():
+            raise ValueError("reviewed G1 identity adapter is not integrated")
     root = Path(manifest["independent_root"])
     spec = manifest["preflight"]
     roots = spec.get("protected_roots")
@@ -821,6 +1120,9 @@ def validate_layout(manifest, directory):
               "build_receipt_path", "build_inputs_path", "git_toolchain_path")}
     if needs_tblib(manifest):
         paths["tblib_path"] = safe(candidate["tblib_path"])
+    if "g1_tests" in candidate:
+        paths["g1_tests_path"] = safe(candidate["g1_tests"]["path"])
+        paths["g1_artifact_path"] = safe(candidate["g1_tests"]["artifact"]["checkout"])
     session_path = safe(directory)
     for value in (*paths.values(), session_path):
         if value == resolved_root or resolved_root not in value.parents:
@@ -830,7 +1132,8 @@ def validate_layout(manifest, directory):
                (paths["tests_path"], paths["runtime_manifest_path"],
                 paths["build_receipt_path"], paths["build_inputs_path"],
                 paths["git_toolchain_path"],
-                *([paths["tblib_path"]] if "tblib_path" in paths else []))):
+                *([paths["tblib_path"]] if "tblib_path" in paths else []),
+                *([paths["g1_tests_path"], paths["g1_artifact_path"]] if "g1_tests_path" in paths else []))):
             raise ValueError("writable path overlaps immutable test/runtime evidence")
     if overlap(session_path, paths["cache_path"]) or overlap(session_path, paths["output_path"]):
         raise ValueError("session evidence must be separate from container writable mounts")
@@ -926,33 +1229,37 @@ def run_session(manifest, directory, ops=None):
             session.update(phase="stopping", mutation_started=True)
             transition_original(session, "stop", 210)
             session.check("stopped")
-            for job in manifest["jobs"]:
-                if session.requested():
-                    session.update(outcome="cancelled")
-                    raise RuntimeError("cluster requested; unfinished jobs cancelled")
-                if time.time() >= capsule["deadline_epoch"]:
-                    raise TimeoutError("bounded session deadline reached")
-                timeout = job["timeout_seconds"]
-                containers = session.state["candidate_containers"]
-                if job["kind"] == "build":
-                    argv = [sys.executable, "-I", "-B", str(Path(__file__).with_name("q03_build_adapter.py")),
-                            "run", "--session-dir", str(directory)]
-                    cwd = str(directory)
-                else:
-                    name, argv = job_command(manifest, job["kind"], window_id)
-                    containers = containers + [name]
-                    cwd = str(directory)
-                session.update(phase="job-" + job["kind"], candidate_containers=containers)
-                if job["kind"] != "build":
-                    argv = ops.prepare_candidate(session, name, argv)
-                execution = ops.execute(session, argv, cwd=cwd, timeout=timeout)
-                result = (ops.validate_capture_result(manifest, execution)
-                          if job["kind"] == "capture" else ops.validate_result(manifest, job["kind"]))
-                if result is not None:
-                    atomic(directory / (job["kind"] + "-result.json"), result)
-                session.update(job_results=session.state["job_results"] + [job["kind"]])
-                session.check("stopped")
-            session.update(outcome="completed")
+            if "held_window" in manifest:
+                from q03_held_window import held_loop
+                held_loop(session, sys.modules[__name__])
+            else:
+                for job in manifest["jobs"]:
+                    if session.requested():
+                        session.update(outcome="cancelled")
+                        raise RuntimeError("cluster requested; unfinished jobs cancelled")
+                    if time.time() >= capsule["deadline_epoch"]:
+                        raise TimeoutError("bounded session deadline reached")
+                    timeout = job["timeout_seconds"]
+                    containers = session.state["candidate_containers"]
+                    if job["kind"] == "build":
+                        argv = [sys.executable, "-I", "-B", str(Path(__file__).with_name("q03_build_adapter.py")),
+                                "run", "--session-dir", str(directory)]
+                        cwd = str(directory)
+                    else:
+                        name, argv = job_command(manifest, job["kind"], window_id)
+                        containers = containers + [name]
+                        cwd = str(directory)
+                    session.update(phase="job-" + job["kind"], candidate_containers=containers)
+                    if job["kind"] != "build":
+                        argv = ops.prepare_candidate(session, name, argv)
+                    execution = ops.execute(session, argv, cwd=cwd, timeout=timeout)
+                    result = (ops.validate_capture_result(manifest, execution)
+                              if job["kind"] == "capture" else ops.validate_result(manifest, job["kind"]))
+                    if result is not None:
+                        atomic(directory / (job["kind"] + "-result.json"), result)
+                    session.update(job_results=session.state["job_results"] + [job["kind"]])
+                    session.check("stopped")
+                session.update(outcome="completed")
         except BaseException as exc:
             session.update(failure=str(exc), outcome=("cancelled" if session.state.get("outcome") == "cancelled" else "failed"))
             raise
@@ -983,18 +1290,47 @@ def main():
     run.add_argument("--apply", action="store_true")
     recovery = sub.add_parser("recover")
     recovery.add_argument("--session-dir", required=True)
+    plan = sub.add_parser("plan-attempt", help="write a typed immutable plan without running tests/services")
+    plan.add_argument("--session-dir", required=True)
+    plan.add_argument("--through", choices=("p0", "g1", "g2"))
+    plan.add_argument("--g1-tests")
+    plan.add_argument("--g1-tests-sha256")
+    control = sub.add_parser("control", help="request a held action; never directly change services")
+    control.add_argument("action", choices=("status", "pause", "resume", "close"))
+    control.add_argument("--session-dir", required=True)
+    control.add_argument("--expected-sequence", type=int)
+    control.add_argument("--attempt")
+    control.add_argument("--attempt-sha256")
+    control.add_argument("--apply", action="store_true")
     args = parser.parse_args()
     def interrupted(signum, frame):
-        raise RuntimeError(f"session interrupted by signal {signum}")
+        raise SessionInterrupted(f"session interrupted by signal {signum}")
     signal.signal(signal.SIGTERM, interrupted)
     signal.signal(signal.SIGINT, interrupted)
-    if args.command == "recover":
+    if args.command == "plan-attempt":
+        from q03_held_window import plan_attempt
+        session = Session(args.session_dir, RuntimeOps())
+        result = plan_attempt(session, sys.modules[__name__], through=args.through,
+                              g1_tests_path=args.g1_tests, g1_tests_sha256=args.g1_tests_sha256)
+    elif args.command == "control":
+        from q03_held_window import read_status, submit_control
+        session = Session(args.session_dir, RuntimeOps())
+        if args.action == "status":
+            result = read_status(session)
+        elif not args.apply:
+            result = {"status": "plan-only", "action": args.action, "no_operations": True}
+        else:
+            result = submit_control(session, args.action, args.expected_sequence,
+                                    attempt_path=args.attempt, attempt_sha256=args.attempt_sha256)
+    elif args.command == "recover":
         result = recover(args.session_dir)
     else:
         manifest = json.loads(Path(args.manifest).read_text())
         if not args.apply:
             print(json.dumps({"status": "plan-only", "jobs": manifest.get("jobs"),
-                              "restore": original_command("start"), "no_operations": True}))
+                              "restore": original_command("start"), "no_operations": True,
+                              "held_window": "held_window" in manifest,
+                              "explicit_resume_required": "held_window" in manifest}))
             return
         result = run_session(manifest, args.session_dir)
     print(json.dumps(result, sort_keys=True))

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "generated_from_baseline": "2026-10-21-mhc-input-quant-candidate",
+  "sources": {
+    "vllm": {
+      "kind": "git",
+      "upstream": "https://github.com/local-inference-lab/vllm.git",
+      "contribution_remote": "https://github.com/christopherowen/vllm.git",
+      "tracking_ref": "refs/heads/integration/karmic-kraken-beta",
+      "revision": "19f2c20ed4d64ae22bd009ceacadd85e2a81e354",
+      "revision_url": "https://github.com/local-inference-lab/vllm/commit/19f2c20ed4d64ae22bd009ceacadd85e2a81e354",
+      "role": "serving source: Local Inference Lab's DS4.1 integration branch, used unchanged; canonical vllm-project/vllm main is parked",
+      "patch_series": "experiments/2026-10-21-mhc-g1-cache-isolation/vllm/series",
+      "canonical_base": {
+        "upstream": "https://github.com/vllm-project/vllm.git",
+        "revision": "0f8fa53acf43a9a6a7a1f7e6b196950c78cd6d7a"
+      }
+    },
+    "vllm_base_image": {
+      "kind": "oci",
+      "upstream": "docker.io/vllm/vllm-openai",
+      "tag": "nightly-af1c01499b289be555c475669ba50a88e96d846e",
+      "source_revision": "af1c01499b289be555c475669ba50a88e96d846e",
+      "recorded_base_digest": "sha256:3cf14c52765a0f0c2f09035e05fa79e1e4b2f9788b64afa90fa41c1ff12d29cf",
+      "role": "CUDA 13.0.2 and vLLM runtime base"
+    },
+    "b12x": {
+      "kind": "git",
+      "upstream": "https://github.com/local-inference-lab/b12x.git",
+      "contribution_remote": null,
+      "tracking_ref": "refs/heads/integration/karmic-kraken-beta",
+      "revision": "236ddff04a5f5064084b46464800b70b34ec7d8c",
+      "revision_url": "https://github.com/local-inference-lab/b12x/commit/236ddff04a5f5064084b46464800b70b34ec7d8c",
+      "applied_upstream_commits": [],
+      "role": "DeepSeek V4.1 kernels and RoCE collectives; the repository is archived and continues in FlashInfer (flashinfer/experimental/b12x), and this is its last commit",
+      "patch_series": "experiments/2026-10-08-lil-rebase/b12x/series"
+    },
+    "nccl": {
+      "kind": "git",
+      "upstream": "https://github.com/NVIDIA/nccl.git",
+      "contribution_remote": null,
+      "tracking_ref": "refs/tags/v2.30.7-1",
+      "revision": "73cf112295c33aee2b895f329f592f2a9b4b0f97",
+      "revision_url": "https://github.com/NVIDIA/nccl/commit/73cf112295c33aee2b895f329f592f2a9b4b0f97",
+      "role": "NCCL 2.30.7, the runtime base image's version, rebuilt for SM121 with the IB send-path fence fix; replaces the nvidia-nccl-cu13 wheel's libnccl.so.2",
+      "patch_series": "experiments/2026-10-03-balanced-policy/nccl-adaptive/series"
+    },
+    "cutlass": {
+      "kind": "git",
+      "upstream": "https://github.com/NVIDIA/cutlass.git",
+      "contribution_remote": null,
+      "tracking_ref": "refs/heads/main",
+      "revision": "cb4247394dd82148787aed73e5dc7cef33cbf862",
+      "revision_url": "https://github.com/NVIDIA/cutlass/commit/cb4247394dd82148787aed73e5dc7cef33cbf862",
+      "release_tag": "v4.7.1",
+      "role": "CUTLASS headers for the SM121 _C_stable_libtorch and _moe_C_stable_libtorch rebuild"
+    },
+    "cutlass_dsl": {
+      "kind": "pypi-wheel-set",
+      "upstream": "https://pypi.org/project/nvidia-cutlass-dsl/4.7.1/",
+      "version": "4.7.1",
+      "lockfile": "requirements/cutlass-dsl-aarch64.txt",
+      "role": "CuTe DSL compiler and CUDA 12/13 runtime libraries; required at 4.7.1 by vLLM and at >=4.7 by quack-kernels, used by B12X (pin moved by patch 0002), FlashInfer and the cuDNN frontend"
+    },
+    "model": {
+      "kind": "huggingface",
+      "upstream": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+      "repository": "deepseek-ai/DeepSeek-V4.1-Flash",
+      "revision": "dba1be0a40aa45a94ad051997016db3960a90277",
+      "release_note": "https://www.deepseek.com/en/news/deepseek-v4-1-flash/",
+      "technical_report": "https://arxiv.org/abs/2609.19969",
+      "technical_report_artifact": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/dba1be0a40aa45a94ad051997016db3960a90277/DeepSeek_V41_Tech_Report.pdf",
+      "technical_report_sha256": "ba68e2e40408125ae6d2f63a9a241b61c73910691c74ec1a2a7023c851eac08d",
+      "role": "unchanged native FP8/FP4 weights and tokenizer"
+    },
+    "tilelang": {
+      "kind": "git",
+      "upstream": "https://github.com/tile-ai/tilelang.git",
+      "contribution_remote": "https://github.com/christopherowen/tilelang.git",
+      "tracking_ref": "refs/heads/main",
+      "revision": "b95ee4ffb52ae26e15619cad38c6f41e7e0a2b46",
+      "revision_url": "https://github.com/tile-ai/tilelang/commit/b95ee4ffb52ae26e15619cad38c6f41e7e0a2b46",
+      "version": "0.1.15",
+      "submodules": true,
+      "role": "TileLang 0.1.15 compiler for the TileLang kernel backend, built from source with SM120-family block-scaled MMA patches; replaces the base image's tilelang 0.1.12",
+      "patch_series": "experiments/2026-10-17-r6u/tilelang/series"
+    },
+    "tile_kernels": {
+      "kind": "git",
+      "upstream": "https://github.com/deepseek-ai/TileKernels.git",
+      "contribution_remote": null,
+      "tracking_ref": "refs/heads/main",
+      "revision": "66258df6175d2f630ffecb04c5ab66bff8a2ae6a",
+      "revision_url": "https://github.com/deepseek-ai/TileKernels/commit/66258df6175d2f630ffecb04c5ab66bff8a2ae6a",
+      "version": "2.0.0",
+      "role": "DeepSeek's TileLang kernels (pure Python, release 2.0.0) for the TileLang kernel backend, with patches/tile_kernels (the routed SwiGLU clamp keeps a NaN)",
+      "patch_series": "patches/tile_kernels/series"
+    },
+    "sparknet": {
+      "kind": "git",
+      "upstream": "https://github.com/christopherowen/dgx-spark-networking.git",
+      "contribution_remote": null,
+      "tracking_ref": "refs/heads/timeout-stop",
+      "revision": "3bc8d10104a5012244a0424d7dfc1107a72eafab",
+      "revision_url": "https://github.com/christopherowen/dgx-spark-networking/commit/3bc8d10104a5012244a0424d7dfc1107a72eafab",
+      "version": "0.3.0",
+      "role": "sparknet: one-shot RoCE collectives (TileLang kernels only, timed waits that stop the GPU, API 2) and fabric profiles, for the TileLang family's TP collectives; branch timeout-stop on tilelang-only, qualified on the TP4 fleet with r6n (2026-10-15)"
+    }
+  },
+  "source_manifest": "experiments/2026-10-21-mhc-g1-cache-isolation/source.json"
+}

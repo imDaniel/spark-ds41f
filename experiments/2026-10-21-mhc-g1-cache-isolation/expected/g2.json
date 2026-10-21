@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "stage": "G2",
+  "source_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a",
+  "nodeids": [
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_legal_producer_to_plan_matches_bf16_path[off-1]",
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_legal_producer_to_plan_matches_bf16_path[off-16]",
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_legal_producer_to_plan_matches_bf16_path[off-96]",
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_legal_producer_to_plan_matches_bf16_path[loaded_zero-1]",
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_legal_producer_to_plan_matches_bf16_path[loaded_zero-16]",
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_legal_producer_to_plan_matches_bf16_path[loaded_zero-96]",
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_legal_producer_to_plan_matches_bf16_path[active-1]",
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_legal_producer_to_plan_matches_bf16_path[active-16]",
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_legal_producer_to_plan_matches_bf16_path[active-96]",
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_shared_addend_wait_and_scratch_do_not_overwrite_quant_pair",
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_owner_alternating_graphs_and_eager_reuse",
+    "tests/kernels/test_deepseek_v41_q03_owner.py::test_capture_retains_quant_allocations_after_owner_is_dropped"
+  ]
+}

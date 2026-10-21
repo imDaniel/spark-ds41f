@@ -154,7 +154,7 @@ def load_capsule(session_dir):
     required = {"q03_window.py", "q03_window_preflight.py", "q03_window_watchdog.py",
                 "q03_original_spark_adapter.py", "q03_remote_operation.py",
                 "q03_build_adapter.py", "q03_window_build.py", "q03_buildkit_plan.py",
-                "q03_git_toolchain.py"}
+                "q03_git_toolchain.py", "q03_held_window.py"}
     sources = capsule["recovery_source_sha256"]
     if set(sources) != required:
         raise RuntimeError("recovery dependency source inventory mismatch")

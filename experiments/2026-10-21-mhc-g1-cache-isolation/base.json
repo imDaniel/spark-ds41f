@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "status": "review-only; replay verified; execution binding not implemented",
+  "deployment_base": "b2ece257945baee479ab42d8b8d69b285543d4df",
+  "component_base": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+  "component_base_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a",
+  "inherited_count": 197,
+  "total_count": 198,
+  "owner_retention_experiment_included": false,
+  "image_build_requested": false,
+  "patch_head": "0875d8842ba0c9370d53d7009de20579cd318dca",
+  "expected_tree": "380a4da057566019912e933ca7216dfaf6456e21",
+  "patchset_sha256": "bcadf92d0ba79a112e47bd0e655e690b56ec4f56dc8f583970ee5832d2d33ea4",
+  "checkpoints": {
+    "176": {
+      "head": "7316c7f9fae1bc4a0b7ab1848de0db4143eec5d2",
+      "tree": "4d6851c8bb1397a55254ba88905a87d9785b98dc"
+    },
+    "188": {
+      "head": "ebb44766d6f04d3a9272b712778d7f2fa2cec1fd",
+      "tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4"
+    },
+    "192": {
+      "head": "dd0d8326d31456a6038ac2f244f765e8d783ce59",
+      "tree": "9cee307fa4fcfca0b907bafc192a7866ea77ec83"
+    },
+    "196": {
+      "head": "77c7112e0340a05aea07252c70acdf91a3d3f1d4",
+      "tree": "6747ba0c7662d231063a44e464b25b8252bb2f7d"
+    },
+    "197": {
+      "head": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+      "tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a"
+    },
+    "198": {
+      "head": "0875d8842ba0c9370d53d7009de20579cd318dca",
+      "tree": "380a4da057566019912e933ca7216dfaf6456e21"
+    }
+  }
+}

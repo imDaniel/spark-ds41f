@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "status": "review-only; not an executable controller selection",
+  "installed_runtime": {
+    "head": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+    "tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a"
+  },
+  "P0": {
+    "source_head": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+    "source_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a"
+  },
+  "G1": {
+    "test_source_head": "0875d8842ba0c9370d53d7009de20579cd318dca",
+    "test_source_tree": "380a4da057566019912e933ca7216dfaf6456e21",
+    "allowed_delta": [
+      "tests/kernels/test_deepseek_v41_mhc_three_way.py"
+    ],
+    "test_file_sha256": "473c5bb2b8df2e3554cddbcbf41248da2456c84be79809276064d69eac408808",
+    "expected_path": "expected/g1.json",
+    "expected_sha256": "ce5cc89e08cf771b22eb5b22fca05841dbf58c1dba7eb32738dc13bdc030ccce",
+    "count": 20
+  },
+  "G2": {
+    "source_head": "154159dc3e38ca8b2321c01a153a1b2ccaf8663b",
+    "source_tree": "ae15047b376c7792062a2607c4ef1dfbc78df18a",
+    "expected_path": "expected/g2.json",
+    "expected_sha256": "c8a33ae139760934448da9b4fbc7ec162a9fa9ecacba4dadc4fda6556d011374",
+    "count": 12
+  },
+  "blockers": [
+    "Separate G1 test/runtime identity admission not implemented",
+    "Continuously held-window lifecycle not implemented or fault-tested",
+    "Real independent compilation and numerical comparison unexecuted"
+  ]
+}

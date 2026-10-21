@@ -1,0 +1,70 @@
+From 0875d8842ba0c9370d53d7009de20579cd318dca Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 21:08:02 +0900
+Subject: [PATCH] test: isolate original and candidate mHC compilation
+
+Upstream base: component197 154159dc3e38ca8b2321c01a153a1b2ccaf8663b.
+
+Rationale: original188 and candidate-off may lower to identical TileLang IR and share the global cached JITKernel. Compile each real factory independently without changing the original source, compiler options, numerical comparisons or kernel identity assertion.
+
+Quality: test-only. Direct JIT.compile bypasses wrapper caches; scoped TILELANG_DISABLE_CACHE bypasses global caches and is restored exactly in finally. Frozen or overridden cache state refuses rather than being bypassed. Vendored188 source/hash and all20 G1/12 G2 cases remain unchanged.
+
+Tests: eight stdlib helper contracts passed, including exception restoration, warm-call-cache traps and frozen/override refusal. Actual patched cache AST was exercised with explicit fake backend boundaries. No TileLang/native compilation, GPU numerical test or model execution occurred.
+
+Upstream status: downstream experimental test correction, not submitted upstream. This mailbox requires a separately reviewed test-source/runtime identity binding before target execution; installed runtime197 is unchanged.
+---
+ .../test_deepseek_v41_mhc_three_way.py        | 34 +++++++++++++++++--
+ 1 file changed, 31 insertions(+), 3 deletions(-)
+
+diff --git a/tests/kernels/test_deepseek_v41_mhc_three_way.py b/tests/kernels/test_deepseek_v41_mhc_three_way.py
+index 083834a21..624927db6 100644
+--- a/tests/kernels/test_deepseek_v41_mhc_three_way.py
++++ b/tests/kernels/test_deepseek_v41_mhc_three_way.py
+@@ -59,13 +59,41 @@ def three_way_kernels():
+         config.hc_sinkhorn_iters,
+         config.rms_norm_eps,
+     )
+-    baseline = original(*args)
+-    off = finalize(*args)
+-    dual = finalize(*args, emit_mxfp8=True, quant_config=_mxfp8_config())
++    baseline, off, dual = _compile_three_way(original, finalize, args, _mxfp8_config())
+     assert baseline is not off, "Original kernel must not reuse the candidate object"
+     return baseline, off, dual
+ 
+ 
++def _compile_three_way(original, candidate, args, quant_config):
++    """Compile three real kernels, even when original/off lower to identical TIR.
++
++    TileLang 0.1.15 globally deduplicates by lowered TIR, not Python factory
++    identity. Its JIT wrapper also has a separate warm-call cache. Direct
++    .compile bypasses the wrapper cache; the supported environment switch
++    bypasses both global memory and disk caches for this construction only.
++    Neither source, decorator, compiler options nor returned kernels is wrapped.
++    """
++    from tilelang import env
++    from tilelang.cache import frozen
++
++    if frozen() is not None:
++        raise RuntimeError("G1 independent compilation requires an unfrozen TileLang cache")
++    previous = os.environ.get("TILELANG_DISABLE_CACHE")
++    try:
++        os.environ["TILELANG_DISABLE_CACHE"] = "1"
++        if env.is_cache_enabled():
++            raise RuntimeError("TileLang cache override prevented independent compilation")
++        baseline = original.compile(*args)
++        off = candidate.compile(*args)
++        dual = candidate.compile(*args, emit_mxfp8=True, quant_config=quant_config)
++        return baseline, off, dual
++    finally:
++        if previous is None:
++            os.environ.pop("TILELANG_DISABLE_CACHE", None)
++        else:
++            os.environ["TILELANG_DISABLE_CACHE"] = previous
++
++
+ def _same_bytes(actual, expected, label):
+     try:
+         common._q03_assert_bytes(actual, expected)
+-- 
+2.52.0
+
