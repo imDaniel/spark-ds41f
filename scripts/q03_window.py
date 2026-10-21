@@ -151,7 +151,7 @@ class RuntimeOps:
     def recovery_sources(self):
         names = ("q03_window.py", "q03_window_preflight.py", "q03_window_watchdog.py",
                  "q03_original_spark_adapter.py", "q03_remote_operation.py", "q03_build_adapter.py",
-                 "q03_window_build.py", "q03_buildkit_plan.py")
+                 "q03_window_build.py", "q03_buildkit_plan.py", "q03_git_toolchain.py")
         return {name: self.sha256(Path(__file__).with_name(name)) for name in names}
 
     def validate_host(self, manifest):
@@ -184,14 +184,32 @@ class RuntimeOps:
                 raise ValueError("candidate mount directory is missing: " + key)
         if not Path(candidate["runtime_manifest_path"]).is_file():
             raise ValueError("runtime manifest is missing")
-        head = self.run(["git", "-C", tests, "rev-parse", "HEAD"]).stdout.strip()
-        tree = self.run(["git", "-C", tests, "rev-parse", "HEAD^{tree}"]).stdout.strip()
-        dirty = self.run(["git", "-C", tests, "status", "--porcelain"]).stdout.strip()
+        from q03_git_toolchain import validate_git_metadata
+        validate_git_metadata(tests, candidate["git_config_sha256"])
+        git = ["git", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null",
+               "-C", tests]
+        head = self.run([*git, "rev-parse", "HEAD"]).stdout.strip()
+        tree = self.run([*git, "rev-parse", "HEAD^{tree}"]).stdout.strip()
+        dirty = self.run([*git, "status", "--porcelain"]).stdout.strip()
         if head != selection["source_head"] or tree != selection["source_tree"] or dirty:
             raise ValueError("tests must be the clean exact materialized component")
         if not (Path(tests) / ".git").is_dir():
             raise ValueError("test mount requires a self-contained git checkout")
         self.validate_candidate_image(manifest, selection)
+        self.validate_git_toolchain(manifest)
+
+    def validate_git_toolchain(self, manifest):
+        from q03_git_toolchain import validate_toolchain
+        candidate = manifest["candidate"]
+        validate_toolchain(candidate, self)
+        images = json.loads(self.run(
+            ["docker", "image", "inspect", candidate["image"]]).stdout)
+        if len(images) != 1 or images[0].get("Id") != candidate["image"]:
+            raise ValueError("Git toolchain image binding is ambiguous")
+        paths = [item[5:] for item in images[0].get("Config", {}).get("Env", [])
+                 if item.startswith("PATH=")]
+        if paths != [candidate.get("git_toolchain_base_path")]:
+            raise ValueError("Git toolchain must preserve the exact image PATH")
 
     def validate_candidate_image(self, manifest, selection):
         from q03_window_build import validate_candidate_build
@@ -601,6 +619,24 @@ def job_command(manifest, kind, window_id):
             "--env", "PYTHONDONTWRITEBYTECODE=1",
             "--env", "XDG_CACHE_HOME=/cache", "--env", "TRITON_CACHE_DIR=/cache/triton",
             "--env", "VLLM_DS41_Q03_MHC_MXFP8=1"]
+    if kind == "p0":
+        base_path = candidate["git_toolchain_base_path"]
+        if (not isinstance(base_path, str) or not base_path
+                or any(not item.startswith("/") or ".." in Path(item).parts
+                       for item in base_path.split(":"))
+                or any(c in base_path for c in ("\n", "\x00"))):
+            raise ValueError("Explicit image PATH binding is required")
+        digest = candidate["git_toolchain_manifest_sha256"]
+        if not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise ValueError("Pinned Git toolchain manifest required")
+        config_digest = candidate["git_config_sha256"]
+        if not re.fullmatch(r"[0-9a-f]{64}", config_digest):
+            raise ValueError("Pinned source Git configuration required")
+        argv += ["--mount", "type=bind,src=" + candidate["git_toolchain_path"]
+                 + ",dst=/git-toolchain,readonly",
+                 "--env", "PATH=/git-toolchain/bin:" + base_path,
+                 "--env", "Q03_GIT_TOOLCHAIN_MANIFEST_SHA256=" + digest,
+                 "--env", "Q03_GIT_CONFIG_SHA256=" + config_digest]
     if kind in ("g1", "g2"):
         argv += ["--env", f"VLLM_Q03_RUN_{kind.upper()}_GPU=1"]
     argv += ["--entrypoint", "python3", candidate["image"]]
@@ -702,7 +738,7 @@ def validate_layout(manifest, directory):
     candidate = manifest["candidate"]
     paths = {key: safe(candidate[key]) for key in
              ("tests_path", "cache_path", "output_path", "runtime_manifest_path",
-              "build_receipt_path", "build_inputs_path")}
+              "build_receipt_path", "build_inputs_path", "git_toolchain_path")}
     session_path = safe(directory)
     for value in (*paths.values(), session_path):
         if value == resolved_root or resolved_root not in value.parents:
@@ -710,7 +746,8 @@ def validate_layout(manifest, directory):
     for writable in (paths["cache_path"], paths["output_path"], session_path):
         if any(overlap(writable, immutable) for immutable in
                (paths["tests_path"], paths["runtime_manifest_path"],
-                paths["build_receipt_path"], paths["build_inputs_path"])):
+                paths["build_receipt_path"], paths["build_inputs_path"],
+                paths["git_toolchain_path"])):
             raise ValueError("writable path overlaps immutable test/runtime evidence")
     if overlap(session_path, paths["cache_path"]) or overlap(session_path, paths["output_path"]):
         raise ValueError("session evidence must be separate from container writable mounts")
