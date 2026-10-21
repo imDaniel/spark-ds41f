@@ -1,5 +1,9 @@
 # Q03 finite qualification execution, first lean slice
 
+The separate [Stage 1b schema 3 successor](q03-quality-matrix.md) now prepares the
+remaining finite 16-token matrix. This document preserves schema 2 and its
+original scope; it does not authorize adding work to an existing capsule.
+
 This successor is based on controller `c6290c5ca519d68e0b3acd3ac31c58741e0e5481`
 (tree `5ca21096397f6f1aef96490d515c1218af51a74d`), with the CI-only parent
 `321b342667e37ae851a133d0e3dc7ea5233685a8` (private canonical test temporary

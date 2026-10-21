@@ -48,13 +48,18 @@ class FrozenQualification(FrozenToolbox):
         return name + '.py'
 
     def find_spec(self, fullname, path=None, target=None):
-        if fullname not in ('q03_qualification', 'q03_owner_model', 'q03_held_window'):
+        if fullname not in ('q03_qualification', 'q03_owner_model', 'q03_held_window', 'q03_quality_matrix'):
             return None
         return importlib.util.spec_from_file_location(fullname, self.root / self.relative(fullname), loader=self)
 
 
 def load_qualification(client):
     names = ('q03_qualification', 'q03_owner_model', 'q03_held_window')
+    workload = client['qualification']['workload']
+    if workload == 'lean_tokens_stage1b_v1':
+        names += ('q03_quality_matrix',)
+    elif workload != 'lean_tokens_c1':
+        raise RuntimeError('unknown finite qualification workload')
     pins = client.get('qualification_sources')
     if not isinstance(pins, dict) or set(pins) != set(names) or any(name in sys.modules for name in names):
         raise RuntimeError('qualification source closure differs or was preloaded')
@@ -65,7 +70,10 @@ def load_qualification(client):
             raise RuntimeError('frozen qualification source changed: ' + name)
         sources[name + '.py'] = raw
     sys.meta_path.insert(0, FrozenQualification(root, sources))
-    from q03_qualification import run_client
+    if workload == 'lean_tokens_stage1b_v1':
+        from q03_quality_matrix import run_client
+    else:
+        from q03_qualification import run_client
     return run_client
 
 

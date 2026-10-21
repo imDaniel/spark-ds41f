@@ -165,11 +165,11 @@ def verify_history(session):
             "retained attempt history inventory drift")
 
 
-def attempt_commands(manifest, window_id, attempt_id, core):
+def attempt_commands(manifest, window_id, attempt_id, core, *, session=None):
     from q03_http_service import is_http, validate_binding, http_plan
     if is_http(manifest):
         binding = validate_binding(manifest, core.RuntimeOps(), remote=False)
-        return [["http_service", http_plan(binding, window_id, attempt_id, manifest["jobs"][0]["selection"])]]
+        return [["http_service", http_plan(binding, window_id, attempt_id, manifest["jobs"][0]["selection"], session=session)]]
     from q03_owner_model import is_owner, validate_owner_binding, owner_plan
     if is_owner(manifest):
         binding = validate_owner_binding(manifest, core.RuntimeOps())
@@ -236,7 +236,7 @@ def plan_attempt(session, core, *, through=None, g1_tests_path=None, g1_tests_sh
                   "previous_receipt_sha256": session.state.get("last_attempt_receipt_sha256"),
                   "candidate_updates": updates, "jobs": jobs}
     manifest = derive_attempt_manifest(session, attempt_id, jobs, updates)
-    commands = attempt_commands(manifest, session.capsule["window_id"], attempt_id, core)
+    commands = attempt_commands(manifest, session.capsule["window_id"], attempt_id, core, session=session)
     descriptor["command_plan_sha256"] = sha256(canonical_bytes(commands))
     build_attempt(session, descriptor, core)
     path = session.directory / "plans" / (attempt_id + ".json")
@@ -297,7 +297,7 @@ def build_attempt(session, descriptor, core):
                 1 <= job["timeout_seconds"] <= allowed["timeout_seconds"],
                 "attempt changes gate order or exceeds reviewed job budget")
     manifest = derive_attempt_manifest(session, attempt_id, jobs, updates)
-    commands = attempt_commands(manifest, session.capsule["window_id"], attempt_id, core)
+    commands = attempt_commands(manifest, session.capsule["window_id"], attempt_id, core, session=session)
     require(descriptor["command_plan_sha256"] == sha256(canonical_bytes(commands)),
             "typed command plan digest differs")
     directory = session.directory / "attempts" / attempt_id

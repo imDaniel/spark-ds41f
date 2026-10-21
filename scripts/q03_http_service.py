@@ -26,20 +26,43 @@ require, canonical, digest, json_bytes = owner.require, owner.canonical, owner.d
 IMAGE, SOURCE_HEAD, RUNTIME_SHA = owner.IMAGE, owner.SOURCE_HEAD, owner.RUNTIME_SHA
 PHASES = ('admitted', 'prepared4', 'created4', 'startup_guards4', 'started4',
           'config_ready', 'steady_guards4', 'client_running', 'client_terminal', 'drained')
-SOURCE_FILES = ('q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py')
+SOURCE_FILES = ('q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py', 'q03_quality_matrix.py')
 BOOT_MODES = ('off', 'off', 'dual')
 QUALIFICATION_SOURCE_SHA256 = 'f41e9fac23ee88defa71d6aed6dddaa6b0630b8c5e369f14b02c17ee2d242c1e'
 
 
-def qualification_module():
+QUALITY_MATRIX_SOURCE_SHA256 = '0192cef0b2cf1765824231998976708893b968c64c5f18a12cf3f3de90722959'
+
+
+def qualification_module(schema_version=2):
     # A new module must not bypass its source pin via ignored timestamp .pyc.
-    path = Path(__file__).with_name('q03_qualification.py')
+    require(type(schema_version) is int and schema_version in (2, 3), 'qualification schema differs')
+    name, expected = ('q03_qualification.py', QUALIFICATION_SOURCE_SHA256) if schema_version == 2 else (
+        'q03_quality_matrix.py', QUALITY_MATRIX_SOURCE_SHA256)
+    path = Path(__file__).with_name(name)
     raw = read_owned_bytes(path)
-    require(digest(raw) == QUALIFICATION_SOURCE_SHA256, 'qualification source pin differs')
+    require(digest(raw) == expected, 'qualification source pin differs')
     module = types.ModuleType('_q03_qualification_source')
     module.__file__ = str(path)
-    exec(compile(raw, str(path), 'exec'), module.__dict__)
+    if schema_version == 2:
+        exec(compile(raw, str(path), 'exec'), module.__dict__)
+    else:
+        # Bind the matrix dependency to the same source-only legacy module, not .pyc.
+        previous = sys.modules.get('q03_qualification')
+        sys.modules['q03_qualification'] = qualification_module(2)
+        try:
+            exec(compile(raw, str(path), 'exec'), module.__dict__)
+        finally:
+            if previous is None:
+                del sys.modules['q03_qualification']
+            else:
+                sys.modules['q03_qualification'] = previous
     return module
+
+
+def quality_module():
+    """Fixed source-pinned Stage 1b reader for separately admitted successors."""
+    return qualification_module(3)
 
 
 def is_http(manifest):
@@ -61,8 +84,8 @@ def validate_jobs(manifest):
 
 
 def next_selection(session):
-    if session.manifest.get('http_service', {}).get('schema_version') == 2:
-        return qualification_module().next_selection(session)
+    if session.manifest.get('http_service', {}).get('schema_version') in (2, 3):
+        return qualification_module(session.manifest['http_service']['schema_version']).next_selection(session)
     passed = [r for r in session.state.get('attempt_results', [])
               if r.get('outcome') == 'passed' and r.get('passed_gates') == ['http_service']]
     require(len(passed) < 3, 'OFF/OFF/DUAL HTTP smoke matrix is complete')
@@ -131,14 +154,15 @@ def validate_binding(manifest, ops, *, remote=True):
     fields = {'schema_version', 'owner_inputs', 'owner_matrix', 'toolbox', 'api_port',
               'startup_seconds', 'client_seconds'}
     require(isinstance(value, dict) and type(value.get('schema_version')) is int
-            and value['schema_version'] in (1, 2), 'HTTP schema differs')
+            and value['schema_version'] in (1, 2, 3), 'HTTP schema differs')
     require(set(value) == (fields if value['schema_version'] == 1 else fields | {'qualification'}),
             'HTTP binding fields differ')
-    if value['schema_version'] == 2:
-        validate_qualification = qualification_module().validate_binding
+    if value['schema_version'] in (2, 3):
+        validate_qualification = qualification_module(value['schema_version']).validate_binding
         validate_qualification(value['qualification'])
-        require(manifest['jobs'][0]['selection']['steering'] == 'off',
-                'first lean qualification slice is unloaded only')
+        if value['schema_version'] == 2:
+            require(manifest['jobs'][0]['selection']['steering'] == 'off',
+                    'first lean qualification slice is unloaded only')
     for key, low, high in (('api_port', 1024, 65535), ('startup_seconds', 1, 3600), ('client_seconds', 1, 600)):
         require(type(value[key]) is int and low <= value[key] <= high, 'invalid HTTP bound: ' + key)
     require(value['api_port'] != value['owner_inputs']['master_port'], 'HTTP and rendezvous ports collide')
@@ -160,7 +184,7 @@ def validate_binding(manifest, ops, *, remote=True):
     for relative, expected in inventory['files'].items():
         require(digest(read_owned_bytes(Path(toolbox['path']) / relative)) == expected, 'toolbox bytes differ')
     binding.update(http=copy.deepcopy(value), toolbox_inventory=inventory)
-    if value['schema_version'] == 2:
+    if value['schema_version'] in (2, 3):
         validate_qualification(value['qualification'], binding)
     if remote:
         validate_remote_inputs(manifest, binding, ops)
@@ -181,14 +205,18 @@ def validate_paths(manifest, directory):
     immutable += [Path(cell[key]['path']) for cell in matrix['terminals'] for key in ('terminal', 'descriptor')]
     for key in ('profile', 'nodes', 'effective_config'):
         immutable.append(Path(manifest['http_service']['owner_inputs'][key]['path']))
-    if manifest['http_service'].get('schema_version') == 2:
-        validate_qualification = qualification_module().validate_binding
+    if manifest['http_service'].get('schema_version') in (2, 3):
+        validate_qualification = qualification_module(manifest['http_service']['schema_version']).validate_binding
         qualification = manifest['http_service']['qualification']
         corpus = validate_qualification(qualification)
         immutable += [Path(qualification['corpus']['path']), Path(corpus['prompts']['path']),
                       Path(corpus['artifacts']['model_root'])]
         immutable += [Path(pin['path']) for pin in [corpus['artifacts']['weights_manifest'],
                       corpus['artifacts']['runtime_metadata'], *corpus['artifacts']['native_sources'].values()]]
+    if manifest['http_service'].get('schema_version') == 3:
+        prior = manifest['http_service']['qualification']['stage1a']['capsule']
+        immutable += [Path(prior['path']).parent,
+                      Path(owner.pinned_json(prior)['manifest']['preflight']['independent_checkout'])]
     writable = [resource, evidence_path(directory, manifest)]
     writable += [evidence_path(manifest['candidate'][k], manifest) for k in ('cache_path', 'output_path')]
     for target in writable:
@@ -205,7 +233,7 @@ def replace_flag(args, key, value):
     args[index + 1] = str(value)
 
 
-def http_plan(binding, window_id, attempt_id, selection):
+def http_plan(binding, window_id, attempt_id, selection, *, session=None):
     # The owner plan supplies pinned identity/expected resolved projection only.
     # Serving argv is rendered from the ACTUAL normal profile, not EngineArgs.
     plan = owner.owner_plan(binding, window_id, attempt_id, selection)
@@ -288,12 +316,15 @@ def http_plan(binding, window_id, attempt_id, selection):
                         'prompts': binding['toolbox_inventory']['prompts'],
                         'output': plan['ranks'][0]['root'] + '/results/smoke.json',
                         'timeout_seconds': binding['http']['client_seconds']})
-    if binding['http'].get('schema_version') == 2:
-        client_plan = qualification_module().client_plan
-        plan['client']['qualification'] = client_plan(binding, selection)
+    if binding['http'].get('schema_version') in (2, 3):
+        version = binding['http']['schema_version']
+        client_plan = qualification_module(version).client_plan
+        plan['client']['qualification'] = (client_plan(binding, selection) if version == 2
+                                           else client_plan(binding, selection, session))
         plan['client']['qualification_sources'] = {name: digest(read_owned_bytes(
             Path(binding['checkout']) / 'scripts' / (name + '.py')))
-            for name in ('q03_qualification', 'q03_owner_model', 'q03_held_window')}
+            for name in (('q03_qualification', 'q03_owner_model', 'q03_held_window')
+                         + (('q03_quality_matrix',) if version == 3 else ()))}
         plan['client']['output'] = plan['ranks'][0]['root'] + '/results/lean.json'
     plan.pop('plan_sha256')
     plan['plan_sha256'] = digest(canonical(plan))
@@ -319,8 +350,8 @@ def input_contract(binding, *, include_toolbox=True):
         value['files'].append({'path': str(path), 'sha256': digest(read_owned_bytes(path))})
     if not include_toolbox:
         return value
-    if binding['http'].get('schema_version') == 2:
-        validate_qualification = qualification_module().validate_binding
+    if binding['http'].get('schema_version') in (2, 3):
+        validate_qualification = qualification_module(binding['http']['schema_version']).validate_binding
         qualification = binding['http']['qualification']
         corpus = validate_qualification(qualification)
         value['files'] += [qualification['corpus'], corpus['prompts'],
@@ -340,8 +371,8 @@ def boundary_contract(binding, node, path):
     value['input_files'] = input_contract(binding, include_toolbox=include_toolbox)['files']
     toolbox = binding['http']['toolbox']['path']
     value['immutable_paths'].append(toolbox)
-    if binding['http'].get('schema_version') == 2:
-        validate_qualification = qualification_module().validate_binding
+    if binding['http'].get('schema_version') in (2, 3):
+        validate_qualification = qualification_module(binding['http']['schema_version']).validate_binding
         qualification = binding['http']['qualification']
         corpus = validate_qualification(qualification)
         value['immutable_paths'] += [qualification['corpus']['path'], corpus['prompts']['path']]
@@ -364,12 +395,13 @@ def validate_remote_inputs(manifest, binding, ops):
         report = json_bytes(result.stdout)
         require(report.get('image') == IMAGE and report.get('test_tree') == owner.TEST_TREE,
                 'HTTP all-four input/image identity differs')
-        if binding['http'].get('schema_version') == 2:
-            qualifier = qualification_module()
+        if binding['http'].get('schema_version') in (2, 3):
+            qualifier = qualification_module(binding['http']['schema_version'])
             corpus = qualifier.validate_binding(binding['http']['qualification'], binding)
-            files = qualifier.artifact_files(corpus)
+            legacy = qualification_module(2)
+            files = legacy.artifact_files(corpus)
             result = ops.run(_node_argv(manifest['preflight'], node, bound_command(
-                ['python3', '-I', '-B', '-c', qualifier.ASSET_PROBE, canonical(files).decode()])), timeout=90)
+                ['python3', '-I', '-B', '-c', legacy.ASSET_PROBE, canonical(files).decode()])), timeout=90)
             require(result.returncode == 0 and json_bytes(result.stdout) == {'verified_files': len(files)},
                     'all-four mounted model/tokenizer asset identity differs')
 
@@ -738,7 +770,7 @@ class HttpOps(owner.OwnerOps):
                 'HTTP client receipt failed or differs')
         value = json_bytes(raw)
         if 'qualification' in self.plan['client']:
-            validate_output = qualification_module().validate_output
+            validate_output = qualification_module(self.binding['http']['schema_version']).validate_output
             qualification = validate_output(value, self.plan)
             for run in value['runs']:
                 retained = read_owned_bytes(path.with_name(run['label'] + '.json'))
