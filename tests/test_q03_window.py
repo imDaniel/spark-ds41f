@@ -471,8 +471,8 @@ class WindowRecoveryTests(unittest.TestCase):
     def test_actual_candidate_image_identity_and_receipt_drift(self):
         import json
         from types import SimpleNamespace
-        load_module("q03_window_build", "PREFLIGHT")
-        head, tree, deployment = "a" * 40, "b" * 40, "c" * 40
+        build = load_module("q03_window_build", "PREFLIGHT")
+        head, tree, deployment = build.SOURCE_HEAD, build.SOURCE_TREE, "c" * 40
         digest, base = "sha256:" + "d" * 64, "sha256:" + "e" * 64
         labels = {"org.opencontainers.image.revision": deployment,
                   "org.opencontainers.image.base.digest": base,
@@ -487,16 +487,21 @@ class WindowRecoveryTests(unittest.TestCase):
         records = {"runtime": {"source_head": head}, "receipt": receipt,
                    "inputs": {"inputs": {"base_image": "example@" + base,
                               "vllm": {"patch_head": head, "expected_tree": tree}}}}
-        candidate = {"image": digest, "runtime_manifest_path": "runtime",
+        candidate = {"image": digest, "component_head": head, "runtime_manifest_path": "runtime",
                      "runtime_manifest_sha256": "f" * 64, "build_receipt_path": "receipt",
                      "build_receipt_sha256": "f" * 64, "build_inputs_path": "inputs",
                      "build_inputs_sha256": "f" * 64}
-        manifest = {"candidate": candidate, "preflight": {"publication": {"sha": deployment}}}
+        publication = {"sha": deployment, "url": "https://github.com/imDaniel/spark-ds41f.git",
+                       "ref": "refs/heads/reviewed-build"}
+        manifest = {"candidate": candidate, "preflight": {"publication": publication}}
         selection = {"source_head": head, "source_tree": tree}
         commands = []
-        def run(argv):
+        def run(argv, **kwargs):
             commands.append(argv)
-            return SimpleNamespace(stdout=json.dumps([image]))
+            if argv[:3] == ["git", "--no-optional-locks", "ls-remote"]:
+                return SimpleNamespace(returncode=0, stdout=deployment + "\t" + publication["ref"], stderr="")
+            self.assertEqual(argv[:3], ["docker", "image", "inspect"])
+            return SimpleNamespace(returncode=0, stdout=json.dumps([image]), stderr="")
         facade = SimpleNamespace(read_json=lambda path: records[path],
                                  sha256=lambda path: "f" * 64, run=run)
         validate = lambda: self.core.RuntimeOps.validate_candidate_image(facade, manifest, selection)
@@ -521,7 +526,7 @@ class WindowRecoveryTests(unittest.TestCase):
         def update(**values):
             state.update(values)
             journal.write_text(json.dumps(state))
-        session = SimpleNamespace(directory=self.root, state=state, update=update,
+        session = SimpleNamespace(directory=self.root, state=state, update=update, manifest=self.manifest,
                                   capsule={"window_id": "synthetic-window"})
         calls = []
         observed = [{"Id": "d" * 64, "State": {"Running": False},

@@ -158,14 +158,117 @@ def verify_image(image, receipt, inputs, tag, deployment_sha):
     return image["Id"]
 
 
-# Captured FROM the image, never from a baseline or host source overlay. This is
-# an output plan only: review captured values before using them as P0 authority.
+def validate_candidate_build(manifest, ops):
+    """Verify immutable image evidence independently of native runtime capture.
+
+    A newer controller may inspect an older published build, but may never
+    relabel that image or substitute its own revision for the build revision.
+    """
+    from q03_window_preflight import verify_build_publication
+
+    candidate = manifest["candidate"]
+    require(candidate.get("component_head") == SOURCE_HEAD, "Unexpected component head")
+    require(re.fullmatch(r"sha256:[0-9a-f]{64}", candidate.get("image", "")),
+            "Immutable candidate image required")
+    for path_key, hash_key in (("build_receipt_path", "build_receipt_sha256"),
+                               ("build_inputs_path", "build_inputs_sha256")):
+        expected = candidate.get(hash_key, "")
+        require(re.fullmatch(r"[0-9a-f]{64}", expected)
+                and ops.sha256(candidate[path_key]) == expected,
+                "Candidate evidence hash mismatch: " + path_key)
+    receipt = ops.read_json(candidate["build_receipt_path"])
+    inputs = ops.read_json(candidate["build_inputs_path"])["inputs"]
+    require(receipt.get("result") == "built-official-smoke-passed"
+            and receipt.get("image_id") == candidate["image"]
+            and receipt.get("source_head") == SOURCE_HEAD
+            and receipt.get("source_tree") == SOURCE_TREE
+            and inputs["vllm"].get("patch_head") == SOURCE_HEAD
+            and inputs["vllm"].get("expected_tree") == SOURCE_TREE,
+            "Candidate build/source identity mismatch")
+    publication = candidate.get("build_publication", manifest["preflight"]["publication"])
+    verify_build_publication(publication, ops)
+    images = json.loads(run(ops, ["docker", "image", "inspect", candidate["image"]]))
+    require(isinstance(images, list) and len(images) == 1, "Ambiguous candidate image")
+    image = images[0]
+    require(image.get("Config", {}).get("Labels") == receipt.get("image_labels"),
+            "Actual image labels differ from build receipt")
+    official = receipt["official_receipt"]
+    digest = verify_image(image, official, inputs, official["tag"], publication["sha"])
+    require(digest == candidate["image"], "Actual candidate image differs")
+    return receipt
+
+
+def native_capture_command(image_id, window_id):
+    """Driver-library-enabled native capture; no GPU devices are requested.
+
+    NVIDIA's `none` mode exposes selected driver capabilities without assigning
+    GPUs. This is not proof of no GPU interaction; capture remains STOP-gated.
+    """
+    require(re.fullmatch(r"sha256:[0-9a-f]{64}", image_id), "Immutable capture image required")
+    require(re.fullmatch(r"[0-9a-f]{32}", window_id), "Bound capture window required")
+    name = "q03-native-capture-" + window_id
+    program = "HEAD=" + repr(SOURCE_HEAD) + "\n" + _CAPTURE
+    return name, ["docker", "run", "--pull", "never", "--rm", "--name", name,
+                  "--label", "q03.window=" + window_id,
+                  "--label", "q03.role=native-capture", "--network=none",
+                  "--read-only", "--runtime=nvidia", "--env", "NVIDIA_VISIBLE_DEVICES=none",
+                  "--env", "NVIDIA_DRIVER_CAPABILITIES=compute",
+                  "--tmpfs", "/tmp:rw,nosuid,nodev", "--entrypoint", "python3",
+                  image_id, "-B", "-c", program]
+
+
+def validate_native_capture_output(text):
+    """Parse one marked native record, retaining other log text as evidence.
+
+    Validation is structural and source-bound, not human review or P0 success.
+    """
+    require(isinstance(text, str) and len(text.encode("utf-8")) <= 1024 * 1024,
+            "Native capture log exceeds bound")
+    prefix = "Q03_NATIVE_MANIFEST="
+    records = [line[len(prefix):] for line in text.splitlines() if line.startswith(prefix)]
+    require(len(records) == 1, "Native capture requires exactly one marked record")
+    def unique_fields(pairs):
+        value = {}
+        for key, item in pairs:
+            require(key not in value, "Duplicate native manifest field")
+            value[key] = item
+        return value
+
+    result = json.loads(records[0], object_pairs_hook=unique_fields)
+    require(isinstance(result, dict)
+            and set(result) == {"source_head", "installation", "versions", "native_paths", "native_sha256"},
+            "Unexpected native manifest schema")
+    require(result["source_head"] == SOURCE_HEAD, "Native source identity differs")
+    installation = result["installation"]
+    require(isinstance(installation, dict) and set(installation) == {"mode", "package_root"}
+            and installation["mode"] == "image-source"
+            and isinstance(installation["package_root"], str)
+            and Path(installation["package_root"]).is_absolute(), "Invalid image installation")
+    versions = result["versions"]
+    require(isinstance(versions, dict) and set(versions) == {"python", "torch", "tilelang", "tile_kernels"}
+            and all(isinstance(v, str) and v.strip() for v in versions.values()),
+            "Incomplete native versions")
+    names = {"vllm._C_stable_libtorch", "vllm._moe_C_stable_libtorch"}
+    paths, hashes = result["native_paths"], result["native_sha256"]
+    require(isinstance(paths, dict) and isinstance(hashes, dict)
+            and set(paths) == names and set(hashes) == names, "Incomplete native module identities")
+    for name in names:
+        require(isinstance(paths[name], str) and Path(paths[name]).is_absolute()
+                and isinstance(hashes[name], str) and re.fullmatch(r"[0-9a-f]{64}", hashes[name]),
+                "Invalid native path/hash")
+    return result
+
+
+# Captured FROM the image, never from a baseline or host source overlay. HEAD is
+# a receipt field, not independent proof: validate_candidate_build binds image
+# labels and the hashed official evidence first. Native imports may still fail;
+# preserve that failure, never synthesize native identities or alter the runtime.
 _CAPTURE = r'''
 import hashlib,importlib,importlib.metadata,json,pathlib,platform
 import torch,vllm
 names=('vllm._C_stable_libtorch','vllm._moe_C_stable_libtorch')
 paths={name:pathlib.Path(importlib.import_module(name).__file__).resolve() for name in names}
-print(json.dumps({'source_head':HEAD,'installation':{'mode':'image-source','package_root':str(pathlib.Path(vllm.__file__).resolve().parent)},'versions':{'python':platform.python_version(),'torch':torch.__version__,'tilelang':importlib.metadata.version('tilelang'),'tile_kernels':importlib.metadata.version('tile_kernels')},'native_paths':{k:str(v) for k,v in paths.items()},'native_sha256':{k:hashlib.sha256(v.read_bytes()).hexdigest() for k,v in paths.items()}},sort_keys=True))
+print('Q03_NATIVE_MANIFEST='+json.dumps({'source_head':HEAD,'installation':{'mode':'image-source','package_root':str(pathlib.Path(vllm.__file__).resolve().parent)},'versions':{'python':platform.python_version(),'torch':torch.__version__,'tilelang':importlib.metadata.version('tilelang'),'tile_kernels':importlib.metadata.version('tile_kernels')},'native_paths':{k:str(v) for k,v in paths.items()},'native_sha256':{k:hashlib.sha256(v.read_bytes()).hexdigest() for k,v in paths.items()}},sort_keys=True))
 '''
 
 
@@ -180,12 +283,7 @@ def verify_build(manifest, ops):
     digest = verify_image(image, receipt, inputs, build["tag"], manifest["preflight"]["publication"]["sha"])
     window = manifest["preflight"]["window_id"]
     require(re.fullmatch(r"[0-9a-f]{32}", window), "Unbound capture window")
-    capture = prefix + ["docker", "run", "--rm", "--name", "q03-native-capture-" + window,
-                        "--label", "q03.window=" + window, "--label", "q03.role=native-capture",
-                        "--network=none", "--read-only", "--runtime=runc",
-                        "--env", "NVIDIA_VISIBLE_DEVICES=void", "--tmpfs", "/tmp:rw,nosuid,nodev",
-                        "--entrypoint", "python3", digest, "-B", "-c",
-                        "HEAD=" + repr(SOURCE_HEAD) + "\n" + _CAPTURE]
+    _, capture = native_capture_command(digest, window)
     return {"schema_version": 1, "result": "built-official-smoke-passed",
             "image_id": digest, "source_head": SOURCE_HEAD, "source_tree": SOURCE_TREE,
             "image_labels": image["Config"].get("Labels") or {},
@@ -193,7 +291,7 @@ def verify_build(manifest, ops):
             "builder_container_id": ops.read_json(build["builder_receipt_path"])["result"]["container_id"],
             "runtime_manifest_capture_plan": {"argv": capture, "cwd": checkout,
                 "output": output + "/runtime-manifest.unreviewed.json", "status": "not executed; review required", "timeout_seconds": 120,
-                "preconditions": ["original service restoration verified",
+                "preconditions": ["execute only through a separately authorized capture-only window after coordinated stop",
                                   "local CPU and memory availability checked",
                                   "unique capture container name absent"]},
             "qualification": "P0/G1/G2 not run; restoration and review required before a new test window"}

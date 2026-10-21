@@ -172,6 +172,12 @@ class RuntimeOps:
         candidate = manifest["candidate"]
         if candidate["component_head"] != selection["source_head"]:
             raise ValueError("component identity differs from published selection")
+        if capture_only(manifest):
+            from q03_window_build import validate_candidate_build
+            if not Path(candidate["output_path"]).is_dir():
+                raise ValueError("capture output directory is missing")
+            validate_candidate_build(manifest, self)
+            return
         tests = candidate["tests_path"]
         for key in ("tests_path", "cache_path", "output_path"):
             if not Path(candidate[key]).is_dir():
@@ -188,35 +194,16 @@ class RuntimeOps:
         self.validate_candidate_image(manifest, selection)
 
     def validate_candidate_image(self, manifest, selection):
-        from q03_window_build import verify_image
+        from q03_window_build import validate_candidate_build
+        validate_candidate_build(manifest, self)
         candidate = manifest["candidate"]
-        for path_key, hash_key in (("runtime_manifest_path", "runtime_manifest_sha256"),
-                                   ("build_receipt_path", "build_receipt_sha256"),
-                                   ("build_inputs_path", "build_inputs_sha256")):
-            expected = candidate.get(hash_key, "")
-            if not re.fullmatch(r"[0-9a-f]{64}", expected) or self.sha256(candidate[path_key]) != expected:
-                raise ValueError("candidate evidence hash mismatch: " + path_key)
-        receipt = self.read_json(candidate["build_receipt_path"])
+        expected = candidate.get("runtime_manifest_sha256", "")
+        if (not re.fullmatch(r"[0-9a-f]{64}", expected)
+                or self.sha256(candidate["runtime_manifest_path"]) != expected):
+            raise ValueError("candidate runtime evidence hash mismatch")
         runtime = self.read_json(candidate["runtime_manifest_path"])
-        inputs = self.read_json(candidate["build_inputs_path"])["inputs"]
-        if (receipt.get("result") != "built-official-smoke-passed" or
-            receipt.get("image_id") != candidate["image"] or
-            receipt.get("source_head") != selection["source_head"] or
-            receipt.get("source_tree") != selection["source_tree"] or
-            runtime.get("source_head") != selection["source_head"] or
-            inputs["vllm"].get("patch_head") != selection["source_head"] or
-            inputs["vllm"].get("expected_tree") != selection["source_tree"]):
-            raise ValueError("candidate build/runtime identity mismatch")
-        images = json.loads(self.run(["docker", "image", "inspect", candidate["image"]]).stdout)
-        if not isinstance(images, list) or len(images) != 1:
-            raise ValueError("candidate image identity is ambiguous")
-        if images[0].get("Config", {}).get("Labels") != receipt.get("image_labels"):
-            raise ValueError("actual candidate image labels differ from reviewed build receipt")
-        official = receipt["official_receipt"]
-        digest = verify_image(images[0], official, inputs, official["tag"],
-                              manifest["preflight"]["publication"]["sha"])
-        if digest != candidate["image"]:
-            raise ValueError("actual candidate image differs from pinned digest")
+        if runtime.get("source_head") != selection["source_head"]:
+            raise ValueError("candidate runtime identity mismatch")
 
     def check(self, phase, manifest):
         from q03_window_preflight import check
@@ -342,6 +329,27 @@ class RuntimeOps:
         with path.open("x") as stream:
             json.dump(report, stream, indent=2)
 
+    def validate_capture_result(self, manifest, execution):
+        from q03_window_build import validate_native_capture_output
+        path = Path(execution["log_path"])
+        if path.stat().st_size > 1024 * 1024:
+            raise RuntimeError("native capture output exceeds bounded size")
+        runtime = validate_native_capture_output(path.read_text())
+        candidate = manifest["candidate"]
+        if runtime.get("source_head") != candidate["component_head"]:
+            raise RuntimeError("captured component identity mismatch")
+        output = Path(candidate["output_path"]) / "runtime-manifest.json"
+        # Exclusive output: a capture never replaces reviewed runtime evidence.
+        with output.open("x") as stream:
+            json.dump(runtime, stream, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        return {"status": "captured-unreviewed", "image_id": candidate["image"],
+                "source_head": candidate["component_head"], "runtime_manifest_path": str(output),
+                "runtime_manifest_sha256": self.sha256(output),
+                "requires_independent_review": True}
+
     def quiesce_original(self, session):
         # Sealing every prior generation prevents a delayed SSH launch from
         # appearing after an apparently empty process/GPU observation.
@@ -384,6 +392,27 @@ class RuntimeOps:
             item["State"].get("Running") is not False or
             not re.fullmatch(r"[0-9a-f]{64}", item.get("Id", ""))):
             raise RuntimeError("candidate creation identity/state differs")
+        if capture_only(session.manifest):
+            host = item.get("HostConfig", {})
+            environment = item["Config"].get("Env", [])
+            expected = {"NVIDIA_VISIBLE_DEVICES": "none", "NVIDIA_DRIVER_CAPABILITIES": "compute"}
+            if (item.get("Image") != session.manifest["candidate"]["image"]
+                    or host.get("Runtime") != "nvidia" or host.get("Devices")
+                    or host.get("DeviceRequests") or host.get("Privileged") is not False
+                    or host.get("NetworkMode") != "none"
+                    or host.get("ReadonlyRootfs") is not True
+                    or not isinstance(environment, list)
+                    or not all(isinstance(value, str) for value in environment)
+                    or any([value for value in environment if value.startswith(key + "=")]
+                           != [key + "=" + value] for key, value in expected.items())):
+                raise RuntimeError("capture container runtime/device/environment differs")
+            projection = {key: item[key] for key in ("Image", "Config", "HostConfig", "Mounts")}
+            identity = {"container_id": item["Id"], "image_id": item["Image"],
+                        "config_sha256": hashlib.sha256(json.dumps(
+                            projection, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
+                        "runtime": host["Runtime"], "environment": expected,
+                        "no_gpu_devices_requested": True}
+            session.update(capture_container_identity=identity)
         ids = dict(session.state.get("candidate_container_ids", {}))
         ids[name] = item["Id"]
         session.update(candidate_container_ids=ids)
@@ -549,6 +578,11 @@ def recover(directory, ops=None):
 
 
 def job_command(manifest, kind, window_id):
+    if kind == "capture":
+        if not capture_only(manifest):
+            raise ValueError("native capture must be a separate capture-only window")
+        from q03_window_build import native_capture_command
+        return native_capture_command(manifest["candidate"]["image"], window_id)
     candidate = manifest["candidate"]
     if kind not in ("p0", "g1", "g2"):
         raise ValueError("only reviewed p0/g1/g2 job kinds are accepted")
@@ -582,6 +616,12 @@ def job_command(manifest, kind, window_id):
         argv += ["-m", "pytest", "-p", "no:cacheprovider", "-q", "tests/kernels/" + path,
                  "--junitxml=/results/" + kind + ".xml"]
     return name, argv
+
+
+def capture_only(manifest):
+    jobs = manifest.get("jobs")
+    return (isinstance(jobs, list) and len(jobs) == 1 and
+            isinstance(jobs[0], dict) and jobs[0].get("kind") == "capture")
 
 
 def build_only(manifest):
@@ -629,6 +669,36 @@ def validate_layout(manifest, directory):
         if type(job.get("timeout_seconds")) is not int or not 1 <= job["timeout_seconds"] <= 86400:
             raise ValueError("bounded build timeout required")
         return  # All build-specific paths are checked by prepare_build before writes.
+    if capture_only(manifest):
+        candidate = manifest["candidate"]
+        paths = {key: safe(candidate[key]) for key in
+                 ("output_path", "build_receipt_path", "build_inputs_path")}
+        for value in paths.values():
+            if value == resolved_root or resolved_root not in value.parents:
+                raise ValueError("capture paths must be inside independent root")
+        for writable in (paths["output_path"], session_path):
+            if any(overlap(writable, paths[key]) for key in
+                   ("build_receipt_path", "build_inputs_path")):
+                raise ValueError("capture output overlaps immutable build evidence")
+            checkout = safe(spec["independent_checkout"])
+            immutable = [checkout / name for name in
+                         (".git", "bin", "scripts", "config", "experiments", "docker")]
+            prepared = paths["build_inputs_path"].parent
+            immutable += [prepared / "src", prepared / "context"]
+            if any(overlap(writable, item) for target in immutable
+                   for item in (target, target.resolve())):
+                raise ValueError("capture output overlaps immutable controller or prepared source")
+        if overlap(paths["output_path"], session_path):
+            raise ValueError("capture output must be separate from session evidence")
+        if (paths["output_path"] / "runtime-manifest.json").exists():
+            raise ValueError("capture output evidence already exists")
+        if not re.fullmatch(r"[0-9a-f]{40}", candidate["component_head"]):
+            raise ValueError("fixed component head required")
+        timeout = manifest["jobs"][0].get("timeout_seconds")
+        if type(timeout) is not int or not 1 <= timeout <= 120:
+            raise ValueError("bounded capture timeout required (1..120)")
+        job_command(manifest, "capture", "0" * 32)
+        return
     candidate = manifest["candidate"]
     paths = {key: safe(candidate[key]) for key in
              ("tests_path", "cache_path", "output_path", "runtime_manifest_path",
@@ -755,8 +825,9 @@ def run_session(manifest, directory, ops=None):
                 session.update(phase="job-" + job["kind"], candidate_containers=containers)
                 if job["kind"] != "build":
                     argv = ops.prepare_candidate(session, name, argv)
-                ops.execute(session, argv, cwd=cwd, timeout=timeout)
-                result = ops.validate_result(manifest, job["kind"])
+                execution = ops.execute(session, argv, cwd=cwd, timeout=timeout)
+                result = (ops.validate_capture_result(manifest, execution)
+                          if job["kind"] == "capture" else ops.validate_result(manifest, job["kind"]))
                 if result is not None:
                     atomic(directory / (job["kind"] + "-result.json"), result)
                 session.update(job_results=session.state["job_results"] + [job["kind"]])

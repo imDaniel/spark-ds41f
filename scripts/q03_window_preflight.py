@@ -294,6 +294,28 @@ def _node_argv(spec, node, argv):
             "ConnectTimeout=10", host, shlex.join(argv)]
 
 
+def _validate_publication(pub):
+    require(pub["url"] in {"https://github.com/imDaniel/spark-ds41f.git",
+                           "git@github.com:imDaniel/spark-ds41f.git"}, "Not the self fork")
+    require(re.fullmatch(r"[0-9a-f]{40}", pub["sha"]) is not None, "Unpinned publication")
+    require(re.fullmatch(r"refs/heads/[A-Za-z0-9_./-]+", pub["ref"]) is not None,
+            "Publication must name an exact branch ref")
+
+
+def verify_build_publication(publication, ops):
+    """Verify an original build's published identity, not the current checkout.
+
+    Image labels and the hashed successful build receipt must separately bind
+    this SHA. The controller checkout may legitimately have advanced since the
+    build; its own full checkout/publication preflight remains mandatory.
+    """
+    _validate_publication(publication)
+    remote = _run(ops, ["git", "--no-optional-locks", "ls-remote", "--exit-code",
+                        publication["url"], publication["ref"]])
+    require(remote.split() == [publication["sha"], publication["ref"]],
+            "Exact ref is not published")
+
+
 def collect_preflight(manifest, ops, phase):
     spec = manifest["preflight"]
     for key in ("hold_path", "request_path", "legacy_hold_path", "legacy_request_path"):
@@ -302,11 +324,7 @@ def collect_preflight(manifest, ops, phase):
                                       "legacy_request_path")}) == 4, "Coordination paths overlap")
     pub = spec["publication"]
     checkout = str(ops.resolve(spec["independent_checkout"]))
-    require(pub["url"] in {"https://github.com/imDaniel/spark-ds41f.git",
-                           "git@github.com:imDaniel/spark-ds41f.git"}, "Not the self fork")
-    require(re.fullmatch(r"[0-9a-f]{40}", pub["sha"]) is not None, "Unpinned publication")
-    require(re.fullmatch(r"refs/heads/[A-Za-z0-9_./-]+", pub["ref"]) is not None,
-            "Publication must name an exact branch ref")
+    _validate_publication(pub)
     policy = ops.read_json(spec["policy_path"])
     require(all(policy.get(key) == value for key, value in spec["registered_policy"].items()),
             "Registered policy authority drift")
@@ -323,8 +341,7 @@ def collect_preflight(manifest, ops, phase):
         require(_run(ops, git + ["remote", "get-url", "origin"]) == pub["url"], "Fork URL drift")
         require(_run(ops, git + ["rev-parse", "HEAD"]) == pub["sha"], "Candidate HEAD drift")
         require(not _run(ops, git + ["status", "--porcelain"]), "Dirty independent checkout")
-        remote = _run(ops, git + ["ls-remote", "--exit-code", pub["url"], pub["ref"]])
-        require(remote.split() == [pub["sha"], pub["ref"]], "Exact ref is not published")
+        verify_build_publication(pub, ops)
     nodes = spec["nodes"]
     require(len(nodes) == 4 and len({n["name"] for n in nodes}) == 4
             and {n["rank"] for n in nodes} == {1, 2, 3, 4},
