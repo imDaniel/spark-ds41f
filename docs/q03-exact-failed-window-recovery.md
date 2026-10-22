@@ -21,25 +21,61 @@ All input paths must be canonical, on the authorized head, and owner-controlled.
 ```sh
 python3 -I -B "$NEW_CHECKOUT/scripts/q03_failed_window_recovery.py" \
   --old-session "$OLD_SESSION" --journal-dir "$RECOVERY_JOURNAL" \
-  --live-witness "$PRIVATE_LSTAT_WITNESS"
+  --live-witness "$PRIVATE_LSTAT_WITNESS" \
+  --continuation-witness "$PRIVATE_CONTINUATION_WITNESS"
 ```
 
 This default is read-only file/process/hold admission, not a proof of live drain.
 Only after source review and the authorized local handoff, append `--apply`.
-No arbitrary command, START, restart, resume or watchdog retry is exposed.
+No arbitrary command, START, restart, generic resume or watchdog retry is exposed.
+
+## Exact failed-predecessor continuation
+
+The first independent entry failed before its old-epoch transport call because
+it rejected unchanged registered source/configuration ancestry. This successor
+does not edit that entry, its failure journal, the original window, or modes.
+It additionally requires the private continuation authority SHA-256
+`a98be5cacaf7e7a8e66f6cfcd5aff65e05d439696211fa96946975bd7f78374a`.
+
+The authority identifies exactly 13 original policy/source/configuration/inventory
+files and their witnessed ancestors. Group-writable original paths are accepted
+only by exact path, inode, ownership, mode and hash. Content authority still comes
+from the old capsule and its protected inventory, not merely the new observation.
+The profile, physical node map and upstream configuration are parsed from the
+same verified bytes. Default read-only admission exercises this exact local
+loader before creating a claim or updating the hold; it never contacts SSH.
+
+Pass the existing fixed journal as `--journal-dir`, not a new sibling. The
+predecessor intent/state/log/lock remain byte-for-byte unchanged. Its exact failed
+command, recorded recovery identity, known original core/watchdog identities,
+and absence of a matching old command are rechecked before and after locks.
+Unrecorded historical supervisor/launcher identities remain explicit gaps; they
+are not invented or treated as a current all-four drain proof. The pinned
+supervisor contract and exact terminal command record bound this pre-STOP
+failure. Fresh old-epoch sealing is still mandatory.
+
+One exclusive nested claim named `continuation-79633da35fcbe1dc` is permitted
+inside that existing journal. Any preexisting claim refuses another attempt.
+The original absolute recovery deadline is retained exactly, rather than
+starting a new 7200-second budget. An expired deadline refuses continuation.
+
 
 ## Closure contract
 
 - Verify the exact immutable capsule, 23 old artifacts, 34 pinned source files,
   private metadata witness, hold invariants and fresh core/watchdog death.
-- The only writable-ancestry exception is the witnessed original
+- The historical-session writable-ancestry exception is the witnessed original
   `restore-evidence` directory at mode 0775, behind its exact private 0700
   enclosing session. Its live inode, ownership, type and metadata must match.
   Every permitted 0664 historical file also requires its exact hash and mode.
-- Acquire the existing session, watchdog and shared GPU locks and the new
-  journal lock. Refuse a preexisting journal, any source drift or UNKNOWN state.
+  The separately hash-bound continuation authority scopes the original
+  registered source/configuration exceptions described above.
+- Acquire the existing session, watchdog, predecessor-journal and shared GPU
+  locks, then the exclusive nested claim lock. Refuse any predecessor drift,
+  existing continuation claim, source drift or UNKNOWN state.
 - Refresh heartbeat only while this bounded, live recovery owns those locks.
-  Use the capsule's existing 7200-second recovery policy, not a new time limit.
+  Preserve the first recovery's absolute deadline under the capsule's existing
+  7200-second policy; continuation never resets or extends it.
 - Freshly seal the old STOP epoch on the exact four configured targets and
   require all eight historical operation IDs. Durably register a new epoch,
   run only the registered coordinated STOP, and seal it even if STOP fails.
@@ -59,8 +95,10 @@ An existing incomplete journal requires evidence-led review, not a new path.
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests \
-  -p test_q03_failed_window_recovery.py -v
+  -p 'test_q03*recovery*.py' -v
 ```
 
-The focused matrix uses only temporary files and fake operation effects. It does
-not contact the cluster, load a model, or establish actual release eligibility.
+The focused matrix includes temporary-file admission faults and fake whole-entry
+effects, plus the real isolated child bootstrap, supervisor, original parser,
+configuration loader and STOP implementation against a local fake SSH transport.
+It does not contact the cluster, load a model, or establish release eligibility.

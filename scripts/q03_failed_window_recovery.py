@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """One exact failed-window closure, NEVERSTART; no historical evidence repair.
 
-Default is read-only admission. --apply requires a new independent journal.
+Default is read-only admission. --apply reserves one independent journal claim.
 Only an actively locked recovery refreshes its owned hold. Pre-release failures
 retain the hold; post-unlink failures report uncertain release separately.
-The new journal is retained for review; there is no automatic retry or resume.
+The exact witnessed predecessor may continue once inside its existing journal;
+its records and original absolute deadline remain unchanged. No generic resume.
 """
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ import argparse
 import contextlib
 import fcntl
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -31,6 +33,11 @@ PACKET_SHA256 = "bc1b4db3d53363db99e29451bf83bb8986c735e1d88e876f947d23e0cffedf1
 MAX_BYTES = 4 * 1024 * 1024
 WITNESS_SHA256 = "837504ffffe5ec94f08dd8e76870e25802c2f87186270efdd47b16aabfd854d2"
 _WITNESS = None
+_CONTINUATION = None
+CONTINUATION_WITNESS_SHA256 = 'a98be5cacaf7e7a8e66f6cfcd5aff65e05d439696211fa96946975bd7f78374a'
+FAILED_ENTRY_SHA256 = '0ffb6fb5f5b9f1e607bdcc8efdc2caefbd413f82afc78de8333a458e32a14e7c'
+CONTINUATION_NAME = 'continuation-79633da35fcbe1dc'
+
 # Child execution compiles the SAME nofollow/hash-verified bytes; never a path
 # reopen or a bytecode cache after the parent validated the source.
 ENTRY_BOOTSTRAP = r"""
@@ -200,6 +207,11 @@ def witness_metadata(path, row):
 def ancestry(path):
     for parent in (path, *path.parents):
         info = parent.lstat()
+        if _CONTINUATION is not None and str(parent) in _CONTINUATION['ancestors']:
+            witness_metadata(parent, _CONTINUATION['ancestors'][str(parent)])
+            require(info.st_uid == os.getuid() and stat.S_IMODE(info.st_mode) in (0o700, 0o755, 0o775),
+                    'Unexpected registered original ancestry')
+            continue
         exception = (_WITNESS is not None and
                      str(parent) == _WITNESS['roles']['restore_evidence']['path'])
         if exception:
@@ -247,6 +259,12 @@ def verify_witness():
 
 def read(path, *, fingerprint=None):
     path = canonical(path)
+    if _CONTINUATION is not None and str(path) in _CONTINUATION['files']:
+        row = _CONTINUATION['files'][str(path)]
+        witness_metadata(path, row)
+        expected = row_fingerprint(row)
+        require(fingerprint is None or fingerprint == expected, 'Conflicting original authority')
+        fingerprint = expected
     ancestry(path.parent)
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
     try:
@@ -257,7 +275,7 @@ def read(path, *, fingerprint=None):
         if fingerprint is None:
             require(not before.st_mode & 0o022, 'Unsafe file mode: ' + str(path))
         else:
-            require(before.st_uid == fingerprint['uid'] == os.getuid()
+            require(before.st_uid == fingerprint['uid'] and before.st_uid in (0, os.getuid())
                     and stat.S_IMODE(before.st_mode) == int(fingerprint['mode'], 8)
                     and before.st_size == fingerprint['bytes'], 'Historical metadata drift: ' + str(path))
         raw = os.read(fd, MAX_BYTES + 1)
@@ -271,6 +289,145 @@ def read(path, *, fingerprint=None):
         return raw
     finally:
         os.close(fd)
+
+
+def row_fingerprint(row):
+    return {'uid': row['lstat']['uid'], 'mode': row['lstat']['mode'],
+            'bytes': row['lstat']['size'], 'sha256': row['sha256']}
+
+
+def load_continuation(path, directory):
+    """Admit this observed failed predecessor, not a generic resume request."""
+    global _CONTINUATION
+    raw = read(path)
+    require(digest(raw) == CONTINUATION_WITNESS_SHA256, 'Continuation witness hash differs')
+    value = decode(raw)
+    require(value['schema_version'] == 1 and value['window_id'] == WINDOW and value['old_capsule_sha256'] == CAPSULE_SHA256
+            and value['failed_entry_sha256'] == FAILED_ENTRY_SHA256
+            and value['original_witness_sha256'] == WITNESS_SHA256,
+            'Continuation witness authority differs')
+    capsule = decode(read(Path(directory) / 'capsule.json', fingerprint=OLD_FILES['capsule.json']))
+    pre = capsule['manifest']['preflight']
+    policy = pre['registered_policy']
+    repository = canonical(policy['repository'])
+    rows = value['original_files']
+    files = {row['path']: row for row in rows}
+    ancestors = {row['path']: row for row in value['original_ancestors']
+                 if int(row['lstat']['mode'], 8) & 0o022}
+    require(len(files) == len(rows), 'Duplicate original file witness')
+    require(all(row['lstat']['type'] == 'regular' and row['lstat']['nlink'] == 1
+                and row['lstat']['uid'] in (0, os.getuid())
+                and (row['lstat']['uid'] == os.getuid() or not int(row['lstat']['mode'], 8) & 0o022)
+                for row in rows),
+            'Original file witness is not an owned single-link regular file')
+    allowed_ancestors = {str(p) for name in files for p in Path(name).parents}
+    require(set(ancestors) <= allowed_ancestors and all(
+        row['lstat']['type'] == 'directory' and row['lstat']['uid'] == os.getuid()
+        and row['lstat']['mode'] == '0775' for row in ancestors.values()),
+        'Unscoped original writable ancestry')
+    _CONTINUATION = dict(value, path=str(canonical(path)), files=files, ancestors=ancestors)
+    expected = {pre['policy_path']: pre['policy_sha256'],
+                str(repository / 'bin/spark'): pre['spark_sha256'],
+                str(repository / policy['cluster_config']): policy['config_sha256'],
+                pre['nodes'][0]['inventory_path']: pre['nodes'][0]['inventory_sha256']}
+    for name in ('topology', 'mesh_fabric', 'kernel_backend', 'kernel_readiness',
+                 'transport_profiles', 'model_layout', 'recipe'):
+        expected[str(repository / 'scripts' / (name + '.py'))] = capsule['recovery_source_sha256'][name + '.py']
+    inventory = decode(read(pre['nodes'][0]['inventory_path']))['inventory']['files']
+    protected = {row['path']: row.get('sha256') for row in inventory}
+    config_files = []
+    for name in value['configuration_paths']:
+        require(canonical(name).is_relative_to(repository) and name in files,
+                'Unscoped original configuration path')
+        if name not in expected:
+            require(isinstance(protected.get(name), str), 'Configuration lacks old protected authority')
+            expected[name] = protected[name]
+        config_files.append(files[name])
+    require(len(config_files) == len({row['path'] for row in config_files})
+            and str(repository / policy['cluster_config']) in value['configuration_paths']
+            and set(files) == set(expected), 'Original input inventory differs')
+    require(all(files[name]['sha256'] == pin for name, pin in expected.items()),
+            'Original input hash differs from capsule/protected authority')
+    _CONTINUATION['config_files'] = config_files
+    verify_registered_inputs()
+
+
+def verify_registered_inputs():
+    require(_CONTINUATION is not None, 'Exact continuation authority is required')
+    require(digest(read(_CONTINUATION['path'])) == CONTINUATION_WITNESS_SHA256,
+            'Continuation witness changed')
+    for row in _CONTINUATION['ancestors'].values():
+        witness_metadata(Path(row['path']), row)
+    for row in _CONTINUATION['files'].values():
+        require(digest(read(row['path'])) == row['sha256'], 'Registered original bytes changed')
+
+
+def predecessor_processes_absent(intent, entry):
+    require(process_state(intent['recovery_process']) == 'dead', 'Predecessor recovery is alive')
+    require(_CONTINUATION['predecessor_processes'] == [intent['recovery_process']],
+            'Recorded predecessor identity inventory differs')
+    # Core/watchdog identities are checked from their original capsule/ready
+    # authority by verify_terminal; missing supervisor identities stay gaps.
+    # The final predecessor state clears its reaped supervisor identity. Match
+    # the exact old entry and journal argv to detect an unrecorded surviving
+    # supervisor/child; unreadable/malformed observations are UNKNOWN.
+    for item in Path('/proc').glob('[0-9]*/stat'):
+        try:
+            before = item.read_text().rsplit(')', 1)[1].split()
+            require(len(before) > 19 and before[19].isdigit(), 'Unknown predecessor process scan')
+            if before[0] == 'Z':
+                continue
+            argv = (item.parent / 'cmdline').read_bytes().split(b'\0')
+            after = item.read_text().rsplit(')', 1)[1].split()
+        except (FileNotFoundError, ProcessLookupError):
+            continue
+        require(before[19] == after[19], 'Process changed during predecessor scan')
+        require(not (os.fsencode(entry) in argv and os.fsencode(intent['journal_dir']) in argv),
+                'Predecessor command or supervisor remains live')
+
+
+def verify_predecessor(capsule, journal, *, initial_hold=False):
+    authority = _CONTINUATION['failed_journal']
+    require(str(journal) == authority['path'], 'Continuation targets another failed journal')
+    row = dict(authority['directory'], role='session_parent')
+    witness_metadata(journal, row)  # stable directory identity; new child changes its entries
+    files = {row['path']: row for row in authority['files']}
+    observed = {str(p) for p in journal.iterdir() if p.name != CONTINUATION_NAME}
+    require(observed == set(files), 'Predecessor journal inventory changed')
+    for name, row in files.items():
+        witness_metadata(Path(name), row)
+        require(digest(read(name)) == row['sha256'], 'Predecessor journal bytes changed')
+    intent, state = (decode(read(journal / name)) for name in ('intent.json', 'state.json'))
+    require(intent['window_id'] == WINDOW and intent['old_capsule_sha256'] == CAPSULE_SHA256
+            and intent['entry_sha256'] == FAILED_ENTRY_SHA256 and intent['never_start'] is True
+            and intent['journal_dir'] == str(journal), 'Predecessor intent differs')
+    require(state['phase'] == 'recovery-failed' and state['active_process'] is None
+            and state['transition_epochs'] == [OLD_EPOCH] and state['last_exit_code'] == 1
+            and state['recovery_process'] == intent['recovery_process']
+            and state['restored'] is False and state['hold_released'] is False
+            and state.get('positive_all_four_drain') is not True
+            and len(state['command_history']) == 1,
+            'Predecessor is not the exact pre-STOP failure')
+    command = state['command_history'][0]
+    argv = command['argv']
+    require(argv[1:5] == ['-I', '-B', '-c', ENTRY_BOOTSTRAP]
+            and argv[6] == FAILED_ENTRY_SHA256 and '--apply' not in argv
+            and argv[argv.index('--adapter-step') + 1] == 'quiesce'
+            and argv[argv.index('--epoch') + 1] == OLD_EPOCH
+            and command['log'] in files, 'Predecessor command differs')
+    require(digest(read(argv[5])) == FAILED_ENTRY_SHA256, 'Predecessor entry changed')
+    predecessor_processes_absent(intent, argv[5])
+    deadline = intent['deadline_epoch']
+    require(type(deadline) in (int, float) and deadline > time.time()
+            and deadline == _CONTINUATION['absolute_recovery_deadline']
+            and abs(deadline - state['restoring_started_epoch'] - capsule['recovery_timeout_s']) < .000001,
+            'Original recovery deadline missing, invalid or expired')
+    verify_hold(capsule, identity=tuple(intent['hold_identity']))
+    hold_row = dict(_CONTINUATION['current_hold'], role='head_hold')
+    witness_metadata(Path(capsule['hold_path']), hold_row)
+    if initial_hold:
+        require(digest(read(capsule['hold_path'])) == hold_row['sha256'], 'Pre-continuation hold changed')
+    return intent
 
 
 def process_state(record):
@@ -453,8 +610,9 @@ def validate_destination(destination, capsule):
     require(destination != root and destination.is_relative_to(root)
             and not destination.is_relative_to(old) and not old.is_relative_to(destination),
             'New journal overlaps old session or escapes independent root')
-    require(destination == root / 'sessions' / ('recovery-' + WINDOW + '-neverstart'),
-            'Exact window requires its one fixed recovery journal')
+    fixed = root / 'sessions' / ('recovery-' + WINDOW + '-neverstart')
+    allowed = (fixed, fixed / CONTINUATION_NAME) if _CONTINUATION is not None else (fixed,)
+    require(destination in allowed, 'Exact window requires its one fixed journal/continuation')
     for value in capsule['manifest']['preflight']['protected_roots']:
         p = Path(value)
         require(not destination.is_relative_to(p) and not p.is_relative_to(destination),
@@ -463,32 +621,11 @@ def validate_destination(destination, capsule):
     return destination
 
 
-def adapter_step(directory, destination, action, epoch, witness):
-    require(action in ('stop', 'quiesce'), 'NEVERSTART: unsupported adapter action')
-    load_witness(witness, directory)
-    os.umask(0o077)
-    os.environ['GIT_OPTIONAL_LOCKS'] = '0'
-    os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
-    capsule, _, _, sources = verify_old(directory)
-    destination = validate_destination(destination, capsule)
-    intent = decode(read(destination / 'intent.json'))
-    state = decode(read(destination / 'state.json'))
-    require(intent['entry_sha256'] == globals().get('_VERIFIED_ENTRY_SHA256')
-            == digest(read(Path(__file__).resolve()))
-            and intent['window_id'] == WINDOW and intent['old_capsule_sha256'] == CAPSULE_SHA256
-            and intent['journal_dir'] == str(destination)
-            and intent['private_witness_path'] == _WITNESS['path']
-            and intent['private_witness_sha256'] == WITNESS_SHA256, 'Recovery child intent differs')
-    parent = state['active_process']
-    require(process_state(intent['recovery_process']) == 'alive'
-            and parent['pid'] == os.getppid() and process_state(parent) == 'alive'
-            and os.getpgid(0) == parent['pid'], 'Adapter is not the journalled supervised child')
-    require(epoch in state['transition_epochs'] and
-            (action == 'quiesce' or epoch != OLD_EPOCH), 'Unregistered transition epoch')
-    verify_hold(capsule, identity=tuple(intent['hold_identity']))
+
+def registered_assets(capsule, sources):
+    """Pure local byte admission shared by plan and the supervised child."""
     modules = load_modules(capsule, sources)
     adapter = modules['q03_original_spark_adapter']
-    evidence = destination / 'restore-evidence'
     # Execute only same-read pinned source bytes, avoiding SourceFileLoader and
     # its second read/pycache route. Preserve the registered source's ROOT.
     pre = capsule['manifest']['preflight']
@@ -520,8 +657,27 @@ def adapter_step(directory, destination, action, epoch, witness):
         exec(compile(source, original.__file__, 'exec'), original.__dict__)
     finally:
         sys.path[:] = before_path
-    verify_hold(capsule, identity=tuple(intent['hold_identity']))
     require(digest(read(pre['policy_path'])) == pre['policy_sha256'], 'Policy changed after import')
+    if _CONTINUATION is not None:
+        snapshots = {}
+        for row in _CONTINUATION['config_files']:
+            raw = read(row['path'])
+            require(digest(raw) == row['sha256'], 'Registered configuration input changed')
+            snapshots[row['path']] = raw
+        require(str(repository / policy['cluster_config']) in snapshots,
+                'Registered profile is not in the same-read configuration set')
+        class PinnedConfigurationPath(type(Path())):
+            def read_bytes(self):
+                require(str(self) in snapshots, 'Unlisted original configuration read: ' + str(self))
+                return snapshots[str(self)]
+            def read_text(self, encoding=None, errors=None):
+                return self.read_bytes().decode(encoding or 'utf-8', errors or 'strict')
+            def open(self, mode='r', buffering=-1, encoding=None, errors=None, newline=None):
+                require(mode in ('r', 'rt', 'rb'), 'Original configuration is read-only')
+                raw = self.read_bytes()
+                return io.BytesIO(raw) if 'b' in mode else io.StringIO(raw.decode(encoding or 'utf-8', errors or 'strict'))
+        original.Path = PinnedConfigurationPath
+        original.ROOT = PinnedConfigurationPath(repository)
     parsed = original.parser().parse_args(adapter.transition_args(policy, 'stop', True))
     cluster, nodes, _ = original.configuration(parsed)
     require(len(nodes['nodes']) == 4
@@ -532,6 +688,45 @@ def adapter_step(directory, destination, action, epoch, witness):
             and all(node['rank'] + 1 == expected_nodes[node['name']]['rank']
                     and original.ssh_target(nodes, node) == expected_nodes[node['name']]['ssh_host']
                     for node in nodes['nodes']), 'Registered node target/rank binding differs')
+    if _CONTINUATION is not None:
+        verify_registered_inputs()
+    return original, adapter, parsed, cluster, nodes
+
+
+def adapter_step(directory, destination, action, epoch, witness, continuation_witness=None):
+    require(action in ('stop', 'quiesce'), 'NEVERSTART: unsupported adapter action')
+    load_witness(witness, directory)
+    if continuation_witness is not None:
+        load_continuation(continuation_witness, directory)
+    os.umask(0o077)
+    os.environ['GIT_OPTIONAL_LOCKS'] = '0'
+    os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
+    capsule, _, _, sources = verify_old(directory)
+    destination = validate_destination(destination, capsule)
+    if _CONTINUATION is not None:
+        require(destination.name == CONTINUATION_NAME, 'Child lacks its exclusive continuation')
+        predecessor = verify_predecessor(capsule, destination.parent)
+    intent = decode(read(destination / 'intent.json'))
+    state = decode(read(destination / 'state.json'))
+    require(intent['entry_sha256'] == globals().get('_VERIFIED_ENTRY_SHA256')
+            == digest(read(Path(__file__).resolve()))
+            and intent['window_id'] == WINDOW and intent['old_capsule_sha256'] == CAPSULE_SHA256
+            and intent['journal_dir'] == str(destination)
+            and intent['private_witness_path'] == _WITNESS['path']
+            and intent['private_witness_sha256'] == WITNESS_SHA256, 'Recovery child intent differs')
+    if _CONTINUATION is not None:
+        require(intent['deadline_epoch'] == predecessor['deadline_epoch']
+                and intent['continuation_witness_sha256'] == CONTINUATION_WITNESS_SHA256,
+                'Continuation deadline/authority changed')
+    parent = state['active_process']
+    require(process_state(intent['recovery_process']) == 'alive'
+            and parent['pid'] == os.getppid() and process_state(parent) == 'alive'
+            and os.getpgid(0) == parent['pid'], 'Adapter is not the journalled supervised child')
+    require(epoch in state['transition_epochs'] and
+            (action == 'quiesce' or epoch != OLD_EPOCH), 'Unregistered transition epoch')
+    verify_hold(capsule, identity=tuple(intent['hold_identity']))
+    original, adapter, parsed, cluster, nodes = registered_assets(capsule, sources)
+    evidence = destination / 'restore-evidence'
     # Label each seal result at its actual configured transport target, not by
     # trusting a remotely supplied label or a four-element aggregate.
     class NodeBoundRemote(adapter.RemoteOperations):
@@ -607,8 +802,14 @@ def failure_fields(state, hold_path, identity, error):
 def recover(directory, destination, *, apply=False):
     capsule, historical, ready, sources = verify_old(directory)
     destination = validate_destination(destination, capsule)
-    require(not destination.exists(), 'Recovery requires a fresh journal; no automatic resume')
-    hold_identity = verify_hold(capsule, initial=True)
+    predecessor = None
+    if _CONTINUATION is not None:
+        require(destination.name != CONTINUATION_NAME, 'Parent must reconcile the fixed predecessor journal')
+        predecessor = verify_predecessor(capsule, destination, initial_hold=True)
+        registered_assets(capsule, sources)  # same local admission as the real child, no SSH
+        destination = destination / CONTINUATION_NAME
+    require(not destination.exists(), 'Recovery requires its fresh journal reservation; no automatic resume')
+    hold_identity = verify_hold(capsule, initial=predecessor is None)
     if not apply:
         return {'status': 'plan-only', 'window_id': WINDOW, 'execution_enabled': False,
                 'old_capsule_sha256': CAPSULE_SHA256, 'scope': 'exact-pre-attempt-NEVERSTART',
@@ -621,6 +822,10 @@ def recover(directory, destination, *, apply=False):
     with contextlib.ExitStack() as locks:
         for name in ('session.lock', 'watchdog.lock'):
             lock_existing(locks, Path(directory) / name, OLD_FILES[name])
+        if predecessor is not None:
+            old_lock = destination.parent / 'reconcile.lock'
+            lock_row = next(row for row in _CONTINUATION['failed_journal']['files'] if row['path'] == str(old_lock))
+            lock_existing(locks, old_lock, row_fingerprint(lock_row))
         # Existing lock is checked before the unchanged GPU-lock acquisition.
         gpu_lock = Path('/tmp/spark-lab-gpu.lock')
         require(gpu_lock.exists(), 'Expected shared GPU lock missing')
@@ -632,7 +837,10 @@ def recover(directory, destination, *, apply=False):
         require((os.fstat(gpu.fileno()).st_dev, os.fstat(gpu.fileno()).st_ino)
                 == (info.st_dev, info.st_ino), 'Shared GPU lock replaced')
         verify_old(directory)
-        verify_hold(capsule, identity=hold_identity, initial=True)
+        verify_hold(capsule, identity=hold_identity, initial=predecessor is None)
+        if predecessor is not None:
+            verify_predecessor(capsule, destination.parent, initial_hold=True)
+            verify_registered_inputs()
         destination.mkdir(mode=0o700)
         fd = os.open(destination / 'reconcile.lock', os.O_CREAT | os.O_EXCL | os.O_RDWR, 0o600)
         stream = locks.enter_context(os.fdopen(fd, 'r+'))
@@ -644,7 +852,11 @@ def recover(directory, destination, *, apply=False):
                   'entry_sha256': entry_sha, 'recovery_process': identity,
                   'private_witness_path': _WITNESS['path'], 'private_witness_sha256': WITNESS_SHA256,
                   'hold_identity': list(hold_identity), 'never_start': True,
-                  'deadline_epoch': time.time() + capsule['recovery_timeout_s']}
+                  'deadline_epoch': (predecessor['deadline_epoch'] if predecessor is not None
+                                     else time.time() + capsule['recovery_timeout_s'])}
+        if predecessor is not None:
+            intent['continuation_witness_sha256'] = CONTINUATION_WITNESS_SHA256
+            intent['predecessor_journal'] = str(destination.parent)
         private_json(destination / 'intent.json', intent, exclusive=True)
         class RecoverySession:
             def __init__(self):
@@ -673,6 +885,8 @@ def recover(directory, destination, *, apply=False):
                     '--old-session', str(directory), '--journal-dir', str(destination),
                     '--adapter-step', action, '--epoch', epoch,
                     '--live-witness', _WITNESS['path']]
+                if _CONTINUATION is not None:
+                    argv += ['--continuation-witness', _CONTINUATION['path']]
                 return ops.execute(self, argv, cwd=str(destination), timeout=timeout)
             def seal(self, epoch):
                 result = self.command('quiesce', epoch, 360)
@@ -732,6 +946,9 @@ def recover(directory, destination, *, apply=False):
         session = RecoverySession()
         stop_heartbeat, heartbeat_errors = threading.Event(), []
         def barrier():
+            if predecessor is not None:
+                verify_predecessor(capsule, destination.parent)
+                verify_registered_inputs()
             require(not heartbeat_errors, 'Active recovery heartbeat failed')
             require(time.time() < intent['deadline_epoch'], 'Recovery deadline expired')
             require(digest(read(Path(__file__).resolve())) == entry_sha, 'Recovery source changed')
@@ -764,15 +981,18 @@ def main():
     parser.add_argument('--journal-dir', required=True)
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--live-witness', required=True)
+    parser.add_argument('--continuation-witness')
     parser.add_argument('--adapter-step', choices=('stop', 'quiesce'), help=argparse.SUPPRESS)
     parser.add_argument('--epoch', help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.adapter_step is not None:
         require(not args.apply and re.fullmatch(r'[0-9a-f]{32}', args.epoch or ''),
                 'Invalid internal adapter arguments')
-        return adapter_step(args.old_session, args.journal_dir, args.adapter_step, args.epoch, args.live_witness)
+        return adapter_step(args.old_session, args.journal_dir, args.adapter_step, args.epoch, args.live_witness, args.continuation_witness)
     require(args.epoch is None, 'Epoch is internal-only')
     load_witness(args.live_witness, args.old_session)
+    if args.continuation_witness is not None:
+        load_continuation(args.continuation_witness, args.old_session)
     print(json.dumps(recover(args.old_session, args.journal_dir, apply=args.apply), sort_keys=True))
     return 0
 
