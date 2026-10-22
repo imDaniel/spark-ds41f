@@ -16,6 +16,11 @@ loaded-dose case needs its own immutable selected-case capsule; no hidden
 scheduler advances selection. The broader approved matrix and semantic-quality
 pilot remain separate work, not silently removed from acceptance.
 
+The separate executable sixty-case A/B unloaded quality entry is documented in
+[`r6x-first-quality-pilot.md`](r6x-first-quality-pilot.md). Its schema-7 source
+reuses this lifecycle but requires its own site-bound corpus and new capsule;
+it does not turn these warm4K performance receipts into quality evidence.
+
 Use a new clean exact freeze checkout on all four nodes. Keep every earlier
 source, helper, capsule, journal and receipt unchanged. The existing safe helper
 and original asset/protection/identity authority are revalidated, not rewritten.

@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import types
+import sys
 
 import q03_owner_model as owner
 from q03_held_window import read_owned_bytes
@@ -27,7 +28,7 @@ LEGACY_SOURCE_SHA256 = '5e624b53a06fa7f1d750ab8ba0edc59493860ea4146f53f868adbb67
 SOURCE_FILES = tuple(dict.fromkeys((*owner.SOURCE_FILES, 'q03_held_window.py',
     'q03_http_service.py', 'q03_http_client.py', 'q03_http_toolbox.json',
     'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py',
-    'q03_legacy_case_replay.py', 'q03_qualification.py', 'q03_git_toolchain.py')))
+    'q03_legacy_case_replay.py', 'q03_quality_pilot.py', 'q03_quality_capture.py', 'q03_qualification.py', 'q03_git_toolchain.py')))
 CANDIDATE_FIELDS = {'image', 'component_head', 'runtime_manifest_path',
     'runtime_manifest_sha256', 'pytest_base_pythonpath', 'cache_path', 'output_path'}
 
@@ -50,6 +51,32 @@ def legacy_module():
     return _module('q03_legacy_case_replay', LEGACY_SOURCE_SHA256)
 
 
+QUALITY_SOURCE_SHA256 = '9f3031c7771d9a0aab6c2063a120aa3cfd5cb3032f6ae5b5a31b03032191e045'
+CAPTURE_SOURCE_SHA256 = '665cd426459474411d963a70c8473926884fa9a2b7f56e061af1ab6be4ac4992'
+
+
+def quality_pilot_module():
+    # Both dependencies are exact source bytes, never cached .pyc or sys.path.
+    dependencies = {'q03_quality_capture': _module('q03_quality_capture', CAPTURE_SOURCE_SHA256),
+                    'q03_legacy_case_replay': legacy_module()}
+    previous = {name: sys.modules.get(name) for name in dependencies}
+    sys.modules.update(dependencies)
+    try:
+        return _module('q03_quality_pilot', QUALITY_SOURCE_SHA256)
+    finally:
+        for name, module in previous.items():
+            if module is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = module
+
+
+def workload(value):
+    if value.get('schema_version') == 7:
+        return 'quality_pilot', quality_pilot_module()
+    return 'legacy_case', legacy_module()
+
+
 def validate_jobs(manifest):
     jobs = manifest.get('jobs')
     require(isinstance(jobs, list) and len(jobs) == 1, 'baseline attempt has one bounded HTTP case')
@@ -67,6 +94,8 @@ def validate_jobs(manifest):
 
 def next_selection(session):
     validate_jobs(session.manifest)
+    if session.manifest.get('http_service', {}).get('schema_version') == 7:
+        require(not session.state.get('attempt_results'), 'quality primary attempt already retained; no retry in capsule')
     require(not any(r.get('outcome') == 'passed' and r.get('passed_gates') == ['http_service']
         for r in session.state.get('attempt_results', [])), 'selected baseline case is complete')
     return copy.deepcopy(session.manifest['jobs'][0]['selection'])
@@ -94,9 +123,11 @@ def validate_binding(manifest, ops, *, remote=True):
     validate_jobs(manifest)
     value = manifest.get('http_service')
     fields = {'schema_version', 'baseline_inputs', 'baseline_identity', 'toolbox',
-              'api_port', 'startup_seconds', 'client_seconds', 'legacy_case'}
+              'api_port', 'startup_seconds', 'client_seconds'}
+    work_key, module = workload(value) if isinstance(value, dict) else ('legacy_case', None)
+    fields.add(work_key)
     require(isinstance(value, dict) and set(value) == fields
-        and type(value['schema_version']) is int and value['schema_version'] == 6,
+        and type(value['schema_version']) is int and value['schema_version'] in (6, 7),
         'baseline HTTP binding fields differ')
     require(isinstance(manifest.get('candidate'), dict)
         and set(manifest['candidate']) == CANDIDATE_FIELDS, 'baseline candidate fields differ')
@@ -144,7 +175,7 @@ def validate_binding(manifest, ops, *, remote=True):
         http=copy.deepcopy(value), baseline_identity=checked, selection=copy.deepcopy(selection),
         toolbox_inventory=_toolbox(value['toolbox'], ops), deployment_git_config_sha256=config_sha)
     owner.remote_nodes(binding)  # Reuse exact physical inventory/endpoint mapping.
-    corpus = legacy_module().validate_binding(value['legacy_case'], binding)
+    corpus = module.validate_binding(value[work_key], binding)
     model_roots = [s.format(home=profile['host']['home']) for s, d, mode in profile['container']['mounts']
         if d == '/models' and mode == 'ro']
     require(model_roots == [corpus['artifacts']['model_root']],
@@ -173,11 +204,12 @@ def validate_host(manifest, ops, *, prepare_images=False):
 
 def _immutable(manifest):
     value = manifest['http_service']
-    corpus = legacy_module().validate_binding(value['legacy_case'])
-    provenance = _provenance_files(corpus)
+    key, module = workload(value)
+    corpus = module.validate_binding(value[key])
+    provenance = _provenance_files(corpus, module)
     return [*[Path(p['path']) for p in provenance], Path(corpus['artifacts']['model_root']),
         Path(manifest['preflight']['independent_checkout']), Path(value['toolbox']['path']),
-        Path(value['baseline_identity']['provenance']['path']), Path(value['legacy_case']['corpus']['path']),
+        Path(value['baseline_identity']['provenance']['path']), Path(value[key]['corpus']['path']),
         *[Path(value['baseline_inputs'][k]['path']) for k in ('profile', 'nodes', 'effective_config')]]
 
 
@@ -197,8 +229,8 @@ def validate_paths(manifest, directory):
         for i, a in enumerate(writable) for b in writable[i + 1:]), 'baseline writable roots overlap')
 
 
-def _provenance_files(corpus):
-    legacy = legacy_module()
+def _provenance_files(corpus, module=None):
+    legacy = module or legacy_module()
     mounted = {p['path'] for p in legacy.mounted_asset_files(corpus)}
     return [p for p in legacy.artifact_files(corpus) if p['path'] not in mounted]
 
@@ -224,9 +256,10 @@ def input_contract(binding, *, include_toolbox=True):
         'sha256': binding['deployment_git_config_sha256']})
     if include_toolbox:
         toolbox = binding['http']['toolbox']
-        value['files'].append(binding['http']['legacy_case']['corpus'])
-        corpus = legacy_module().validate_binding(binding['http']['legacy_case'], binding)
-        value['files'] += _provenance_files(corpus)
+        key, module = workload(binding['http'])
+        value['files'].append(binding['http'][key]['corpus'])
+        corpus = module.validate_binding(binding['http'][key], binding)
+        value['files'] += _provenance_files(corpus, module)
         value['files'] += [{'path': str(Path(toolbox['path']) / name), 'sha256': sha}
             for name, sha in binding['toolbox_inventory']['files'].items()]
         value['files'].append({'path': str(Path(toolbox['path']) / '.git/config'),
@@ -257,8 +290,9 @@ def validate_remote_inputs(manifest, binding, ops):
     from q03_window_preflight import _node_argv
     from q03_remote_operation import bound_command
     identity = identity_module()
-    corpus = legacy_module().validate_binding(binding['http']['legacy_case'], binding)
-    assets = legacy_module().mounted_asset_files(corpus)
+    key, module = workload(binding['http'])
+    corpus = module.validate_binding(binding['http'][key], binding)
+    assets = module.mounted_asset_files(corpus)
     # Reuse only the generic mounted-data byte probe, never its197 corpus gate.
     from q03_http_service import qualification_module
     asset_probe = qualification_module(2).ASSET_PROBE
@@ -361,19 +395,25 @@ def http_plan(binding, window_id, attempt_id, selection, *, session=None):
             create += ['--label', key + '=' + val]
         ranks.append(dict(rank=rank, node=node, name=name, root=root, environment=env,
             mounts=mounts, python_argv=python, create_prefix=create))
-    plan = dict(schema_version=6, kind='http_service', window_id=window_id, attempt_id=attempt_id,
+    plan = dict(schema_version=binding['http']['schema_version'], kind='http_service', window_id=window_id, attempt_id=attempt_id,
         selection=copy.deepcopy(selection), image=image, source_head=checked['identity']['source_head'],
         runtime_sha256=checked['provenance']['sha256'], spec=spec, spec_sha256=spec_sha,
         ranks=ranks, docker_args=profile['container']['docker_run_args'], binding=copy.deepcopy(binding),
         url=f"http://127.0.0.1:{binding['http']['api_port']}")
+    key, module = workload(binding['http'])
+    quality = key == 'quality_pilot'
     plan['client'] = dict(toolbox_path=binding['http']['toolbox']['path'],
         toolbox_head=binding['toolbox_inventory']['head'], toolbox_files=binding['toolbox_inventory']['files'],
         prompts=binding['toolbox_inventory']['prompts'], timeout_seconds=binding['http']['client_seconds'],
-        output=ranks[0]['root'] + '/results/legacy-case.json',
-        runtime_context=ranks[0]['root'] + '/results/runtime-context.json',
-        legacy_case=legacy_module().client_plan(binding, selection),
-        legacy_sources={name: digest(read_owned_bytes(Path(binding['checkout']) / 'scripts' / (name + '.py')))
-            for name in ('q03_legacy_case_replay', 'q03_baseline_identity', 'q03_owner_model', 'q03_held_window')})
+        output=ranks[0]['root'] + ('/results/quality-pr8.json' if quality else '/results/legacy-case.json'),
+        runtime_context=ranks[0]['root'] + '/results/runtime-context.json')
+    plan['client'][key] = module.client_plan(binding, selection)
+    names = module.SOURCES if quality else (
+        'q03_legacy_case_replay', 'q03_baseline_identity', 'q03_owner_model', 'q03_held_window')
+    plan['client']['quality_sources' if quality else 'legacy_sources'] = {
+        name: digest(read_owned_bytes(Path(binding['checkout']) / 'scripts' / (name + '.py'))) for name in names}
+    if quality:
+        plan['lane_id'] = selection['arm'] + '/' + selection['steering']
     plan['plan_sha256'] = digest(canonical(plan))
     return plan
 

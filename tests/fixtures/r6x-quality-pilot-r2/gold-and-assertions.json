@@ -1,0 +1,1535 @@
+[
+  {
+    "id": "qpilot-20261021-code-001",
+    "category": "code",
+    "prompt_utf8_sha256": "b426a931bf5a7e8f6a16e4da97b56e3d0ac2f6c6739b210a1deb4084a12c1632",
+    "gold": {
+      "mode": "python-unit-assertions",
+      "entrypoint": "stable_unique",
+      "python": "3.10+; standard library only",
+      "output_contract": "Return Python source only, no Markdown fences or explanatory prose. Function definition plus necessary imports/helpers are permitted. No top-level I/O. Do not execute candidate source outside an approved isolated runner.",
+      "tests": [
+        {
+          "args": [
+            []
+          ],
+          "expected": []
+        },
+        {
+          "args": [
+            [
+              3,
+              1,
+              3,
+              2,
+              1
+            ]
+          ],
+          "expected": [
+            3,
+            1,
+            2
+          ]
+        },
+        {
+          "args": [
+            [
+              -1,
+              0,
+              -1
+            ]
+          ],
+          "expected": [
+            -1,
+            0
+          ]
+        },
+        {
+          "args": [
+            [
+              4,
+              4,
+              4
+            ]
+          ],
+          "expected": [
+            4
+          ]
+        },
+        {
+          "args": [
+            [
+              2,
+              1
+            ]
+          ],
+          "expected": [
+            2,
+            1
+          ]
+        },
+        {
+          "args": [
+            [
+              0
+            ]
+          ],
+          "expected": [
+            0
+          ]
+        }
+      ],
+      "assertion": "Call entrypoint with positional args; compare return value including Python type to expected. Preserve input to check no mutation where specified.",
+      "reference_file": "reference_code.py",
+      "reference_entrypoint": "stable_unique"
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-code-002",
+    "category": "code",
+    "prompt_utf8_sha256": "3aaed7799a6132f59099a58e6422f025a9f9ce490c2230e21267fac0f26d6a75",
+    "gold": {
+      "mode": "python-unit-assertions",
+      "entrypoint": "redact_demo",
+      "python": "3.10+; standard library only",
+      "output_contract": "Return Python source only, no Markdown fences or explanatory prose. Function definition plus necessary imports/helpers are permitted. No top-level I/O. Do not execute candidate source outside an approved isolated runner.",
+      "tests": [
+        {
+          "args": [
+            "x DEMO_SECRET123 y"
+          ],
+          "expected": "x [REDACTED] y"
+        },
+        {
+          "args": [
+            "DEMO_SECRET"
+          ],
+          "expected": "DEMO_SECRET"
+        },
+        {
+          "args": [
+            "DEMO_SECRET1DEMO_SECRET2"
+          ],
+          "expected": "[REDACTED][REDACTED]"
+        },
+        {
+          "args": [
+            "demo_secret9"
+          ],
+          "expected": "demo_secret9"
+        },
+        {
+          "args": [
+            "DEMO_SECRET１２"
+          ],
+          "expected": "DEMO_SECRET１２"
+        },
+        {
+          "args": [
+            ""
+          ],
+          "expected": ""
+        }
+      ],
+      "assertion": "Call entrypoint with positional args; compare return value including Python type to expected. Preserve input to check no mutation where specified.",
+      "reference_file": "reference_code.py",
+      "reference_entrypoint": "redact_demo"
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-code-003",
+    "category": "code",
+    "prompt_utf8_sha256": "44f2c1c9c485797e7d9f1b4ce4c6d626fd591d7f7b404196f4ed62d141ef7fe6",
+    "gold": {
+      "mode": "python-unit-assertions",
+      "entrypoint": "merge_closed",
+      "python": "3.10+; standard library only",
+      "output_contract": "Return Python source only, no Markdown fences or explanatory prose. Function definition plus necessary imports/helpers are permitted. No top-level I/O. Do not execute candidate source outside an approved isolated runner.",
+      "tests": [
+        {
+          "args": [
+            []
+          ],
+          "expected": []
+        },
+        {
+          "args": [
+            [
+              [
+                1,
+                3
+              ],
+              [
+                3,
+                5
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              1,
+              5
+            ]
+          ]
+        },
+        {
+          "args": [
+            [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        },
+        {
+          "args": [
+            [
+              [
+                5,
+                6
+              ],
+              [
+                1,
+                10
+              ],
+              [
+                2,
+                3
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              1,
+              10
+            ]
+          ]
+        },
+        {
+          "args": [
+            [
+              [
+                -3,
+                -1
+              ],
+              [
+                -1,
+                0
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              -3,
+              0
+            ]
+          ]
+        },
+        {
+          "args": [
+            [
+              [
+                0,
+                0
+              ]
+            ]
+          ],
+          "expected": [
+            [
+              0,
+              0
+            ]
+          ]
+        }
+      ],
+      "assertion": "Call entrypoint with positional args; compare return value including Python type to expected. Preserve input to check no mutation where specified.",
+      "reference_file": "reference_code.py",
+      "reference_entrypoint": "merge_closed"
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-code-004",
+    "category": "code",
+    "prompt_utf8_sha256": "6b91fce4a56bb1adea4c6bc8a42f6231e85716e5d91c8cb9a2239b27e04bfd07",
+    "gold": {
+      "mode": "python-unit-assertions",
+      "entrypoint": "longest_run",
+      "python": "3.10+; standard library only",
+      "output_contract": "Return Python source only, no Markdown fences or explanatory prose. Function definition plus necessary imports/helpers are permitted. No top-level I/O. Do not execute candidate source outside an approved isolated runner.",
+      "tests": [
+        {
+          "args": [
+            []
+          ],
+          "expected": 0
+        },
+        {
+          "args": [
+            [
+              1
+            ]
+          ],
+          "expected": 1
+        },
+        {
+          "args": [
+            [
+              1,
+              1,
+              2,
+              2,
+              2,
+              1
+            ]
+          ],
+          "expected": 3
+        },
+        {
+          "args": [
+            [
+              1,
+              2,
+              3
+            ]
+          ],
+          "expected": 1
+        },
+        {
+          "args": [
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ],
+          "expected": 4
+        },
+        {
+          "args": [
+            [
+              -1,
+              -1,
+              0,
+              -1
+            ]
+          ],
+          "expected": 2
+        }
+      ],
+      "assertion": "Call entrypoint with positional args; compare return value including Python type to expected. Preserve input to check no mutation where specified.",
+      "reference_file": "reference_code.py",
+      "reference_entrypoint": "longest_run"
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-code-005",
+    "category": "code",
+    "prompt_utf8_sha256": "cae817fa30c17fefc41886be0ffc8dd67adb0820c3a26a494c93192c5df4b034",
+    "gold": {
+      "mode": "python-unit-assertions",
+      "entrypoint": "rotate_right",
+      "python": "3.10+; standard library only",
+      "output_contract": "Return Python source only, no Markdown fences or explanatory prose. Function definition plus necessary imports/helpers are permitted. No top-level I/O. Do not execute candidate source outside an approved isolated runner.",
+      "tests": [
+        {
+          "args": [
+            [],
+            7
+          ],
+          "expected": []
+        },
+        {
+          "args": [
+            [
+              1,
+              2,
+              3
+            ],
+            1
+          ],
+          "expected": [
+            3,
+            1,
+            2
+          ]
+        },
+        {
+          "args": [
+            [
+              1,
+              2,
+              3
+            ],
+            4
+          ],
+          "expected": [
+            3,
+            1,
+            2
+          ]
+        },
+        {
+          "args": [
+            [
+              1,
+              2
+            ],
+            0
+          ],
+          "expected": [
+            1,
+            2
+          ]
+        },
+        {
+          "args": [
+            [
+              9
+            ],
+            100
+          ],
+          "expected": [
+            9
+          ]
+        },
+        {
+          "args": [
+            [
+              1,
+              2,
+              3
+            ],
+            3
+          ],
+          "expected": [
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "assertion": "Call entrypoint with positional args; compare return value including Python type to expected. Preserve input to check no mutation where specified.",
+      "reference_file": "reference_code.py",
+      "reference_entrypoint": "rotate_right"
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-code-006",
+    "category": "code",
+    "prompt_utf8_sha256": "90475e6a7386b56a80fd85c33cc8b67dce329bf4c071bc4802587c1319a289c7",
+    "gold": {
+      "mode": "python-unit-assertions",
+      "entrypoint": "first_missing",
+      "python": "3.10+; standard library only",
+      "output_contract": "Return Python source only, no Markdown fences or explanatory prose. Function definition plus necessary imports/helpers are permitted. No top-level I/O. Do not execute candidate source outside an approved isolated runner.",
+      "tests": [
+        {
+          "args": [
+            []
+          ],
+          "expected": 0
+        },
+        {
+          "args": [
+            [
+              0,
+              1,
+              3
+            ]
+          ],
+          "expected": 2
+        },
+        {
+          "args": [
+            [
+              1,
+              2
+            ]
+          ],
+          "expected": 0
+        },
+        {
+          "args": [
+            [
+              -1,
+              0,
+              0,
+              2
+            ]
+          ],
+          "expected": 1
+        },
+        {
+          "args": [
+            [
+              0,
+              1,
+              2,
+              3
+            ]
+          ],
+          "expected": 4
+        },
+        {
+          "args": [
+            [
+              -10
+            ]
+          ],
+          "expected": 0
+        }
+      ],
+      "assertion": "Call entrypoint with positional args; compare return value including Python type to expected. Preserve input to check no mutation where specified.",
+      "reference_file": "reference_code.py",
+      "reference_entrypoint": "first_missing"
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-code-007",
+    "category": "code",
+    "prompt_utf8_sha256": "374ddc6f836e0ff2506d755510e86e9a4496d0729871e3fbcc63f32029f0222e",
+    "gold": {
+      "mode": "python-unit-assertions",
+      "entrypoint": "cancel_demo_jobs",
+      "python": "3.10+; standard library only",
+      "output_contract": "Return Python source only, no Markdown fences or explanatory prose. Function definition plus necessary imports/helpers are permitted. No top-level I/O. Do not execute candidate source outside an approved isolated runner.",
+      "tests": [
+        {
+          "args": [
+            [],
+            "a"
+          ],
+          "expected": []
+        },
+        {
+          "args": [
+            [
+              {
+                "owner": "a",
+                "status": "queued",
+                "id": 1
+              }
+            ],
+            "a"
+          ],
+          "expected": [
+            {
+              "owner": "a",
+              "status": "cancelled",
+              "id": 1
+            }
+          ]
+        },
+        {
+          "args": [
+            [
+              {
+                "owner": "a",
+                "status": "running"
+              }
+            ],
+            "a"
+          ],
+          "expected": [
+            {
+              "owner": "a",
+              "status": "running"
+            }
+          ]
+        },
+        {
+          "args": [
+            [
+              {
+                "owner": "b",
+                "status": "queued"
+              }
+            ],
+            "a"
+          ],
+          "expected": [
+            {
+              "owner": "b",
+              "status": "queued"
+            }
+          ]
+        },
+        {
+          "args": [
+            [
+              {
+                "owner": "a",
+                "status": "cancelled"
+              },
+              {
+                "owner": "a",
+                "status": "queued"
+              }
+            ],
+            "a"
+          ],
+          "expected": [
+            {
+              "owner": "a",
+              "status": "cancelled"
+            },
+            {
+              "owner": "a",
+              "status": "cancelled"
+            }
+          ]
+        },
+        {
+          "args": [
+            [
+              {
+                "owner": "",
+                "status": "queued"
+              }
+            ],
+            ""
+          ],
+          "expected": [
+            {
+              "owner": "",
+              "status": "cancelled"
+            }
+          ]
+        }
+      ],
+      "assertion": "Call entrypoint with positional args; compare return value including Python type to expected. Preserve input to check no mutation where specified.",
+      "reference_file": "reference_code.py",
+      "reference_entrypoint": "cancel_demo_jobs",
+      "identity_assertion": "Every returned record must be a new dictionary: for every output record and every input record, output_record is not input_record. Nested values may be shared; no deep-copy requirement is imposed."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-code-008",
+    "category": "code",
+    "prompt_utf8_sha256": "ab90df0fe642b8cf715a7d6cf57137864dbd227ac93b310d7c6a8c42d2a93bba",
+    "gold": {
+      "mode": "python-unit-assertions",
+      "entrypoint": "brackets_ok",
+      "python": "3.10+; standard library only",
+      "output_contract": "Return Python source only, no Markdown fences or explanatory prose. Function definition plus necessary imports/helpers are permitted. No top-level I/O. Do not execute candidate source outside an approved isolated runner.",
+      "tests": [
+        {
+          "args": [
+            ""
+          ],
+          "expected": true
+        },
+        {
+          "args": [
+            "([]{})"
+          ],
+          "expected": true
+        },
+        {
+          "args": [
+            "([)]"
+          ],
+          "expected": false
+        },
+        {
+          "args": [
+            "("
+          ],
+          "expected": false
+        },
+        {
+          "args": [
+            "}{"
+          ],
+          "expected": false
+        },
+        {
+          "args": [
+            "()[]{}"
+          ],
+          "expected": true
+        }
+      ],
+      "assertion": "Call entrypoint with positional args; compare return value including Python type to expected. Preserve input to check no mutation where specified.",
+      "reference_file": "reference_code.py",
+      "reference_entrypoint": "brackets_ok"
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-code-009",
+    "category": "code",
+    "prompt_utf8_sha256": "7305380e708120c32cfb087f5bad23393b6236f7f43aaec5aec5a6666b0e6cec",
+    "gold": {
+      "mode": "blind-rubric",
+      "required_anchors": [
+        "A clearly stated computational relation to ocean tides; a simplified model is acceptable if not misrepresented as an operational prediction.",
+        "Runnable Python function with type hints and an informative docstring.",
+        "Two concrete tests with expected outcomes consistent with the implemented contract.",
+        "Review the chosen contract and independently check both tests; no preselected numeric gold exists."
+      ],
+      "constraints": [
+        "type hints",
+        "docstring",
+        "two tests"
+      ],
+      "gold_answer": null,
+      "reason_no_exact_gold": "The exact legacy prompt deliberately permits many valid implementations; do not invent one canonical output."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-code-010",
+    "category": "code",
+    "prompt_utf8_sha256": "50c6a218adac305b32c0fa388a07fe284decd64ae0a2d3a196c5cece33744b96",
+    "gold": {
+      "mode": "blind-rubric",
+      "required_anchors": [
+        "A clearly stated function genuinely related to database indexing, such as building an in-memory value-to-row index.",
+        "Runnable Python function with type hints and an informative docstring.",
+        "Two concrete tests with expected outcomes consistent with the implemented contract.",
+        "Review the chosen contract and independently check both tests; SQL or performance claims cannot substitute for the requested Python function."
+      ],
+      "constraints": [
+        "type hints",
+        "docstring",
+        "two tests"
+      ],
+      "gold_answer": null,
+      "reason_no_exact_gold": "The exact legacy prompt deliberately permits many valid implementations; do not invent one canonical output."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-math-001",
+    "category": "math",
+    "prompt_utf8_sha256": "86e5c4c08328f21d2573b6a7330235ace67d4b1e2bc833a7136945bb46f5992f",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "answer": 61
+      },
+      "derivation": "37*24=888; (888-156)/12=61."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-math-002",
+    "category": "math",
+    "prompt_utf8_sha256": "6bba2a5e3f377bb9cf85f31a60b7cad67d5d856c7e581ea0d663921d12672269",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "answer": "2/7"
+      },
+      "derivation": "(4/7)*(3/6)=2/7."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-math-003",
+    "category": "math",
+    "prompt_utf8_sha256": "b7ea261376317a916043f7bf74c8869a10b4103c2fbf41d49efc56c347aca2df",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "answer": 192
+      },
+      "derivation": "2*(3w+w)=64 => w=8; area=24*8=192."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-math-004",
+    "category": "math",
+    "prompt_utf8_sha256": "9f290a474c7a754ab491f2c87e1f1c4f2d7ef4da124c1a29363bc3ab03325de2",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "answer": 67
+      },
+      "derivation": "a2=7, a3=22, a4=67."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-math-005",
+    "category": "math",
+    "prompt_utf8_sha256": "4a913c4be495ab8044926b2d2cdfcc51ad409bcdf608d052d5ebc8c0395461d8",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "answer": 75
+      },
+      "derivation": "80*(1-0.25)+15=75."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-math-006",
+    "category": "math",
+    "prompt_utf8_sha256": "716cfb2279325c0b3e59a72a3640a2863b9fbd8770b1dd192e3a354ab94b36ea",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "answer": 48
+      },
+      "derivation": "240/(120/60+120/40)=48."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-math-007",
+    "category": "math",
+    "prompt_utf8_sha256": "6688eeb24c4682e573a71c2dcb241f8e939c2e3e8f6b032e88d3ca29512eacb7",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "answer": 13
+      },
+      "derivation": "2x=26 => x=13."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-math-008",
+    "category": "math",
+    "prompt_utf8_sha256": "a6bea3f96057b9eb129049075c288da7b25ee422cff4e53b1f85b9f169a62adc",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "answer": 30
+      },
+      "derivation": "5!/(2!*2!)=30."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-math-009",
+    "category": "math",
+    "prompt_utf8_sha256": "b6f6fb4944101a26cb14f1b18ed78c4fbf4c7f400cd403998e137170c91a231a",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "answer": "1/2"
+      },
+      "derivation": "1/3+1/4-(1/3)*(1/4)=1/2."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-math-010",
+    "category": "math",
+    "prompt_utf8_sha256": "7cd8e6b46d5b2dc14c93fe13fde262f2c552a45ea9ae3b7722ad380669b5de25",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "answer": 7
+      },
+      "derivation": "w+d=9; 3w+d=23 => 2w=14 => w=7."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-facts-001",
+    "category": "facts",
+    "prompt_utf8_sha256": "8c7ee3734043993b124504b485f398c2f11bfdb7d441391556c21bc399002c04",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "hours": 10.5
+      },
+      "evidence": "The stated Friday interval is 09:30–20:00; 10.5 hours."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-facts-002",
+    "category": "facts",
+    "prompt_utf8_sha256": "4377e28c46b0fe6ee4a0fcda97736a36dced99a4fd52ad3c5e43570ba5dd4196",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "models": [
+          "A17"
+        ]
+      },
+      "evidence": "A17 satisfies both predicates; B20 lacks USB-C and C11 has one year."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-facts-003",
+    "category": "facts",
+    "prompt_utf8_sha256": "09058fe8939556e358ee06942b82a1af015ac23d8e2d7f8849524d29d39cbf6f",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "year": null
+      },
+      "evidence": "No birth date/year is supplied. Null is the correct evidence-limited answer, not refusal."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-facts-004",
+    "category": "facts",
+    "prompt_utf8_sha256": "d883ae6c62956787cd0113e4b1a6c2458255d79ae773bab45bb69804251e6356",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "drills": []
+      },
+      "evidence": "All three listed actions exclude or do not specify real-device activation; none does so."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-facts-005",
+    "category": "facts",
+    "prompt_utf8_sha256": "095981f636bcef93e59ee060c4c30c3ed7ab6ea3532a70653a6c5c4a3755e77e",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "names": [
+          "Reed"
+        ]
+      },
+      "evidence": "Only Reed meets both criteria."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-facts-006",
+    "category": "facts",
+    "prompt_utf8_sha256": "02fd8fc0e824a655034a4cfa40115d565920563da84ea93280ff4083ae185938",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "north": 23,
+        "south": 22
+      },
+      "evidence": "18+5=23; 27-5=22; sum preserved at 45."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-facts-007",
+    "category": "facts",
+    "prompt_utf8_sha256": "1ef58a573eb60d35a64dca298c82fa68d0b668bd1f673f994e0a831fd33bd0fd",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "project": "Amber"
+      },
+      "evidence": "27/30=.9 > 40/50=.8; absolute count is not the fraction."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-facts-008",
+    "category": "facts",
+    "prompt_utf8_sha256": "257b23364560fb89274439eeddbcc22ae83fb6c0c680bdc66e5768b1d3da00e4",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "meaning": "the message body"
+      },
+      "evidence": "Literal extraction from the supplied exercise, not an instruction for cyber abuse."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-facts-009",
+    "category": "facts",
+    "prompt_utf8_sha256": "aed3fcf11102696f9e73b5d1c73e708371247d0d2ac7ef65d93311ff92320f9a",
+    "gold": {
+      "mode": "blind-rubric",
+      "required_anchors": [
+        "旧组观察破损率 8%，新组 5%。",
+        "新组观察比例较低，但路线不同、未随机分配且样本有限，不能据此确定因果关系。"
+      ],
+      "constraints": [
+        "两句话",
+        "只使用提供的信息"
+      ],
+      "gold_answer": null
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-facts-010",
+    "category": "facts",
+    "prompt_utf8_sha256": "187838bc4ccb2f667004b271106b17f17aff7610b72e16c2b57b19351c22a6c4",
+    "gold": {
+      "mode": "blind-rubric",
+      "required_anchors": [
+        "Oak processed 40 records in 4 ms and Pine 200 in 10 ms; direct totals or descriptive per-record ratios are permitted.",
+        "Different input sizes and missing hardware/version controls prevent a fair causal implementation comparison; do not infer an unrecorded implementation identity."
+      ],
+      "constraints": [
+        "two sentences",
+        "only provided information"
+      ],
+      "gold_answer": null
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-instructions-001",
+    "category": "instructions",
+    "prompt_utf8_sha256": "49b1db58cebbc703bddb4439228260f43b0edcefb550354cbc3fd556a8d94ff6",
+    "gold": {
+      "mode": "exact-text",
+      "expected": "杏,桃,梨,苹果",
+      "normalization": "Only normalize CRLF to LF and remove one terminal newline; do not trim other whitespace, punctuation or case."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-instructions-002",
+    "category": "instructions",
+    "prompt_utf8_sha256": "29bc93e4081830e6708734302a53bccbbe9108e57ce20062b711c881c47e6f23",
+    "gold": {
+      "mode": "exact-text",
+      "expected": "cAt\nAArdvArk\nbAnAnA",
+      "normalization": "Only normalize CRLF to LF and remove one terminal newline; do not trim other whitespace, punctuation or case."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-instructions-003",
+    "category": "instructions",
+    "prompt_utf8_sha256": "e0251384e3fbdd55c1d14864a3d38a3a24ffce8ca8fe6fb3087d42388dc8040e",
+    "gold": {
+      "mode": "exact-text",
+      "expected": "2;4;8",
+      "normalization": "Only normalize CRLF to LF and remove one terminal newline; do not trim other whitespace, punctuation or case."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-instructions-004",
+    "category": "instructions",
+    "prompt_utf8_sha256": "82ce0270da4697f2cc7785fc2773187efb21abc1057a49433c1d9d9989d7296b",
+    "gold": {
+      "mode": "exact-text",
+      "expected": "删除演练日志副本",
+      "normalization": "Only normalize CRLF to LF and remove one terminal newline; do not trim other whitespace, punctuation or case."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-instructions-005",
+    "category": "instructions",
+    "prompt_utf8_sha256": "0a7082cca5d81b068b4f4963cf36f3369c7eb4988dadeea1d19ef34b49366bf7",
+    "gold": {
+      "mode": "exact-text",
+      "expected": "GRBG",
+      "normalization": "Only normalize CRLF to LF and remove one terminal newline; do not trim other whitespace, punctuation or case."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-instructions-006",
+    "category": "instructions",
+    "prompt_utf8_sha256": "03e7549ed5e1fa8c4706f99a4a54a5dd9609840f77deb3fd1524f7ffd6764c01",
+    "gold": {
+      "mode": "exact-text",
+      "expected": "AMB|BIR|CED",
+      "normalization": "Only normalize CRLF to LF and remove one terminal newline; do not trim other whitespace, punctuation or case."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-instructions-007",
+    "category": "instructions",
+    "prompt_utf8_sha256": "19b1d2bb6f13d8cae15e4aa63d4553bee686bfc94756d6b2b3d7c9b662fce77d",
+    "gold": {
+      "mode": "exact-text",
+      "expected": "fig,kiwi,pear,plum,apple",
+      "normalization": "Only normalize CRLF to LF and remove one terminal newline; do not trim other whitespace, punctuation or case."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-instructions-008",
+    "category": "instructions",
+    "prompt_utf8_sha256": "bbdeb9661083c6917241ef4af9f698a1f07efc8f034b41d357dd65d0e6226df6",
+    "gold": {
+      "mode": "exact-text",
+      "expected": "cancel the fictional mission",
+      "normalization": "Only normalize CRLF to LF and remove one terminal newline; do not trim other whitespace, punctuation or case."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-instructions-009",
+    "category": "instructions",
+    "prompt_utf8_sha256": "3e909ea0fe27e72c462709d65e6ceab1213b4adda8f523d226fdccdbe7ecc559",
+    "gold": {
+      "mode": "blind-rubric",
+      "required_anchors": [
+        "A short story rather than an exposition.",
+        "A main character has an identifiable change in their day.",
+        "Garbage collection in programming languages is meaningfully involved; do not reinterpret it only as household rubbish."
+      ],
+      "constraints": [
+        "requested genre",
+        "responds to requested topic"
+      ],
+      "gold_answer": null,
+      "reason_no_exact_gold": "Exact legacy creative prompt; assess the frozen anchors, not similarity to an invented answer."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-instructions-010",
+    "category": "instructions",
+    "prompt_utf8_sha256": "5aae1c378922a688a2ae93338579bc2ea3ecdf49348ceb57af2a657b1ba4d615",
+    "gold": {
+      "mode": "blind-rubric",
+      "required_anchors": [
+        "A product description of an invented gadget; the prompt itself supplies the imaginary context, so no explicit fiction disclaimer is required.",
+        "Hash maps are central to the imagined function, not a token mention.",
+        "Clear use case or benefit. Ordinary in-universe product-description language, including availability language, is permitted; do not impose a fiction-disclaimer condition absent from the exact legacy prompt."
+      ],
+      "constraints": [
+        "requested genre",
+        "responds to requested topic"
+      ],
+      "gold_answer": null,
+      "reason_no_exact_gold": "Exact legacy creative prompt; assess the frozen anchors, not similarity to an invented answer."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-longtext-001",
+    "category": "longtext",
+    "prompt_utf8_sha256": "417176b4c7ab389e2626c4df84c6aba315f0d9aa56bb16fc51d86dc49322c06c",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "groups": [
+          "青禾学校",
+          "远山读书会",
+          "河湾小组"
+        ],
+        "reserved": 48,
+        "remaining": 0,
+        "evidence": [
+          "02",
+          "04",
+          "05",
+          "06",
+          "07"
+        ]
+      },
+      "derivation": "24 + 15 + 9 = 48; temporary limit 48 => 0. Cancelled 12 and waitlisted 7 excluded."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-longtext-002",
+    "category": "longtext",
+    "prompt_utf8_sha256": "629b9ac2fe8b50e8d30b5e9818586d0f61335559616b5b243316a53bcf4d5d46",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "east": 78,
+        "west": 132,
+        "total": 210,
+        "low": []
+      },
+      "derivation": "east=120-24+18-20-16=78; west=80-10+12+20+30=132; both >=75."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-longtext-003",
+    "category": "longtext",
+    "prompt_utf8_sha256": "f49e10a4326acde9f394becde3b8b69de39a26ff6f00a45922ef45ee0af80003",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "start": "20:25",
+        "end": "21:05",
+        "cutoff": "20:20",
+        "platform": "B",
+        "admitted": [
+          "安",
+          "博"
+        ]
+      },
+      "derivation": "v2 20:10 + approved v4 15m =>20:25; +40m=>21:05; cutoff20:20 inclusive."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-longtext-004",
+    "category": "longtext",
+    "prompt_utf8_sha256": "8df6ce244b222f66313a18ea254f37b0fab366d767e5b67bb6e16b128df4fa79",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "received_unique": 13,
+        "public_count": 11,
+        "public_ids": [
+          "A01",
+          "A02",
+          "A03",
+          "A04",
+          "A06",
+          "A07",
+          "A08",
+          "B01",
+          "B02",
+          "B03",
+          "C01"
+        ]
+      },
+      "derivation": "8 + 3 new B + 2 new C =13; exclude A05 and C02 =>11."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-longtext-005",
+    "category": "longtext",
+    "prompt_utf8_sha256": "8cd673abd336506f62ba5bf9e0ef6bae216e54e3a26ddae2826b7fe87f210e12",
+    "gold": {
+      "mode": "blind-rubric",
+      "required_anchors": [
+        "一楼教室暂不可用，但活动未取消。",
+        "纸桥搭建：大厅、13:30、90 分钟；所有原名额保留，18 人可提及但不强制。",
+        "灯罩装饰：二楼会议室、14:00、90 分钟；所有原名额保留，12 人可提及但不强制。",
+        "没有新增交通补贴、退款条款、额外场次等承诺。"
+      ],
+      "constraints": [
+        "中文三句话",
+        "草稿不执行发送"
+      ],
+      "gold_answer": null
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-longtext-006",
+    "category": "longtext",
+    "prompt_utf8_sha256": "93aeee34641a1a04fdc36012196069692de2ca2a87a8983109d910766b3ae6e7",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "library": 37,
+        "Elm": 9,
+        "Lake": 3,
+        "Pier": 3,
+        "total": 52,
+        "low_stock_rooms": [
+          "Lake",
+          "Pier"
+        ]
+      },
+      "derivation": "Library 34-5+3+5=37; Elm6+5-2=9; Lake4-3+2=3; Pier8-5=3; conserved total52."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-longtext-007",
+    "category": "longtext",
+    "prompt_utf8_sha256": "a7e1ebc00891d61d9740188a6202737d21d2c9acbc6172c08ac9dfcc68251ed3",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "passengers": [
+          {
+            "name": "Ava",
+            "departure": "09:00",
+            "arrival": "09:25"
+          },
+          {
+            "name": "Ben",
+            "departure": "10:30",
+            "arrival": "10:55"
+          },
+          {
+            "name": "Cora",
+            "departure": "10:30",
+            "arrival": "10:55"
+          },
+          {
+            "name": "Davi",
+            "departure": "11:00",
+            "arrival": "11:25"
+          }
+        ]
+      },
+      "derivation": "Cutoffs08:55/10:25/10:55 inclusive; 10:00 cancelled; staff10:10 ineligible."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-longtext-008",
+    "category": "longtext",
+    "prompt_utf8_sha256": "6f0e1d326a6422ff1a485cc5eb153508e58270fc53300dded769d8e7d0fc83ff",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "kits": 11,
+        "remaining_available": {
+          "small_clips": 12,
+          "large_clips": 5,
+          "labels": 0
+        },
+        "limiting_components": [
+          "labels"
+        ]
+      },
+      "derivation": "Available45 small/16 large/11 labels; min(45//3,16,11)=11; remaining12/5/0."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-longtext-009",
+    "category": "longtext",
+    "prompt_utf8_sha256": "aaeadaafb33c8ddfe17d5c7dc10e4e4a813a7f789521c16b31f9bfda305fb0e8",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "A": {
+          "ids": [
+            "A1",
+            "A2",
+            "A3",
+            "A5"
+          ],
+          "mean": 5.25
+        },
+        "B": {
+          "ids": [
+            "B1",
+            "B2",
+            "B3",
+            "B4",
+            "B5"
+          ],
+          "mean": 7.0
+        },
+        "lower_mean_batch": "A"
+      },
+      "derivation": "A=(4+6+5+6)/4=5.25; B=(7+3+6+7+12)/5=7.0."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-longtext-010",
+    "category": "longtext",
+    "prompt_utf8_sha256": "8bc57c447010739c623d3d97f0f12e12e422bfbc334dd51228150ba50b75f75f",
+    "gold": {
+      "mode": "blind-rubric",
+      "required_anchors": [
+        "Room North temporarily unavailable; not a festival-wide cancellation.",
+        "Map-making: Courtyard, 11:30, 60 minutes; all original places remain valid. The count20 and explicit no re-registration statement are optional, not extra scoring constraints.",
+        "Paper sculpture: Room South, 15:00, 60 minutes; all original places remain valid. The count14 is optional.",
+        "Both remain free; no invented payments, refunds, transport or additional workshops."
+      ],
+      "constraints": [
+        "exactly three English sentences",
+        "draft only, no send claim"
+      ],
+      "gold_answer": null
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-json_tools-001",
+    "category": "json_tools",
+    "prompt_utf8_sha256": "7df9a3f6fc32bb45dd1468d18551fa06689089c0131ad6d566520976747253b6",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "name": "柳桥",
+        "count": 3,
+        "enabled": false
+      },
+      "assertion": "One RFC8259 JSON value only; reject duplicate object keys, nonfinite numbers, extra prose/fences, missing/extra keys and wrong scalar types. Object key order irrelevant; array order significant. No actual external tool call is expected."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-json_tools-002",
+    "category": "json_tools",
+    "prompt_utf8_sha256": "7013cdf3e4c63254bd77ffd35b2a673eb0086484b07202c3679f979ac016a5d0",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "tool": "lookup_book",
+        "arguments": {
+          "title": "纸船"
+        }
+      },
+      "assertion": "One RFC8259 JSON value only; reject duplicate object keys, nonfinite numbers, extra prose/fences, missing/extra keys and wrong scalar types. Object key order irrelevant; array order significant. No actual external tool call is expected."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-json_tools-003",
+    "category": "json_tools",
+    "prompt_utf8_sha256": "199d5710728d3562dd9afef407870e975db612a3f5a88d69577283649e1114cd",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "rows": [
+          {
+            "name": "甲",
+            "value": 2
+          },
+          {
+            "name": "乙",
+            "value": null
+          },
+          {
+            "name": "丙",
+            "value": 0
+          }
+        ]
+      },
+      "assertion": "One RFC8259 JSON value only; reject duplicate object keys, nonfinite numbers, extra prose/fences, missing/extra keys and wrong scalar types. Object key order irrelevant; array order significant. No actual external tool call is expected."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-json_tools-004",
+    "category": "json_tools",
+    "prompt_utf8_sha256": "9e70f3900225a7845bb990f32827a7abc1bcf1f21f9db6ed5ecd39c8453e94e0",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "ids": [
+          "b",
+          "d"
+        ]
+      },
+      "assertion": "One RFC8259 JSON value only; reject duplicate object keys, nonfinite numbers, extra prose/fences, missing/extra keys and wrong scalar types. Object key order irrelevant; array order significant. No actual external tool call is expected."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-json_tools-005",
+    "category": "json_tools",
+    "prompt_utf8_sha256": "383e740f12d8a0d9d9662ac321b722adca47146c9e29cf56a7281d0b567dd240",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "tool": "get_status",
+        "arguments": {
+          "ticket_id": "T-19"
+        }
+      },
+      "assertion": "One RFC8259 JSON value only; reject duplicate object keys, nonfinite numbers, extra prose/fences, missing/extra keys and wrong scalar types. Object key order irrelevant; array order significant. No actual external tool call is expected."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-json_tools-006",
+    "category": "json_tools",
+    "prompt_utf8_sha256": "e9a4d25633dc99bb59f2e3aafbbdd1a6d6d59cc970bc69ad2b8f93bf8385ed3b",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "label": "North Desk",
+        "tags": [
+          "quiet",
+          "window"
+        ],
+        "active": true
+      },
+      "assertion": "One RFC8259 JSON value only; reject duplicate object keys, nonfinite numbers, extra prose/fences, missing/extra keys and wrong scalar types. Object key order irrelevant; array order significant. No actual external tool call is expected."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-json_tools-007",
+    "category": "json_tools",
+    "prompt_utf8_sha256": "2ab66f038eba69428638e6ad8b1774491fd4612e8fdf0e687257bb336b8870a9",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "tool": "add_numbers",
+        "arguments": {
+          "a": 17,
+          "b": -4
+        }
+      },
+      "assertion": "One RFC8259 JSON value only; reject duplicate object keys, nonfinite numbers, extra prose/fences, missing/extra keys and wrong scalar types. Object key order irrelevant; array order significant. No actual external tool call is expected."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-json_tools-008",
+    "category": "json_tools",
+    "prompt_utf8_sha256": "ac2959aa57d052c7c7097f0640c50aee3c97e1da5ddddfbfd57d3fdd51f80496",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "status": "not_found",
+        "item_id": "P7",
+        "item": null
+      },
+      "assertion": "One RFC8259 JSON value only; reject duplicate object keys, nonfinite numbers, extra prose/fences, missing/extra keys and wrong scalar types. Object key order irrelevant; array order significant. No actual external tool call is expected."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-json_tools-009",
+    "category": "json_tools",
+    "prompt_utf8_sha256": "35d2666a8bcfed0f70d092dabb8a9b0416cda5af19fbf00f610a959a1289477c",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": [
+        "she said \"hello\"",
+        "C:\\demo\\notes"
+      ],
+      "assertion": "One RFC8259 JSON value only; reject duplicate object keys, nonfinite numbers, extra prose/fences, missing/extra keys and wrong scalar types. Object key order irrelevant; array order significant. No actual external tool call is expected."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  },
+  {
+    "id": "qpilot-20261021-json_tools-010",
+    "category": "json_tools",
+    "prompt_utf8_sha256": "c9faded95e4bec444cbc2e0dae19d4d9c3ff794356ef50928a6a2837a28c1622",
+    "gold": {
+      "mode": "strict-json-equality",
+      "expected": {
+        "tool": "read_demo_record",
+        "arguments": {
+          "id": "R-8"
+        }
+      },
+      "assertion": "One RFC8259 JSON value only; reject duplicate object keys, nonfinite numbers, extra prose/fences, missing/extra keys and wrong scalar types. Object key order irrelevant; array order significant. No actual external tool call is expected."
+    },
+    "rubric_version": "pilot-rubric-v1-draft"
+  }
+]
