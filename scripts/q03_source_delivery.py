@@ -359,6 +359,37 @@ def write_new(path, data):
         os.fsync(stream.fileno())
 
 
+def validate_mac_transport_config(effective, url):
+    """Allow only well-formed insteadOf entries unrelated to this literal URL.
+
+    Git chooses the longest case-sensitive matching prefix. Rejecting every
+    matching entry also rejects ties, identity rewrites and shadowed entries;
+    none may change the authenticated publication's transport authority.
+    """
+    require(isinstance(effective, str) and (not effective or effective.endswith('\0')),
+            'malformed Mac Git configuration records')
+    for record in effective.split('\0')[:-1]:
+        require(bool(record), 'malformed Mac Git configuration records')
+        key, separator, value = record.partition('\n')
+        parts = key.split('.')
+        require(len(parts) >= 2 and re.fullmatch('[A-Za-z0-9-]*', parts[0])
+                and re.fullmatch('[A-Za-z][A-Za-z0-9-]*', parts[-1]),
+                'malformed Mac Git configuration key')
+        key_lower = key.lower()
+        if key_lower.startswith('url.'):
+            suffix = '.insteadof'
+            base = key[4:-len(suffix)] if key_lower.endswith(suffix) else ''
+            require(separator and record.count('\n') == 1 and base and value
+                    and all(ord(c) >= 32 and ord(c) != 127 for c in base + value)
+                    and not url.startswith(value), 'Mac Git transport override rejected')
+            continue
+        require(key_lower != 'core.sshcommand'
+                and not key_lower.endswith('.uploadpack')
+                and not (key_lower.startswith('http.') and key_lower.endswith('.sslverify')
+                         and value.lower() in ('false', 'no', 'off', '0')),
+                'Mac Git transport override rejected')
+
+
 def prepare(manifest, checkouts, output):
     """Mac only. Existing authentication is used, never exported or configured."""
     require(platform.system() == 'Darwin', 'publication preparation must run on the authenticated Mac')
@@ -379,12 +410,7 @@ def prepare(manifest, checkouts, output):
         # Keep existing Mac credential helpers, but reject effective transport
         # rewrites. Never copy this configuration into a receipt or to a Spark.
         effective = git(source, 'config', '--null', '--list', network=True)
-        for record in effective.split('\x00'):
-            key = record.partition('\n')[0].lower()
-            require(not key.startswith('url.') and key != 'core.sshcommand'
-                    and not key.endswith('.uploadpack')
-                    and not (key.startswith('http.') and key.endswith('.sslverify')
-                             and record.partition('\n')[2].lower() in ('false', 'no', 'off', '0')), 'Mac Git transport override rejected')
+        validate_mac_transport_config(effective, pub['url'])
         observed = git(source, 'ls-remote', '--exit-code', pub['url'], pub['ref'], network=True)
         require(observed.split() == [pub['sha'], pub['ref']], 'exact Mac branch publication differs')
         observed_at = dt.datetime.now(dt.timezone.utc).isoformat()
