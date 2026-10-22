@@ -116,52 +116,60 @@ class RetainedBatchTests(Report.TrustedFixtureTests):
             def client_scope(self, index):return Batch.client_scope(self.plan, self.journal.directory, index)
             def run_client(self, index):
                 child, directory = self.client_scope(index)
-                directory.mkdir()
-                Path(child['client']['output']).parent.mkdir(parents=True)
-                owner.legacy.plan = child; owner.legacy.write_context()
-                context = owner.legacy.context
-                # Real wall-clock order, not the old synthetic now-1/now-.5
-                # offsets, which can put C4 admission before C1 actually ends.
-                for sample in context['admission']['thermal']['samples']:
-                    sample['sampled_utc'] = time.time()
-                context['admission']['prefix_reset']['completed_utc'] = time.time()
-                self.journal.event('baseline-prefix-reset', receipt=context['admission']['prefix_reset'])
-                context['ranks'] = [{k: r[k] for k in ('rank', 'container_id', 'config_sha256')} for r in self.journal.state['ranks']]
-                context['ready_sha256'] = P.digest(P.canonical(ready))
-                write(Path(child['client']['runtime_context']), context)
-                write(directory / 'baseline-runtime-context.json', context)
-                self.journal.event('baseline-runtime-context-pinned', case_index=index, context_sha256=P.digest(P.canonical(context)))
-                write(directory / 'client-plan.json', child)
-                command = Remote.bound_command(['python3', '-I', '-B', str(ROOT / 'scripts/q03_http_client.py'),
-                    '--plan', str(directory / 'client-plan.json'), '--sha256', child['plan_sha256']])
-                epoch = dict(rank=0, action_kind='http_client', epoch=str(index + 1) * 32,
-                    operation=str(index + 3) * 32, argv_sha256=P.digest(P.canonical(command)))
-                self.journal.state['epochs'].append(epoch)
-                self.journal.event('remote-intent', **epoch)
-                operation_dir = Path(plan['binding']['independent_root']) / 'remote-operations' / plan['window_id'] / epoch['operation']
-                manifest = dict(root=str(operation_dir.parent.parent), window=plan['window_id'], epoch=epoch['epoch'],
-                    operation=epoch['operation'], argv=command, cwd=plan['binding']['independent_root'],
-                    timeout_seconds=600, created_epoch=time.time(),
-                    helper_sha256=P.digest((ROOT / 'scripts/q03_remote_operation.py').read_bytes()))
-                write(operation_dir / 'manifest.json', manifest)
-                manifest_sha = P.digest(P.canonical(manifest))
-                (operation_dir / 'manifest.sha256').write_text(manifest_sha)
-                assert owner.legacy.execute(Batch.CASES[index]) == 0
-                output = Path(child['client']['output'])
-                write(output.with_name('client-receipt.json'), {k: child[k] for k in ('window_id', 'attempt_id', 'plan_sha256')} |
-                      dict(exit_code=0, error=None, output_sha256=P.digest(output.read_bytes())))
-                receipt = dict(window=plan['window_id'], operation=epoch['operation'], manifest_sha256=manifest_sha, finished_epoch=time.time(),
-                    status='terminal', action_succeeded=True, group_quiescent=True, cancelled=False,
-                    timed_out=False, exit_code=0, epoch_sealed=False, safe_to_overlap=False)
-                write(operation_dir / 'receipt.json', {k: receipt[k] for k in ('window', 'operation', 'manifest_sha256',
-                    'group_quiescent', 'exit_code', 'cancelled', 'timed_out', 'finished_epoch')})
-                self.journal.event('remote-terminal', rank=0, operation=epoch['operation'], receipt=receipt)
-                for rank in range(4):
-                    sealed = dict(receipt, epoch_sealed=True, safe_to_overlap=True)
-                    self.journal.event('http-client-epoch-sealed', rank=rank, epoch=epoch['epoch'], receipt=dict(
-                        window=plan['window_id'], epoch=epoch['epoch'], sealed=True, safe_to_overlap=True,
-                        status='quiescent', operations=[sealed] if rank == 0 else []))
-                self.journal.state.setdefault('sealed_epochs', []).append(epoch['epoch']); self.journal.save()
+                # The fake daemon boundary stands in for remote prepare.
+                Path(child['client']['output']).parent.parent.mkdir(parents=True, exist_ok=True)
+                def admission(client_plan):
+                    owner.legacy.plan = client_plan; owner.legacy.write_context()
+                    context = owner.legacy.context
+                    # Let the real producer exclusively persist this synthetic
+                    # physical admission instead of replacing a retained file.
+                    Path(client_plan['client']['runtime_context']).unlink()
+                    for sample in context['admission']['thermal']['samples']:
+                        sample['sampled_utc'] = time.time()
+                    context['admission']['prefix_reset']['completed_utc'] = time.time()
+                    self.journal.event('baseline-prefix-reset', receipt=context['admission']['prefix_reset'])
+                    context['ranks'] = [{k: r[k] for k in ('rank', 'container_id', 'config_sha256')} for r in self.journal.state['ranks']]
+                    context['ready_sha256'] = P.digest(P.canonical(ready))
+                    return context
+                def launch(rank, action_kind, argv, timeout):
+                    # Only the remote/process boundary is synthetic. Do not
+                    # reconstruct the producer's argv or either plan hash here.
+                    assert rank == 0 and action_kind == 'http_client'
+                    assert timeout == child['client']['timeout_seconds']
+                    command = Remote.bound_command(argv)
+                    epoch = dict(rank=0, action_kind='http_client', epoch=str(index + 1) * 32,
+                        operation=str(index + 3) * 32, argv_sha256=P.digest(P.canonical(command)))
+                    self.journal.state['epochs'].append(epoch)
+                    self.journal.event('remote-intent', **epoch)
+                    operation_dir = Path(plan['binding']['independent_root']) / 'remote-operations' / plan['window_id'] / epoch['operation']
+                    manifest = dict(root=str(operation_dir.parent.parent), window=plan['window_id'], epoch=epoch['epoch'],
+                        operation=epoch['operation'], argv=command, cwd=plan['binding']['independent_root'],
+                        timeout_seconds=600, created_epoch=time.time(),
+                        helper_sha256=P.digest((ROOT / 'scripts/q03_remote_operation.py').read_bytes()))
+                    write(operation_dir / 'manifest.json', manifest)
+                    manifest_sha = P.digest(P.canonical(manifest))
+                    (operation_dir / 'manifest.sha256').write_text(manifest_sha)
+                    assert owner.legacy.execute(Batch.CASES[index]) == 0
+                    output = Path(child['client']['output'])
+                    write(output.with_name('client-receipt.json'), {k: child[k] for k in ('window_id', 'attempt_id', 'plan_sha256')} |
+                          dict(exit_code=0, error=None, output_sha256=P.digest(output.read_bytes())))
+                    receipt = dict(window=plan['window_id'], operation=epoch['operation'], manifest_sha256=manifest_sha, finished_epoch=time.time(),
+                        status='terminal', action_succeeded=True, group_quiescent=True, cancelled=False,
+                        timed_out=False, exit_code=0, epoch_sealed=False, safe_to_overlap=False)
+                    write(operation_dir / 'receipt.json', {k: receipt[k] for k in ('window', 'operation', 'manifest_sha256',
+                        'group_quiescent', 'exit_code', 'cancelled', 'timed_out', 'finished_epoch')})
+                    self.journal.event('remote-terminal', rank=0, operation=epoch['operation'], receipt=receipt)
+                    for rank in range(4):
+                        sealed = dict(receipt, epoch_sealed=True, safe_to_overlap=True)
+                        self.journal.event('http-client-epoch-sealed', rank=rank, epoch=epoch['epoch'], receipt=dict(
+                            window=plan['window_id'], epoch=epoch['epoch'], sealed=True, safe_to_overlap=True,
+                            status='quiescent', operations=[sealed] if rank == 0 else []))
+                    self.journal.state.setdefault('sealed_epochs', []).append(epoch['epoch']); self.journal.save()
+                producer = SimpleNamespace(plan=self.plan, binding=self.plan['binding'],
+                    journal=self.journal, check_authority=self.check_authority,
+                    client_scope=self.client_scope, legacy_runtime_context=admission,
+                    end=time.time() + child['client']['timeout_seconds'] + 60, mutate=launch)
+                H.HttpOps.run_client(producer, index)
             def collect_result(self, index):return H.HttpOps.collect_result(self, index)
         ops = Ops(H, session, plan)
         result = H.run_http(session, plan, ops=ops)
@@ -209,6 +217,84 @@ class RetainedBatchTests(Report.TrustedFixtureTests):
         original = P.H.owner.pinned_json(self.plan['binding']['nodes'])
         self.assertNotEqual(list(original['nodes'][0]['roce_peer_hcas']), list(self.plan['binding']['nodes_value']['nodes'][0]['roce_peer_hcas']))
         self.assertEqual(before, {str(p): P.digest(p.read_bytes()) for p in self.f.session.directory.rglob('*') if p.is_file()})
+
+    def test_real_producer_preserves_distinct_file_and_semantic_plan_pins(self):
+        state = P.read_json(self.attempt / 'http/state.json')
+        epochs = [e for e in state['epochs'] if e['action_kind'] == 'http_client']
+        for index, case in enumerate(self.result['cases']):
+            child = case['plan']
+            scope = self.attempt / 'http' / ('case-' + child['client']['legacy_case']['case_id'])
+            raw = (scope / 'client-plan.json').read_bytes()
+            semantic = copy.deepcopy(child); semantic.pop('plan_sha256')
+            self.assertEqual(child['plan_sha256'], P.digest(P.canonical(semantic)))
+            self.assertNotEqual(P.digest(raw), child['plan_sha256'])
+            root = Path(self.plan['binding']['independent_root']) / 'remote-operations' / self.plan['window_id']
+            manifest = P.read_json(root / epochs[index]['operation'] / 'manifest.json')
+            command = manifest['argv']
+            self.assertEqual(command[command.index('--sha256') + 1], P.digest(raw))
+            self.assertEqual(epochs[index]['argv_sha256'], P.digest(P.canonical(command)))
+            receipt = P.read_json(Path(child['client']['output']).with_name('client-receipt.json'))
+            self.assertEqual(receipt['plan_sha256'], child['plan_sha256'])
+
+    def test_same_json_with_different_retained_bytes_is_not_normalized(self):
+        for case in self.result['cases']:
+            case_id = case['plan']['client']['legacy_case']['case_id']
+            path = self.attempt / 'http' / ('case-' + case_id) / 'client-plan.json'
+            raw = path.read_bytes()
+            try:
+                path.write_bytes(raw + b'\n')
+                self.assertEqual(P.json_bytes(path.read_bytes()), P.json_bytes(raw))
+                with self.assertRaisesRegex(RuntimeError, 'retained batch client plan differs'):
+                    P.read_drained(self.attempt)
+            finally:path.write_bytes(raw)
+
+    @contextmanager
+    def rebind_command(self, index, pin_value, *, bind_epoch=True):
+        # Deliberately coherent synthetic tampering: do not rely on a stale
+        # manifest sidecar/receipt to reject the wrong command pin.
+        originals = {}
+        def save(path, value):
+            originals.setdefault(path, path.read_bytes()); write(path, value)
+        try:
+            state_path = self.attempt / 'http/state.json'
+            state = P.read_json(state_path)
+            epoch = [e for e in state['epochs'] if e['action_kind'] == 'http_client'][index]
+            root = Path(self.plan['binding']['independent_root']) / 'remote-operations' / self.plan['window_id'] / epoch['operation']
+            manifest = P.read_json(root / 'manifest.json')
+            command = manifest['argv']; command[command.index('--sha256') + 1] = pin_value
+            save(root / 'manifest.json', manifest)
+            sha = P.digest(P.canonical(manifest))
+            sidecar = root / 'manifest.sha256'; originals[sidecar] = sidecar.read_bytes(); sidecar.write_text(sha)
+            receipt = P.read_json(root / 'receipt.json'); receipt['manifest_sha256'] = sha
+            save(root / 'receipt.json', receipt)
+            if bind_epoch:
+                epoch['argv_sha256'] = P.digest(P.canonical(command)); save(state_path, state)
+                path = self.event_path('remote-intent', index)
+                event = P.read_json(path); event['argv_sha256'] = epoch['argv_sha256']; save(path, event)
+            path = self.event_path('remote-terminal', index)
+            event = P.read_json(path); event['receipt']['manifest_sha256'] = sha; save(path, event)
+            path = self.event_path('http-client-epoch-sealed', index * 4)
+            event = P.read_json(path); event['receipt']['operations'][0]['manifest_sha256'] = sha; save(path, event)
+            yield
+        finally:
+            for path, raw in originals.items():path.write_bytes(raw)
+
+    def test_rebound_embedded_or_wrong_file_pin_still_rejects(self):
+        for index, case in enumerate(self.result['cases']):
+            for pin in (case['plan']['plan_sha256'], 'f' * 64):
+                with self.subTest(index=index, pin=pin), self.rebind_command(index, pin):
+                    with self.assertRaisesRegex(RuntimeError, 'batch client command/epoch binding differs'):
+                        P.read_drained(self.attempt)
+            with self.rebind_command(index, case['plan']['plan_sha256'], bind_epoch=False):
+                with self.assertRaisesRegex(RuntimeError, 'batch operation manifest does not bind'):
+                    P.read_drained(self.attempt)
+
+    def test_epoch_argv_hash_remains_required(self):
+        for index in (0, 1):
+            def change(state):
+                clients = [e for e in state['epochs'] if e['action_kind'] == 'http_client']
+                clients[index]['argv_sha256'] = 'f' * 64
+            self.mutate_file(self.attempt / 'http/state.json', change)
 
     def test_whole_batch_cannot_pass_one_case_or_wrong_parent_result(self):
         for name in ('http/result.json', 'http_service-result.json'):

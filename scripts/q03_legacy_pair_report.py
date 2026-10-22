@@ -415,9 +415,12 @@ def _batch_journal(plan, state, events, runs):
                 and canonical(reset_event.get('receipt')) == canonical(reset)
                 and intent['sequence'] < reset_event['sequence'] < pin['sequence'],
                 'batch case reset event missing, duplicated, reordered or receipt differs')
+        # The launch/CLI pin covers the complete retained file, including its
+        # embedded semantic plan hash. _read_batch already requires these exact
+        # canonical bytes; case identity/receipt pins still use plan_sha256.
         command = bound_command(['python3', '-I', '-B',
             str(Path(plan['binding']['checkout']) / 'scripts/q03_http_client.py'), '--plan',
-            str(Path(run['controller_directory']) / 'client-plan.json'), '--sha256', child['plan_sha256']])
+            str(Path(run['controller_directory']) / 'client-plan.json'), '--sha256', digest(canonical(child))])
         require(set(epoch) == {'rank', 'action_kind', 'epoch', 'operation', 'argv_sha256'}
                 and type(epoch['rank']) is int and epoch['rank'] == 0
                 and all(type(epoch[k]) is str and re.fullmatch(r'[0-9a-f]{32}', epoch[k])
