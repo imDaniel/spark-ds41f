@@ -352,7 +352,7 @@ class RuntimeOps:
         owner_sources = ("q03_owner_model.py", "q03_rank_logs.py", "q03_image_preparation.py", "memguard-start.sh", "memguard.sh", "../bin/spark",
                          "mesh_fabric.py", "kernel_backend.py", "kernel_readiness.py", "topology.py",
                          "transport_profiles.py", "model_layout.py", "recipe.py")
-        http_sources = ("q03_http_service.py", "q03_http_worker.py", "q03_http_client.py", "q03_http_toolbox.json", "q03_qualification.py", "q03_quality_matrix.py", "q03_performance.py", 'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py', 'q03_legacy_case_replay.py')
+        http_sources = ("q03_http_service.py", "q03_http_worker.py", "q03_http_client.py", "q03_http_toolbox.json", "q03_qualification.py", "q03_quality_matrix.py", "q03_performance.py", 'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py', 'q03_legacy_case_replay.py', 'q03_quality_capture.py', 'q03_quality_pilot.py')
         return {name: self.sha256(Path(__file__).parent / name) for name in (*names, *owner_sources, *http_sources)}
 
     def validate_host(self, manifest, *, prepare_images=False):
