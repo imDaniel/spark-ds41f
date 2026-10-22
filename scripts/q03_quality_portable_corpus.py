@@ -3,6 +3,7 @@
 
 Cloud preparation is NOT_REPLAY_ADMISSIBLE, not native ARM/runtime evidence.
 No model, candidate/reference code, generator, endpoint or weight shard is run/read.
+Schema-2 site binding reuses the reviewed U/S producer and retains both sidecars.
 """
 from __future__ import annotations
 import argparse
@@ -73,8 +74,12 @@ def isolate():
             'task helper was not loaded from exact isolated source: ' + name)
 
 
-def support_sources():
+def support_sources(*, revised=False):
     value = P.support_sources()
+    if revised:
+        # Reuse the reviewed schema-2 producer's exact metadata/runtime helper
+        # closure. The historical portable preparation contract stays intact.
+        value.update(E.preparation_sources(revised=True))
     path = Path(__file__).resolve()
     value[path.name] = {'path': str(path), 'sha256': Q.digest(Q.read_owned_bytes(path))}
     return value
@@ -262,13 +267,21 @@ def prepare(bindings_path, materials_directory, output_directory):
 
 def bind_site(preparation_path, preparation_sha256, bindings_path, materials_directory, output_directory):
     isolate()
-    support = support_sources()
     prep_raw, preparation = read_preparation(preparation_path, preparation_sha256)
     raw = Q.read_owned_bytes(bindings_path)
     bindings = Q.json_bytes(raw)
+    revised = isinstance(bindings, dict) and type(bindings.get('schema_version')) is int and bindings['schema_version'] == 2
+    support = support_sources(revised=revised)
     # Unchanged complete site proof, including 83-file existence and actual
     # runtime version pins. Cloud assets are insufficient; never relax this.
-    native, export, sources, toolbox, weights = E.validate_bindings(bindings)
+    validation_options = {'allow_revised': True} if revised else {}
+    native, export, sources, toolbox, weights = E.validate_bindings(bindings, **validation_options)
+    metadata_raw = {arm: Q.read_owned_bytes(pin['path']) for arm, pin in bindings['tokenizer_metadata'].items()} if revised else {}
+    require(all(Q.digest(data) == bindings['tokenizer_metadata'][arm]['sha256']
+                for arm, data in metadata_raw.items()), 'native tokenizer metadata changed after validation')
+    retained_helpers = {name: Q.read_owned_bytes(pin['path']) for name, pin in support.items()} if revised else {}
+    require(all(Q.digest(data) == support[name]['sha256'] for name, data in retained_helpers.items()),
+            'quality preparation helper changed after validation')
     material_root, snapshot, prompts, metadata = read_materials(materials_directory)
     content = preparation['content']
     require(content['tokenizer_identity'] == {k: export['identity'][k] for k in L.TOKENIZER_FIELDS}
@@ -276,12 +289,14 @@ def bind_site(preparation_path, preparation_sha256, bindings_path, materials_dir
     immutable = [preparation_path, bindings_path, material_root, bindings['native_cpu_bindings']['path'],
         native['model_root'], native['weights_manifest']['path'], native['runtime_metadata']['path'],
         bindings['toolbox_root'], *(x['root'] for x in bindings['native_sources'].values()),
-        *(x['path'] for x in support.values())]
+        *(x['path'] for x in support.values()),
+        *(x['path'] for x in bindings.get('tokenizer_metadata', {}).values())]
     directory = P.new_output(output_directory, immutable)
     modules, packages = P.packages()
     for name, evidence in packages.items():
         require(evidence['version'] == export['identity'][name + '_version'], name + ' CPU/native runtime version drift')
-    tokenizer = N.native_tokenizer(sources['native197-off'], native['model_root'], modules['transformers'].TokenizersBackend)
+    loader_arm = 'r6x-unpatched' if revised else 'native197-off'
+    tokenizer = N.native_tokenizer(sources[loader_arm], native['model_root'], modules['transformers'].TokenizersBackend)
     rows = frozen_vectors(tokenizer, content)
     corpus = dict(schema_version=1, workload=WORKLOAD, model=L.MODEL, material_sha256=MATERIAL_SHA256,
         prompts={'path': str(material_root / 'prompts.jsonl'), 'sha256': PROMPTS_SHA256},
@@ -289,20 +304,40 @@ def bind_site(preparation_path, preparation_sha256, bindings_path, materials_dir
         cases=[{k: copy.deepcopy(c[k]) for k in ('id', 'category', 'language', 'prompt_sha256', 'input_ids')}
                for c in content['cases']], default_rendering=copy.deepcopy(DEFAULT_RENDERING))
     L.validate_tokenizer_identity(corpus['tokenizer_identity']); L.artifact_files(corpus)
-    require(E.validate_bindings(bindings) == (native, export, sources, toolbox, weights)
+    require(E.validate_bindings(bindings, **validation_options) == (native, export, sources, toolbox, weights)
         and read_materials(materials_directory) == (material_root, snapshot, prompts, metadata), 'site inputs changed')
     P.recheck_packages(modules, packages)
     require(Q.read_owned_bytes(preparation_path) == prep_raw and Q.read_owned_bytes(bindings_path) == raw
-        and support_sources() == support, 'immutable preparation/site bindings/source changed')
+        and support_sources(revised=revised) == support, 'immutable preparation/site bindings/source changed')
+    require(all(Q.read_owned_bytes(bindings['tokenizer_metadata'][arm]['path']) == data
+                for arm, data in metadata_raw.items()), 'native tokenizer metadata changed during quality binding')
     directory.mkdir(mode=0o700, exist_ok=False)
     corpus_pin = {'path': str(directory / 'corpus.json'), 'sha256': Q.exclusive_json(directory / 'corpus.json', corpus)}
-    receipt = dict(schema_version=1, scope='SITE_CPU_INPUT_BINDING_NOT_FIELD_QUALIFICATION',
+    receipt = dict(schema_version=2 if revised else 1, scope='SITE_CPU_INPUT_BINDING_NOT_FIELD_QUALIFICATION',
         preparation_sha256=Q.digest(prep_raw), content_sha256=preparation['content_sha256'],
         material_sha256=MATERIAL_SHA256, site_bindings_sha256=Q.digest(raw), site_bindings=bindings,
         site_artifacts=export['artifacts'], final_corpus=corpus_pin,
         comparison=dict(chat_vectors=60, complete_ids_equal=True, complete_rendered_text_equal=True,
                         regenerated_prompts=False), packages=packages, preparation_sources=support,
         chat_tokenization=P.CHAT_OPTIONS, compared_rows=rows)
+    if revised:
+        retained = {}
+        for arm, data in metadata_raw.items():
+            relative = 'site-inputs/' + arm + '-tokenizer-metadata.json'
+            write_bytes(directory / relative, data)
+            retained[arm] = {'path': str(directory / relative), 'sha256': Q.digest(data)}
+        for arm, files in sources.items():
+            for name, data in files.items():
+                write_bytes(directory / 'native-sources' / arm / name, data)
+        for name, data in retained_helpers.items():
+            write_bytes(directory / 'preparation-sources' / name, data)
+        receipt['producer_provenance'] = dict(binding_schema_version=2, loader_arm=loader_arm,
+            tokenizer_metadata=retained,
+            runtime_qualification='NOT_EVALUATED',
+            package_byte_equivalence='NOT_ASSERTED_ACROSS_CPU_AND_NATIVE_IMAGES',
+            native_source_files_sha256={arm: {name: Q.digest(data) for name, data in files.items()}
+                                       for arm, files in sources.items()},
+            retained_helper_sources_sha256={name: Q.digest(data) for name, data in retained_helpers.items()})
     receipt_pin = {'path': str(directory / 'site-link-receipt.json'),
         'sha256': Q.exclusive_json(directory / 'site-link-receipt.json', receipt)}
     return dict(corpus=corpus_pin, site_link_receipt=receipt_pin)

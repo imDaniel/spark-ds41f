@@ -169,6 +169,7 @@ with tempfile.TemporaryDirectory() as d:
  assert set(corpus)=={'schema_version','workload','model','material_sha256','prompts','tokenizer_identity','artifacts','cases','default_rendering'}
  assert len(corpus['cases'])==60 and set(corpus['cases'][0])=={'id','category','language','prompt_sha256','input_ids'}
  receipt=Q.json_bytes(Path(result['site_link_receipt']['path']).read_bytes())
+ assert receipt['schema_version']==1 and 'producer_provenance' not in receipt
  assert receipt['comparison']==dict(chat_vectors=60,complete_ids_equal=True,complete_rendered_text_equal=True,regenerated_prompts=False)
 ''')
 

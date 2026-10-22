@@ -96,3 +96,32 @@ evidence. They cover exact metadata/prompts/defaults, full vectors, source-cache
 and package/extension shadows, mandatory full site validation, immutable
 preparation and the final corpus schema. The genuine CPU preparation and its
 raw provenance are separate artifacts, not checked-in fabricated fixtures.
+
+## Fixed U/S site-binding composition
+
+The existing `bind-site` command also accepts reviewed schema-2 U/S producer
+bindings. It preserves all 60 frozen vectors and R2 material hashes. No question,
+quota, rubric, rendering override or runtime corpus schema changes. Formal600 and
+the original256 MODEL execution contract remain separate and unchanged.
+
+The quality route explicitly enables the reviewed U/S binding validator. Existing
+legacy exporter and portable callers retain schema-1 admission; no cold4K or
+release256 replay/service/HTTP implementation is imported. On published
+`4f69158b81d8c46ac8a98c89a28e2665eae02c90`, the dependency closure is:
+
+- Exact reviewed `39d8f9ddf35de8ac7e2c741dc84e65b5ff0c9841` native asset exporter,
+  tokenizer metadata helper and pinned runtime-metadata helper blobs.
+- Only that review's source-selection, metadata-validation and binding functions
+  from the legacy exporter, with an explicit quality-route opt-in. Its warm corpus
+  construction, verification and CLI bodies stay byte-for-byte unchanged.
+- The quality wrapper's frozen-vector comparison and raw-provenance retention.
+
+A successful bind produces the unchanged schema-1 quality corpus and a schema-2
+CPU site-link receipt. The receipt retains both actual tokenizer sidecars, full
+per-arm source files (including their different protocols), and helper bytes.
+It rechecks those inputs before writing; it does not regenerate the preparation
+or assert cross-image package-byte equivalence, runtime or model qualification.
+
+Actual U/S sidecars, registered model/source inputs and matching CPU package
+versions are still required. Source readiness and synthetic tests do not supply
+that evidence or authorize Mac/GPU execution. No new command-line flags are added.

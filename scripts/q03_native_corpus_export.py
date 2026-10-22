@@ -184,7 +184,12 @@ def read_sources(native_root):
     return sources
 
 
-def validate_bindings(value):
+def asset_bindings(value, versions=None):
+    """Validate full model/source inputs, not a native runtime identity.
+
+    Only the original fixed-runtime validator or the explicit U/S sidecar
+    adapter may complete provenance. This function is not an exporter CLI.
+    """
     require(isinstance(value, dict) and set(value) == BINDING_FIELDS
             and type(value['schema_version']) is int and value['schema_version'] == 1,
             'complete native CPU export bindings required')
@@ -219,15 +224,16 @@ def validate_bindings(value):
             'remote code or alternate tokenizer assets are outside native closure')
     require(value['special_tokens_file'] in assets, 'inventoried special tokens asset required')
     sources = read_sources(value['native_root'])
-    runtime = Q.owner.pinned_json(value['runtime_metadata'])
+    if versions is None:
+        versions = Q.owner.pinned_json(value['runtime_metadata'])
     identity = {key: value[key] for key in ('model_repository', 'model_revision', 'tokenizer_revision',
                 'model_config_sha256', 'tokenizer_assets_sha256')}
     identity.update(weights_manifest_sha256=value['weights_manifest']['sha256'],
                     encoding_source_sha256=Q.NATIVE_SOURCES['deepseek_v41_encoding.py'],
                     chat_template_sha256=Q.TEMPLATE_SHA,
                     special_tokens_sha256=assets[value['special_tokens_file']],
-                    transformers_version=runtime.get('transformers_version'),
-                    tokenizers_version=runtime.get('tokenizers_version'))
+                    transformers_version=versions.get('transformers_version'),
+                    tokenizers_version=versions.get('tokenizers_version'))
     artifacts = {'model_root': str(root), 'weights_manifest': value['weights_manifest'],
                  'runtime_metadata': value['runtime_metadata'], 'special_tokens_file': value['special_tokens_file'],
                  'native_sources': {name: {'path': str(Path(value['native_root']) / 'vllm/tokenizers' / name),
@@ -235,9 +241,17 @@ def validate_bindings(value):
     export = {'schema_version': 1, 'tokenizer_mode': 'deepseek_v41', 'identity': identity,
               'artifacts': artifacts, 'request': copy.deepcopy(Q.EXTRA), 'rows': []}
     Q.validate_identity(identity)
-    Q.verify_artifacts(export)
+    Q.artifact_files(export)
+    for pin in [artifacts['weights_manifest'], *artifacts['native_sources'].values()]:
+        require(Q.digest(Q.read_owned_bytes(pin['path'])) == pin['sha256'], 'actual provenance artifact changed')
     inventory = weight_inventory(Q.read_owned_bytes(value['weights_manifest']['path']))
     require(all((root / name).is_file() for name in inventory), 'retained manifest file absent in snapshot')
+    return export, sources, inventory
+
+
+def validate_bindings(value):
+    export, sources, inventory = asset_bindings(value)
+    Q.verify_artifacts(export)  # Original native197 runtime contract is unchanged.
     return export, sources, inventory
 
 

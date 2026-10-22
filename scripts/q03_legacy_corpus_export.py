@@ -26,7 +26,7 @@ import uuid
 BYTECODE_PREFIX = '/__q03_cpu_export_unused_bytecode__'
 _preimported_helpers = any(name in sys.modules for name in (
     'q03_native_corpus_export', 'q03_legacy_case_replay', 'q03_qualification',
-    'q03_owner_model', 'q03_held_window'))
+    'q03_owner_model', 'q03_held_window', 'q03_runtime_capture', 'q03_tokenizer_metadata_capture'))
 _before_bytecode = sys.dont_write_bytecode, sys.pycache_prefix
 sys.dont_write_bytecode, sys.pycache_prefix = True, BYTECODE_PREFIX
 try:
@@ -48,6 +48,18 @@ SOURCE_FILES = {
     'vllm/entrypoints/serve/tokenize/serving.py': 'fb9fd00cc71df5c052f420a959e39434ce5fd3c84556275eb9dc25d43ff59750',
     'vllm/entrypoints/openai/chat_completion/protocol.py': 'f6a21a3b6ae07967b6e4994e14bcf9b39117d8f7dfc57bbc8c2979687784f95f',
 }
+# Revised heads identify tokenizer source selections, NEVER executing runtimes.
+# Explicit schema-2 sidecars bind their CPU provenance; old modes stay fixed.
+REVISED_NATIVE_HEADS = {
+    'r6x-unpatched': '7316c7f9fae1bc4a0b7ab1848de0db4143eec5d2',
+    'r6x-steer': 'ebb44766d6f04d3a9272b712778d7f2fa2cec1fd',
+}
+CHAT_PROTOCOL = 'vllm/entrypoints/openai/chat_completion/protocol.py'
+REVISED_SOURCE_FILES = {
+    'r6x-unpatched': {**SOURCE_FILES, CHAT_PROTOCOL:
+        '0d85d431a4ccb56cbe45665aaa040578d707cc8c728408a72a68666ec085cab2'},
+    'r6x-steer': dict(SOURCE_FILES),
+}
 CHAT_OPTIONS = {'add_generation_prompt': True, 'continue_final_message': False}
 
 
@@ -63,7 +75,7 @@ def isolate():
             'fixed native CPU exporter negative import-cache isolation is required')
 
 
-def preparation_sources():
+def preparation_sources(*, revised=False):
     result = N.preparation_sources()
     root = Path(__file__).resolve().parent
     for module, name in ((sys.modules[__name__], 'q03_legacy_corpus_export.py'),
@@ -71,6 +83,12 @@ def preparation_sources():
         path = Path(module.__file__).resolve()
         require(path == root / name, 'legacy preparation helper import origin differs: ' + name)
         result[name] = {'path': str(path), 'sha256': Q.digest(Q.read_owned_bytes(path))}
+    if revised:
+        capture = metadata_validator()
+        for module in (capture, capture.R):
+            path = Path(module.__file__).resolve()
+            require(path.parent == root, 'CPU metadata helper import origin differs')
+            result[path.name] = {'path': str(path), 'sha256': Q.digest(Q.read_owned_bytes(path))}
     path = root / 'q03_http_toolbox.json'
     result[path.name] = {'path': str(path), 'sha256': Q.digest(Q.read_owned_bytes(path))}
     require(result[path.name]['sha256'] == L.TOOLBOX_INVENTORY_SHA256, 'PR8 inventory drift')
@@ -85,22 +103,30 @@ def canonical_root(value, label):
     return path
 
 
-def read_native_sources(bindings):
-    require(isinstance(bindings, dict) and set(bindings) == set(NATIVE_HEADS),
+def read_native_sources(bindings, *, allow_revised=False):
+    revised = isinstance(bindings, dict) and set(bindings) == set(REVISED_NATIVE_HEADS)
+    require(not revised or allow_revised,
+            'U176/S188 source bindings require explicit schema-2 CPU metadata; runtime binding is separate')
+    heads = REVISED_NATIVE_HEADS if revised else NATIVE_HEADS
+    require(isinstance(bindings, dict) and set(bindings) == set(heads),
             'both fixed native source selections required')
     output = {}
-    for arm, expected_head in NATIVE_HEADS.items():
+    for arm, expected_head in heads.items():
         binding = bindings[arm]
         require(isinstance(binding, dict) and set(binding) == {'head', 'root'}
                 and binding['head'] == expected_head, 'fixed native source head differs: ' + arm)
         root = canonical_root(binding['root'], arm + ' native source root')
         files = {}
-        for name, expected in SOURCE_FILES.items():
+        expected_files = REVISED_SOURCE_FILES[arm] if revised else SOURCE_FILES
+        for name, expected in expected_files.items():
             raw = Q.read_owned_bytes(root / name)
             require(Q.digest(raw) == expected, 'native tokenizer/protocol source drift: ' + arm + ':' + name)
             files[name] = raw
         output[arm] = files
-    require(output['r6x188'] == output['native197-off'], 'native A/B tokenizer/protocol bytes differ')
+    if not revised:
+        require(output['r6x188'] == output['native197-off'], 'native A/B tokenizer/protocol bytes differ')
+    # Revised protocol bytes intentionally differ. No normalization or whole-
+    # runtime equality claim is justified by the seven shared tokenizer files.
     return output
 
 
@@ -111,17 +137,63 @@ def read_toolbox(root):
     return {name: Q.read_owned_bytes(root / name) for name in inventory}
 
 
-def validate_bindings(value):
-    require(isinstance(value, dict) and set(value) == {
-        'schema_version', 'native_cpu_bindings', 'native_sources', 'toolbox_root'}
-        and type(value['schema_version']) is int and value['schema_version'] == 1,
-        'complete legacy CPU corpus bindings required')
+def metadata_validator():
+    # Load only for revised bindings, under the same absent source-only cache
+    # prefix. Old export/portable modes do not gain this dependency.
+    before = sys.dont_write_bytecode, sys.pycache_prefix
+    sys.dont_write_bytecode, sys.pycache_prefix = True, BYTECODE_PREFIX
+    try:
+        module = importlib.import_module('q03_tokenizer_metadata_capture')
+        require(Path(module.__file__).resolve() == Path(__file__).resolve().with_name(
+                'q03_tokenizer_metadata_capture.py'), 'CPU metadata helper import origin differs')
+        cached = getattr(getattr(module, '__spec__', None), 'cached', None)
+        require(isinstance(cached, str) and cached.startswith(BYTECODE_PREFIX + '/'),
+                'CPU metadata helper loaded before source-only isolation')
+        return module
+    finally:
+        sys.dont_write_bytecode, sys.pycache_prefix = before
+
+
+def revised_metadata(value):
+    pins = value['tokenizer_metadata']
+    require(isinstance(pins, dict) and set(pins) == set(REVISED_NATIVE_HEADS),
+            'both actual U176/S188 tokenizer metadata captures required')
+    capture = metadata_validator()
+    result = {arm: capture.validate_metadata(Q.owner.pinned_json(pin), arm) for arm, pin in pins.items()}
+    require(all(result[arm]['tokenizer_source_sha256'] == {name.removeprefix('vllm/'): sha
+                for name, sha in REVISED_SOURCE_FILES[arm].items()} for arm in REVISED_NATIVE_HEADS),
+            'captured image/local tokenizer source closure differs')
+    versions = {name + '_version': result['r6x-unpatched']['packages'][name]['version']
+                for name in ('transformers', 'tokenizers')}
+    require(all(result[arm]['packages'][name]['version'] == versions[name + '_version']
+                for arm in REVISED_NATIVE_HEADS for name in ('transformers', 'tokenizers')),
+            'captured U176/S188 tokenizer package versions differ')
+    return versions
+
+
+def validate_bindings(value, *, allow_revised=False):
+    revised = isinstance(value, dict) and type(value.get('schema_version')) is int and value['schema_version'] == 2
+    require(not revised or allow_revised, 'schema-2 CPU bindings require the quality site-binding route')
+    fields = {'schema_version', 'native_cpu_bindings', 'native_sources', 'toolbox_root'}
+    require(isinstance(value, dict) and set(value) == fields | ({'tokenizer_metadata'} if revised else set())
+            and type(value['schema_version']) is int and value['schema_version'] in (1, 2),
+            'complete legacy CPU corpus bindings required')
+    require(not revised or isinstance(value['native_sources'], dict)
+            and set(value['native_sources']) == set(REVISED_NATIVE_HEADS),
+            'schema-2 requires genuine U176/S188 source selections')
+    sources = read_native_sources(value['native_sources'], allow_revised=revised)
     native = Q.owner.pinned_json(value['native_cpu_bindings'])
-    export, loader_sources, weights = N.validate_bindings(native)
-    sources = read_native_sources(value['native_sources'])
-    require(native['native_root'] == value['native_sources']['native197-off']['root'],
-            'actual tokenizer loader source root differs from fixed native197 input')
-    require(loader_sources == {key: sources['native197-off'][key] for key in N.SOURCE_FILES},
+    loader_arm = 'r6x-unpatched' if revised else 'native197-off'
+    if revised:
+        versions = revised_metadata(value)
+        require(native.get('runtime_metadata') == value['tokenizer_metadata'][loader_arm],
+                'clean CPU producer metadata must be the actual U176 sidecar pin')
+        export, loader_sources, weights = N.asset_bindings(native, versions)
+    else:
+        export, loader_sources, weights = N.validate_bindings(native)
+    require(native['native_root'] == value['native_sources'][loader_arm]['root'],
+            'actual tokenizer loader source root differs from fixed input')
+    require(loader_sources == {key: sources[loader_arm][key] for key in N.SOURCE_FILES},
             'actual tokenizer loader source bytes differ')
     toolbox = read_toolbox(value['toolbox_root'])
     return native, export, sources, toolbox, weights
