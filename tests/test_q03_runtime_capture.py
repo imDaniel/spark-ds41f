@@ -104,8 +104,12 @@ class PlanAndSchemaTests(unittest.TestCase):
 
 class FilesystemExecutionTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
+        # CI deliberately puts TMPDIR inside the checkout. Capture evidence must
+        # stay outside it, so use the canonical system temp parent explicitly.
+        self.temp=tempfile.TemporaryDirectory(prefix='q03-runtime-evidence-', dir=Path('/tmp').resolve())
+        self.addCleanup(self.temp.cleanup)
         self.root=Path(self.temp.name).resolve(); self.root.chmod(0o700)
+        self.assertFalse(self.root.is_relative_to(ROOT))
         self.output=self.root/'new-capture'; self.calls=[]
         self.image=image()
         self.pin=mock.patch.dict(C.IMAGE_FREEZE['image_rootfs_sha256'],
@@ -148,6 +152,15 @@ class FilesystemExecutionTests(unittest.TestCase):
         (self.root/'alias').symlink_to(self.root, target_is_directory=True)
         with self.assertRaises(ValueError): C.capture(ARM,CID,str(self.root/'alias'/'capture'),self.runner)
         self.assertEqual(self.calls,[])
+
+    def test_in_checkout_output_rejected_before_execution(self):
+        with tempfile.TemporaryDirectory(prefix='.runtime-capture-test-', dir=ROOT) as temp:
+            parent=Path(temp).resolve(); parent.chmod(0o700)
+            output=parent/'forbidden-capture'
+            with self.assertRaisesRegex(ValueError, 'output must be separate from the source slice'):
+                C.capture(ARM,CID,str(output),self.runner)
+            self.assertFalse(output.exists())
+            self.assertEqual(self.calls,[])
 
     def test_existing_file_and_symlink_never_overwritten(self):
         fd=C.open_output(str(self.output))
