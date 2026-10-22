@@ -285,6 +285,8 @@ class HeldCoreContracts(unittest.TestCase):
         self.ops.spawn_watchdog = spawn
         self.ops.wait_watchdog_ready = lambda directory, process: W.wait_ready(directory, process, timeout=.1)
 
+    @unittest.skipUnless(sys.platform.startswith('linux') and Path('/proc/self/stat').is_file(),
+                         'requires the production Linux /proc process-identity boundary')
     def test_new_controls_pass_strict_reader_before_first_stop(self):
         import stat
         self.real_readiness()
@@ -303,6 +305,8 @@ class HeldCoreContracts(unittest.TestCase):
         self.assertEqual(observed, [True])
         self.assertTrue(result['hold_released'])
 
+    @unittest.skipUnless(sys.platform.startswith('linux') and Path('/proc/self/stat').is_file(),
+                         'requires the production Linux /proc process-identity boundary')
     def test_invalid_new_readiness_refuses_before_stop(self):
         self.real_readiness(unsafe=True)
         with self.assertRaisesRegex(TimeoutError, 'watchdog readiness'):
@@ -442,5 +446,93 @@ class HeldCoreContracts(unittest.TestCase):
             ops.run=mock.Mock(side_effect=[SimpleNamespace(returncode=0,stdout=json.dumps([observed])),absent,final])
             with self.subTest(final=final.stdout),self.assertRaises(RuntimeError):self.core.RuntimeOps.cleanup_held_candidates(ops,session)
             self.assertNotIn('removed',state['held_candidates'][0])
+
+
+
+@unittest.skipUnless(sys.platform.startswith('linux') and Path('/proc/self/stat').is_file(),
+                     'requires the production Linux /proc process-identity boundary')
+class LinuxWatchdogReadinessContracts(unittest.TestCase):
+    """Real inert child and strict files; no watchdog, service or GPU is launched."""
+    def setUp(self):
+        import subprocess
+        import q03_window_watchdog as W
+        self.W = W
+        self.temp = tempfile.TemporaryDirectory(prefix='.readiness-test-', dir=ROOT)
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name).resolve()
+        self.capsule = {'window_id': 'a' * 32}
+        self.digest = 'b' * 64
+        boundary = mock.patch.object(W, 'load_capsule', return_value=(self.capsule, self.digest))
+        boundary.start(); self.addCleanup(boundary.stop)
+        self.process = subprocess.Popen([sys.executable, '-I', '-B', '-c',
+            'import sys; sys.stdin.buffer.read(1)'], stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.addCleanup(self.finish_child)
+        self.identity = W.process_identity(self.process.pid)
+        self.assertIsNotNone(self.identity)
+        self.ready = {'window_id': self.capsule['window_id'],
+                      'capsule_sha256': self.digest, 'process': self.identity}
+
+    def finish_child(self):
+        if not self.process.stdin.closed:
+            self.process.stdin.close()
+        self.process.wait(timeout=5)
+
+    def write_ready(self, value):
+        self.W.atomic_json(self.root / 'watchdog.ready.json', value)
+
+    def wait(self):
+        return self.W.wait_ready(self.root, self.process, timeout=.02)
+
+    def test_real_live_child_identity_is_required(self):
+        self.write_ready(self.ready)
+        self.assertEqual(self.wait(), self.ready)
+
+    def test_null_or_malformed_readiness_is_not_admitted(self):
+        records = [None, [], 1, {'process': None},
+                   dict(self.ready, process=None), dict(self.ready, process=[]),
+                   dict(self.ready, process={'pid': self.process.pid}),
+                   dict(self.ready, process=dict(self.identity, pid=True)),
+                   dict(self.ready, process=dict(self.identity, pid=float(self.process.pid))),
+                   dict(self.ready, process=dict(self.identity, start_ticks=0)),
+                   dict(self.ready, process=dict(self.identity, start_ticks='unknown')),
+                   dict(self.ready, process=dict(self.identity, extra='unbound'))]
+        for value in records:
+            with self.subTest(value=value):
+                self.write_ready(value)
+                with self.assertRaisesRegex(TimeoutError, 'watchdog readiness'):
+                    self.wait()
+                self.assertIsNone(self.process.poll())
+
+    def test_dead_child_is_not_ready(self):
+        self.write_ready(self.ready)
+        self.finish_child()
+        with self.assertRaisesRegex(RuntimeError, 'exited before readiness'):
+            self.wait()
+
+    def test_child_exit_between_poll_and_identity_check_is_not_ready(self):
+        self.write_ready(self.ready)
+        real_identity = self.W.process_identity
+        def disappear(pid):
+            self.finish_child()
+            return real_identity(pid)
+        with mock.patch.object(self.W, 'process_identity', side_effect=disappear), \
+                self.assertRaisesRegex(TimeoutError, 'watchdog readiness'):
+            self.wait()
+        self.assertIsNotNone(self.process.poll())
+
+    def test_same_pid_with_different_start_ticks_is_not_ready(self):
+        self.ready['process'] = dict(self.identity, start_ticks=str(int(self.identity['start_ticks']) + 1))
+        self.write_ready(self.ready)
+        with self.assertRaisesRegex(TimeoutError, 'watchdog readiness'):
+            self.wait()
+
+    def test_ready_record_cannot_name_another_process_or_window(self):
+        for key, value in (('process', dict(self.identity, pid=os.getpid())),
+                           ('window_id', 'c' * 32), ('capsule_sha256', 'd' * 64)):
+            with self.subTest(key=key):
+                self.write_ready(dict(self.ready, **{key: value}))
+                with self.assertRaisesRegex(TimeoutError, 'watchdog readiness'):
+                    self.wait()
 
 if __name__=='__main__':unittest.main(verbosity=2)

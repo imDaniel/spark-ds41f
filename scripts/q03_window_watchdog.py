@@ -380,10 +380,17 @@ def wait_ready(session_dir, process, timeout=10):
             raise RuntimeError("watchdog exited before readiness")
         try:
             ready = json.loads(read_owned_bytes(root / "watchdog.ready.json"))
-            if (ready["window_id"] == c["window_id"]
-                    and ready["capsule_sha256"] == expected
-                    and ready["process"]["pid"] == process.pid
-                    and process_alive(ready["process"])):
+            identity = ready.get("process") if isinstance(ready, dict) else None
+            if (isinstance(ready, dict)
+                    and ready.get("window_id") == c["window_id"]
+                    and ready.get("capsule_sha256") == expected
+                    and isinstance(identity, dict)
+                    and set(identity) == {"pid", "start_ticks"}
+                    and type(identity["pid"]) is int and identity["pid"] > 0
+                    and isinstance(identity["start_ticks"], str)
+                    and re.fullmatch(r"[0-9]+", identity["start_ticks"])
+                    and identity["pid"] == process.pid
+                    and process_alive(identity)):
                 return ready
         except (OSError, ValueError, KeyError):
             pass

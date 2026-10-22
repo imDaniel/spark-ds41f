@@ -34,3 +34,20 @@ Use this correction only in a newly frozen successor. Preserve every failed
 window's source, capsule, manifest, receipts and refusal bytes. It neither
 reopens a closed window nor authorizes START, model execution, a build rerun,
 or migration.
+
+## CPU validation and source preparation order
+
+The watchdog's process-identity contract uses Linux `/proc`. Tests that exercise
+that real boundary are explicitly Linux-required: run them on a genuine Linux
+CPU host. A macOS skip is not a readiness validation result, and no synthetic
+process identity may substitute for that required Linux coverage. The remaining
+portable tests may run on macOS; retain the exact pass/failure/skip counts.
+
+Do not run source preparation concurrently with tests in the same checkout.
+These suites create owner-controlled temporary fixtures beneath their checkout
+root, so the source can legitimately be transiently dirty while tests run.
+Finish the test process, confirm its outcome and the checkout's cleanliness,
+then prepare; alternatively prepare from a separate clean, immutable checkout.
+A dirty-source refusal remains a refusal, not permission to clean it to green.
+Preserve the first failure and inspect actual dirty entries before attributing
+its cause. No test or preparation failure permits a blind retry of an old window.
