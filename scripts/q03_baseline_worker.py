@@ -100,6 +100,26 @@ def project_effective_config(config):
     return json.loads(json.dumps(result, sort_keys=True, allow_nan=False))
 
 
+def observe_target(target, arm):
+    """Absence is a checked capability, not a missing-profile fallback."""
+    revised = arm in ('r6x-unpatched', 'r6x-steer')
+    arena = getattr(target, 'q03_input_arena', None)
+    need(arena is None, 'baseline OFF model unexpectedly has Q03 owner')
+    if revised:
+        need(not hasattr(target, 'q03_input_arena'), 'revised pair contains a Q03 model patch')
+    if arm == 'r6x-unpatched':
+        need(not hasattr(target, 'steering_profile'), 'unpatched model has steering capability')
+        return None, False
+    # Do not use getattr(..., None): an absent API is not proof of unloaded steer.
+    need(hasattr(target, 'steering_profile'), 'candidate steering capability is missing')
+    profile = target.steering_profile
+    steering = None if profile is None else {
+        'name': profile.profile_id, 'artifact_sha256': profile.artifact_sha256,
+        'identity': profile.identity, 'schedule_sha256': profile.schedule_sha256,
+        'layers': list(profile.layers), 'alphas': list(profile.alphas)}
+    return steering, arena is not None
+
+
 class HttpObservation:
     def q03_http_observe(self):
         verify_bytecode_policy()
@@ -120,7 +140,9 @@ class HttpObservation:
         need(runtime_sha == checked['provenance']['sha256'], 'baseline explicit runtime provenance changed')
         runtime = identity.validate_runtime(identity.json_bytes(runtime_raw), arm)
         need(runtime == checked['runtime'], 'baseline runtime spec binding differs')
-        need(os.environ.get('VLLM_DS41_Q03_MHC_MXFP8') == '0', 'baseline Q03 must remain OFF')
+        revised = arm in identity.REVISED_ARMS
+        need(os.environ.get('VLLM_DS41_Q03_MHC_MXFP8') == (None if revised else '0'),
+             'baseline Q03 switch differs from the exact arm capability')
         need(os.environ.get('VLLM_ALLOW_INSECURE_SERIALIZATION') == '0', 'baseline safe RPC disabled')
         # Imports are confined to the already running, authorized model worker,
         # never the static preparation capture.
@@ -143,13 +165,21 @@ class HttpObservation:
         need(version_hash == runtime['torch_version_sha256']
              and str(torch.__version__) == runtime['torch_version'], 'baseline actual Torch version changed')
         sources = {}
-        for relative, expected in identity.SOURCE_SHA256[arm].items():
+        absent = identity.absent_source_paths(arm)
+        for relative in absent:
+            path = root / relative
+            need(not path.exists() and not path.is_symlink(), 'unpatched steering source is present')
+        for relative, expected in identity.source_hashes(arm).items():
             path = root / relative
             need(path.resolve() == path and file_sha(path) == expected, 'baseline loaded source bytes differ')
             sources[relative] = expected
         # Reject imported critical modules from another mount/path as well as
         # checking the baked files. The observer does not add a vLLM overlay.
         for name, module in list(sys.modules.items()):
+            if arm == 'r6x-unpatched':
+                need(name != 'vllm.models.deepseek_v4_1.steering'
+                     and not name.startswith('vllm.models.deepseek_v4_1.steering.'),
+                     'unpatched worker imported steering code')
             if name == 'vllm' or name.startswith('vllm.'):
                 path = getattr(module, '__file__', None)
                 if path is not None:
@@ -165,17 +195,9 @@ class HttpObservation:
         targets = [m for m in self.model_runner.get_model().modules() if isinstance(m, DeepseekV4Model)]
         need(len(targets) == 1, 'baseline actual model target missing or ambiguous')
         target = targets[0]
-        # A188 predates q03_input_arena. Its absence is an observed A188 fact,
-        # not a fabricated native197 owner/collector qualification.
-        arena = getattr(target, 'q03_input_arena', None)
-        need(arena is None, 'baseline OFF model unexpectedly has Q03 owner')
-        profile = target.steering_profile
-        steering = None if profile is None else {
-            'name': profile.profile_id, 'artifact_sha256': profile.artifact_sha256,
-            'identity': profile.identity, 'schedule_sha256': profile.schedule_sha256,
-            'layers': list(profile.layers), 'alphas': list(profile.alphas)}
+        steering, owner_present = observe_target(target, arm)
         parallel = self.parallel_config
-        return {'worker_rank': self.rank, 'tp_rank': get_tensor_model_parallel_rank(),
+        result = {'worker_rank': self.rank, 'tp_rank': get_tensor_model_parallel_rank(),
             'config_rank': parallel.rank, 'node_rank': parallel.node_rank,
             'node_rank_within_dp': parallel.node_rank_within_dp, 'local_rank': self.local_rank,
             'runner_type': type(self.model_runner).__name__, 'identity': checked['identity'],
@@ -187,10 +209,14 @@ class HttpObservation:
             'metadata_versions': {name: importlib.metadata.version(name) for name in ('torch', 'tilelang', 'tile_kernels')},
             'package_origins': package_origins, 'package_sha256': package_hashes,
             'torch_version_sha256': version_hash,
-            'sm': list(torch.cuda.get_device_capability()), 'q03_switch': os.environ['VLLM_DS41_Q03_MHC_MXFP8'],
-            'q03_owner_present': arena is not None, 'sequence_parallel': target.use_sequence_parallel,
+            'sm': list(torch.cuda.get_device_capability()), 'q03_switch': os.environ.get('VLLM_DS41_Q03_MHC_MXFP8'),
+            'q03_owner_present': owner_present, 'sequence_parallel': target.use_sequence_parallel,
             'steering_profile': steering, 'effective_config': project_effective_config(self.vllm_config),
             'runner_config': project_effective_config(self.model_runner.vllm_config)}
+        if revised:
+            result.update(absent_source_paths=absent, steering_capability=(
+                'absent' if arm == 'r6x-unpatched' else 'present'))
+        return result
 
 
 def install_worker_source():

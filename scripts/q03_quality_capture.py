@@ -82,9 +82,9 @@ def ids(value, *, empty=False):
 
 
 def extra_body(state):
-    require(state in ('unloaded', 'loaded0', 'loaded1', 'loaded2', 'loaded3', 'loaded4'), 'unknown state')
+    require(state in ('absent', 'unloaded', 'loaded0', 'loaded1', 'loaded2', 'loaded3', 'loaded4'), 'unknown state')
     extra = {'temperature': 0, 'seed': 2048}
-    if state != 'unloaded':
+    if state not in ('absent', 'unloaded'):
         extra.update(steering_profile=PROFILE, steering_scale=int(state[-1]))
     return extra
 
@@ -399,7 +399,12 @@ def run_client(plan, main, *, deadline, open_response=None, clock=time.monotonic
     require(digest(prompt_raw) == PROMPTS_SHA256, 'exact generation-only prompt bytes required')
     prompts = [strict_json(line) for line in prompt_raw.splitlines() if line.strip()]
     require(len(prompts) == 60, 'all sixty planned cases required; segmentation is not implemented')
-    require(plan['selection']['arm'] in ('r6x188', 'native197-off'), 'unknown arm')
+    selection = plan['selection']
+    require(set(selection) == {'arm', 'steering'}
+        and selection['arm'] in ('r6x188', 'native197-off', 'r6x-unpatched', 'r6x-steer')
+        and selection['steering'] in (('absent',) if selection['arm'] == 'r6x-unpatched' else
+            ('unloaded', 'loaded0', 'loaded1', 'loaded2', 'loaded3', 'loaded4')),
+        'unknown arm/capability state')
     context = copy.deepcopy(config['context'])
     require({'runtime_receipt_sha256', 'tokenizer_identity_sha256', 'decode_identity_sha256',
             'observed_loaded_state', 'applied_state_evidence'} <= set(context)

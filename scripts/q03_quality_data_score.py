@@ -271,7 +271,7 @@ def _verify_request(record, case, selection):
     require(isinstance(salt, str) and salt, 'missing cache salt')
     expected = {'model': MODEL, 'messages': [{'role': 'user', 'content': case['prompt_text']}],
                 'max_tokens': 2048, 'temperature': 0, 'seed': 2048, 'return_token_ids': True, 'cache_salt': salt}
-    if selection['steering'] != 'unloaded':
+    if selection['steering'] not in ('absent', 'unloaded'):
         expected.update(steering_profile='heretic-1017-attn-v1', steering_scale=int(selection['steering'][-1]))
     require(canonical(payload) == canonical(expected), 'exact prompt/decode request differs')
     require(isinstance(request.get('endpoint'), str) and re.fullmatch(r'http://127\.0\.0\.1:[0-9]+/v1/chat/completions', request['endpoint']), 'unexpected request endpoint')
@@ -434,7 +434,10 @@ def evaluate(material_directory, capture_directory, *, max_response_bytes):
         require(isinstance(identity.get(key), str) and identity[key], 'missing primary identity: ' + key)
     require(identity.get('transport_bounds') == capture.get('transport_bounds'), 'identity transport bounds differ')
     selection = identity.get('selection', {})
-    require(selection.get('arm') in ('r6x188', 'native197-off') and selection.get('steering') in ('unloaded', 'loaded0', 'loaded1', 'loaded2', 'loaded3', 'loaded4'), 'unknown arm/state')
+    require(set(selection) == {'arm', 'steering'}
+        and selection.get('arm') in ('r6x188', 'native197-off', 'r6x-unpatched', 'r6x-steer')
+        and selection.get('steering') in (('absent',) if selection['arm'] == 'r6x-unpatched' else
+            ('unloaded', 'loaded0', 'loaded1', 'loaded2', 'loaded3', 'loaded4')), 'unknown arm/state')
     copied_prompts = _read(directory / 'prompts.jsonl', MATERIAL_FILES['prompts.jsonl'][0])
     require(digest(copied_prompts) == MATERIAL_FILES['prompts.jsonl'][1], 'capture prompt file changed')
     index_raw, index_ref = _artifact(directory, 'case-index.json', 60 * bound)

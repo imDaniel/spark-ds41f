@@ -32,7 +32,7 @@ WORKLOAD = 'legacy_warm4k_v1'
 MODEL = 'deepseek-v4.1-flash'
 PROFILE = 'heretic-1017-attn-v1'
 CASES = {'warm4k_c1': 1, 'warm4k_c4': 4}
-ARMS = ('r6x188', 'native197-off')
+ARMS = ('r6x188', 'native197-off', 'r6x-unpatched', 'r6x-steer')
 STATES = ('unloaded', 'loaded0', 'loaded1', 'loaded2', 'loaded3', 'loaded4')
 PROMPTS_SHA256 = 'ce2d8ed479d6cbf2f01e01de28faae01e311495472b2260b7c8bbf3c901a0961'
 TOOLBOX_HEAD = 'c6342a1b6c5e5a98108905a71452a51d6d3a4a87'
@@ -64,15 +64,16 @@ def ids(value):
 
 def validate_selection(value):
     require(isinstance(value, dict) and set(value) == {'arm', 'steering'}
-            and value['arm'] in ARMS and value['steering'] in STATES,
-            'finite A188/B197-OFF and unloaded/loaded0..4 selection required')
+            and value['arm'] in ARMS
+            and value['steering'] in (('absent',) if value['arm'] == 'r6x-unpatched' else STATES),
+            'finite baseline arm/capability state required')
     return value
 
 
 def extra_body(selection):
     validate_selection(selection)
     extra = {'temperature': 0, 'seed': 2048}
-    if selection['steering'] != 'unloaded':
+    if selection['steering'] not in ('absent', 'unloaded'):
         extra.update(steering_profile=PROFILE, steering_scale=int(selection['steering'][-1]))
     return extra  # Deliberately no thinking/chat-template override, even at loaded0.
 

@@ -23,8 +23,8 @@ PROFILE_SHA256 = 'e935b492d1f76eeae09fe5a57b094c3bfbf8e63e83b37fe1be0e42fa46170a
 # Independently frozen expected configuration, not a first-worker observation.
 # The scale is a request scalar, so loaded0 through loaded4 have identical config.
 EFFECTIVE_SHA256 = 'a144ea7b1dbb12c50ca4cf0862d1ec9e83f34d87a2938ea441f8c57f181914c8'
-IDENTITY_SOURCE_SHA256 = 'd1a72efdf4ea85d781b7d689064190957b5cef0e32de503c343a730292aed46f'
-LEGACY_SOURCE_SHA256 = '5e624b53a06fa7f1d750ab8ba0edc59493860ea4146f53f868adbb670a3e07b3'
+IDENTITY_SOURCE_SHA256 = '91dd7a755a1bba0b1315c7c73dbd882831c3a348be427ef3cd14acf9833bd268'
+LEGACY_SOURCE_SHA256 = '9ad779f7d2c93dcfacb5d1d734072547b6c8d4c71623a3e01c56735e7acc296c'
 SOURCE_FILES = tuple(dict.fromkeys((*owner.SOURCE_FILES, 'q03_held_window.py',
     'q03_http_service.py', 'q03_http_client.py', 'q03_http_toolbox.json',
     'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py',
@@ -51,8 +51,8 @@ def legacy_module():
     return _module('q03_legacy_case_replay', LEGACY_SOURCE_SHA256)
 
 
-QUALITY_SOURCE_SHA256 = '9f3031c7771d9a0aab6c2063a120aa3cfd5cb3032f6ae5b5a31b03032191e045'
-CAPTURE_SOURCE_SHA256 = '665cd426459474411d963a70c8473926884fa9a2b7f56e061af1ab6be4ac4992'
+QUALITY_SOURCE_SHA256 = 'e48f4a50d0cb90aa104cdc653f995368c3f0c2b1b873abea1ed4f96b0c511d14'
+CAPTURE_SOURCE_SHA256 = '6aceb09a34cacf59595b8e7f3148e49a7c2051292291d4eba9f23c2dfce3a38e'
 
 
 def quality_pilot_module():
@@ -142,11 +142,21 @@ def validate_binding(manifest, ops, *, remote=True):
         (value, 'startup_seconds', 1, 3600), (value, 'client_seconds', 106, 600)):
         require(type(source[key]) is int and low <= source[key] <= high, 'invalid baseline bound: ' + key)
     require(value['api_port'] != fixed['master_port'], 'baseline HTTP/rendezvous ports collide')
-    require(fixed['profile']['sha256'] == PROFILE_SHA256, 'baseline normal profile pin differs')
+    revised = selection['arm'] in ('r6x-unpatched', 'r6x-steer')
+    frozen = identity_module().validate_revised_freeze() if revised else None
+    profile_sha = frozen['profile_sha256'][selection['arm']] if revised else PROFILE_SHA256
+    require(fixed['profile']['sha256'] == profile_sha, 'baseline normal profile pin differs')
     profile = owner.pinned_json(fixed['profile'])
     require(profile['shape'] == 'tp4-ring' and profile['fabric']['transport'] == 'oneshot-ring4',
         'baseline requires reviewed TP4 ring profile')
-    require(fixed['effective_config']['sha256'] == EFFECTIVE_SHA256,
+    if revised:
+        require(digest(canonical(common_recipe(profile))) == frozen['common_recipe_sha256'],
+                'revised pair common serving recipe differs')
+        if selection['arm'] == 'r6x-unpatched':
+            require('--additional-config' not in profile['serve_args']
+                    and not any(d == '/steering' for _, d, _ in profile['container']['mounts']),
+                    'unpatched profile cannot require steering configuration or assets')
+    require(fixed['effective_config']['sha256'] == (frozen['effective_sha256'] if revised else EFFECTIVE_SHA256),
         'baseline expected effective config must be independently frozen')
     effective = owner.pinned_json(fixed['effective_config'])
     require(set(effective) == {'off', 'loaded_zero', 'active'}
@@ -176,6 +186,15 @@ def validate_binding(manifest, ops, *, remote=True):
         toolbox_inventory=_toolbox(value['toolbox'], ops), deployment_git_config_sha256=config_sha)
     owner.remote_nodes(binding)  # Reuse exact physical inventory/endpoint mapping.
     corpus = module.validate_binding(value[work_key], binding)
+    if revised:
+        require(digest(canonical(corpus['tokenizer_identity'])) == frozen['model_tokenizer_sha256'],
+                'revised pair model/tokenizer identity differs')
+        sources = identity_module().source_hashes(selection['arm'])
+        native = {name: sources['tokenizers/' + name] for name in
+                  ('deepseek_v41.py', 'deepseek_v41_encoding.py')}
+        require(corpus['tokenizer_identity']['encoding_source_sha256'] == native['deepseek_v41_encoding.py']
+                and corpus['tokenizer_identity']['chat_template_sha256'] == digest(canonical(native)),
+                'revised corpus tokenizer proof is not from this actual native source')
     model_roots = [s.format(home=profile['host']['home']) for s, d, mode in profile['container']['mounts']
         if d == '/models' and mode == 'ro']
     require(model_roots == [corpus['artifacts']['model_root']],
@@ -316,6 +335,27 @@ def validate_remote_inputs(manifest, binding, ops):
             'baseline all-four mounted model/tokenizer bytes differ')
 
 
+def common_recipe(profile):
+    """Only image/source labels and the declared steer delta may differ."""
+    value = copy.deepcopy(profile)
+    # Source/build references are arm identity, not a serving-recipe difference.
+    # Each entire profile is separately frozen; never relabel U as the S baseline.
+    value.pop('upstreams_config', None)
+    value.pop('promoted_baseline', None)
+    container = value['container']
+    container.pop('image', None)
+    container.pop('expected_labels', None)
+    container['mounts'] = [m for m in container['mounts'] if m[1] != '/steering']
+    args = value['serve_args']
+    if '--additional-config' in args:
+        require(args.count('--additional-config') == 1, 'duplicated steering profile flag')
+        index = args.index('--additional-config')
+        require(index + 1 < len(args) and json_bytes(args[index + 1]) ==
+                owner.FIXED_ENGINE_KWARGS['additional_config'], 'non-steering recipe delta')
+        del args[index:index + 2]
+    return value
+
+
 def _replace(args, flag, value):
     require(args.count(flag) == 1 and args.index(flag) + 1 < len(args), 'baseline normal flag differs: ' + flag)
     args[args.index(flag) + 1] = str(value)
@@ -339,18 +379,23 @@ def http_plan(binding, window_id, attempt_id, selection, *, session=None):
             'baseline normal profile changes fixed capacity/topology: ' + flag)
     _replace(args, '--host', '127.0.0.1')
     _replace(args, '--port', binding['http']['api_port'])
-    require(args.count('--additional-config') == 1, 'baseline normal steering profile missing/duplicated')
-    index = args.index('--additional-config')
-    additional = json_bytes(args[index + 1])
-    require(additional == owner.FIXED_ENGINE_KWARGS['additional_config'], 'baseline steering configuration differs')
-    if selection['steering'] == 'unloaded':
-        del args[index:index + 2]
+    if selection['arm'] == 'r6x-unpatched':
+        require(selection['steering'] == 'absent' and '--additional-config' not in args
+                and not any(d == '/steering' for _, d, _ in profile['container']['mounts']),
+                'unpatched profile contains steering configuration or assets')
+    else:
+        require(args.count('--additional-config') == 1, 'baseline normal steering profile missing/duplicated')
+        index = args.index('--additional-config')
+        additional = json_bytes(args[index + 1])
+        require(additional == owner.FIXED_ENGINE_KWARGS['additional_config'], 'baseline steering configuration differs')
+        if selection['steering'] == 'unloaded':
+            del args[index:index + 2]
     require('--worker-extension-cls' not in args, 'unreviewed baseline worker extension')
     args += ['--worker-extension-cls', 'q03_baseline_worker.HttpObservation']
     profile['distributed']['master_port'] = str(binding['master_port'])
     profile['container']['image'] = image = checked['identity']['image']
     profile['container']['expected_labels'] = copy.deepcopy(binding['baseline_identity']['image_observation']['image_labels'])
-    expected = binding['effective_value']['off' if selection['steering'] == 'unloaded' else 'loaded_zero']
+    expected = binding['effective_value']['off' if selection['steering'] in ('absent', 'unloaded') else 'loaded_zero']
     spec = dict(baseline_identity=checked, expected_effective_config=copy.deepcopy(expected),
         selection=copy.deepcopy(selection), handshake=dict(window_id=window_id, attempt_id=attempt_id,
             timeout_seconds=binding['handoff_seconds']))
@@ -369,6 +414,10 @@ def http_plan(binding, window_id, attempt_id, selection, *, session=None):
             Q03_HTTP_SPEC_SHA256=spec_sha,
             Q03_HTTP_WORKER_SHA256=digest(read_owned_bytes(Path(binding['checkout']) / 'scripts/q03_baseline_worker.py')),
             Q03_BASELINE_IDENTITY_SHA256=IDENTITY_SOURCE_SHA256)
+        if selection['arm'] in ('r6x-unpatched', 'r6x-steer'):
+            require('VLLM_DS41_Q03_MHC_MXFP8' not in profile['environment'],
+                    'revised pair profile contains a Q03 runtime switch')
+            del env['VLLM_DS41_Q03_MHC_MXFP8']
         mounts = [[s.format(home=profile['host']['home']), d, m]
             for s, d, m in profile['container']['mounts'] if d != '/cache']
         require(all(m == 'ro' for _, _, m in mounts), 'unapproved baseline profile writable mount')

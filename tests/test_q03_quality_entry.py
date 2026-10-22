@@ -21,10 +21,10 @@ import q03_http_client as HC
 
 
 class ExecutableEntryTests(unittest.TestCase):
-    def run_entry(self, directory, mask, *, fail_token=False, arm='r6x188'):
+    def run_entry(self, directory, mask, *, fail_token=False, arm='r6x188', state='unloaded'):
         value, context = plan(directory)
-        value['selection']['arm'] = arm
-        value['lane_id'] = arm + '/unloaded'
+        value['selection'] = {'arm': arm, 'steering': state}
+        value['lane_id'] = arm + '/' + state
         client = value['client']
         client['toolbox_path'] = TOOLBOX
         client['toolbox_files'] = C.strict_json((ROOT / 'scripts/q03_http_toolbox.json').read_bytes())['files']
@@ -92,10 +92,11 @@ class ExecutableEntryTests(unittest.TestCase):
 
     def test_actual_unloaded_client_and_offline_scorer_keep_private_evidence(self):
         # Both approved first-pilot arms exercise the same no-override CLI.
-        for mask, arm in ((0o000, 'r6x188'), (0o002, 'native197-off'),
-                          (0o022, 'r6x188'), (0o077, 'native197-off')):
+        for mask, arm, state in ((0o000, 'r6x188', 'unloaded'), (0o002, 'native197-off', 'unloaded'),
+                          (0o022, 'r6x188', 'unloaded'), (0o077, 'native197-off', 'unloaded'),
+                          (0o022, 'r6x-unpatched', 'absent'), (0o077, 'r6x-steer', 'unloaded')):
             with self.subTest(umask=oct(mask), arm=arm), tempfile.TemporaryDirectory() as directory:
-                value, context, receipt, summary, calls = self.run_entry(directory, mask, arm=arm)
+                value, context, receipt, summary, calls = self.run_entry(directory, mask, arm=arm, state=state)
                 self.assertEqual(receipt['exit_code'], 0)
                 self.assertEqual(len(calls), 125)
                 self.assertEqual(calls[:60], ['/tokenize'] * 60)

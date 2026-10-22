@@ -106,7 +106,7 @@ def validate_context(value, plan):
         and isinstance(observed['profiles'], list) and len(observed['profiles']) == 4,
         'quality loaded-profile observation missing')
     # Profile bytes and arm identities were verified by baseline validate_ready.
-    if plan['selection']['steering'] == 'unloaded':
+    if plan['selection']['steering'] in ('absent', 'unloaded'):
         require(observed['profiles'] == [None] * 4, 'quality unloaded state differs')
     else:
         require(all(isinstance(p, dict) and p.get('name') == C.PROFILE for p in observed['profiles']),

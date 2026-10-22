@@ -79,6 +79,169 @@ SOURCE_SHA256 = {
   }
 }
 
+# New comparisons do not rename or reuse either historical steer-bearing image.
+# These are source-frozen slots, never manifest/CLI-supplied image or build pins.
+# A separately reviewed composition must fill every UNBOUND value before even
+# static-image inspection or a service plan is admitted.
+REVISED_ARMS = ('r6x-unpatched', 'r6x-steer')
+REVISED_IDENTITIES = {
+    'r6x-unpatched': {
+        'image': 'sha256:fc6a9ef83dd1a741a32c2724263e9c05a2635dc8154784ffe0f9c36709018082',
+        'source_head': '7316c7f9fae1bc4a0b7ab1848de0db4143eec5d2',
+        'source_tree': '4d6851c8bb1397a55254ba88905a87d9785b98dc'},
+    'r6x-steer': {
+        'image': 'sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a',
+        'source_head': 'ebb44766d6f04d3a9272b712778d7f2fa2cec1fd',
+        'source_tree': 'ac79557915e3ee2778f8f6353a3d35f848f564e4'},
+}
+REVISED_SOURCE_SHA256 = {   'r6x-steer': {   '__init__.py': 'fd3708e5a13abe98c566afd79a6b1987cef70c0548bb19c1218ff6a7f9d43346',
+                     'config/parallel.py': 'e3802272e792ad710b8a55233bdc7ba7cd08bcee79c5259098b34bcab2b431a7',
+                     'engine/arg_utils.py': '454d9cc4d2f6575d19bddc19fe7845878eb355020a8a9557905c4bd7e70730a3',
+                     'entrypoints/cli/serve.py': '3eb557c63f1f7bdda22287fe9fcae184b40363ae211672c2b17742e33d255847',
+                     'entrypoints/launchers/api_server/routers.py': 'c2f1bb2708f44f0fe24f3d8ab8f884c7262e551c6557ebc606263abc4d7b1db1',
+                     'entrypoints/openai/api_server.py': '470ff555bdc19f8e17edf4ee7b6ec3f49ff5af0f773e2a7f91bab536e2239109',
+                     'entrypoints/serve/__init__.py': '36278041128fab7bebb55fab25db39e9b229a660239d13ac910202b27d7d0a51',
+                     'entrypoints/serve/dev/rpc/api_router.py': '02b3ac71867b333548b15cb5d8382877d587b211c4ef80fdd881712ab523d107',
+                     'envs.py': '90760d268818ad20fd471ebc40c26ed65ca44bfd39e88b75e8e88d16b6146f66',
+                     'model_executor/layers/mhc.py': '923828e71cc695c9ce393c77bbc3bc3d69370e12ee37678a11078618e1cd36ee',
+                     'models/deepseek_v4_1/nvidia/dspark.py': '52bce488dcb7aa6ca66581f219364207cc5308da00c1e8548ac98f8380a94e1c',
+                     'models/deepseek_v4_1/nvidia/model.py': 'cc90dad8970cf7bc9cd46271ff9df95b38b0eaa6b5bb11e8134cbf253469955b',
+                     'models/deepseek_v4_1/steering/__init__.py': '8e7e10a737b2033b7ac68a049320113a0d640b0898718a833fcbbd165dec88af',
+                     'models/deepseek_v4_1/steering/artifact.py': '3afe34c5ae1f2ecef8ea5a5b8de58e00bdec0964de2f337f10d7c15c36837389',
+                     'models/deepseek_v4_1/steering/cache.py': 'a3b9a84349a13f7e174a0f8d4edd106ec9144a423bca7f7e6f2aa9d839b51040',
+                     'models/deepseek_v4_1/steering/config.py': '5305406bbef89a63700daf3e50942abd9b96481e5204847db0c248ccbb020f62',
+                     'models/deepseek_v4_1/steering/consume.py': '917dc0646dd5573c6d5d27314f7e08c58a2041f588bd0a8a1d9e2618096d17db',
+                     'models/deepseek_v4_1/steering/ops.py': 'd539205a087213fea9faf1c4ceff7db520db458eea91b1075e66d80fbb72cb27',
+                     'models/deepseek_v4_1/steering/profile.py': '761b7be767a8cea168ace7d8a1d7e9f63991372751d561f2073e53f5d93912c7',
+                     'models/deepseek_v4_1/steering/reference.py': '0030a4e686752db4ad382e6a2ee39c93943827df6ee40eed7f8c39881267af65',
+                     'models/deepseek_v4_1/steering/request.py': 'c57520b61716be75cb76bbf9c83ade3e6c355421e37cd792438de062bfcface3',
+                     'models/deepseek_v4_1/steering/row_kernel.py': '6849de8fa57d12be3a8c386922da58222c4340a825ffd4d5956f6f574c7bef13',
+                     'models/deepseek_v4_1/steering/rows.py': '3736525745fb324fe285f4eb091a6b72d407a73db64a46db6f9c72eaa7d288f3',
+                     'models/deepseek_v4_1/steering/runtime.py': 'aa17173fdb25772273a2c5a2d0053e580b56c185b2091f19e41a56ee8c3ea346',
+                     'tokenizers/deepseek_v41.py': '8450587010152846a2e3f6269c661b464615b7e46c312f4e38a397c44218a6e5',
+                     'tokenizers/deepseek_v41_encoding.py': '8ee7a8010c3ed257a0f1caa4dfbeb3ec68df0b03e36fcd20dad044ec7cf114fe',
+                     'v1/serial_utils.py': 'd75c17a098231b2398cbdb7da6f9983e5b9229c0ba138b2874934d45fafd1f28',
+                     'v1/worker/gpu/model_runner.py': 'f8ea26dce6ac8ba54eabe31621055516c7764b721ef1849cb48df0ab01ed1d10',
+                     'v1/worker/gpu_model_runner.py': '74842cd4f20704768e2ac8b0ec3ccd3dcb80af6115675bf4e3fc703cec146340',
+                     'v1/worker/gpu_worker.py': '1dfdf4fd410947bfd32d69b53224a4aea26d2767693596481aea4a14339e4bb3',
+                     'v1/worker/worker_base.py': '3a0ca44daf0b00fe626ca21a5b71d1a0e0e506759449a7fb8967292edccbcf35'},
+    'r6x-unpatched': {   '__init__.py': 'fd3708e5a13abe98c566afd79a6b1987cef70c0548bb19c1218ff6a7f9d43346',
+                         'config/parallel.py': 'e3802272e792ad710b8a55233bdc7ba7cd08bcee79c5259098b34bcab2b431a7',
+                         'engine/arg_utils.py': '454d9cc4d2f6575d19bddc19fe7845878eb355020a8a9557905c4bd7e70730a3',
+                         'entrypoints/cli/serve.py': '3eb557c63f1f7bdda22287fe9fcae184b40363ae211672c2b17742e33d255847',
+                         'entrypoints/launchers/api_server/routers.py': 'c2f1bb2708f44f0fe24f3d8ab8f884c7262e551c6557ebc606263abc4d7b1db1',
+                         'entrypoints/openai/api_server.py': '470ff555bdc19f8e17edf4ee7b6ec3f49ff5af0f773e2a7f91bab536e2239109',
+                         'entrypoints/serve/__init__.py': '36278041128fab7bebb55fab25db39e9b229a660239d13ac910202b27d7d0a51',
+                         'entrypoints/serve/dev/rpc/api_router.py': '02b3ac71867b333548b15cb5d8382877d587b211c4ef80fdd881712ab523d107',
+                         'envs.py': '90760d268818ad20fd471ebc40c26ed65ca44bfd39e88b75e8e88d16b6146f66',
+                         'model_executor/layers/mhc.py': '923828e71cc695c9ce393c77bbc3bc3d69370e12ee37678a11078618e1cd36ee',
+                         'models/deepseek_v4_1/nvidia/dspark.py': '52bce488dcb7aa6ca66581f219364207cc5308da00c1e8548ac98f8380a94e1c',
+                         'models/deepseek_v4_1/nvidia/model.py': '9443fedb35140e8e146f71ecd2603f40c0ebdc90de0488c47d711fcd284833fa',
+                         'tokenizers/deepseek_v41.py': '8450587010152846a2e3f6269c661b464615b7e46c312f4e38a397c44218a6e5',
+                         'tokenizers/deepseek_v41_encoding.py': '8ee7a8010c3ed257a0f1caa4dfbeb3ec68df0b03e36fcd20dad044ec7cf114fe',
+                         'v1/serial_utils.py': 'd75c17a098231b2398cbdb7da6f9983e5b9229c0ba138b2874934d45fafd1f28',
+                         'v1/worker/gpu/model_runner.py': '4dad9aa8e7964f33a11ce695fadfe010882f112d82e31a892a855527e8bc4d36',
+                         'v1/worker/gpu_model_runner.py': '74842cd4f20704768e2ac8b0ec3ccd3dcb80af6115675bf4e3fc703cec146340',
+                         'v1/worker/gpu_worker.py': '1dfdf4fd410947bfd32d69b53224a4aea26d2767693596481aea4a14339e4bb3',
+                         'v1/worker/worker_base.py': '3a0ca44daf0b00fe626ca21a5b71d1a0e0e506759449a7fb8967292edccbcf35'}}
+REVISED_FREEZE = {
+    'upstream_deployment_head': 'a125256eb47f2d76f077117cf6e437eb42bfaa1d',
+    'upstream_deployment_tree': '9834bc0d20f29bce89e8dec8c01162923110411f',
+    'upstream_patchset_sha256': '6519df98b2039f508a0b38677ecef889201c8117325cf944a8b5a787844a5f7c',
+    'steering_patchset_sha256': 'e6bdcb3147290a6cb7df6471bcb2c3e658a8780b1e594a561e59875bcf0cc1e0',
+    'common_recipe_sha256': 'cb76902efccbacd3b62fdedbcc4ebf7f49c6d273b25a406a2f8d1c5aff5600d7',
+    'profile_sha256': {'r6x-unpatched': 'UNBOUND',
+                       'r6x-steer': 'e935b492d1f76eeae09fe5a57b094c3bfbf8e63e83b37fe1be0e42fa46170a36'},
+    'effective_sha256': 'a144ea7b1dbb12c50ca4cf0862d1ec9e83f34d87a2938ea441f8c57f181914c8', 'common_runtime_sha256': 'UNBOUND',
+    'model_tokenizer_sha256': 'UNBOUND', 'component_sources': {'b12x': {'head': '69e5795e2141fbb5fa2b3af096d51e754939bb41',
+          'tree': '1a647a311ca55d45070ab83d60668d9c8fb8886c'},
+ 'nccl': {'head': 'eeacf1c6343f0499e4e7ab20ec7eecfb6f62eda6',
+          'tree': '6af10aa730a64fcee8781d62340a9c9184e79469'},
+ 'sparknet': {'head': '3bc8d10104a5012244a0424d7dfc1107a72eafab',
+              'tree': 'f72599fa212e894d67ee114553e628ab05daf2da'},
+ 'tile_kernels': {'head': 'edfa64d018bc64006fcb07c95c32fa196363c0ae',
+                  'tree': 'cb2fa41c8af290204c81c547ed678ebf957cca53'},
+ 'tilelang': {'head': 'a0e66d71fe7617216f2de5d86c3b088595367387',
+              'tree': '222b895d04ee6cd75179155d06e0c0d450636f51'}},
+    'build_inputs_sha256': {'r6x-unpatched': 'b0f7abaf3c42b4904fde3d440c9cae2e8dcbf05d7a46123c8eb0cd4b07bfc014', 'r6x-steer': '0002002f9d67d697c1b829d6a57d83a84d3a1371d9adce7d4ab6e3514aed227f'},
+    'build_receipt_sha256': {arm: '80d2f820df658504b4a01959773fc94d5e9997a223278585966e8ececebed5e4' for arm in REVISED_ARMS},
+    'runtime_manifest_sha256': {arm: 'UNBOUND' for arm in REVISED_ARMS},
+    'image_rootfs_sha256': {'r6x-unpatched': '690a9ee62a4c3cea729c8e4bd4d0851da0b2b236bf38c0f96226711fe5e62de0', 'r6x-steer': '00cd11979aa31b51b1f66269156f059ca7f4c3460b1a5b7a3d8d1a61c872de7a'},
+    'native_parent_image': 'sha256:a63259a196d82dae51016d487ed43093f2045261adcb41045cfe9c1be29f70d2',
+}
+STEERING_DIRECTORY = 'models/deepseek_v4_1/steering'
+# Safe string RPC and CLI/config compatibility must be bound in both trees,
+# rather than assumed to exist because a patched image had them.
+REVISED_COMMON_SOURCES = frozenset(k for k in SOURCE_SHA256['r6x188']
+    if not k.startswith(STEERING_DIRECTORY + '/')) | frozenset({
+        'engine/arg_utils.py', 'entrypoints/cli/serve.py',
+        'entrypoints/openai/api_server.py', 'config/parallel.py',
+        'entrypoints/launchers/api_server/routers.py', 'entrypoints/serve/__init__.py', 'entrypoints/serve/dev/rpc/api_router.py', 'v1/serial_utils.py', 'envs.py',
+        'tokenizers/deepseek_v41.py', 'tokenizers/deepseek_v41_encoding.py'})
+REVISED_STEERING_SOURCES = frozenset(k for k in SOURCE_SHA256['r6x188']
+    if k.startswith(STEERING_DIRECTORY + '/'))
+
+
+def validate_revised_freeze():
+    """No fallback to A188/B197 or trust in first-observed runtime values."""
+    freeze = REVISED_FREEZE
+    for key in ('upstream_deployment_head', 'upstream_deployment_tree'):
+        require(type(freeze[key]) is str and re.fullmatch('[0-9a-f]{40}', freeze[key]),
+                'revised baseline remains UNBOUND: ' + key)
+    for key in ('upstream_patchset_sha256', 'steering_patchset_sha256', 'common_recipe_sha256', 'effective_sha256',
+                'common_runtime_sha256', 'model_tokenizer_sha256'):
+        require(_hash(freeze[key]), 'revised baseline remains UNBOUND: ' + key)
+    for key in ('profile_sha256', 'build_inputs_sha256', 'build_receipt_sha256', 'runtime_manifest_sha256', 'image_rootfs_sha256'):
+        require(isinstance(freeze[key], dict) and set(freeze[key]) == set(REVISED_ARMS)
+                and all(_hash(v) for v in freeze[key].values()),
+                'revised baseline remains UNBOUND: ' + key)
+    require(type(freeze['native_parent_image']) is str
+            and re.fullmatch('sha256:[0-9a-f]{64}', freeze['native_parent_image']),
+            'revised baseline remains UNBOUND: native_parent_image')
+    components = freeze['component_sources']
+    require(isinstance(components, dict) and set(components) == set(COMPONENTS) - {'vllm'}
+            and all(isinstance(v, dict) and set(v) == {'head', 'tree'}
+                    and all(type(x) is str and re.fullmatch('[0-9a-f]{40}', x) for x in v.values())
+                    for v in components.values()), 'revised baseline remains UNBOUND: component_sources')
+    for arm in REVISED_ARMS:
+        value = REVISED_IDENTITIES[arm]
+        require(set(value) == {'image', 'source_head', 'source_tree'}
+                and type(value['image']) is str and re.fullmatch('sha256:[0-9a-f]{64}', value['image'])
+                and all(type(value[k]) is str and re.fullmatch('[0-9a-f]{40}', value[k])
+                        for k in ('source_head', 'source_tree')),
+                'revised baseline remains UNBOUND: ' + arm + ' identity')
+        if arm == 'r6x-unpatched':
+            require(value['image'] not in {v['image'] for v in IDENTITIES.values()},
+                    'steering-bearing historical image cannot be relabelled as unpatched')
+        sources = REVISED_SOURCE_SHA256[arm]
+        expected = REVISED_COMMON_SOURCES | (REVISED_STEERING_SOURCES if arm == 'r6x-steer' else set())
+        require(isinstance(sources, dict) and set(sources) == expected
+                and all(_hash(v) for v in sources.values()),
+                'revised baseline remains UNBOUND: ' + arm + ' source closure')
+    for name in ('tokenizers/deepseek_v41.py', 'tokenizers/deepseek_v41_encoding.py'):
+        require(REVISED_SOURCE_SHA256[REVISED_ARMS[0]][name] == REVISED_SOURCE_SHA256[REVISED_ARMS[1]][name],
+                'revised pair native tokenizer source differs')
+    for key in ('image', 'source_head', 'source_tree'):
+        require(REVISED_IDENTITIES[REVISED_ARMS[0]][key] != REVISED_IDENTITIES[REVISED_ARMS[1]][key],
+                'unpatched and steering identities must be distinct: ' + key)
+    return copy.deepcopy(freeze)
+
+
+def source_hashes(arm):
+    checked_identity(arm)
+    return copy.deepcopy(REVISED_SOURCE_SHA256[arm] if arm in REVISED_ARMS else SOURCE_SHA256[arm])
+
+
+def absent_source_paths(arm):
+    return [STEERING_DIRECTORY] if arm == 'r6x-unpatched' else []
+
+
+def common_runtime_sha256(runtime):
+    keys = ('installation', 'platform', 'metadata_versions', 'package_origins', 'package_sha256',
+            'torch_version', 'torch_version_sha256', 'native_paths', 'native_sha256', 'pythonpath')
+    return digest(canonical({k: runtime[k] for k in keys}))
+
+
 def require(ok, message):
     if not ok:
         raise ValueError(message)
@@ -104,7 +267,10 @@ def json_bytes(raw):
 
 
 def checked_identity(arm):
-    require(type(arm) is str and arm in IDENTITIES, 'unknown baseline arm')
+    require(type(arm) is str and arm in (*IDENTITIES, *REVISED_ARMS), 'unknown baseline arm')
+    if arm in REVISED_ARMS:
+        validate_revised_freeze()
+        return dict(arm=arm, **REVISED_IDENTITIES[arm])
     return dict(arm=arm, **IDENTITIES[arm])
 
 
@@ -112,14 +278,15 @@ def validate_selection(selection):
     require(isinstance(selection, dict) and set(selection) == {'arm', 'steering'},
             'baseline selection fields differ; no free image, mode, dose or argv')
     checked_identity(selection['arm'])
-    require(type(selection['steering']) is str and selection['steering'] in STEERING,
+    states = ('absent',) if selection['arm'] == 'r6x-unpatched' else STEERING
+    require(type(selection['steering']) is str and selection['steering'] in states,
             'baseline steering state differs')
     return copy.deepcopy(selection)
 
 
 def steering_request(selection):
     validate_selection(selection)
-    if selection['steering'] == 'unloaded':
+    if selection['steering'] in ('absent', 'unloaded'):
         return {}
     return {'steering_profile': PROFILE_NAME, 'steering_scale': int(selection['steering'][-1])}
 
@@ -135,7 +302,8 @@ def _path(value):
 
 def validate_runtime(runtime, arm):
     identity = checked_identity(arm)
-    require(isinstance(runtime, dict) and set(runtime) == {
+    extra = {'absent_source_paths'} if arm in REVISED_ARMS else set()
+    require(isinstance(runtime, dict) and set(runtime) == extra | {
         'schema_version', 'arm', 'image', 'source_head', 'source_tree', 'installation',
         'platform', 'metadata_versions', 'package_origins', 'package_sha256', 'torch_version',
         'torch_version_sha256', 'native_paths', 'native_sha256', 'source_sha256', 'pythonpath'},
@@ -170,11 +338,16 @@ def validate_runtime(runtime, arm):
                 and Path(paths[name]).name.startswith(name.split('.')[-1] + '.')
                 and Path(paths[name]).name.endswith('.so') and _hash(hashes[name]),
                 'baseline native path/hash differs')
-    require(runtime['source_sha256'] == SOURCE_SHA256[arm],
+    require(runtime['source_sha256'] == source_hashes(arm),
             'baseline actual full-module source bytes differ from exact source revision')
     require(type(runtime['pythonpath']) is str and runtime['pythonpath']
             and all(_path(p) for p in runtime['pythonpath'].split(':')),
             'baseline baked Python path is missing or relative')
+    if arm in REVISED_ARMS:
+        require(runtime['absent_source_paths'] == absent_source_paths(arm),
+                'revised baseline absent-source proof differs')
+        require(common_runtime_sha256(runtime) == REVISED_FREEZE['common_runtime_sha256'],
+                'revised pair common runtime/native package identity differs')
     return copy.deepcopy(runtime)
 
 
@@ -198,6 +371,9 @@ def validate_image(arm, image, runtime):
                 and type(head) is str and re.fullmatch(r'[0-9a-f]{40}', head),
                 'baseline component label missing: ' + name)
         components[name] = {'head': head, 'tree': tree}
+    if arm in REVISED_ARMS:
+        require({k: v for k, v in components.items() if k != 'vllm'} == REVISED_FREEZE['component_sources'],
+                'revised pair non-vLLM component sources differ')
     require([v for v in config.get('Env', []) if v.startswith('PYTHONPATH=')]
             == ['PYTHONPATH=' + runtime['pythonpath']], 'baseline image baked Python path differs')
     rootfs = image.get('RootFS', {})
@@ -205,6 +381,10 @@ def validate_image(arm, image, runtime):
     require(rootfs.get('Type') == 'layers' and isinstance(layers, list) and layers
             and all(type(v) is str and re.fullmatch(r'sha256:[0-9a-f]{64}', v) for v in layers),
             'baseline image RootFS layer identity missing')
+    if arm in REVISED_ARMS:
+        require(digest(canonical(rootfs)) == REVISED_FREEZE['image_rootfs_sha256'][arm]
+                and labels.get('local.site.native-parent') == REVISED_FREEZE['native_parent_image'],
+                'revised baseline historical RootFS/native parent differs')
     return dict(identity=identity, components=components, image_labels=copy.deepcopy(labels),
                 rootfs_sha256=digest(canonical(rootfs)), image_config_sha256=digest(canonical(config)),
                 pythonpath=runtime['pythonpath'])
@@ -218,6 +398,9 @@ def validate_binding(binding, candidate=None):
     pin = binding['provenance']
     require(isinstance(pin, dict) and set(pin) == {'path', 'sha256'} and _hash(pin['sha256']),
             'baseline provenance needs exact immutable path/hash')
+    if binding['arm'] in REVISED_ARMS:
+        require(pin['sha256'] == REVISED_FREEZE['runtime_manifest_sha256'][binding['arm']],
+                'revised baseline runtime provenance is not independently frozen')
     raw = read_owned_bytes(pin['path'])
     require(digest(raw) == pin['sha256'], 'baseline provenance bytes changed')
     runtime = validate_runtime(json_bytes(raw), binding['arm'])
@@ -270,6 +453,9 @@ spec=importlib.machinery.PathFinder.find_spec('vllm',search)
 need(spec is not None and spec.origin is not None,'image vllm package missing')
 root=pathlib.Path(spec.origin).resolve().parent
 sources={}
+for rel in p.get('absent_source_paths', []):
+ path=root/rel
+ need(not path.exists() and not path.is_symlink(),'unpatched steering source must be absent')
 for rel, expected in p['source_sha256'].items():
  path=root/rel
  need(path.resolve()==path and path.is_file(),'source path alias or missing')
@@ -313,6 +499,7 @@ result=dict(schema_version=1,**p['identity'],installation={'mode':'image-source'
  metadata_versions=versions,package_origins=package_origins,package_sha256=package_sha,
  torch_version=assignments[0],torch_version_sha256=sha(version_path),
  native_paths=native_paths,native_sha256=native_sha,source_sha256=sources,pythonpath=pythonpath)
+if 'absent_source_paths' in p: result['absent_source_paths']=p['absent_source_paths']
 print('Q03_BASELINE_STATIC='+json.dumps(result,sort_keys=True,separators=(',',':'),allow_nan=False))
 '''
 
@@ -321,7 +508,9 @@ def static_capture_plan(arm, capture_id):
     """Return one inert fixed CPU-only command; an authorized supervisor owns it."""
     identity = checked_identity(arm)
     require(type(capture_id) is str and re.fullmatch(r'[0-9a-f]{32}', capture_id), 'baseline capture UUID differs')
-    params = dict(identity=identity, source_sha256=SOURCE_SHA256[arm], native_names=NATIVE_NAMES)
+    params = dict(identity=identity, source_sha256=source_hashes(arm), native_names=NATIVE_NAMES)
+    if arm in REVISED_ARMS:
+        params['absent_source_paths'] = absent_source_paths(arm)
     program = 'P=' + repr(params) + '\n' + STATIC_CAPTURE
     name = 'q03-baseline-static-' + capture_id
     argv = ['/usr/bin/env', '-u', 'DOCKER_CONTEXT', '-u', 'DOCKER_HOST', 'docker',
@@ -373,7 +562,7 @@ def validate_ready(raw, plan):
         require(report.get('identity') == identity and report.get('runtime_sha256') == checked['provenance']['sha256']
                 and all(report.get(k) == plan[k] for k in ('window_id', 'attempt_id', 'spec_sha256')),
                 'baseline worker identity differs')
-        require(report.get('source_sha256') == SOURCE_SHA256[selection['arm']]
+        require(report.get('source_sha256') == source_hashes(selection['arm'])
                 and report.get('native_sha256') == runtime['native_sha256']
                 and report.get('native_paths') == runtime['native_paths']
                 and report.get('package_root') == runtime['installation']['package_root'],
@@ -381,7 +570,15 @@ def validate_ready(raw, plan):
         require(canonical(report.get('effective_config')) == canonical(expected_config)
                 and canonical(report.get('runner_config')) == canonical(expected_config),
                 'baseline actual worker/runner config differs')
-        require(report.get('sm') == [12, 1] and report.get('q03_switch') == '0'
+        revised = selection['arm'] in REVISED_ARMS
+        if revised:
+            require(report.get('absent_source_paths') == absent_source_paths(selection['arm'])
+                    and report.get('steering_capability') == (
+                        'absent' if selection['arm'] == 'r6x-unpatched' else 'present'),
+                    'revised baseline steering capability/absence proof differs')
+            require(expected_config.get('model_config.max_model_len') == 1048576,
+                    'revised baseline service context must remain 1048576')
+        require(report.get('sm') == [12, 1] and report.get('q03_switch') == (None if revised else '0')
                 and report.get('q03_owner_present') is False and report.get('sequence_parallel') is False,
                 'baseline actual OFF/SM121/SP state differs')
         actual_versions = report.get('actual_versions')
@@ -398,7 +595,7 @@ def validate_ready(raw, plan):
                 and report.get('torch_version_sha256') == runtime['torch_version_sha256'],
                 'baseline imported package/version sources differ')
         observed = report.get('steering_profile')
-        if selection['steering'] == 'unloaded':
+        if selection['steering'] in ('absent', 'unloaded'):
             require(observed is None, 'baseline unloaded steering unexpectedly loaded')
         else:
             require(isinstance(observed, dict) and observed.get('name') == PROFILE_NAME
@@ -446,10 +643,10 @@ def main():
     parser = argparse.ArgumentParser(description='Inert finite baseline static-capture plan or receipt validation')
     sub = parser.add_subparsers(dest='operation', required=True)
     plan = sub.add_parser('plan-static')
-    plan.add_argument('arm', choices=tuple(IDENTITIES))
+    plan.add_argument('arm', choices=(*IDENTITIES, *REVISED_ARMS))
     plan.add_argument('--capture-id', required=True)
     validate = sub.add_parser('validate-static')
-    validate.add_argument('arm', choices=tuple(IDENTITIES))
+    validate.add_argument('arm', choices=(*IDENTITIES, *REVISED_ARMS))
     validate.add_argument('--log', required=True)
     args = parser.parse_args()
     if args.operation == 'plan-static':

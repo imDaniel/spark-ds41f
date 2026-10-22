@@ -235,7 +235,7 @@ class LegacyCaseTest(unittest.TestCase):
         for case, concurrency in L.CASES.items():
             self.plan['client']['legacy_case']['case_id'] = case
             for arm in L.ARMS:
-                for state in L.STATES:
+                for state in (('absent',) if arm == 'r6x-unpatched' else L.STATES):
                     self.plan['selection'] = {'arm': arm, 'steering': state}
                     args = L.argv(self.plan, '/not/executed')
                     for flag, value in (('--context', '4096'), ('--max-tokens', '256'), ('--concurrency', str(concurrency)),
@@ -244,8 +244,8 @@ class LegacyCaseTest(unittest.TestCase):
                     extra = json.loads(args[args.index('--extra-body') + 1])
                     self.assertNotIn('chat_template_kwargs', extra); self.assertNotIn('thinking', extra)
                     self.assertEqual(extra['temperature'], 0); self.assertEqual(extra['seed'], 2048)
-                    self.assertEqual('steering_scale' in extra, state != 'unloaded')
-                    if state != 'unloaded': self.assertEqual(extra['steering_scale'], int(state[-1]))
+                    self.assertEqual('steering_scale' in extra, state not in ('absent', 'unloaded'))
+                    if state not in ('absent', 'unloaded'): self.assertEqual(extra['steering_scale'], int(state[-1]))
         for selection in ({'arm': 'native197-dual', 'steering': 'loaded1'}, {'arm': 'r6x188', 'steering': 'loaded5'},
                           {'arm': 'r6x188', 'steering': 'loaded0', 'argv': []}):
             with self.assertRaises(RuntimeError): L.validate_selection(selection)
