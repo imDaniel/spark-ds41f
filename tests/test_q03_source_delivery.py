@@ -1,6 +1,7 @@
 """Tiny CPU-only repositories; no Mac, Spark, SSH, Docker or network execution."""
 import argparse
 import ast
+import contextlib
 import copy
 import hashlib
 import io
@@ -19,6 +20,21 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 import q03_source_delivery as source
 import q03_window_preflight as preflight
+
+
+@contextlib.contextmanager
+def inherited_umask(value):
+    previous = os.umask(value)
+    try:
+        yield
+    finally:
+        os.umask(previous)
+
+
+def current_umask():
+    previous = os.umask(0o077)
+    os.umask(previous)
+    return previous
 
 
 class DeliveryTests(unittest.TestCase):
@@ -468,6 +484,133 @@ class DeliveryTests(unittest.TestCase):
                   head=n['local']) for n in self.nodes]}
         return spark, args, cluster, nodes
 
+    def incoming_source_fixture(self, metadata_mode=0o600, *, missing_pack=False, shared=False):
+        """A separate producer ensures the receiver really imports missing objects."""
+        with inherited_umask(0o077):
+            case = DeliveryTests('test_valid_offline_evidence_and_empty_closure')
+            case.setUp()
+            self.addCleanup(case.doCleanups)
+            if shared:
+                case.git('config', 'core.sharedRepository', 'group')
+                case.config_sha = source.digest(case.repo / '.git/config')
+                case.pub['source_bundle']['git_config_sha256'] = case.config_sha
+                case.pub['source_bundle']['node_git_config_sha256'] = {
+                    n['name']: case.config_sha for n in case.nodes}
+            old = case.sha
+            producer = case.root / 'producer'
+            shutil.copytree(case.repo, producer)
+            (producer / 'new-directory').mkdir()
+            (producer / 'new-directory/new-file').write_text('incoming source\n')
+            source.git(producer, 'add', 'new-directory/new-file')
+            source.git(producer, 'commit', '--quiet', '-m', 'incoming')
+            case.sha = case.pub['sha'] = source.git(producer, 'rev-parse', 'HEAD')
+            case.tree = case.pub['source_bundle']['tree'] = source.git(producer, 'rev-parse', 'HEAD^{tree}')
+            case.bundle.unlink()
+            source.git(producer, 'bundle', 'create', '--version=2', str(case.bundle), 'HEAD')
+            case.pub['source_bundle']['bundle_sha256'] = source.digest(case.bundle)
+            case.sync_fixture()
+            if missing_pack:
+                (case.repo / '.git/objects/pack').rmdir()
+            for path in (case.repo / '.git').rglob('*'):
+                if path.is_file():
+                    path.chmod(metadata_mode)  # Only this newly created test fixture.
+            self.assertEqual(source.inspect_checkout(case.repo, case.pub, case.config_sha,
+                                                     at_target=False), old)
+            with self.assertRaises(subprocess.CalledProcessError):
+                case.git('cat-file', '-e', case.sha)
+            return case, old
+
+    def private_git_matrix(self, *, missing_pack):
+        caller_mask = current_umask()
+        for mask in (0o000, 0o002, 0o022, 0o077):
+            for mode in (0o644, 0o600):
+                for shared in (False, True):
+                    with self.subTest(umask=oct(mask), initial_mode=oct(mode), shared=shared,
+                                      missing_pack=missing_pack):
+                        case, old = self.incoming_source_fixture(mode, missing_pack=missing_pack,
+                                                                 shared=shared)
+                        config = (case.repo / '.git/config').read_bytes()
+                        self.assertEqual((case.repo / '.git/HEAD').stat().st_mode & 0o777, mode)
+                        self.assertEqual((case.repo / '.git/index').stat().st_mode & 0o777, mode)
+                        with inherited_umask(mask), \
+                             patch.object(source.platform, 'node', return_value='node1'), \
+                             patch.object(sys, 'stdin', types.SimpleNamespace(
+                                 buffer=io.BytesIO(case.bundle.read_bytes()))):
+                            staged = source.remote_action('stage', case.manifest, 'node1', 'node1',
+                                                          old, case.receipt.read_text())
+                            self.assertEqual(staged['head'], old)
+                            self.assertEqual(staged['staged'], case.sha)
+                            self.assertEqual(source.inspect_checkout(case.repo, case.pub, case.config_sha,
+                                                                     at_target=False), old)
+                            checked = source.remote_action('checkout', case.manifest, 'node1', 'node1', old)
+                            self.assertEqual(checked, {'head': case.sha, 'tree': case.tree})
+                            self.assertEqual((case.repo / '.git/HEAD').stat().st_mode & 0o777, 0o600)
+                            self.assertEqual((case.repo / '.git/index').stat().st_mode & 0o777, 0o600)
+                            rolled = source.remote_action('rollback', case.manifest, 'node1', 'node1', old)
+                            self.assertEqual(rolled, {'rolled_back': old})
+                            self.assertEqual(case.git('rev-parse', 'HEAD'), old)
+                            self.assertEqual(current_umask(), mask)
+                        self.assertEqual((case.repo / '.git/config').read_bytes(), config)
+                        self.assertEqual(source.digest(case.repo / '.git/config'), case.config_sha)
+                        for path in (case.repo / '.git').rglob('*'):
+                            self.assertFalse(path.stat().st_mode & 0o022, str(path))
+        self.assertEqual(current_umask(), caller_mask)
+
+    def test_private_checkout_and_rollback_under_inherited_umask_matrix(self):
+        self.private_git_matrix(missing_pack=False)
+
+    def test_private_import_creates_missing_pack_under_inherited_umask_matrix(self):
+        self.private_git_matrix(missing_pack=True)
+
+    def test_stage_revalidates_metadata_after_actual_import(self):
+        case, old = self.incoming_source_fixture(missing_pack=True)
+        original = source.git
+        def drift(root, *args, **kwargs):
+            result = original(root, *args, **kwargs)
+            if Path(root) == case.repo and args[:2] == ('bundle', 'unbundle'):
+                (case.repo / '.git/objects/pack').chmod(0o775)
+            return result
+        with patch.object(source.platform, 'node', return_value='node1'), \
+             patch.object(sys, 'stdin', types.SimpleNamespace(buffer=io.BytesIO(case.bundle.read_bytes()))), \
+             patch.object(source, 'git', side_effect=drift), \
+             self.assertRaisesRegex(ValueError, 'unsafe Git metadata descendant'):
+            source.remote_action('stage', case.manifest, 'node1', 'node1', old, case.receipt.read_text())
+        self.assertEqual(case.git('rev-parse', 'HEAD'), old)
+        self.assertEqual((case.repo / '.git/objects/pack').stat().st_mode & 0o777, 0o775)
+
+    def test_stage_revalidates_prior_head_after_actual_import(self):
+        case, old = self.incoming_source_fixture()
+        original = source.git
+        def drift(root, *args, **kwargs):
+            result = original(root, *args, **kwargs)
+            if Path(root) == case.repo and args[:2] == ('bundle', 'unbundle'):
+                original(root, 'checkout', '--quiet', '--detach', case.sha)
+            return result
+        with patch.object(source.platform, 'node', return_value='node1'), \
+             patch.object(sys, 'stdin', types.SimpleNamespace(buffer=io.BytesIO(case.bundle.read_bytes()))), \
+             patch.object(source, 'git', side_effect=drift), \
+             self.assertRaisesRegex(ValueError, 'node source state changed during staging'):
+            source.remote_action('stage', case.manifest, 'node1', 'node1', old, case.receipt.read_text())
+        self.assertEqual(case.git('rev-parse', 'HEAD'), case.sha)
+
+    def test_unsafe_existing_metadata_is_not_repaired_by_any_mutation_action(self):
+        for relative in ('HEAD', 'index'):
+            case, old = self.incoming_source_fixture()
+            (case.repo / '.git' / relative).chmod(0o664)
+            def snapshot():
+                return {str(p.relative_to(case.repo)): (p.stat().st_mode,
+                        p.read_bytes() if p.is_file() else None)
+                        for p in (case.repo / '.git').rglob('*')}
+            before = snapshot()
+            for action in ('stage', 'checkout', 'rollback'):
+                with self.subTest(metadata=relative, action=action), \
+                     patch.object(source.platform, 'node', return_value='node1'), \
+                     patch.object(source, 'git', side_effect=AssertionError('unsafe state must not run Git')), \
+                     self.assertRaisesRegex(ValueError, 'source delivery file type, owner, links or permissions differ'):
+                    source.remote_action(action, case.manifest, 'node1', 'node1', old,
+                                         case.receipt.read_text())
+            self.assertEqual(snapshot(), before)
+
     def test_sync_rejects_swapped_rank_and_changed_ignored_site_map(self):
         spark, args, cluster, nodes = self.sync_fixture()
         source.Sync(spark, args, cluster, nodes)
@@ -609,6 +752,53 @@ class DeliveryTests(unittest.TestCase):
             self.assertEqual(env['command_cluster_sync'](argparse.Namespace(revision=None, apply=True), Delivery()), 1)
         self.assertEqual(events, [('checkout', 'node1'), ('rollback', 'node1')])
         self.assertEqual(self.git('rev-parse', 'HEAD'), old)
+
+    def test_failed_rollback_preserves_both_child_output_streams(self):
+        tree = ast.parse((ROOT / 'bin/spark').read_text())
+        fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'command_cluster_sync')
+        config_file = self.root / 'nodes.json'
+        config_file.write_text('{}')
+        env = {'argparse': argparse, 'Path': Path, 'sys': sys, 'shlex': __import__('shlex'),
+            'ROOT': self.repo, 'NODES_FILE': 'nodes.json',
+            'cluster_recipe': types.SimpleNamespace(SITE_FILE='site.json'),
+            'require_named_profile': lambda a: None,
+            'configuration': lambda a: ({'deployment': {'repository': self.url}}, {'nodes': self.nodes}, {}),
+            'cluster_config_path': lambda a: (None, 'config.json'),
+            'repository_path': lambda c: str(self.repo),
+            'require_local_deployment_state': lambda *a: self.sha,
+            'normalized_repository_url': lambda s: s,
+            'repository_config_path': lambda p: config_file}
+        exec(compile(ast.Module(body=[fn], type_ignores=[]), '<sync-fixture>', 'exec'), env)
+        test = self
+        class Delivery:
+            revision = test.sha
+            def inspect(self, node):
+                return test.sha, test.url, ''
+            def validate_site_texts(self, texts):
+                pass
+            def stage(self, previous):
+                pass
+            def invoke(self, action, node, previous=None):
+                events.append((action, node['name']))
+                if action == 'rollback':
+                    return types.SimpleNamespace(returncode=1, stdout=out, stderr=err)
+                return types.SimpleNamespace(returncode=1, stdout='', stderr='checkout refused')
+        for out, err in (('', ''), ('retained stdout\n\n', ''), ('', 'receiver stderr'),
+                         ('retained stdout\n\n', 'receiver stderr\n')):
+            with self.subTest(stdout=out, stderr=err):
+                events = []
+                captured = io.StringIO()
+                with patch('sys.stdout', new=io.StringIO()), patch('sys.stderr', new=captured):
+                    self.assertEqual(env['command_cluster_sync'](
+                        argparse.Namespace(revision=None, apply=True), Delivery()), 1)
+                self.assertEqual(events, [('checkout', 'node1'), ('rollback', 'node1')])
+                text = captured.getvalue()
+                self.assertIn('rollback failed; inspect retained state', text)
+                for label, output in (('stdout', out), ('stderr', err)):
+                    if output:
+                        self.assertIn(f'node1: rollback {label}:\n{output}', text)
+                    else:
+                        self.assertNotIn(f'node1: rollback {label}:', text)
 
     def test_all_four_prevalidate_before_checkout_and_rollback(self):
         tree = ast.parse((ROOT / 'bin/spark').read_text())

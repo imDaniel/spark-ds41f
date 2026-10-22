@@ -1875,6 +1875,10 @@ def command_cluster_sync(args: argparse.Namespace, delivery=None) -> int:
                 rolled_back = delivery.invoke("rollback", node, previous[node["name"]])
                 if rolled_back.returncode:
                     print(f"ERROR: {node['name']}: rollback failed; inspect retained state", file=sys.stderr)
+                    for label, output in (("stdout", rolled_back.stdout), ("stderr", rolled_back.stderr)):
+                        if output:
+                            print(f"{node['name']}: rollback {label}:\n{output}", file=sys.stderr,
+                                  end="" if output.endswith("\n") else "\n")
             else:
                 remote_shell(nodes, node,
                     f"cd {quoted_path} && git checkout --quiet --detach "

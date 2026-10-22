@@ -204,11 +204,13 @@ def clean_environment_from(previous):
 
 
 def git(root, *args, network=False):
+    # Private creation belongs to this child, not the caller's shell/config.
+    # sharedRepository can otherwise re-enable group writes despite the umask.
     return subprocess.run(['git', '--no-replace-objects', '-c', 'core.fsmonitor=false',
         '-c', 'core.hooksPath=/dev/null', '-c', 'core.untrackedCache=false',
-        '-c', 'http.sslVerify=true',
+        '-c', 'http.sslVerify=true', '-c', 'core.sharedRepository=false',
         '-C', str(root), *args], env=clean_environment(network), check=True,
-        capture_output=True, text=True).stdout.strip()
+        capture_output=True, text=True, umask=0o077).stdout.strip()
 
 
 def metadata(root, expected, *, mac_source=False):
@@ -565,6 +567,8 @@ def remote_action(action, manifest, name, hostname, previous=None, receipt_text=
         git(root, 'bundle', 'unbundle', binding['bundle_path'])
         git(root, 'fsck', '--full', '--strict', '--no-reflogs', '--no-dangling', pub['sha'])
         require(git(root, 'rev-parse', pub['sha'] + '^{tree}') == binding['tree'], 'staged tree differs')
+        require(inspect_checkout(root, pub, binding['node_git_config_sha256'][name],
+                                 at_target=False) == previous, 'node source state changed during staging')
         return {'head': head, 'staged': pub['sha'], 'tree': binding['tree'],
                 'receipt_sha256': binding['receipt_sha256'], 'bundle_sha256': binding['bundle_sha256']}
     if action == 'checkout':
