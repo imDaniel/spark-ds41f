@@ -69,7 +69,7 @@ class PlanAndSchemaTests(unittest.TestCase):
                 if isinstance(n, ast.Import): imports.extend(a.name for a in n.names)
                 elif isinstance(n, ast.ImportFrom): imports.append(n.module)
             self.assertTrue(set(imports) <= {'ast','hashlib','importlib.machinery','importlib.metadata',
-                                           'json','os','pathlib','platform','sys','sysconfig'})
+                                           'json','os','pathlib','platform','stat','sys','sysconfig'})
             self.assertEqual(C.validate_capture(runtime(arm), arm), runtime(arm))
         for arm in ('r6x188', 'native197-off', 'custom', True):
             with self.assertRaises(ValueError): C.static_capture_plan(arm, CID)
@@ -87,6 +87,26 @@ class PlanAndSchemaTests(unittest.TestCase):
         for raw in ('{"x":1,"x":2}', '{"x":NaN}', '{"x":Infinity}'):
             with self.assertRaises(ValueError): C.json_bytes(raw)
         with self.assertRaises(ValueError): C.canonical({'x': float('nan')})
+
+    def test_versioned_empty_directory_witness_is_only_fixed_u(self):
+        value=runtime(); value.update(schema_version=2, absent_source_paths=[],
+                                     empty_source_directories=C.absent_source_paths(ARM))
+        self.assertEqual(C.validate_capture(value,ARM),value)
+        self.assertEqual(C.validate_static_capture_output(
+            'Q03_BASELINE_STATIC='+C.canonical(value).decode(),ARM),value)
+        for changes in ({'schema_version':1}, {'schema_version':True}, {'schema_version':3},
+                        {'absent_source_paths':C.absent_source_paths(ARM)},
+                        {'empty_source_directories':[]},
+                        {'empty_source_directories':['models/deepseek_v4_1/unknown']},
+                        {'image':C.REVISED_IDENTITIES['r6x-steer']['image']}):
+            broken=dict(value,**changes)
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                C.validate_capture(broken,ARM)
+        for arm in C.REVISED_ARMS:
+            old=runtime(arm); old['empty_source_directories']=[]
+            with self.assertRaises(ValueError): C.validate_capture(old,arm)
+        steer=runtime('r6x-steer'); steer.update(schema_version=2,empty_source_directories=[])
+        with self.assertRaises(ValueError): C.validate_capture(steer,'r6x-steer')
 
     def test_provenance_inventory_native_and_metadata_faults(self):
         changes = [('image', C.REVISED_IDENTITIES['r6x-steer']['image']), ('source_head','f'*40),
@@ -245,11 +265,66 @@ class RealCollectorTests(unittest.TestCase):
         self.assertEqual(value['metadata_versions'],{n:'1.0' for n in ('torch','tilelang','tile_kernels')})
         self.assertEqual(value['torch_version_sha256'],C.digest((self.site/'torch/version.py').read_bytes()))
 
-    def test_absent_directory_and_broken_symlink_fail_closed(self):
+    def test_absent_and_actual_empty_directory_are_truthful_distinct_versions(self):
+        absent=self.collect(); self.assertEqual(absent.returncode,0,absent.stderr)
+        old=C.json_bytes(absent.stdout.split('Q03_BASELINE_STATIC=')[1])
+        self.assertEqual(old['schema_version'],1)
+        self.assertEqual(old['absent_source_paths'],C.absent_source_paths(ARM))
+        self.assertNotIn('empty_source_directories',old)
+        steering=self.vllm/'models/deepseek_v4_1/steering'; steering.mkdir(mode=0o755)
+        result=self.collect(); self.assertEqual(result.returncode,0,result.stderr)
+        value=C.json_bytes(result.stdout.split('Q03_BASELINE_STATIC=')[1])
+        self.assertEqual(value['schema_version'],2)
+        self.assertEqual(value['absent_source_paths'],[])
+        self.assertEqual(value['empty_source_directories'],C.absent_source_paths(ARM))
+        with mock.patch.dict(C.REVISED_SOURCE_SHA256,{ARM:self.expected}):
+            self.assertEqual(C.validate_static_capture_output(result.stdout,ARM),value)
+        for key in old:
+            if key not in ('schema_version','absent_source_paths'):
+                self.assertEqual(value[key],old[key])
+
+    def test_s_manifest_stays_exact_version_one_shape(self):
+        expected={}
+        for relative in C.source_hashes('r6x-steer'):
+            path=self.vllm/relative; path.parent.mkdir(parents=True,exist_ok=True)
+            if not path.exists(): path.write_bytes(b'raise AssertionError("do not import")\n')
+            expected[relative]=C.digest(path.read_bytes())
+        result=self.collect(identity=C.checked_identity('r6x-steer'),
+                            source_sha256=expected,absent_source_paths=[])
+        self.assertEqual(result.returncode,0,result.stderr)
+        value=C.json_bytes(result.stdout.split('Q03_BASELINE_STATIC=')[1])
+        self.assertEqual(set(value),set(runtime('r6x-steer')))
+        self.assertEqual(value['schema_version'],1)
+        self.assertEqual(value['absent_source_paths'],[])
+        self.assertNotIn('empty_source_directories',value)
+        with mock.patch.dict(C.REVISED_SOURCE_SHA256,{'r6x-steer':expected}):
+            self.assertEqual(C.validate_capture(value,'r6x-steer'),value)
+
+    def test_any_child_file_bytecode_directory_or_link_fails_closed(self):
         steering=self.vllm/'models/deepseek_v4_1/steering'; steering.mkdir()
-        self.assertNotEqual(self.collect().returncode,0)
+        for name in ('__init__.py','code.pyc','.hidden','unknown'):
+            child=steering/name; child.write_bytes(b'')
+            with self.subTest(name=name): self.assertNotEqual(self.collect().returncode,0)
+            child.unlink()
+        child=steering/'__pycache__'; child.mkdir()
+        self.assertNotEqual(self.collect().returncode,0); child.rmdir()
+        child=steering/'link'; child.symlink_to(self.root/'missing')
+        self.assertNotEqual(self.collect().returncode,0); child.unlink()
         steering.rmdir(); steering.symlink_to(self.root/'missing')
+        self.assertNotEqual(self.collect().returncode,0); steering.unlink()
+        actual=self.root/'empty'; actual.mkdir(); steering.symlink_to(actual,target_is_directory=True)
+        self.assertNotEqual(self.collect().returncode,0); steering.unlink()
+        steering.write_bytes(b'')
         self.assertNotEqual(self.collect().returncode,0)
+
+    def test_directory_inspection_errors_and_identity_drift_fail_closed(self):
+        steering=self.vllm/'models/deepseek_v4_1/steering'; steering.mkdir()
+        for action in ('lstat','open','scandir'):
+            target=mock.patch.object(Path,'lstat',side_effect=PermissionError('unreadable')) if action=='lstat' else mock.patch.object(os,action,side_effect=PermissionError('unreadable'))
+            with self.subTest(action=action), target, self.assertRaises(PermissionError):
+                C.inspect_source_absence(self.vllm,ARM)
+        identity=C.checked_identity(ARM); identity['image']=C.REVISED_IDENTITIES['r6x-steer']['image']
+        self.assertNotEqual(self.collect(identity=identity).returncode,0)
 
     def test_source_mutation_and_alias_fail_closed(self):
         source=self.vllm/'envs.py'; before=source.read_bytes(); source.write_bytes(b'changed')

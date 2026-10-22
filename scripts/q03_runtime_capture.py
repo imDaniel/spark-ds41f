@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Finite U176/S188 CPU image evidence, independent of runtime admission.
 
-The frozen inventories and stdlib collector are copied verbatim from admission
+The frozen inventories and original stdlib collector come from admission
 commit eb775f13d4a61ece739003c5fca860864d91ea63, q03_baseline_identity.py.
+Only fixed U adds a truthful version-2 witness for an actual empty directory.
 This standalone slice deliberately does not import that admission/controller.
 Successful capture is unreviewed evidence to bind later, NEVER qualification.
 """
@@ -79,7 +80,44 @@ REVISED_SOURCE_SHA256 = {'r6x-steer': {'__init__.py': 'fd3708e5a13abe98c566afd79
                    'v1/worker/gpu_worker.py': '1dfdf4fd410947bfd32d69b53224a4aea26d2767693596481aea4a14339e4bb3',
                    'v1/worker/worker_base.py': '3a0ca44daf0b00fe626ca21a5b71d1a0e0e506759449a7fb8967292edccbcf35'}}
 
-STATIC_CAPTURE = r'''
+SOURCE_ABSENCE_CHECK = r'''
+def inspect_source_absence(root, arm):
+    """Measure nonexistent versus strictly empty U source directories truthfully."""
+    import os
+    from pathlib import Path
+    import stat
+    if arm != 'r6x-unpatched':
+        return {'absent_source_paths': []}
+    root = Path(root)
+    relative = 'models/deepseek_v4_1/steering'
+    path = root / relative
+    if path.resolve() != path:
+        raise ValueError('unpatched steering path is aliased')
+    try:
+        before = path.lstat()
+    except FileNotFoundError:
+        return {'absent_source_paths': [relative]}
+    if not stat.S_ISDIR(before.st_mode):
+        raise ValueError('unpatched steering path is not an actual directory')
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        opened = os.fstat(fd)
+        if (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino):
+            raise ValueError('unpatched steering directory changed before scan')
+        with os.scandir(fd) as entries:
+            if next(entries, None) is not None:
+                raise ValueError('unpatched steering directory contains a child entry')
+        after = path.lstat()
+        if (after.st_dev, after.st_ino, after.st_mtime_ns, after.st_ctime_ns) != (
+                before.st_dev, before.st_ino, before.st_mtime_ns, before.st_ctime_ns):
+            raise ValueError('unpatched steering directory changed during scan')
+    finally:
+        os.close(fd)
+    return {'absent_source_paths': [], 'empty_source_directories': [relative]}
+'''
+exec(SOURCE_ABSENCE_CHECK)
+
+STATIC_CAPTURE = SOURCE_ABSENCE_CHECK + r'''
 import ast, hashlib, importlib.machinery, importlib.metadata, json, os, pathlib, platform, sys, sysconfig
 p = P
 def need(ok, message):
@@ -96,9 +134,12 @@ spec=importlib.machinery.PathFinder.find_spec('vllm',search)
 need(spec is not None and spec.origin is not None,'image vllm package missing')
 root=pathlib.Path(spec.origin).resolve().parent
 sources={}
-for rel in p.get('absent_source_paths', []):
- path=root/rel
- need(not path.exists() and not path.is_symlink(),'unpatched steering source must be absent')
+absence={}
+if 'absent_source_paths' in p:
+ need(p['absent_source_paths']==(['models/deepseek_v4_1/steering'] if p['identity']['arm']=='r6x-unpatched' else []),'unexpected source absence inventory')
+ if p['identity']['arm']=='r6x-unpatched':
+  need(p['identity']=={'arm':'r6x-unpatched','image':'sha256:fc6a9ef83dd1a741a32c2724263e9c05a2635dc8154784ffe0f9c36709018082','source_head':'7316c7f9fae1bc4a0b7ab1848de0db4143eec5d2','source_tree':'4d6851c8bb1397a55254ba88905a87d9785b98dc'},'empty-directory observation requires exact fixed U identity')
+ absence=inspect_source_absence(root,p['identity']['arm'])
 for rel, expected in p['source_sha256'].items():
  path=root/rel
  need(path.resolve()==path and path.is_file(),'source path alias or missing')
@@ -142,7 +183,8 @@ result=dict(schema_version=1,**p['identity'],installation={'mode':'image-source'
  metadata_versions=versions,package_origins=package_origins,package_sha256=package_sha,
  torch_version=assignments[0],torch_version_sha256=sha(version_path),
  native_paths=native_paths,native_sha256=native_sha,source_sha256=sources,pythonpath=pythonpath)
-if 'absent_source_paths' in p: result['absent_source_paths']=p['absent_source_paths']
+if 'absent_source_paths' in p: result.update(absence)
+if 'empty_source_directories' in absence: result['schema_version']=2
 print('Q03_BASELINE_STATIC='+json.dumps(result,sort_keys=True,separators=(',',':'),allow_nan=False))
 '''
 
@@ -217,13 +259,17 @@ def _path(value):
 
 def validate_capture(runtime, arm):
     identity = checked_identity(arm)
+    version = runtime.get('schema_version') if isinstance(runtime, dict) else None
     extra = {'absent_source_paths'} if arm in REVISED_ARMS else set()
+    if type(version) is int and version == 2:
+        require(arm == 'r6x-unpatched', 'empty-directory schema is only for fixed U')
+        extra.add('empty_source_directories')
     require(isinstance(runtime, dict) and set(runtime) == extra | {
         'schema_version', 'arm', 'image', 'source_head', 'source_tree', 'installation',
         'platform', 'metadata_versions', 'package_origins', 'package_sha256', 'torch_version',
         'torch_version_sha256', 'native_paths', 'native_sha256', 'source_sha256', 'pythonpath'},
         'baseline static provenance fields differ')
-    require(type(runtime['schema_version']) is int and runtime['schema_version'] == 1
+    require(type(version) is int and version in (1, 2)
             and all(runtime[k] == v for k, v in identity.items()), 'baseline provenance arm/image/source differs')
     install = runtime['installation']
     require(isinstance(install, dict) and set(install) == {'mode', 'package_root'}
@@ -259,8 +305,13 @@ def validate_capture(runtime, arm):
             and all(_path(p) for p in runtime['pythonpath'].split(':')),
             'baseline baked Python path is missing or relative')
     if arm in REVISED_ARMS:
-        require(runtime['absent_source_paths'] == absent_source_paths(arm),
-                'revised baseline absent-source proof differs')
+        if version == 2:
+            require(runtime['absent_source_paths'] == []
+                    and runtime['empty_source_directories'] == absent_source_paths(arm),
+                    'fixed U empty-directory witness differs')
+        else:
+            require(runtime['absent_source_paths'] == absent_source_paths(arm),
+                    'revised baseline absent-source proof differs')
     return copy.deepcopy(runtime)
 
 def validate_image(arm, image, runtime):
