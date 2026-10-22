@@ -186,7 +186,7 @@ def validate_candidate_build(manifest, ops):
             and inputs["vllm"].get("expected_tree") == SOURCE_TREE,
             "Candidate build/source identity mismatch")
     publication = candidate.get("build_publication", manifest["preflight"]["publication"])
-    verify_build_publication(publication, ops)
+    verify_build_publication(publication, ops, manifest)
     images = json.loads(run(ops, ["docker", "image", "inspect", candidate["image"]]))
     require(isinstance(images, list) and len(images) == 1, "Ambiguous candidate image")
     image = images[0]
