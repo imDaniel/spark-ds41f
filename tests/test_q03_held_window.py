@@ -70,6 +70,31 @@ class HeldContracts(unittest.TestCase):
     def admit(self,ident='1'*32):
         d=self.descriptor(ident);path=self.root/(ident+'.json');path.write_bytes(H.canonical_bytes(d))
         return H.admit_attempt(self.s,{'attempt_path':str(path),'attempt_sha256':H.sha256(path.read_bytes())},self.core)
+    def test_bundle_context_is_forwarded_at_admission_and_before_each_gate(self):
+        self.s.manifest['source_delivery'] = {'fixture': 'frozen-outer'}
+        observed = []
+        def validate(manifest, *, held_source):
+            self.assertIs(held_source['outer_manifest'], self.s.manifest)
+            self.assertEqual(H.validate_source_derivation(manifest, held_source), self.s.manifest)
+            observed.append(H.canonical_bytes(held_source))
+        self.s.ops.validate_host = validate
+        attempt = self.admit()
+        H.run_attempt(self.s, attempt, self.core)
+        self.assertEqual(len(observed), 4)  # Admission, then P0/G1/G2.
+        self.assertEqual(len(set(observed)), 1)
+
+    def test_source_derivation_accepts_only_typed_prefix_budget_and_g1_drop(self):
+        self.s.manifest['source_delivery'] = {'fixture': 'frozen-outer'}
+        self.s.manifest['candidate']['g1_tests'] = {'fixture': 'inherited-unused'}
+        context = {'outer_manifest': self.s.manifest, 'attempt_id': 'a' * 32,
+                   'jobs': [{'kind': 'p0', 'timeout_seconds': 30}], 'candidate_updates': {}}
+        derived = H.derive_attempt_manifest(self.s, context['attempt_id'], context['jobs'], {})
+        self.assertNotIn('g1_tests', derived['candidate'])
+        self.assertEqual(H.validate_source_derivation(derived, context), self.s.manifest)
+        context['candidate_updates'] = {'g1_tests': {'fixture': 'unallowed-without-g1'}}
+        with self.assertRaisesRegex(ValueError, 'requires a G1 gate'):
+            H.validate_source_derivation(derived, context)
+
     def test_pass_drains_without_intermediate_restore(self):
         a=self.admit();receipt=H.run_attempt(self.s,a,self.core)
         self.assertEqual(receipt['passed_gates'],['p0','g1','g2']);self.assertEqual(self.s.state['phase'],'held-ready')

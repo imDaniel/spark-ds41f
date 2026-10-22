@@ -231,6 +231,169 @@ class DeliveryTests(unittest.TestCase):
             source._owned_parent(unsafe / 'new', self.root)
         self.assertFalse((unsafe / 'new').exists())
 
+    def prepare_held_source_fixture(self):
+        """Real producer and tiny Git artifacts; only Mac identity/transport fake."""
+        import q03_held_window as held
+        manifest = copy.deepcopy(self.manifest)
+        manifest.update(held_window={'schema_version': 1}, window_seconds=10800,
+                        jobs=[{'kind': 'http_service', 'timeout_seconds': 60,
+                               'selection': {'mode': 'off', 'steering': 'off'}}])
+        manifest['preflight']['original_service_disposition'] = 'keep-stopped'
+        candidate = manifest['candidate']
+        candidate.update(cache_path=str(self.root / 'cache'), image='sha256:' + 'b' * 64,
+                         component_head=self.sha, tests_path=str(self.repo),
+                         git_config_sha256=self.config_sha)
+        build_pub = copy.deepcopy(manifest['preflight']['publication'])
+        build_pub['source_bundle'].update(bundle_path=str(self.root / 'build.bundle'),
+                                         receipt_path=str(self.root / 'build.receipt.json'))
+        candidate['build_publication'] = build_pub
+        labels = {'org.opencontainers.image.revision': self.sha,
+                  'org.opencontainers.image.base.digest': 'sha256:' + 'e' * 64,
+                  'local.spark3.vllm.patch-head': self.sha,
+                  'local.spark3.vllm.tree': self.tree}
+        self.held_image = {'Id': candidate['image'], 'Config': {'Labels': labels}}
+        official = {'tag': 'q03-validation:fixture', 'image_id': candidate['image'],
+                    'deployment_commit': self.sha, 'compile_jobs': 1,
+                    'min_available_gib': 24, 'built_utc': '2026-10-22T00:00:00Z'}
+        documents = {'runtime_manifest': {'source_head': self.sha},
+                     'build_inputs': {'inputs': {'base_image': 'fixture@sha256:' + 'e' * 64,
+                         'vllm': {'patch_head': self.sha, 'expected_tree': self.tree}}},
+                     'build_receipt': {'result': 'built-official-smoke-passed',
+                         'image_id': candidate['image'], 'source_head': self.sha,
+                         'source_tree': self.tree, 'image_labels': labels,
+                         'official_receipt': official}}
+        for name, value in documents.items():
+            path = self.root / (name + '.json')
+            path.write_bytes(source.encoded(value))
+            candidate[name + '_path'] = str(path)
+            candidate[name + '_sha256'] = source.digest(path)
+        self.git('update-ref', self.pub['ref'], self.sha)
+        original = source.git
+        def git(root, *args, network=False):
+            if network and args[0] == 'ls-remote':
+                self.assertEqual(args[2:], (self.url, self.pub['ref']))
+                return original(root, 'ls-remote', '--exit-code', str(self.repo), self.pub['ref'])
+            return original(root, *args, network=network)
+        export = self.root / 'held-export'
+        with patch.object(source.platform, 'system', return_value='Darwin'), \
+             patch.object(source, 'git', side_effect=git):
+            outer = source.prepare(manifest, {'controller': str(self.repo), 'build': str(self.repo)}, export)
+        for name, pub in source.publications(outer).items():
+            for suffix, key in (('bundle', 'bundle_path'), ('receipt.json', 'receipt_path')):
+                destination = Path(pub['source_bundle'][key])
+                destination.write_bytes((export / (name + '.' + suffix)).read_bytes())
+                destination.chmod(0o600)
+        session = types.SimpleNamespace(manifest=outer)
+        context = {'outer_manifest': outer, 'attempt_id': 'a' * 32,
+                   'jobs': copy.deepcopy(outer['jobs']), 'candidate_updates': {}}
+        derived = held.derive_attempt_manifest(session, context['attempt_id'], context['jobs'], {})
+        for key in ('cache_path', 'output_path'):
+            Path(derived['candidate'][key]).mkdir(mode=0o700, parents=True)
+        return outer, derived, context
+
+    def test_real_producer_held_derivation_actual_host_preserves_outer_receipts(self):
+        import q03_held_window as held
+        import q03_window as window
+        import q03_window_build as build
+        import q03_http_service as http
+        outer, derived, context = self.prepare_held_source_fixture()
+        before = source.encoded(outer)
+        original_receipts = {name: Path(pub['source_bundle']['receipt_path']).read_bytes()
+                             for name, pub in source.publications(outer).items()}
+        self.assertNotEqual(source.projection(outer), source.projection(derived))
+        for pub in source.publications(derived).values():
+            with self.assertRaisesRegex(ValueError, 'Mac receipt does not bind'):
+                source.verify_evidence(pub, derived)
+            source.verify_evidence(pub, derived, held_source=context)
+        ops = window.RuntimeOps()
+        original_run, original_read = ops.run, Path.read_text
+        def run(argv, **kwargs):
+            if argv[:3] == ['docker', 'image', 'inspect']:
+                return types.SimpleNamespace(returncode=0, stdout=json.dumps([self.held_image]))
+            self.assertEqual(argv[0], 'git')
+            self.assertNotIn('ls-remote', argv)
+            return original_run(argv, **kwargs)
+        def read(path, *args, **kwargs):
+            if path.name == 'validation-selection.json':
+                return json.dumps({'source_head': self.sha, 'source_tree': self.tree})
+            return original_read(path, *args, **kwargs)
+        with patch.object(window, '__file__', str(self.repo / 'scripts/q03_window.py')), \
+             patch.object(build, 'SOURCE_HEAD', self.sha), patch.object(build, 'SOURCE_TREE', self.tree), \
+             patch.object(Path, 'read_text', read), patch.object(ops, 'run', side_effect=run), \
+             patch.object(ops, 'validate_git_toolchain'), patch.object(window, 'validate_tblib_dependency'), \
+             patch.object(http, 'validate_binding'):
+            session = types.SimpleNamespace(manifest=outer, ops=ops)
+            attempt = {'manifest': derived, 'descriptor': context}
+            held.validate_attempt_host(session, attempt)
+            # The real uncontextualized host path reproduces the field refusal.
+            with self.assertRaisesRegex(ValueError, 'Mac receipt does not bind'):
+                ops.validate_host(derived)
+        self.assertEqual(source.encoded(outer), before)
+        for name, pub in source.publications(outer).items():
+            self.assertEqual(Path(pub['source_bundle']['receipt_path']).read_bytes(), original_receipts[name])
+            self.assertEqual(json.loads(original_receipts[name])['manifest_sha256'], source.projection(outer))
+            source.verify_evidence(pub, outer)  # Ordinary close remains exact.
+
+    def test_held_source_refuses_arbitrary_drift_before_publication_or_host_io(self):
+        import q03_window as window
+        outer, derived, context = self.prepare_held_source_fixture()
+        mutations = [(['candidate', 'image'], 'sha256:' + 'c' * 64),
+                     (['candidate', 'cache_path'], outer['candidate']['cache_path']),
+                     (['candidate', 'output_path'], derived['candidate']['output_path'] + '/extra'),
+                     (['preflight', 'publication', 'ref'], 'refs/heads/drift'),
+                     (['source_delivery', 'preparation_id'], 'f' * 32),
+                     (['source_delivery', 'session_dir'], str(self.root / 'wrong-session')),
+                     (['window_seconds'], 10800.0), (['held_window'], {'schema_version': 1}),
+                     (['unreviewed'], {'value': True})]
+        for path, value in mutations:
+            altered = copy.deepcopy(derived)
+            target = altered
+            for key in path[:-1]:
+                target = target[key]
+            target[path[-1]] = value
+            with self.subTest(path=path), patch.object(source, 'regular', side_effect=AssertionError('evidence I/O')), \
+                 self.assertRaisesRegex(ValueError, 'exact typed derivation'):
+                preflight.verify_build_publication(altered['candidate']['build_publication'], object(),
+                                                   altered, held_source=context)
+            with self.subTest(host_path=path), self.assertRaisesRegex(ValueError, 'exact typed derivation'):
+                window.RuntimeOps().validate_host(altered, held_source=context)
+        # Re-deriving arbitrary changes from a tampered outer cannot rebind its receipt.
+        import q03_held_window as held
+        forged = copy.deepcopy(context)
+        forged['outer_manifest']['candidate']['image'] = 'sha256:' + 'c' * 64
+        altered = held.derive_attempt_manifest(types.SimpleNamespace(manifest=forged['outer_manifest']),
+            forged['attempt_id'], forged['jobs'], forged['candidate_updates'])
+        with self.assertRaisesRegex(ValueError, 'Mac receipt does not bind'):
+            source.verify_evidence(altered['candidate']['build_publication'], altered, held_source=forged)
+        # Missing bundle/mode cannot fall back to network when context was supplied.
+        stripped = copy.deepcopy(derived)
+        stripped.pop('source_delivery')
+        pub = stripped['candidate']['build_publication']
+        pub.pop('source_bundle')
+        with patch.object(preflight, '_run', side_effect=AssertionError('online fallback')), self.assertRaises(ValueError):
+            preflight.verify_build_publication(pub, object(), stripped, held_source=context)
+
+    def test_held_source_rejects_untyped_context_and_preserves_receipt_hashes(self):
+        import q03_held_window as held
+        outer, derived, context = self.prepare_held_source_fixture()
+        for key, value in [('attempt_id', '../escape'), ('attempt_id', 'b' * 32),
+                           ('candidate_updates', {'image': 'sha256:' + 'd' * 64}),
+                           ('jobs', [{'kind': 'http_service', 'timeout_seconds': 61,
+                                     'selection': {'mode': 'off', 'steering': 'off'}}]),
+                           ('jobs', [{'kind': 'http_service', 'timeout_seconds': True,
+                                     'selection': {'mode': 'off', 'steering': 'off'}}])]:
+            changed = copy.deepcopy(context)
+            changed[key] = value
+            with self.subTest(key=key, value=value), self.assertRaises((ValueError, RuntimeError)):
+                held.validate_source_derivation(derived, changed)
+        for name, pub in source.publications(derived).items():
+            path = Path(pub['source_bundle']['receipt_path'])
+            original = path.read_bytes()
+            path.write_bytes(original + b' ')
+            with self.subTest(publication=name), self.assertRaisesRegex(ValueError, 'receipt digest differs'):
+                source.verify_evidence(pub, derived, held_source=context)
+            path.write_bytes(original)
+
     def test_prepare_observes_exact_mac_ref_without_exporting_config(self):
         original = source.git
         # Exercise real Git's missing/exact ref semantics in an owned local

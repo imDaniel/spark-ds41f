@@ -317,7 +317,13 @@ def verify_closure(path, pub, directory):
                 'bundle source tree differs')
 
 
-def verify_evidence(pub, manifest):
+def verify_evidence(pub, manifest, *, held_source=None):
+    # A held attempt retains exact outer receipt authority. Validate every
+    # derived field first; ordinary callers retain the unchanged full projection.
+    if held_source is not None:
+        from q03_held_window import validate_source_derivation
+        validate_manifest(manifest)
+        manifest = validate_source_derivation(manifest, held_source)
     require(validate_manifest(manifest), 'missing frozen source delivery authority')
     require(pub in publications(manifest).values(), 'publication is outside the frozen manifest')
     binding = pub['source_bundle']
@@ -346,8 +352,8 @@ def verify_evidence(pub, manifest):
     return receipt
 
 
-def verify_publication(pub, manifest):
-    verify_evidence(pub, manifest)
+def verify_publication(pub, manifest, *, held_source=None):
+    verify_evidence(pub, manifest, held_source=held_source)
     binding = pub['source_bundle']
     inspect_checkout(binding['checkout'], pub, binding['git_config_sha256'])
 

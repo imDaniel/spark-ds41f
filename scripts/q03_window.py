@@ -355,7 +355,11 @@ class RuntimeOps:
         http_sources = ("q03_http_service.py", "q03_http_worker.py", "q03_http_client.py", "q03_http_toolbox.json", "q03_qualification.py", "q03_quality_matrix.py", "q03_performance.py", 'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py', 'q03_legacy_case_replay.py', 'q03_baseline_batch.py', 'q03_quality_capture.py', 'q03_quality_pilot.py')
         return {name: self.sha256(Path(__file__).parent / name) for name in (*names, *owner_sources, *http_sources)}
 
-    def validate_host(self, manifest, *, prepare_images=False):
+    def validate_host(self, manifest, *, prepare_images=False, held_source=None):
+        if held_source is not None:
+            from q03_held_window import validate_source_derivation
+            validate_source_derivation(manifest, held_source)
+        source_kwargs = {} if held_source is None else {"held_source": held_source}
         checkout = Path(manifest["preflight"]["independent_checkout"]).resolve()
         if Path(__file__).resolve() != checkout / "scripts/q03_window.py":
             raise ValueError("running controller is not from the pinned independent checkout")
@@ -381,7 +385,7 @@ class RuntimeOps:
             from q03_window_build import validate_candidate_build
             if not Path(candidate["output_path"]).is_dir():
                 raise ValueError("capture output directory is missing")
-            validate_candidate_build(manifest, self)
+            validate_candidate_build(manifest, self, held_source=held_source)
             return
         tests = candidate["tests_path"]
         for key in ("tests_path", "cache_path", "output_path"):
@@ -400,8 +404,8 @@ class RuntimeOps:
             raise ValueError("tests must be the clean exact materialized component")
         if not (Path(tests) / ".git").is_dir():
             raise ValueError("test mount requires a self-contained git checkout")
-        self.validate_g1_test_source(manifest, selection)
-        self.validate_candidate_image(manifest, selection)
+        self.validate_g1_test_source(manifest, selection, **source_kwargs)
+        self.validate_candidate_image(manifest, selection, **source_kwargs)
         self.validate_git_toolchain(manifest)
         if needs_tblib(manifest):
             validate_tblib_dependency(candidate)
@@ -429,7 +433,7 @@ class RuntimeOps:
         self.require_receipt(result, {"window_id": session.capsule["window_id"], **(
             {"quiescent": True, "positive_remote_epoch_drain": True} if quiesce else {"result": "passed"})})
 
-    def validate_g1_test_source(self, manifest, selection):
+    def validate_g1_test_source(self, manifest, selection, *, held_source=None):
         candidate = manifest["candidate"]
         if "g1_tests" not in candidate:
             return
@@ -456,7 +460,7 @@ class RuntimeOps:
             return self.run([*git, *args]).stdout.strip()
         artifact_git = git_at(artifact["checkout"], artifact["git_config_sha256"])
         publication = artifact["publication"]
-        verify_build_publication(publication, self, manifest)
+        verify_build_publication(publication, self, manifest, held_source=held_source)
         if (run(artifact_git, "remote", "get-url", "origin") != publication["url"]
                 or run(artifact_git, "rev-parse", "HEAD") != publication["sha"]
                 or run(artifact_git, "status", "--porcelain")):
@@ -508,9 +512,9 @@ class RuntimeOps:
             if pythonpaths != [candidate.get("pytest_base_pythonpath")]:
                 raise ValueError("pytest must preserve the exact image PYTHONPATH")
 
-    def validate_candidate_image(self, manifest, selection):
+    def validate_candidate_image(self, manifest, selection, *, held_source=None):
         from q03_window_build import validate_candidate_build
-        validate_candidate_build(manifest, self)
+        validate_candidate_build(manifest, self, held_source=held_source)
         candidate = manifest["candidate"]
         expected = candidate.get("runtime_manifest_sha256", "")
         if (not re.fullmatch(r"[0-9a-f]{64}", expected)

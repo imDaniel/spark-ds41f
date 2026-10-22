@@ -158,7 +158,7 @@ def verify_image(image, receipt, inputs, tag, deployment_sha):
     return image["Id"]
 
 
-def validate_candidate_build(manifest, ops):
+def validate_candidate_build(manifest, ops, *, held_source=None):
     """Verify immutable image evidence independently of native runtime capture.
 
     A newer controller may inspect an older published build, but may never
@@ -186,7 +186,7 @@ def validate_candidate_build(manifest, ops):
             and inputs["vllm"].get("expected_tree") == SOURCE_TREE,
             "Candidate build/source identity mismatch")
     publication = candidate.get("build_publication", manifest["preflight"]["publication"])
-    verify_build_publication(publication, ops, manifest)
+    verify_build_publication(publication, ops, manifest, held_source=held_source)
     images = json.loads(run(ops, ["docker", "image", "inspect", candidate["image"]]))
     require(isinstance(images, list) and len(images) == 1, "Ambiguous candidate image")
     image = images[0]

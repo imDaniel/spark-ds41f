@@ -178,9 +178,75 @@ def attempt_commands(manifest, window_id, attempt_id, core, *, session=None):
                                   attempt_id=attempt_id)) for job in manifest["jobs"]]
 
 
+def validate_attempt_inputs(outer, attempt_id, jobs, updates):
+    """The same typed derivation policy for descriptor admission and receipts."""
+    validate_held_policy(outer)
+    require(isinstance(attempt_id, str) and re.fullmatch(r"[0-9a-f]{32}", attempt_id),
+            "attempt ID must be canonical UUID hex")
+    require(isinstance(updates, dict) and set(updates) <= {"g1_tests"},
+            "attempt cannot change native image/runtime/paths or controller authority")
+    if "g1_tests" in updates:
+        require(isinstance(updates["g1_tests"], dict), "invalid typed G1 test binding")
+    require(isinstance(jobs, list) and 1 <= len(jobs) <= len(outer["jobs"]),
+            "invalid attempt gate sequence")
+    from q03_owner_model import is_owner, validate_jobs
+    owner = is_owner(outer)
+    from q03_http_service import is_http, validate_jobs as validate_http_jobs
+    http = is_http(outer)
+    if http:
+        require(not updates, "HTTP native/source inputs are immutable")
+        validate_http_jobs(dict(outer, jobs=jobs))
+    if owner:
+        require(not updates, "owner binding is immutable; no G1/source updates")
+        validate_jobs(dict(outer, jobs=jobs))
+    for job, allowed in zip(jobs, outer["jobs"]):
+        if owner or http:
+            require(job["timeout_seconds"] <= allowed["timeout_seconds"], "owner job budget increased")
+            continue
+        require(isinstance(job, dict) and set(job) == {"kind", "timeout_seconds"} and
+                job["kind"] == allowed["kind"] and type(job["timeout_seconds"]) is int and
+                1 <= job["timeout_seconds"] <= allowed["timeout_seconds"],
+                "attempt changes gate order or exceeds reviewed job budget")
+
+
+def validate_source_derivation(manifest, context):
+    """Return the frozen receipt authority only for an exact typed derivation.
+
+    This does not authorize admission or its sequence: build_attempt still binds
+    the capsule, predecessor, command plan and next HTTP selection separately.
+    No receipt/projection field is omitted to accommodate derived attempts.
+    """
+    require(isinstance(context, dict) and set(context) == {
+        "outer_manifest", "attempt_id", "jobs", "candidate_updates"},
+        "invalid held source derivation context")
+    outer = context["outer_manifest"]
+    require(isinstance(outer, dict) and "source_delivery" in outer,
+            "held source derivation requires frozen outer authority")
+    validate_attempt_inputs(outer, context["attempt_id"], context["jobs"], context["candidate_updates"])
+    expected = _derive_manifest(outer, context["attempt_id"], context["jobs"], context["candidate_updates"])
+    require(canonical_bytes(manifest) == canonical_bytes(expected),
+            "held source manifest differs from exact typed derivation")
+    return outer
+
+
+def validate_attempt_host(session, attempt):
+    """Keep runtime validation on derived paths, publication evidence on outer."""
+    if "source_delivery" not in session.manifest:
+        return session.ops.validate_host(attempt["manifest"])
+    descriptor = attempt["descriptor"]
+    context = {"outer_manifest": session.manifest,
+               **{key: descriptor[key] for key in ("attempt_id", "jobs", "candidate_updates")}}
+    validate_source_derivation(attempt["manifest"], context)
+    return session.ops.validate_host(attempt["manifest"], held_source=context)
+
+
 def derive_attempt_manifest(session, attempt_id, jobs, updates):
     """One derivation for planning and admission; the outer manifest is untouched."""
-    manifest = copy.deepcopy(session.manifest)
+    return _derive_manifest(session.manifest, attempt_id, jobs, updates)
+
+
+def _derive_manifest(outer, attempt_id, jobs, updates):
+    manifest = copy.deepcopy(outer)
     manifest.pop("held_window")
     manifest["jobs"] = copy.deepcopy(jobs)
     manifest["candidate"].update(copy.deepcopy(updates))
@@ -190,7 +256,7 @@ def derive_attempt_manifest(session, attempt_id, jobs, updates):
         # native197 tests_path; an unused G1 mount must not make P0-only invalid.
         manifest["candidate"].pop("g1_tests", None)
     for key in ("cache_path", "output_path"):
-        manifest["candidate"][key] = str(Path(session.manifest["candidate"][key]) / attempt_id)
+        manifest["candidate"][key] = str(Path(outer["candidate"][key]) / attempt_id)
     return manifest
 
 
@@ -266,36 +332,13 @@ def build_attempt(session, descriptor, core):
     require(uuid.UUID(attempt_id).hex == attempt_id, "invalid attempt UUID")
     require(descriptor["previous_receipt_sha256"] == session.state.get("last_attempt_receipt_sha256"),
             "attempt predecessor receipt differs")
-    updates = descriptor["candidate_updates"]
-    require(isinstance(updates, dict) and set(updates) <= {"g1_tests"},
-            "attempt cannot change native image/runtime/paths or controller authority")
+    updates, jobs = descriptor["candidate_updates"], descriptor["jobs"]
+    validate_attempt_inputs(session.manifest, attempt_id, jobs, updates)
     if "g1_tests" in updates:
-        require(isinstance(updates["g1_tests"], dict), "invalid typed G1 test binding")
-        # The separately reviewed identity implementation must exist before this
-        # override can be admitted; no fallback to an unchecked test mount.
         require(hasattr(core, "g1_tests_path"), "G1 identity adapter is not integrated")
-    jobs = descriptor["jobs"]
-    require(isinstance(jobs, list) and 1 <= len(jobs) <= len(session.manifest["jobs"]),
-            "invalid attempt gate sequence")
-    from q03_owner_model import is_owner, validate_jobs
-    owner = is_owner(session.manifest)
-    from q03_http_service import is_http, validate_jobs as validate_http_jobs, next_selection
-    http = is_http(session.manifest)
-    if http:
-        require(not updates, "HTTP native/source inputs are immutable")
-        validate_http_jobs(dict(session.manifest, jobs=jobs))
+    from q03_http_service import is_http, next_selection
+    if is_http(session.manifest):
         require(jobs[0]["selection"] == next_selection(session), "HTTP OFF/OFF/DUAL sequence differs")
-    if owner:
-        require(not updates, "owner binding is immutable; no G1/source updates")
-        validate_jobs(dict(session.manifest, jobs=jobs))
-    for job, allowed in zip(jobs, session.manifest["jobs"]):
-        if owner or http:
-            require(job["timeout_seconds"] <= allowed["timeout_seconds"], "owner job budget increased")
-            continue
-        require(isinstance(job, dict) and set(job) == {"kind", "timeout_seconds"} and
-                job["kind"] == allowed["kind"] and type(job["timeout_seconds"]) is int and
-                1 <= job["timeout_seconds"] <= allowed["timeout_seconds"],
-                "attempt changes gate order or exceeds reviewed job budget")
     manifest = derive_attempt_manifest(session, attempt_id, jobs, updates)
     commands = attempt_commands(manifest, session.capsule["window_id"], attempt_id, core, session=session)
     require(descriptor["command_plan_sha256"] == sha256(canonical_bytes(commands)),
@@ -329,7 +372,7 @@ def admit_attempt(session, request, core):
         "control_sequence": session.state["held_sequence"]})
     for key in ("cache_path", "output_path"):
         Path(attempt["manifest"]["candidate"][key]).mkdir(mode=0o700, exist_ok=False)
-    session.ops.validate_host(attempt["manifest"])
+    validate_attempt_host(session, attempt)
     check_open(session)
     session.check("stopped")
     from q03_owner_model import is_owner
@@ -465,7 +508,7 @@ def run_attempt(session, attempt, core):
             poll_attempt(session)
             require(sha256(read_owned_bytes(attempt["directory"] / "descriptor.json")) ==
                     attempt["descriptor_sha256"], "accepted attempt descriptor changed")
-            session.ops.validate_host(manifest)
+            validate_attempt_host(session, attempt)
             if job["kind"] == "http_service":
                 import sys
                 session.update(phase="attempt-running", active_gate="http_service")

@@ -310,7 +310,7 @@ def _validate_publication(pub):
             "Publication must name an exact branch ref")
 
 
-def verify_build_publication(publication, ops, manifest=None):
+def verify_build_publication(publication, ops, manifest=None, *, held_source=None):
     """Verify an original build's published identity, not the current checkout.
 
     Image labels and the hashed successful build receipt must separately bind
@@ -318,10 +318,10 @@ def verify_build_publication(publication, ops, manifest=None):
     build; its own full checkout/publication preflight remains mandatory.
     """
     _validate_publication(publication)
-    if "source_bundle" in publication or (manifest is not None and "source_delivery" in manifest):
+    if held_source is not None or "source_bundle" in publication or (manifest is not None and "source_delivery" in manifest):
         from q03_source_delivery import verify_publication
         require(manifest is not None, "Bundle publication requires its frozen manifest")
-        verify_publication(publication, manifest)
+        verify_publication(publication, manifest, held_source=held_source)
         return
     remote = _run(ops, ["git", "--no-optional-locks", "ls-remote", "--exit-code",
                         publication["url"], publication["ref"]])
