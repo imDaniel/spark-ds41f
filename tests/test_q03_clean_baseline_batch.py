@@ -34,6 +34,9 @@ class CompositionTests(unittest.TestCase):
             self.assertIn(name, Http.SOURCE_FILES)
             self.assertEqual(sources[name], Identity.digest((ROOT / 'scripts' / name).read_bytes()))
 
+    @mock.patch.dict(Identity.REVISED_FREEZE, {'common_runtime_sha256': 'UNBOUND'})
+    @mock.patch.object(Http, 'baseline_module', lambda: Bridge)
+    @mock.patch.object(Bridge, 'identity_module', lambda: Identity)
     def test_all_revised_fixed_batches_fail_before_external_operations_when_unbound(self):
         for arm, state in SELECTIONS:
             manifest = dict(jobs=[dict(kind='http_service', timeout_seconds=7200,
@@ -56,13 +59,17 @@ class CompositionTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'single client'):
             ops.client_scope(0)
 
-    def test_only_two_real_freeze_hashes_remain_unbound(self):
+    def test_all_actual_freeze_hashes_are_bound(self):
         def unbound(value, prefix=''):
             if isinstance(value, dict):
                 return [p for key, item in value.items() for p in unbound(item, prefix + '/' + key)]
             return [prefix] if value == 'UNBOUND' else []
-        self.assertEqual(set(unbound(Identity.REVISED_FREEZE)), {
-            '/common_runtime_sha256', '/runtime_manifest_sha256/r6x-unpatched'})
+        self.assertEqual(unbound(Identity.REVISED_FREEZE), [])
+        self.assertEqual(Identity.validate_revised_freeze(), Identity.REVISED_FREEZE)
+        self.assertEqual(Identity.REVISED_FREEZE['common_runtime_sha256'],
+            '71f2c58abc65e3083e528987bff23aff9a64a7551d4d9e9bee5e6ba875cb79a2')
+        self.assertEqual(Identity.REVISED_FREEZE['runtime_manifest_sha256']['r6x-unpatched'],
+            '01be8e3f0d13a7ff446ae94d0c9f838081327156764cf6f79069079cf1e0e011')
         self.assertEqual(Identity.REVISED_FREEZE['profile_sha256']['r6x-unpatched'],
             '62f545bf727f23a5c24dddd35358ce6caba4fde2d81b5684187a414c998e7e83')
         self.assertEqual(Identity.REVISED_FREEZE['runtime_manifest_sha256']['r6x-steer'],

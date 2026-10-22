@@ -120,6 +120,16 @@ def observe_target(target, arm):
     return steering, arena is not None
 
 
+def observe_source_absence(root, arm, runtime, identity):
+    """Re-measure the exact captured branch; empty is never renamed absent."""
+    if arm not in identity.REVISED_ARMS:
+        return {}
+    observed = identity.inspect_source_absence(root, arm)
+    need(observed == identity.source_absence_witness(runtime, arm),
+         'baseline worker source absence witness changed')
+    return observed
+
+
 class HttpObservation:
     def q03_http_observe(self):
         verify_bytecode_policy()
@@ -165,10 +175,7 @@ class HttpObservation:
         need(version_hash == runtime['torch_version_sha256']
              and str(torch.__version__) == runtime['torch_version'], 'baseline actual Torch version changed')
         sources = {}
-        absent = identity.absent_source_paths(arm)
-        for relative in absent:
-            path = root / relative
-            need(not path.exists() and not path.is_symlink(), 'unpatched steering source is present')
+        absence = observe_source_absence(root, arm, runtime, identity)
         for relative, expected in identity.source_hashes(arm).items():
             path = root / relative
             need(path.resolve() == path and file_sha(path) == expected, 'baseline loaded source bytes differ')
@@ -214,7 +221,7 @@ class HttpObservation:
             'steering_profile': steering, 'effective_config': project_effective_config(self.vllm_config),
             'runner_config': project_effective_config(self.model_runner.vllm_config)}
         if revised:
-            result.update(absent_source_paths=absent, steering_capability=(
+            result.update(absence, steering_capability=(
                 'absent' if arm == 'r6x-unpatched' else 'present'))
         return result
 

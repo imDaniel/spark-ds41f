@@ -54,6 +54,7 @@ def runtime(arm):
 
 
 class UnboundAdmissionTests(unittest.TestCase):
+    @mock.patch.dict(I.REVISED_FREEZE, {'common_runtime_sha256': 'UNBOUND'})
     def test_new_arms_fail_before_static_plan_files_or_operations(self):
         for arm in I.REVISED_ARMS:
             with self.subTest(arm=arm), mock.patch.object(I, 'read_owned_bytes') as read:
@@ -64,6 +65,9 @@ class UnboundAdmissionTests(unittest.TestCase):
                         'provenance': {'path': '/unused', 'sha256': 'b' * 64}}, {}, mock.Mock())
                 read.assert_not_called()
 
+    @mock.patch.dict(I.REVISED_FREEZE, {'common_runtime_sha256': 'UNBOUND'})
+    @mock.patch.object(H, 'baseline_module', lambda: S)
+    @mock.patch.object(S, 'identity_module', lambda: I)
     def test_both_schema_entries_fail_before_ops(self):
         for schema in (6, 7):
             for arm, state in (('r6x-unpatched', 'absent'), ('r6x-steer', 'loaded0')):
@@ -175,11 +179,13 @@ class CapabilityTests(unittest.TestCase):
                     with self.subTest(arm=arm, key=key), self.assertRaises(ValueError):
                         I.validate_image(arm, bad, value)
 
-    def test_static_capture_demands_absent_directory_without_model_import(self):
+    def test_static_capture_measures_source_absence_without_model_import(self):
         with synthetic_freeze():
             value = I.static_capture_plan('r6x-unpatched', 'a' * 32)
             self.assertIn("'absent_source_paths': ['models/deepseek_v4_1/steering']", value['argv'][-1])
-            self.assertIn('not path.exists() and not path.is_symlink()', value['argv'][-1])
+            self.assertIn('inspect_source_absence(root', value['argv'][-1])
+            self.assertIn('os.O_NOFOLLOW', value['argv'][-1])
+            self.assertIn('empty_source_directories', value['argv'][-1])
             self.assertNotIn('import torch', value['argv'][-1])
             self.assertNotIn('import vllm', value['argv'][-1])
 

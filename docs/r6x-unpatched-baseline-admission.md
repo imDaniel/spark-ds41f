@@ -17,7 +17,7 @@ The historical source overlays verified 7678 U / 7699 S source files and 32
 unchanged native libraries. U removed the parent's steering-only files. These
 facts support using the retained images; neither an old label nor a Python
 source overlay alone requires rebuilding native libraries. Current effective
-filesystem/import-path qualification is a separate, still-unbound requirement.
+filesystem/import-path qualification remains a separate execution requirement.
 
 ## Exact native source compatibility checked
 
@@ -52,7 +52,7 @@ not proof of mounted checkpoint/tokenizer assets or successful native execution.
   the existing 60-case material and decoder contract; performance remains the
   existing fixed cases. Separate historical-method adapters are not in this patch.
 
-## Exact freeze blockers
+## Exact source freeze and remaining execution evidence
 
 `validate_revised_freeze()` rejects both new arms before file reads or operations
 while any required field is unbound. The retained S profile (`e935b492...`), shared recipe
@@ -61,14 +61,16 @@ verified from exact file bytes and frozen. The exact U profile (`62f545bf...`),
 truthful S runtime manifest (`c7a9ec93...`) and canonical shared model/tokenizer
 identity (`43a054fb...`) have also been
 verified and frozen. Private artifact bytes are not included in source.
-The remaining two hash values are:
-
-1. Actual shared runtime/package/native-library/path closure (`common_runtime_sha256`).
-2. Actual U immutable runtime manifest (`runtime_manifest_sha256["r6x-unpatched"]`).
-
-The S-only common projection is a comparison target, not a shared-runtime proof.
-Both values remain `UNBOUND` until fresh U capture establishes its actual bytes
-and equality with S; all revised service admission still rejects before operations.
+The fresh actual U schema-2 runtime manifest is now frozen as
+`01be8e3f0d13a7ff446ae94d0c9f838081327156764cf6f79069079cf1e0e011` (3518 bytes).
+All ten common-runtime fields match the actual S manifest individually. Their
+canonical 1340-byte projection is
+`71f2c58abc65e3083e528987bff23aff9a64a7551d4d9e9bee5e6ba875cb79a2`.
+No required source-freeze value remains `UNBOUND`; an absent or changed binding
+still fails the same admission checks. Private JSON is not included in Git.
+The original capture receipt remains `captured-unreviewed` with
+`runtime_qualification: false`. This source composition and raw JSON replay do
+not establish native four-rank readiness, performance or quality qualification.
 
 A deployable freeze additionally needs the existing schema's concrete corpus,
 site inventory, independent checkout/source pins and publication evidence. The
@@ -114,5 +116,44 @@ Schema-7 quality and schema-6 single-case entry points are preserved. The exact
 recovery inventory includes both batch and quality dependencies, using the
 `owned-http-finite-batch/2` reader contract and exact current source hashes.
 Earlier capsules require their matching archived checkout; they are not edited
-to pass the new source closure. All five missing actual admission hashes above
-remain `UNBOUND`, so these changes are not deployment or execution readiness.
+to pass the new source closure. The actual source/runtime pins above are bound,
+but these changes alone are not deployment or execution readiness.
+
+
+## Versioned empty-directory witness successor
+
+The retained U image has an actual empty `models/deepseek_v4_1/steering`
+directory. The first strict CPU capture correctly stopped because that path was
+not nonexistent; its original failure and readonly directory witness remain
+historical evidence. No image, RootFS, label or source file is changed here.
+
+The independently frozen standalone CPU collector at `c9a983dc40f47200b21b13bc9abf84e4b5c3685e`
+adds a closed version-2 U manifest: `absent_source_paths` is empty and
+`empty_source_directories` contains only the steering directory. It opens the
+canonical actual directory without following links and requires a successful
+zero-entry scan, rejecting every child, file, bytecode, link, unknown path type,
+read failure or observed directory replacement/change. Version 1 remains exact
+for genuinely nonexistent U paths and for S; old receipts are not rewritten.
+
+This matching admission successor uses the identical collector/witness bytes.
+The runtime JSON validator accepts only the version-appropriate field set. The
+actual worker observer remeasures the directory and requires the same captured
+branch: removing an empty directory or adding one to a previously absent path
+is drift, not an automatic schema conversion. The poststart validator requires
+all four reports to match the frozen witness exactly. Imported steering modules,
+steering model capability, source/native/package changes and all other existing
+runtime checks still fail closed. Service/HTTP dependency source pins are updated
+together; no lifecycle, request, image or serving behavior is changed.
+
+The predecessor binding checkpoint `e9c72043d1a461ca87de0a23c9e92cb7c95c9010`
+already contains the actual U profile, shared model/tokenizer and S runtime pins.
+Those values are preserved byte-for-byte. The actual U manifest and matched
+common-runtime projection are now bound as recorded above. The standalone CPU
+capture remains separate from service execution and runtime qualification.
+
+The matched CPU regression runs the real isolated collector on synthetic package
+files, validates its serialized immutable manifest, executes the actual observer
+method with explicitly inert native/GPU-shaped doubles, and feeds all four reports
+through the real poststart validator. It covers both v1/v2 branches, rehashed
+witness tampering, directory-state drift, files/bytecode/children/links and read
+errors. It is source-contract evidence, not native four-rank/GPU qualification.
