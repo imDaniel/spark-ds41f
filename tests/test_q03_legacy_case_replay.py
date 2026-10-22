@@ -19,6 +19,7 @@ import sys
 import tempfile
 import threading
 import time
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -224,8 +225,10 @@ class LegacyCaseTest(unittest.TestCase):
         original_run = load.run
         begin = time.monotonic(); clock = lambda: 1000 + (time.monotonic() - begin) * 100
         # The real loop, shuffling, payload, priming, scraping and report code run.
-        # Only its monotonic clock is accelerated; these are not field timings.
-        with patch.object(load, 'run', partial(original_run, clock=clock)):
+        # PR8 and retained acquisition evidence must share a monotonic domain.
+        # Only the clock is accelerated; these are not field timings.
+        with patch.object(load, 'run', partial(original_run, clock=clock)), \
+             patch.object(L, 'time', SimpleNamespace(time=time.time, monotonic=clock)):
             return L.run_client(self.plan, main)
 
     def test_finite_original_argv_and_all_distinct_states(self):
@@ -324,6 +327,99 @@ class LegacyCaseTest(unittest.TestCase):
         bad = copy.deepcopy(evidence); bad['raw_run']['records'][0]['slot'] = (bad['raw_run']['records'][0]['slot'] + 1) % 4
         with self.assertRaisesRegex(RuntimeError, 'records differ'): L.validate_case(raw, bad, self.plan)
 
+    def test_scrape_timestamps_match_ordered_boundary_acquisitions(self):
+        self.server(); self.assertEqual(self.execute(), 0)
+        evidence = L.json_bytes((self.root / 'legacy-evidence.json').read_bytes())
+        value = L.json_bytes((self.root / 'legacy-run.json').read_bytes())
+        self.assertTrue(L.validate_case(value, evidence, self.plan))
+
+        def reject(mutate, message):
+            bad = copy.deepcopy(evidence); mutate(bad)
+            with self.assertRaisesRegex(RuntimeError, message):
+                L.validate_case(value, bad, self.plan)
+
+        for invalid in (None, True, '1000', float('nan'), float('inf'), -float('inf')):
+            for index in range(7):
+                with self.subTest(invalid=invalid, scrape=index):
+                    reject(lambda e: e['raw_run']['scrape_times'].__setitem__(index, invalid), 'finite original')
+            for index in range(2):
+                with self.subTest(invalid=invalid, fence=index):
+                    reject(lambda e: e['raw_run']['fences']['times'].__setitem__(index, invalid), 'finite original')
+            for key in ('begin_monotonic', 'end_monotonic'):
+                for index in range(10):
+                    with self.subTest(invalid=invalid, acquisition=index, key=key):
+                        reject(lambda e: e['scrapes'][index].update({key: invalid}), 'finite original')
+            with self.subTest(invalid=invalid, key='started_monotonic'):
+                reject(lambda e: e.update(started_monotonic=invalid), 'finite original')
+
+        mutations = [
+            ('duplicate stamp', lambda e: e['raw_run']['scrape_times'].__setitem__(1, e['raw_run']['scrape_times'][0]), 'chronology'),
+            ('reversed stamps', lambda e: e['raw_run']['scrape_times'].reverse(), 'chronology'),
+            ('before boundary', lambda e: e['raw_run']['scrape_times'].__setitem__(0, e['raw_run']['boundaries'][0] - 1), 'boundary ordering'),
+            ('inside fetch', lambda e: e['raw_run']['scrape_times'].__setitem__(0,
+                (e['scrapes'][2]['begin_monotonic'] + e['scrapes'][2]['end_monotonic']) / 2), 'acquisition correspondence'),
+            ('reversed acquisition', lambda e: e['scrapes'][2].update(begin_monotonic=e['scrapes'][2]['end_monotonic'] + 1), 'acquisition chronology'),
+            ('overlapping acquisition', lambda e: e['scrapes'][2].update(begin_monotonic=e['scrapes'][1]['end_monotonic'] - 1), 'acquisition chronology'),
+            ('before client interval', lambda e: e.update(started_monotonic=e['scrapes'][0]['begin_monotonic'] + 1), 'acquisition chronology'),
+            ('stamp before preceding fetch ends', lambda e: e['scrapes'][2].update(
+                end_monotonic=(e['raw_run']['scrape_times'][1] + e['scrapes'][3]['begin_monotonic']) / 2), 'acquisition correspondence'),
+            ('start before post-prime fetch ends', lambda e: e['scrapes'][1].update(
+                end_monotonic=e['raw_run']['start'] + 1), 'acquisition correspondence'),
+            ('primer before pre-prime fetch ends', lambda e: e['scrapes'][0].update(
+                end_monotonic=e['requests'][0]['record']['sent'] + 1), 'acquisition correspondence'),
+        ]
+        for name, mutate, message in mutations:
+            with self.subTest(name=name):
+                reject(mutate, message)
+
+    def test_rehashed_stretched_timestamps_and_outside_client_interval_are_rejected(self):
+        self.server(); self.assertEqual(self.execute(), 0)
+        output = Path(self.plan['client']['output'])
+        receipt = L.json_bytes(output.read_bytes())
+        evidence_path, raw_path = self.root / 'legacy-evidence.json', self.root / 'legacy-run.json'
+        evidence, value = L.json_bytes(evidence_path.read_bytes()), L.json_bytes(raw_path.read_bytes())
+        self.assertEqual(L.validate_output(receipt, self.plan)['status'], 'COMPLETE_ORIGINAL_CASE_CLIENT_ONLY')
+        original_tps = value['summary']['server']['generation_tps']['mean']
+        times = evidence['raw_run']['scrape_times']; origin = times[0]
+        evidence['raw_run']['scrape_times'] = [origin + (stamp - origin) * 10 for stamp in times]
+        value['summary'], _ = L._frozen_report(evidence['raw_run'], self.plan)
+        self.assertAlmostEqual(value['summary']['server']['generation_tps']['mean'], original_tps / 10)
+        self.assertGreater(evidence['raw_run']['scrape_times'][-1], evidence['raw_run']['fences']['times'][-1])
+        evidence_path.write_bytes(L.canonical(evidence)); raw_path.write_bytes(L.canonical(value))
+        receipt.update(evidence_sha256=L.digest(evidence_path.read_bytes()), raw_sha256=L.digest(raw_path.read_bytes()))
+        with self.assertRaisesRegex(RuntimeError, 'chronology'):
+            L.validate_output(receipt, self.plan)
+
+        evidence['raw_run']['scrape_times'] = times
+        value['summary'], _ = L._frozen_report(evidence['raw_run'], self.plan)
+        evidence['ended_monotonic'] = evidence['scrapes'][-1]['begin_monotonic']
+        evidence_path.write_bytes(L.canonical(evidence)); raw_path.write_bytes(L.canonical(value))
+        receipt.update(evidence_sha256=L.digest(evidence_path.read_bytes()), raw_sha256=L.digest(raw_path.read_bytes()))
+        with self.assertRaisesRegex(RuntimeError, 'exceeds client interval'):
+            L.validate_output(receipt, self.plan)
+
+    def test_delayed_scrapes_are_valid_without_a_new_lateness_tolerance(self):
+        self.server(); self.assertEqual(self.execute(), 0)
+        evidence = L.json_bytes((self.root / 'legacy-evidence.json').read_bytes())
+        value = L.json_bytes((self.root / 'legacy-run.json').read_bytes())
+        raw = evidence['raw_run']
+        # Model a slow serialized fetch crossing later planned boundaries. PR8
+        # permits this and uses the actual stamp deltas in its server summary.
+        raw['scrape_times'] = [raw['boundaries'][0] + 30 * (k + 1) for k in range(7)]
+        for stamp, scrape in zip(raw['scrape_times'], evidence['scrapes'][2:-1]):
+            scrape.update(begin_monotonic=stamp + 1, end_monotonic=stamp + 20)
+        raw['fences']['times'][-1] = evidence['scrapes'][-2]['end_monotonic'] + 1
+        evidence['scrapes'][-1].update(begin_monotonic=raw['fences']['times'][-1] + 1,
+                                       end_monotonic=raw['fences']['times'][-1] + 2)
+        evidence['ended_monotonic'] = evidence['scrapes'][-1]['end_monotonic'] + 1
+        value['summary'], _ = L._frozen_report(raw, self.plan)
+        self.assertTrue(L.validate_case(value, evidence, self.plan))
+        evidence_path, raw_path = self.root / 'legacy-evidence.json', self.root / 'legacy-run.json'
+        evidence_path.write_bytes(L.canonical(evidence)); raw_path.write_bytes(L.canonical(value))
+        receipt = L.json_bytes(Path(self.plan['client']['output']).read_bytes())
+        receipt.update(evidence_sha256=L.digest(evidence_path.read_bytes()), raw_sha256=L.digest(raw_path.read_bytes()))
+        self.assertEqual(L.validate_output(receipt, self.plan)['status'], 'COMPLETE_ORIGINAL_CASE_CLIENT_ONLY')
+
     def test_failed_primer_stops_new_requests_and_keeps_partial_receipt(self):
         server = self.server(); server.failed_primer = True
         self.assertEqual(self.execute('warm4k_c4'), 1)
@@ -353,7 +449,7 @@ class LegacyCaseTest(unittest.TestCase):
         evidence = L.json_bytes((self.root / 'legacy-evidence.json').read_bytes())
         self.assertIn('hard deadline', evidence['error'])
         self.assertEqual(server.payloads, [])
-        self.assertLess(evidence['ended_monotonic'] - evidence['started_monotonic'], 2)
+        self.assertLess((evidence['ended_monotonic'] - evidence['started_monotonic']) / 100, 2)
 
     def test_counter_reset_stops_during_actual_servebench(self):
         server = self.server(); server.reset_on_scrape = 3

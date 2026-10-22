@@ -83,7 +83,7 @@ def is_baseline(value):
     return type(http.get('schema_version')) is int and http['schema_version'] == 6
 
 
-BASELINE_SOURCE_SHA256 = 'f57e521ba64aba3a31d10232cfd7abc5304d831ccad237e1ff70a6cb78564958'
+BASELINE_SOURCE_SHA256 = '8d69b4546f6000e2eed935a4aedc73ce9aac3d42b5fa758a34b124e0426cdceb'
 
 def baseline_module():
     # This new finite lane is pinned with the complete controller recovery inventory.

@@ -684,6 +684,26 @@ def validate_case(value, evidence, plan):
     # One separate pre-prime scrape + original post-prime fence + 7 boundaries + final drain fence.
     require(len(scrapes) == 10 and len(raw['scrapes']) == 7 and len(raw['scrape_times']) == 7
             and len(raw['fences']['scrapes']) == len(raw['fences']['times']) == 2, 'original fence/scrape inventory differs')
+    stamps = [raw['fences']['times'][0], *raw['scrape_times'], raw['fences']['times'][-1]]
+    require(all(number(t) for t in stamps) and number(evidence['started_monotonic'])
+            and all(number(s.get(k)) for s in scrapes for k in ('begin_monotonic', 'end_monotonic')),
+            'finite original scrape/fence acquisition times required')
+    require(all(a < b for a, b in zip(stamps, stamps[1:]))
+            and all(boundary <= stamp for boundary, stamp in zip(raw['boundaries'], raw['scrape_times'])),
+            'original scrape/fence chronology or boundary ordering differs')
+    previous_end = evidence['started_monotonic']
+    for scrape in scrapes:
+        require(previous_end <= scrape['begin_monotonic'] <= scrape['end_monotonic'],
+                'original scrape acquisition chronology differs')
+        previous_end = scrape['end_monotonic']
+    # PR8 records each stamp BEFORE calling prom.scrape/fetch, not within the
+    # observed acquisition. Slow scrapes may cross subsequent boundaries;
+    # preserve that contract without inventing a lateness tolerance.
+    require(all(previous['end_monotonic'] <= stamp <= scrape['begin_monotonic']
+                for previous, stamp, scrape in zip(scrapes, stamps, scrapes[1:]))
+            and scrapes[1]['end_monotonic'] <= raw['start']
+            and scrapes[0]['end_monotonic'] <= min(r['record']['sent'] for r in primers),
+            'retained original scrape/fence acquisition correspondence differs')
     series = [native_series(s['text'], q['metric_labels']) for s in scrapes]
     for previous, current in zip(series, series[1:]):
         require(set(current) == set(previous) and all(current[k] >= n for k, n in previous.items() if json_bytes(k)[0] not in GAUGES),
@@ -742,9 +762,12 @@ def validate_output(value, plan):
     require(canonical(value) == canonical(expected), 'complete legacy receipt identity/hash/status differs')
     require(evidence['context_sha256'] == value['runtime_context_sha256'] and evidence['url'] == plan['url']
             and number(evidence['started_utc']) and evidence['started_utc'] <= evidence['admitted_utc'] <= evidence['ended_utc']
+            and number(evidence['started_monotonic']) and number(evidence['ended_monotonic'])
             and 0 < evidence['ended_monotonic'] - evidence['started_monotonic'] <= plan['client']['timeout_seconds'],
             'owned endpoint/admission/existing client bound differs')
     validate_case(json_bytes(raw), evidence, plan)
+    require(evidence['scrapes'][-1]['end_monotonic'] <= evidence['ended_monotonic'],
+            'original scrape acquisition exceeds client interval')
     return {'status': 'COMPLETE_ORIGINAL_CASE_CLIENT_ONLY', 'case_id': value['case_id'], 'performance': 'NOT_EVALUATED',
             'quality': 'NOT_EVALUATED', 'capacity': 'NOT_EVALUATED', 'lifecycle': 'REQUIRES_OWNED_FOUR_RANK_DRAIN'}
 
