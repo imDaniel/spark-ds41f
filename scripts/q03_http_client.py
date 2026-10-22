@@ -123,6 +123,32 @@ def load_legacy(client):
     return run_client
 
 
+QUALITY_NAMES = ('q03_quality_pilot', 'q03_quality_capture', 'q03_legacy_case_replay',
+                 'q03_owner_model', 'q03_held_window')
+
+
+class FrozenQuality(FrozenQualification):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname not in QUALITY_NAMES:
+            return None
+        return importlib.util.spec_from_file_location(fullname, self.root / self.relative(fullname), loader=self)
+
+
+def load_quality(client):
+    pins = client.get('quality_sources')
+    if not isinstance(pins, dict) or set(pins) != set(QUALITY_NAMES) or any(name in sys.modules for name in QUALITY_NAMES):
+        raise RuntimeError('quality source closure differs or was preloaded')
+    root, sources = Path(__file__).resolve().parent, {}
+    for name in QUALITY_NAMES:
+        raw = (root / (name + '.py')).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != pins[name]:
+            raise RuntimeError('frozen quality source changed: ' + name)
+        sources[name + '.py'] = raw
+    sys.meta_path.insert(0, FrozenQuality(root, sources))
+    from q03_quality_pilot import run_client
+    return run_client
+
+
 def run(plan):
     # No supplied argv/import path. The frozen plan has been admitted and is
     # rehashed by the controller and remote boundary before this fixed program.
@@ -152,7 +178,9 @@ def run(plan):
             'steering_scale': 0 if plan['selection']['steering'] == 'loaded_zero' else 1}}).decode()]
     error = None
     try:
-        if 'legacy_case' in client:
+        if 'quality_pilot' in client:
+            code = load_quality(client)(plan, main)
+        elif 'legacy_case' in client:
             code = load_legacy(client)(plan, main)
         elif 'performance_screen' in client:
             code = load_performance(client)(plan, main)
@@ -196,4 +224,6 @@ def main():
 
 
 if __name__ == '__main__':
+    # The capture verifies this very loader, not a second ambient import.
+    sys.modules['q03_http_client'] = sys.modules[__name__]
     main()
