@@ -622,7 +622,29 @@ class WindowRecoveryTests(unittest.TestCase):
         self.assertEqual({key for key in actual if key.startswith(
             ("DOCKER_", "BUILDX_", "BUILDKIT_"))}, {"DOCKER_HOST"})
 
+    def assert_registered_policy_commands(self, state):
+        # Check command meaning exactly, not model-name substrings in otherwise
+        # valid evidence paths (a random tempfile name can contain "glm").
+        spec = self.manifest["preflight"]
+        window = self.ops.read_json(self.directory / "capsule.json")["window_id"]
+        transitions = state["transition_epochs"]
+        self.assertEqual([row["action"] for row in transitions], ["stop", "stop", "start"])
+        original = [[sys.executable, "-I", "-B",
+                     str(Path(self.core.__file__).with_name("q03_original_spark_adapter.py")),
+                     "--policy", spec["policy_path"],
+                     "--policy-sha256", spec["policy_sha256"],
+                     "--spark-sha256", spec["spark_sha256"],
+                     "--evidence-dir", str(self.directory / "restore-evidence"),
+                     "--hold", str(self.hold), "--window-id", window,
+                     "--epoch", row["epoch"], "--action", row["action"], "--apply"]
+                    for row in transitions]
+        candidate = ["docker", "start", "--attach", "c" * 64]
+        self.assertEqual(self.ops.commands, [original[0], candidate, candidate, *original[1:]])
+
     def test_success_restores_registered_policy_then_releases_hold(self):
+        # Deterministically retain both old substring collisions in a harmless
+        # evidence-path component; neither selects a policy or starts a model.
+        self.directory = self.root / "session-glm-acceptance.json"
         state = self.run_window()
         self.assertTrue(state["restored"])
         self.assertFalse(self.hold.exists())
@@ -634,11 +656,26 @@ class WindowRecoveryTests(unittest.TestCase):
             "check:before_restore", "stop:2", "quiesce", "check:restore_drained",
             "restore:start", "quiesce", "check:restored",
         ])
-        restore = self.ops.commands[-1]
-        self.assertEqual(restore[restore.index("--policy") + 1],
-                         self.manifest["preflight"]["policy_path"])
-        self.assertNotIn("acceptance.json", " ".join(restore))
-        self.assertNotIn("glm", " ".join(sum(self.ops.commands, [])))
+        self.assert_registered_policy_commands(state)
+
+    def test_registered_command_assertion_rejects_policy_or_model_changes(self):
+        state = self.run_window()
+        self.assert_registered_policy_commands(state)
+        original = copy.deepcopy(self.ops.commands)
+        mutations = (
+            lambda commands: commands.append(["docker", "start", "glm"]),
+            lambda commands: commands[1].__setitem__(-1, "glm"),
+            lambda commands: commands[-1].__setitem__(
+                commands[-1].index("--policy") + 1, "/synthetic/protected/acceptance.json"),
+            lambda commands: commands[-1].extend(["--service", "glm"]),
+        )
+        try:
+            for mutate in mutations:
+                self.ops.commands = copy.deepcopy(original); mutate(self.ops.commands)
+                with self.subTest(mutation=mutate), self.assertRaises(AssertionError):
+                    self.assert_registered_policy_commands(state)
+        finally:
+            self.ops.commands = original
 
     def test_explicit_keep_stopped_success_and_job_failure_never_start(self):
         for fault in (None, 'job:p0'):
