@@ -19,6 +19,7 @@ import os
 import re
 from pathlib import Path
 import signal
+import stat
 import subprocess
 import sys
 import time
@@ -32,6 +33,50 @@ REMOTE_ENV_EXEC = (
     'GIT_OPTIONAL_LOCKS="0",PYTHONDONTWRITEBYTECODE="1"); '
     'os.execvpe(sys.argv[1],sys.argv[1:],e)'
 )
+
+
+def open_private(path, mode):
+    """Create private control files; append never repairs an unsafe old inode."""
+    flags = {"x": os.O_EXCL, "xb": os.O_EXCL, "a": os.O_APPEND}.get(mode)
+    if flags is None:
+        raise ValueError("private file mode must be x, xb or a")
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | flags |
+                 os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+    try:
+        info = os.fstat(fd)
+        current = os.stat(path, follow_symlinks=False)
+        if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.geteuid()
+                or info.st_mode & 0o022 or info.st_nlink != 1):
+            raise RuntimeError("control file must be owned, unaliased and not shared-writable")
+        if (info.st_dev, info.st_ino) != (current.st_dev, current.st_ino):
+            raise RuntimeError("control file changed while opening")
+        return os.fdopen(fd, mode)
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def private_mkdir(path, *, parents=False, exist_ok=False):
+    """Create each missing private directory without changing existing modes."""
+    path = Path(path)
+    if path.resolve() != path.absolute():
+        raise RuntimeError("control directory must be owner-controlled without aliases")
+    for parent in (path.parent, *path.parent.parents):
+        if parent.exists():
+            info = parent.stat()
+            if info.st_uid not in (0, os.geteuid()) or info.st_mode & 0o022:
+                raise RuntimeError("control directory ancestry is not owner-controlled")
+    if parents and not path.parent.exists():
+        private_mkdir(path.parent, parents=True, exist_ok=True)
+    try:
+        path.mkdir(mode=0o700)
+    except FileExistsError:
+        if not exist_ok:
+            raise
+    info = path.lstat()
+    if (not stat.S_ISDIR(info.st_mode) or path.resolve() != path.absolute()
+            or info.st_uid not in (0, os.geteuid()) or info.st_mode & 0o022):
+        raise RuntimeError("control directory must be owner-controlled without aliases")
 
 
 def operation_environment(inherited):
@@ -151,11 +196,15 @@ def acknowledged_memguard_absence(argv, receipt, stdout, stderr, expected_unit=N
 
 def atomic(path, value):
     tmp = path.with_name(path.name + '.' + uuid.uuid4().hex + '.tmp')
-    with tmp.open('x') as out:
-        json.dump(value, out, sort_keys=True)
-        out.flush()
-        os.fsync(out.fileno())
-    os.replace(tmp, path)
+    with open_private(tmp, 'x') as out:
+        try:
+            json.dump(value, out, sort_keys=True)
+            out.flush()
+            os.fsync(out.fileno())
+            os.replace(tmp, path)
+        finally:
+            if tmp.exists():
+                tmp.unlink()
     fd = os.open(path.parent, os.O_DIRECTORY)
     try:
         os.fsync(fd)
@@ -257,7 +306,7 @@ def epoch_lock(root, window, epoch):
     base = operation_dir(root, window, epoch).parent / 'epochs' / epoch
     if base.resolve() != base:
         raise ValueError('epoch path aliases another owner')
-    base.mkdir(parents=True, exist_ok=True)
+    private_mkdir(base, parents=True, exist_ok=True)
     fd = os.open(base / 'lock', os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
@@ -299,10 +348,10 @@ def create_operation(root, window, operation, argv, cwd, timeout_seconds, epoch)
     with epoch_lock(root, window, epoch) as (path, record):
         if record['sealed']:
             raise RuntimeError('transition epoch is permanently sealed')
-        directory.mkdir(mode=0o700, parents=True, exist_ok=False)
+        private_mkdir(directory, parents=True, exist_ok=False)
         atomic(directory / 'manifest.json', m)
         digest = hashlib.sha256((directory / 'manifest.json').read_bytes()).hexdigest()
-        with (directory / 'manifest.sha256').open('x') as out:
+        with open_private(directory / 'manifest.sha256', 'x') as out:
             out.write(digest + '\n')
             out.flush()
             os.fsync(out.fileno())
@@ -538,7 +587,7 @@ def main():
                 raise RuntimeError('operation was not durably registered')
         if hashlib.sha256(Path(__file__).read_bytes()).hexdigest() != m['helper_sha256']:
             raise RuntimeError('operation helper changed')
-        with (directory / 'supervisor.lock').open('a') as lock:
+        with open_private(directory / 'supervisor.lock', 'a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             if (directory / 'receipt.json').exists():
                 raise RuntimeError('terminal operation cannot be restarted')

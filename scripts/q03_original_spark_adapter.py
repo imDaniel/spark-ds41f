@@ -116,7 +116,8 @@ def redirected_log_writer(original, destination):
             return None
         try:
             target = destination / ('failed-start-' + uuid.uuid4().hex)
-            target.mkdir(parents=True, exist_ok=False)
+            destination.mkdir(mode=0o700, exist_ok=True)
+            target.mkdir(mode=0o700, exist_ok=False)
             name = cluster['container']['name']
             for index, node in enumerate(started):
                 label = re.sub(r'[^A-Za-z0-9_.-]', '_', str(node['name']))
@@ -129,7 +130,10 @@ def redirected_log_writer(original, destination):
                             f'{state.stdout}{state.stderr}\n[docker logs]\n{logs.stdout}{logs.stderr}')
                 except Exception as error:
                     text = f'failure evidence capture error: {type(error).__name__}: {error}\n'
-                (target / f'{index}-{label}.log').write_text(text, encoding='utf-8')
+                fd = os.open(target / f'{index}-{label}.log',
+                             os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+                with os.fdopen(fd, 'w', encoding='utf-8') as stream:
+                    stream.write(text)
             print(json.dumps({'redirected_failure_evidence': str(target)}), flush=True)
         except Exception as error:
             print(f'failure evidence unavailable; original rollback continues: {error}', file=sys.stderr)
@@ -279,7 +283,7 @@ class RemoteOperations:
             return self.transport(nodes, node, *argv)
         require(not self.blocked, 'prior remote operation uncertain; refusing further mutations')
         operation = uuid.uuid4().hex
-        self.destination.mkdir(parents=True, exist_ok=True)
+        self.helper_module.private_mkdir(self.destination, parents=True, exist_ok=True)
         self.helper_module.atomic(self.destination / ('remote-operation-' + operation + '.json'),
                dict(window=self.window, epoch=self.epoch, operation=operation,
                     node=node['name'], argv_sha256=hashlib.sha256(json.dumps(argv).encode()).hexdigest()))

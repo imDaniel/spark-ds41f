@@ -21,6 +21,8 @@ import select
 
 sys.dont_write_bytecode = True
 
+from q03_remote_operation import open_private
+
 G1_TEST_FILE = "tests/kernels/test_deepseek_v41_mhc_three_way.py"
 G1_PRESERVED_FILES = (
     "tests/conftest.py", "tests/kernels/conftest.py",
@@ -575,7 +577,7 @@ class RuntimeOps:
         log_path = session.directory / ("command-" + uuid.uuid4().hex + ".log")
         session.update(command_history=session.state.get("command_history", []) + [
             {"argv": argv, "log": str(log_path), "phase": session.state["phase"]}])
-        with log_path.open("xb") as log:
+        with open_private(log_path, "xb") as log:
             # Child cannot execute an operation until its identity is durable.
             read_fd, write_fd = os.pipe()
             try:
@@ -657,7 +659,7 @@ class RuntimeOps:
                           test_artifact_publication=candidate["g1_tests"]["artifact"]["publication"],
                           test_artifact_source_sha256=candidate["g1_tests"]["artifact"]["source_sha256"])
         path = output / (kind + "-receipt.json")
-        with path.open("x") as stream:
+        with open_private(path, "x") as stream:
             json.dump(report, stream, indent=2)
 
     def validate_capture_result(self, manifest, execution):
@@ -671,7 +673,7 @@ class RuntimeOps:
             raise RuntimeError("captured component identity mismatch")
         output = Path(candidate["output_path"]) / "runtime-manifest.json"
         # Exclusive output: a capture never replaces reviewed runtime evidence.
-        with output.open("x") as stream:
+        with open_private(output, "x") as stream:
             json.dump(runtime, stream, indent=2)
             stream.write("\n")
             stream.flush()
@@ -1065,7 +1067,7 @@ def recover(directory, ops=None):
     root = Path(session.manifest["independent_root"]).resolve()
     if root not in Path(directory).resolve().parents:
         raise RuntimeError("recovery directory escaped independent root")
-    with open(Path(directory) / "session.lock", "a") as lock, contextlib.ExitStack() as locks:
+    with open_private(Path(directory) / "session.lock", "a") as lock, contextlib.ExitStack() as locks:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         session = Session(directory, ops)
         locks.enter_context(ops.acquire_gpu_lock())
@@ -1352,7 +1354,7 @@ def run_session(manifest, directory, ops=None):
     capsule["recovery_script_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     capsule["recovery_source_sha256"] = ops.recovery_sources()
     atomic(directory / "capsule.json", capsule)
-    with (directory / "capsule.sha256").open("x") as stream:
+    with open_private(directory / "capsule.sha256", "x") as stream:
         stream.write(hashlib.sha256((directory / "capsule.json").read_bytes()).hexdigest() + "\n")
         stream.flush()
         os.fsync(stream.fileno())
@@ -1365,7 +1367,10 @@ def run_session(manifest, directory, ops=None):
                                          restored=False, active_process=None, candidate_containers=[],
                                          outcome="incomplete", job_results=[]))
     session = Session(directory, ops)
-    with open(directory / "session.lock", "a") as lock, contextlib.ExitStack() as locks:
+    if "held_window" in manifest:
+        from q03_held_window import verify_outer
+        verify_outer(session, require_hold=False)
+    with open_private(directory / "session.lock", "a") as lock, contextlib.ExitStack() as locks:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         if session.requested():
             raise RuntimeError("another operator requests the cluster")

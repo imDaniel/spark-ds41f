@@ -4,6 +4,7 @@ import copy
 import hashlib
 import importlib.util
 import json
+import stat
 from pathlib import Path
 import subprocess
 import sys
@@ -221,6 +222,7 @@ class RecoveryOrderingTests(unittest.TestCase):
         result = self.recover()
         self.assertTrue(result['restored'])
         self.assertTrue(result['hold_released'])
+        self.assertEqual(stat.S_IMODE((self.destination / 'intent.json').stat().st_mode), 0o600)
         self.assertLess(self.events.index('lock'), self.events.index('cleanup'))
         self.assertLess(self.events.index('heartbeat'), self.events.index('watchdog-ready'))
         self.assertLess(self.events.index('watchdog-ready'), self.events.index('quiesce'))

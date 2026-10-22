@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+import stat
 from pathlib import Path
 import subprocess
 import sys
@@ -313,15 +314,34 @@ class QualificationTest(unittest.TestCase):
         self.plan['client'].update(toolbox_path=str(toolbox.parent), toolbox_files={
             'servebench/' + p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in toolbox.iterdir()})
         self.plan.pop('plan_sha256'); self.plan['plan_sha256'] = Q.digest(Q.canonical(self.plan))
-        path = self.root / 'plan.json'; path.write_bytes(Q.canonical(self.plan))
-        result = subprocess.run([sys.executable, '-I', '-B', str(ROOT / 'scripts/q03_http_client.py'),
-                                 '--plan', str(path), '--sha256', Q.digest(path.read_bytes())],
-                                capture_output=True, text=True, timeout=15)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        receipt = json.loads(result.stdout)
-        self.assertEqual(receipt['exit_code'], 0, receipt)
-        value = json.loads(Path(self.plan['client']['output']).read_text())
-        self.assertEqual(Q.validate_output(value, self.plan)['qualification_status'], 'CONTROL_STABLE')
+        toolbox_before = {p: p.read_bytes() for p in toolbox.iterdir()}
+        parent_umask = next(line for line in Path('/proc/self/status').read_text().splitlines()
+                            if line.startswith('Umask:'))
+        for mask in (0o000, 0o002, 0o022, 0o077):
+            with self.subTest(umask=oct(mask)):
+                output_dir = self.root / str(mask)
+                output_dir.mkdir(mode=0o700)
+                plan = copy.deepcopy(self.plan)
+                plan['client']['output'] = str(output_dir / 'lean.json')
+                plan.pop('plan_sha256'); plan['plan_sha256'] = Q.digest(Q.canonical(plan))
+                path = self.root / ('plan-' + str(mask) + '.json')
+                path.write_bytes(Q.canonical(plan))
+                result = subprocess.run([sys.executable, '-I', '-B', str(ROOT / 'scripts/q03_http_client.py'),
+                                         '--plan', str(path), '--sha256', Q.digest(path.read_bytes())],
+                                        capture_output=True, text=True, timeout=15, umask=mask)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                receipt = json.loads(result.stdout)
+                self.assertEqual(receipt['exit_code'], 0, receipt)
+                value = json.loads(Q.read_owned_bytes(Path(plan['client']['output'])))
+                self.assertEqual(Q.validate_output(value, plan)['qualification_status'], 'CONTROL_STABLE')
+                for label in ('off_control1', 'off_control2'):
+                    self.assertEqual(json.loads(Q.read_owned_bytes(output_dir / (label + '.json'))),
+                                     self.generation(plan, label))
+                for artifact in output_dir.iterdir():
+                    Q.read_owned_bytes(artifact)
+                    self.assertEqual(stat.S_IMODE(artifact.stat().st_mode), 0o600, artifact.name)
+                self.assertEqual({p: p.read_bytes() for p in toolbox.iterdir()}, toolbox_before)
+        self.assertIn(parent_umask, Path('/proc/self/status').read_text().splitlines())
 
 
 if __name__ == '__main__':

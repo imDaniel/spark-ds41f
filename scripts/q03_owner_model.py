@@ -518,6 +518,7 @@ def owner_plan(binding, window_id, attempt_id, selection):
 class Journal:
     """One fenced writer. Intent survives process death independently of core state."""
     def __init__(self, session, plan, *, create=False):
+        from q03_remote_operation import open_private
         self.session, self.plan = session, plan
         self.directory = session.directory / "attempts" / plan["attempt_id"] / "owner"
         if create:
@@ -530,7 +531,7 @@ class Journal:
         raw = read_owned_bytes(self.directory / "plan.json")
         require(json_bytes(raw) == plan, "retained owner plan changed")
         self.state = json_bytes(read_owned_bytes(self.directory / "state.json"))
-        self.lock = open(self.directory / "owner.lock", "a")
+        self.lock = open_private(self.directory / "owner.lock", "a")
         fcntl.flock(self.lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
 
     def close(self):

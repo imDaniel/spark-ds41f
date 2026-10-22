@@ -20,6 +20,9 @@ import signal
 import subprocess
 import sys
 import time
+import uuid
+
+from q03_remote_operation import open_private
 
 
 def utc(epoch=None):
@@ -122,19 +125,29 @@ def release_hold(path, window_id, holder):
 
 def atomic_json(path, data):
     path = Path(path)
-    temp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    with temp.open("x") as stream:
-        json.dump(data, stream)
-        stream.flush()
-        os.fsync(stream.fileno())
-    os.replace(temp, path)
+    temp = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    with open_private(temp, "x") as stream:
+        try:
+            json.dump(data, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+            os.replace(temp, path)
+        finally:
+            if temp.exists():
+                temp.unlink()
+    fd = os.open(path.parent, os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
 
 
 def load_capsule(session_dir):
+    from q03_held_window import read_owned_bytes
     root = Path(session_dir).resolve()
     path = root / "capsule.json"
-    expected = (root / "capsule.sha256").read_text().strip()
-    raw = path.read_bytes()
+    expected = read_owned_bytes(root / "capsule.sha256").decode().strip()
+    raw = read_owned_bytes(path)
     if hashlib.sha256(raw).hexdigest() != expected:
         raise RuntimeError("immutable session capsule digest mismatch")
     capsule = json.loads(raw)
@@ -313,7 +326,7 @@ class LocalOps:
             os.close(fd)
 
     def journal(self, event, **fields):
-        with (self.root / "watchdog-journal.jsonl").open("a") as stream:
+        with open_private(self.root / "watchdog-journal.jsonl", "a") as stream:
             stream.write(json.dumps(dict(event=event, time=utc(), **fields)) + "\n")
             stream.flush()
             os.fsync(stream.fileno())
@@ -323,13 +336,13 @@ class LocalOps:
 
     def mark_recovery_attempted(self):
         path = self.root / "watchdog-recovery-attempt.json"
-        with path.open("x") as stream:
+        with open_private(path, "x") as stream:
             json.dump({"window_id": self.capsule["window_id"], "time": utc()}, stream)
             stream.flush()
             os.fsync(stream.fileno())
 
     def recover(self):
-        with (self.root / "watchdog-recovery.log").open("x") as stream:
+        with open_private(self.root / "watchdog-recovery.log", "x") as stream:
             try:
                 subprocess.run(self.capsule["recovery_command"], check=True,
                                stdout=stream, stderr=subprocess.STDOUT,
@@ -349,7 +362,7 @@ class LocalOps:
 def launch_watchdog(session_dir):
     root = Path(session_dir).resolve()
     load_capsule(root)
-    with (root / "watchdog.log").open("x") as stream:
+    with open_private(root / "watchdog.log", "x") as stream:
         return subprocess.Popen(
             [sys.executable, str(Path(__file__).resolve()), "watch",
              "--session-dir", str(root)], stdout=stream, stderr=subprocess.STDOUT,
@@ -358,6 +371,7 @@ def launch_watchdog(session_dir):
 
 
 def wait_ready(session_dir, process, timeout=10):
+    from q03_held_window import read_owned_bytes
     root = Path(session_dir).resolve()
     c, expected = load_capsule(root)
     end = time.monotonic() + timeout
@@ -365,7 +379,7 @@ def wait_ready(session_dir, process, timeout=10):
         if process.poll() is not None:
             raise RuntimeError("watchdog exited before readiness")
         try:
-            ready = json.loads((root / "watchdog.ready.json").read_text())
+            ready = json.loads(read_owned_bytes(root / "watchdog.ready.json"))
             if (ready["window_id"] == c["window_id"]
                     and ready["capsule_sha256"] == expected
                     and ready["process"]["pid"] == process.pid
@@ -383,22 +397,22 @@ def main():
     parser.add_argument("--session-dir", type=Path, required=True)
     args = parser.parse_args()
     # Retain this descriptor for the entire watcher lifetime.
-    lock = (args.session_dir / "watchdog.lock").open("a")
-    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    c, expected = load_capsule(args.session_dir)
-    ops = LocalOps(args.session_dir, c, expected)
-    ops.verify_capsule()
-    ops.owned_hold()
-    atomic_json(args.session_dir / "watchdog.ready.json", {
-        "window_id": c["window_id"], "capsule_sha256": expected,
-        "process": process_identity(os.getpid()),
-    })
-    watch = Watchdog(c, ops)
-    while True:
-        result = watch.step()
-        if result != "waiting":
-            return 0 if result in ("restored", "stopped") else 1
-        time.sleep(min(2, c["heartbeat_timeout_s"] / 4))
+    with open_private(args.session_dir / "watchdog.lock", "a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        c, expected = load_capsule(args.session_dir)
+        ops = LocalOps(args.session_dir, c, expected)
+        ops.verify_capsule()
+        ops.owned_hold()
+        atomic_json(args.session_dir / "watchdog.ready.json", {
+            "window_id": c["window_id"], "capsule_sha256": expected,
+            "process": process_identity(os.getpid()),
+        })
+        watch = Watchdog(c, ops)
+        while True:
+            result = watch.step()
+            if result != "waiting":
+                return 0 if result in ("restored", "stopped") else 1
+            time.sleep(min(2, c["heartbeat_timeout_s"] / 4))
 
 
 if __name__ == "__main__":

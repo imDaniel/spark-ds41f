@@ -27,7 +27,11 @@ def load_module(name, role):
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
-    spec.loader.exec_module(module)
+    sys.path.insert(0, str(root / "scripts"))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.pop(0)
     return module
 
 
@@ -423,7 +427,7 @@ class WindowRecoveryTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name) / "independent"
-        self.root.mkdir()
+        self.root.mkdir(mode=0o700)
         self.directory = self.root / "session"
         self.hold = self.root.parent / "hold.json"
         self.ops = FakeOps()

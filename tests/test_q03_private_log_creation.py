@@ -90,6 +90,16 @@ class PrivateLogCreation(unittest.TestCase):
                     self.assertEqual(base64.b64decode(captured['data_base64']), expected)
                     self.assertEqual(captured['bytes'], len(expected))
                     self.assertEqual(captured['sha256'], hashlib.sha256(expected).hexdigest())
+                # Control JSON, digest sidecar and every newly created ancestor
+                # must not depend on the SSH child's inherited umask either.
+                for path in (directory / name for name in
+                        ('manifest.json', 'manifest.sha256', 'state.json',
+                         'receipt.json', 'supervisor.lock')):
+                    self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600, str(path))
+                for path in operation_root.rglob('*'):
+                    self.assertEqual(stat.S_IMODE(path.stat().st_mode),
+                                     0o700 if path.is_dir() else 0o600, str(path))
+                self.assertEqual(stat.S_IMODE(operation_root.stat().st_mode), 0o700)
                 identities = []
                 for name in ('output.log', 'error.log', 'supervisor.log'):
                     value = (directory / name).lstat()
@@ -102,6 +112,27 @@ class PrivateLogCreation(unittest.TestCase):
                 probe = json.loads((independent / 'child-probe.json').read_text())
                 self.assertEqual(probe['umask'], mask, 'helper must not mutate inherited umask')
                 self.assertEqual(probe['streams'], [{'mode': 0o600, 'uid': os.geteuid(), 'nlink': 1}] * 2)
+
+    def test_window_and_watchdog_control_lifecycle_in_real_umask_children(self):
+        tests = [
+            'test_q03_held_window.HeldCoreContracts.test_new_controls_pass_strict_reader_before_first_stop',
+            'test_q03_held_window.HeldCoreContracts.test_invalid_new_capsule_mode_refuses_before_hold_or_stop',
+            'test_q03_held_window.HeldCoreContracts.test_invalid_new_readiness_refuses_before_stop',
+            'test_q03_held_window.HeldCoreContracts.test_actual_failed_gate_pauses_then_close_restores_once',
+            'test_q03_held_window.HeldCoreContracts.test_unknown_drain_blocks_final_restore_and_retains_hold',
+            'test_q03_held_window.HeldCoreContracts.test_interrupted_attempt_cleared_only_after_registered_drain',
+            'test_q03_window.WindowRecoveryTests.test_restore_failures_retain_hold_and_recovery_can_retry',
+            'test_q03_window.WatchdogFaultTests.test_dead_core_recovers_without_signalling_reused_pid',
+            'test_q03_private_log_creation.PrivateControlFiles',
+            'test_q03_reconcile_restore.RecoveryOrderingTests.test_new_journal_epochs_and_readiness_precede_hold_release',
+        ]
+        for mask in (0o000, 0o002, 0o022, 0o077):
+            with self.subTest(umask=oct(mask)):
+                child = subprocess.run([sys.executable, '-B', '-m', 'unittest', '-q', *tests],
+                    cwd=ROOT, env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1',
+                    PYTHONPATH=os.pathsep.join((str(ROOT / 'scripts'), str(ROOT / 'tests')))),
+                    umask=mask, capture_output=True, text=True, timeout=30)
+                self.assertEqual(child.returncode, 0, child.stdout + child.stderr)
 
     def test_existing_log_files_are_not_reopened_repaired_or_truncated(self):
         directory = self.operation_directory()
@@ -298,6 +329,150 @@ class PrivateLogCreation(unittest.TestCase):
             os.umask(previous)
         self.assertEqual(stat.S_IMODE((directory / 'output.log').stat().st_mode), 0o400)
         self.assert_no_receipt(directory)
+
+
+class PrivateControlFiles(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix='q03-private-controls-')
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+
+    def test_watchdog_main_readiness_journal_and_recovery_artifacts_are_private(self):
+        import q03_window_watchdog as W
+        import q03_held_window as H
+        capsule = {'window_id': 'a' * 32, 'recovery_command': [sys.executable, '-c', 'pass'],
+                   'recovery_timeout_s': 5}
+        with mock.patch.object(W, 'load_capsule', return_value=(capsule, 'b' * 64)), \
+                mock.patch.object(W.LocalOps, 'verify_capsule'), \
+                mock.patch.object(W.LocalOps, 'owned_hold'), \
+                mock.patch.object(W.Watchdog, 'step', return_value='restored'), \
+                mock.patch.object(sys, 'argv', ['watchdog', 'watch', '--session-dir', str(self.root)]):
+            self.assertEqual(W.main(), 0)
+        ready = json.loads(H.read_owned_bytes(self.root / 'watchdog.ready.json'))
+        self.assertEqual(ready['window_id'], capsule['window_id'])
+        ops = W.LocalOps(self.root, capsule, 'b' * 64)
+        ops.journal('first')
+        ops.journal('second')
+        ops.mark_recovery_attempted()
+        ops.recover()
+        with self.assertRaises(FileExistsError):
+            ops.mark_recovery_attempted()
+        with mock.patch.object(W, 'load_capsule', return_value=(capsule, 'b' * 64)), \
+                mock.patch.object(W.subprocess, 'Popen') as popen:
+            W.launch_watchdog(self.root)
+            self.assertEqual(popen.call_count, 1)
+        for path in self.root.iterdir():
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600, path.name)
+            self.assertEqual(path.stat().st_nlink, 1)
+        self.assertEqual(len((self.root / 'watchdog-journal.jsonl').read_text().splitlines()), 2)
+
+    def test_recovery_supervisor_logs_are_private_with_real_inert_retry_child(self):
+        import q03_recovery_supervisor as S
+        main = S.identity(os.getpid())
+        deadline = time.time() + 30
+        intent = {'deadline_epoch': deadline}
+        S.exclusive(self.root / 'intent.json', intent)
+        process = mock.Mock(pid=os.getpid())
+        def spawn(*args, **kwargs):
+            S.exclusive(self.root / 'supervisor-ready.json', {
+                'supervisor': main, 'main': main, 'intent_sha256': 'digest'})
+            return process
+        with mock.patch.object(S, 'verify_sources', return_value=(intent, {}, 'digest')), \
+                mock.patch.object(S.subprocess, 'Popen', side_effect=spawn):
+            S.start_watchdog(self.root, main, deadline)
+        children, real_popen = [], subprocess.Popen
+        def retry(*args, **kwargs):
+            child = real_popen(*args, **kwargs)
+            children.append(child)
+            return child
+        try:
+            with mock.patch.object(S, 'retry_command', return_value=[sys.executable, '-I', '-B', '-c', 'pass']), \
+                    mock.patch.object(S.subprocess, 'Popen', side_effect=retry):
+                S.Ops().launch_retry(self.root, intent, main)
+            self.assertEqual(children[0].wait(timeout=5), 0)
+        finally:
+            for child in children:
+                if child.poll() is None:
+                    child.kill()
+                    child.wait(timeout=5)
+        for name in ('supervisor.log', 'supervisor-retry.log', 'supervisor-retry.json'):
+            self.assertEqual(stat.S_IMODE((self.root / name).stat().st_mode), 0o600, name)
+        before = (self.root / 'supervisor-retry.log').read_bytes()
+        descriptors = set(os.listdir('/proc/self/fd'))
+        with self.assertRaises(FileExistsError):
+            S.Ops().launch_retry(self.root, intent, main)
+        self.assertEqual(set(os.listdir('/proc/self/fd')), descriptors)
+        self.assertEqual((self.root / 'supervisor-retry.log').read_bytes(), before)
+
+    def test_http_and_owner_journal_locks_are_private_and_refuse_unsafe_reopen(self):
+        from types import SimpleNamespace
+        import q03_http_service as HTTP
+        import q03_owner_model as Owner
+        parent = self.root / 'attempts' / ('a' * 32)
+        R.private_mkdir(parent, parents=True)
+        for module, kind in ((HTTP, 'http'), (Owner, 'owner')):
+            plan = {'attempt_id': 'a' * 32}
+            journal = module.Journal(SimpleNamespace(directory=self.root), plan, create=True)
+            journal.close()
+            for path in journal.directory.iterdir():
+                self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600, path.name)
+            lock = journal.directory / (kind + '.lock')
+            lock.chmod(0o664)
+            before = lock.stat()
+            with self.assertRaisesRegex(RuntimeError, 'not shared-writable'):
+                module.Journal(SimpleNamespace(directory=self.root), plan)
+            self.assertEqual((lock.stat().st_ino, lock.stat().st_mode, lock.stat().st_mtime_ns),
+                             (before.st_ino, before.st_mode, before.st_mtime_ns))
+
+    def test_unsafe_existing_append_targets_and_aliases_are_not_modified(self):
+        path = self.root / 'session.lock'
+        path.write_bytes(b'historical evidence')
+        path.chmod(0o664)
+        before = path.stat(), path.read_bytes()
+        with self.assertRaisesRegex(RuntimeError, 'not shared-writable'):
+            R.open_private(path, 'a')
+        self.assertEqual((path.stat().st_ino, path.stat().st_mode, path.stat().st_mtime_ns, path.read_bytes()),
+                         (before[0].st_ino, before[0].st_mode, before[0].st_mtime_ns, before[1]))
+        alias = self.root / 'alias'
+        alias.symlink_to(path)
+        with self.assertRaises(OSError):
+            R.open_private(alias, 'a')
+        with self.assertRaises(FileExistsError):
+            R.open_private(path, 'x')
+        os.link(path, self.root / 'hardlink')
+        with self.assertRaisesRegex(RuntimeError, 'unaliased'):
+            R.open_private(path, 'a')
+        fifo = self.root / 'fifo'
+        os.mkfifo(fifo, 0o600)
+        with self.assertRaises(OSError):
+            R.open_private(fifo, 'a')
+        self.assertEqual(path.read_bytes(), before[1])
+
+    def test_atomic_failure_keeps_old_bytes_and_removes_only_own_temporary(self):
+        import q03_window_watchdog as W
+        for writer in (R.atomic, W.atomic_json):
+            with self.subTest(writer=writer.__module__):
+                path = self.root / 'state.json'
+                R.atomic(path, {'old': True})
+                before = path.stat(), path.read_bytes()
+                with self.assertRaises(TypeError):
+                    writer(path, {'invalid': object()})
+                self.assertEqual((path.stat().st_ino, path.read_bytes()), (before[0].st_ino, before[1]))
+                self.assertEqual(list(self.root.iterdir()), [path])
+                writer(path, {'new': True})
+                self.assertEqual(json.loads(path.read_bytes()), {'new': True})
+                self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+
+    def test_private_directory_does_not_repair_shared_existing_ancestry(self):
+        parent = self.root / 'shared'
+        parent.mkdir(mode=0o700)
+        parent.chmod(0o775)
+        with self.assertRaisesRegex(RuntimeError, 'owner-controlled'):
+            R.private_mkdir(parent, parents=True, exist_ok=True)
+        self.assertEqual(stat.S_IMODE(parent.stat().st_mode), 0o775)
+        with self.assertRaisesRegex(RuntimeError, 'ancestry'):
+            R.private_mkdir(parent / 'child' / 'leaf', parents=True)
+        self.assertFalse((parent / 'child').exists())
 
 
 if __name__ == '__main__':

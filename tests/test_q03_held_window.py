@@ -21,7 +21,7 @@ class FakeSession:
         self.manifest={'held_window':{'schema_version':1},'window_seconds':10800,'independent_root':str(root),
             'candidate':{'image':'sha256:'+'a'*64,'cache_path':str(root/'cache'),'output_path':str(root/'output')},
             'jobs':[{'kind':'p0','timeout_seconds':60},{'kind':'g1','timeout_seconds':60},{'kind':'g2','timeout_seconds':60}]}
-        for key in ('cache_path','output_path'):Path(self.manifest['candidate'][key]).mkdir()
+        for key in ('cache_path','output_path'):Path(self.manifest['candidate'][key]).mkdir(mode=0o700)
         self.capsule={'window_id':'b'*32,'deadline_epoch':10900,'recovery_source_sha256':{'core':'a'*64}}
         raw=H.canonical_bytes(self.capsule);(self.directory/'capsule.json').write_bytes(raw)
         (self.directory/'capsule.sha256').write_text(H.sha256(raw))
@@ -220,7 +220,7 @@ class HeldCoreContracts(unittest.TestCase):
         with mock.patch.object(tempfile,'TemporaryDirectory',side_effect=lambda:factory(dir=ROOT)):
             self.legacy.WindowRecoveryTests.setUp(self)
         self.manifest.update(held_window={'schema_version':1},window_seconds=10800)
-        for key in ('cache_path','output_path'):Path(self.manifest['candidate'][key]).mkdir()
+        for key in ('cache_path','output_path'):Path(self.manifest['candidate'][key]).mkdir(mode=0o700)
         self.ops.cleanup_held_candidates=lambda s,attempt_id=None:self.ops.event('cleanup-held')
         old_prepare=self.ops.prepare_candidate
         self.ops.prepare_candidate=lambda s,n,a,held_attempt=None:old_prepare(s,n,a)
@@ -245,6 +245,61 @@ class HeldCoreContracts(unittest.TestCase):
         with mock.patch.object(H.time,'sleep',side_effect=control):
             result=self.core.run_session(self.manifest,self.directory,self.ops)
         return result,checkpoints
+    def real_readiness(self, *, unsafe=False):
+        import q03_window_watchdog as W
+        self.ops.recovery_sources = self.core.RuntimeOps().recovery_sources
+        def spawn(directory):
+            capsule, digest = W.load_capsule(directory)
+            process = SimpleNamespace(pid=os.getpid(), poll=lambda: None)
+            ready = directory / 'watchdog.ready.json'
+            W.atomic_json(ready, {'window_id': capsule['window_id'],
+                'capsule_sha256': digest, 'process': W.process_identity(process.pid)})
+            if unsafe:
+                ready.chmod(0o664)
+            return process
+        self.ops.spawn_watchdog = spawn
+        self.ops.wait_watchdog_ready = lambda directory, process: W.wait_ready(directory, process, timeout=.1)
+
+    def test_new_controls_pass_strict_reader_before_first_stop(self):
+        import stat
+        self.real_readiness()
+        observed = []
+        def inspect(event):
+            if event == 'check:before_stop':
+                for name in ('capsule.json', 'capsule.sha256', 'state.json', 'session.lock', 'watchdog.ready.json'):
+                    path = self.directory / name
+                    H.read_owned_bytes(path)
+                    self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+                self.assertTrue(self.hold.exists())
+                self.assertEqual(self.ops.stop_count, 0)
+                observed.append(True)
+        self.ops.hook = inspect
+        result, _ = self.run_controlled()
+        self.assertEqual(observed, [True])
+        self.assertTrue(result['hold_released'])
+
+    def test_invalid_new_readiness_refuses_before_stop(self):
+        self.real_readiness(unsafe=True)
+        with self.assertRaisesRegex(TimeoutError, 'watchdog readiness'):
+            self.core.run_session(self.manifest, self.directory, self.ops)
+        self.assertEqual(self.ops.commands, [])
+        self.assertEqual(self.ops.stop_count, 0)
+        self.assertFalse(self.hold.exists())
+
+    def test_invalid_new_capsule_mode_refuses_before_hold_or_stop(self):
+        original = self.core.Session
+        def invalid_mode(directory, ops):
+            session = original(directory, ops)
+            (Path(directory) / 'capsule.sha256').chmod(0o664)
+            return session
+        with mock.patch.object(self.core, 'Session', side_effect=invalid_mode):
+            with self.assertRaisesRegex(ValueError, 'type/ownership/mode'):
+                self.run_controlled()
+        self.assertFalse(self.hold.exists())
+        self.assertFalse((self.directory / 'session.lock').exists())
+        self.assertNotIn('watchdog:spawn', self.ops.events)
+        self.assertEqual(self.ops.commands, [])
+
     def test_actual_outer_restores_once_after_pass_and_close(self):
         result,points=self.run_controlled()
         self.assertEqual([p[0] for p in points],['held-ready','held-ready'])

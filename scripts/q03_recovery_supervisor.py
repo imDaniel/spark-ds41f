@@ -119,14 +119,21 @@ class Ops:
 
     def launch_retry(self, directory, intent, main):
         # A durable child identity precedes gate release and any entry execution.
-        r, w = os.pipe()
         gate = ('import os,sys; f=int(sys.argv[1]); b=os.read(f,1); os.close(f); '
                 'os.execvpe(sys.argv[2],sys.argv[2:],os.environ) if b==b"1" else sys.exit(125)')
-        with (directory / 'supervisor-retry.log').open('xb') as log:
-            child = subprocess.Popen([sys.executable, '-I', '-B', '-c', gate, str(r),
-                                      *retry_command(intent, directory)],
-                                     stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
-                                     pass_fds=(r,), start_new_session=True)
+        fd = os.open(directory / 'supervisor-retry.log',
+                     os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(fd, 'wb') as log:
+            r, w = os.pipe()
+            try:
+                child = subprocess.Popen([sys.executable, '-I', '-B', '-c', gate, str(r),
+                                          *retry_command(intent, directory)],
+                                         stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
+                                         pass_fds=(r,), start_new_session=True)
+            except BaseException:
+                os.close(r)
+                os.close(w)
+                raise
         os.close(r)
         try:
             record = identity(child.pid)
@@ -173,7 +180,9 @@ def start_watchdog(journal_dir, main_identity, deadline_epoch):
                '--journal-dir', str(directory), '--main-pid', str(main_identity['pid']),
                '--main-start', str(main_identity['start_ticks']),
                '--deadline-epoch', str(deadline_epoch)]
-    with (directory / 'supervisor.log').open('xb') as log:
+    fd = os.open(directory / 'supervisor.log',
+                 os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'wb') as log:
         process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=log,
                                    stderr=subprocess.STDOUT, start_new_session=True)
     expected = identity(process.pid)

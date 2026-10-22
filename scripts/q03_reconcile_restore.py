@@ -394,7 +394,8 @@ def recover_normal_complete(old_dir, capsule_sha256, journal_dir, compat_path,
         if intent_path.exists():
             require(_json(_read(intent_path)) == intent, 'Reconciliation intent differs')
         else:
-            with intent_path.open('x') as file:
+            fd = os.open(intent_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+            with os.fdopen(fd, 'w') as file:
                 json.dump(intent, file, sort_keys=True); file.flush(); os.fsync(file.fileno())
             directory_fd = os.open(destination, os.O_DIRECTORY)
             try:

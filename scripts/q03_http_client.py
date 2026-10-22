@@ -170,7 +170,8 @@ def run(plan):
     if output.is_file():
         with output.open('rb') as stream:
             os.fsync(stream.fileno())
-    with path.open('xb') as stream:
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'wb') as stream:
         stream.write(canonical(receipt))
         stream.flush()
         os.fsync(stream.fileno())
@@ -196,4 +197,7 @@ def main():
 
 
 if __name__ == '__main__':
+    # This owned, isolated child invokes the unchanged toolbox's file writers.
+    # Never change the coordinator's process-global umask from run() or main().
+    os.umask(0o077)
     main()
