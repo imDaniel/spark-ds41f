@@ -32,6 +32,11 @@ jobs:
           done
       - name: Compile helper
         run: python3 -m py_compile bin/spark
+      - name: Fetch the pinned legacy toolbox test source
+        run: |
+          toolbox_head=c6342a1b6c5e5a98108905a71452a51d6d3a4a87
+          git fetch --no-tags --depth=1 origin "$toolbox_head"
+          test "$(git rev-parse --verify FETCH_HEAD)" = "$toolbox_head"
       - name: Unit tests
         run: |
           # Strict evidence tests reject shared-writable ancestry such as /tmp.
