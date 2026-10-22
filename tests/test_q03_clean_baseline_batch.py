@@ -56,14 +56,19 @@ class CompositionTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'single client'):
             ops.client_scope(0)
 
-    def test_only_five_real_freeze_hashes_remain_unbound(self):
+    def test_only_two_real_freeze_hashes_remain_unbound(self):
         def unbound(value, prefix=''):
             if isinstance(value, dict):
                 return [p for key, item in value.items() for p in unbound(item, prefix + '/' + key)]
             return [prefix] if value == 'UNBOUND' else []
         self.assertEqual(set(unbound(Identity.REVISED_FREEZE)), {
-            '/profile_sha256/r6x-unpatched', '/common_runtime_sha256', '/model_tokenizer_sha256',
-            '/runtime_manifest_sha256/r6x-unpatched', '/runtime_manifest_sha256/r6x-steer'})
+            '/common_runtime_sha256', '/runtime_manifest_sha256/r6x-unpatched'})
+        self.assertEqual(Identity.REVISED_FREEZE['profile_sha256']['r6x-unpatched'],
+            '62f545bf727f23a5c24dddd35358ce6caba4fde2d81b5684187a414c998e7e83')
+        self.assertEqual(Identity.REVISED_FREEZE['runtime_manifest_sha256']['r6x-steer'],
+            'c7a9ec935683bff337560e128642e9a40f97367a8a71fe0c1a2117c136828ac2')
+        self.assertEqual(Identity.REVISED_FREEZE['model_tokenizer_sha256'],
+            '43a054fb5dd965948b611ea5ccd68178177f97e544922d7cd2fdc3c115203013')
 
 
 class RevisedScopedClients(Existing.ScopedClientFaults):

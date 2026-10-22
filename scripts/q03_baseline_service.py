@@ -24,7 +24,7 @@ PROFILE_SHA256 = 'e935b492d1f76eeae09fe5a57b094c3bfbf8e63e83b37fe1be0e42fa46170a
 # Independently frozen expected configuration, not a first-worker observation.
 # The scale is a request scalar, so loaded0 through loaded4 have identical config.
 EFFECTIVE_SHA256 = 'a144ea7b1dbb12c50ca4cf0862d1ec9e83f34d87a2938ea441f8c57f181914c8'
-IDENTITY_SOURCE_SHA256 = '91dd7a755a1bba0b1315c7c73dbd882831c3a348be427ef3cd14acf9833bd268'
+IDENTITY_SOURCE_SHA256 = 'cafd0342e551b55a076ad49fb7cb3bc6d0325dcbdf9d8eec2101d796796d764f'
 LEGACY_SOURCE_SHA256 = '9ad779f7d2c93dcfacb5d1d734072547b6c8d4c71623a3e01c56735e7acc296c'
 BATCH_SOURCE_SHA256 = 'c71e9b214ec541c7a2fd8c26f010f14730577c0764ad179f53726b3249f64eb6'
 SOURCE_FILES = tuple(dict.fromkeys((*owner.SOURCE_FILES, 'q03_held_window.py',

@@ -57,12 +57,18 @@ not proof of mounted checkpoint/tokenizer assets or successful native execution.
 `validate_revised_freeze()` rejects both new arms before file reads or operations
 while any required field is unbound. The retained S profile (`e935b492...`), shared recipe
 (`cb76902e...`) and expected effective configuration (`a144ea7b...`) have been
-verified from exact file bytes and frozen. The remaining five hash values are:
+verified from exact file bytes and frozen. The exact U profile (`62f545bf...`),
+truthful S runtime manifest (`c7a9ec93...`) and canonical shared model/tokenizer
+identity (`43a054fb...`) have also been
+verified and frozen. Private artifact bytes are not included in source.
+The remaining two hash values are:
 
-1. Actual U normal profile file (`profile_sha256["r6x-unpatched"]`).
-2. Actual shared runtime/package/native-library/path closure (`common_runtime_sha256`).
-3. Mounted model weights/tokenizer asset identity (`model_tokenizer_sha256`).
-4. Two actual immutable runtime manifests (`runtime_manifest_sha256`).
+1. Actual shared runtime/package/native-library/path closure (`common_runtime_sha256`).
+2. Actual U immutable runtime manifest (`runtime_manifest_sha256["r6x-unpatched"]`).
+
+The S-only common projection is a comparison target, not a shared-runtime proof.
+Both values remain `UNBOUND` until fresh U capture establishes its actual bytes
+and equality with S; all revised service admission still rejects before operations.
 
 A deployable freeze additionally needs the existing schema's concrete corpus,
 site inventory, independent checkout/source pins and publication evidence. The
