@@ -15,6 +15,7 @@ import importlib.util
 from datetime import datetime
 import math
 import os
+import re
 from pathlib import Path
 import sys
 from types import SimpleNamespace, ModuleType
@@ -88,7 +89,7 @@ def _source_only(function):
 
 with _source_imports(check=__name__ == '__main__'):
     import q03_http_service as H
-    from q03_held_window import read_owned_bytes, verify_outer, verify_history
+    from q03_held_window import read_owned_bytes, verify_outer, verify_history, derive_attempt_manifest
 
 require, canonical, digest, json_bytes = H.require, H.canonical, H.digest, H.json_bytes
 SCHEMA = 'legacy-baseline-pair-report/1'
@@ -136,15 +137,45 @@ def _closure_evidence(session, ended_utc):
     return dict(sha256=hashes, observed_utc=times)
 
 
-def _fixed_plan(plan, session, bridge):
+def _attempt_manifest(plan, session, descriptor, bridge):
+    """Replay the typed first-attempt derivation without reopening admission.
+
+    build_attempt is intentionally not called: a closed session already has its
+    terminal predecessor and attempt directory. Its admission-only guards must
+    not be disabled or replayed against invented pre-admission session state.
+    """
+    keys = {'schema_version', 'window_id', 'capsule_sha256', 'attempt_id',
+            'previous_receipt_sha256', 'candidate_updates', 'jobs', 'command_plan_sha256'}
+    require(isinstance(descriptor, dict) and set(descriptor) == keys
+            and type(descriptor['schema_version']) is int and descriptor['schema_version'] == 1,
+            'selected-case typed descriptor fields/schema differ')
+    attempt_id = descriptor['attempt_id']
+    require(type(attempt_id) is str and re.fullmatch(r'[0-9a-f]{32}', attempt_id)
+            and attempt_id == plan['attempt_id']
+            and descriptor['window_id'] == plan['window_id'] == session.capsule['window_id']
+            and descriptor['capsule_sha256'] == digest(read_owned_bytes(session.directory / 'capsule.json')),
+            'selected-case descriptor window/attempt/capsule differs')
+    bridge.validate_jobs(dict(session.manifest, jobs=descriptor['jobs']))
+    # read_drained admits exactly one retained attempt, not a retry selection.
+    require(descriptor['previous_receipt_sha256'] is None
+            and isinstance(descriptor['candidate_updates'], dict) and not descriptor['candidate_updates']
+            and descriptor['jobs'] == session.manifest['jobs'],
+            'selected-case descriptor predecessor/jobs/updates differ')
+    require(descriptor['command_plan_sha256'] == digest(canonical([['http_service', plan]])),
+            'selected-case typed command plan differs')
+    return derive_attempt_manifest(session, attempt_id, descriptor['jobs'], descriptor['candidate_updates'])
+
+
+def _fixed_plan(plan, session, bridge, descriptor):
     require(plan.get('schema_version') == 6 and plan.get('kind') == 'http_service',
             'only the selected original-case schema6 is comparable')
     binding = plan['binding']
     bridge.validate_jobs(session.manifest)
-    require(binding['http'] == session.manifest['http_service']
-            and binding['candidate'] == session.manifest['candidate']
-            and binding['selection'] == plan['selection'] == session.manifest['jobs'][0]['selection'],
-            'plan/capsule selected arm or candidate differs')
+    manifest = _attempt_manifest(plan, session, descriptor, bridge)
+    require(binding['http'] == manifest['http_service']
+            and binding['candidate'] == manifest['candidate']
+            and binding['selection'] == plan['selection'] == manifest['jobs'][0]['selection'],
+            'plan/derived attempt selected arm or candidate differs')
     fixed = binding['http']['baseline_inputs']
     for key in ('profile', 'nodes', 'effective_config'):
         require(binding[key] == fixed[key], 'fixed resource binding differs: ' + key)
@@ -221,8 +252,8 @@ def read_drained(directory):
             'selected attempt is not the complete session history')
     plan = read_json(directory / 'http' / 'plan.json')
     H.verify_plan_identity(session, plan)
-    _fixed_plan(plan, session, bridge)
     descriptor = read_json(directory / 'descriptor.json')
+    _fixed_plan(plan, session, bridge, descriptor)
     terminal_raw = read_owned_bytes(directory / 'terminal.json')
     terminal = json_bytes(terminal_raw)
     require(plan['attempt_id'] == directory.name and descriptor['jobs'] == session.manifest['jobs']

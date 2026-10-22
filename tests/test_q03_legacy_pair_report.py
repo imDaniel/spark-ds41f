@@ -436,27 +436,36 @@ class FixedPlanTests(TrustedFixtureTests):
             path=root/(key+'.json');raw=P.canonical(binding[projection]);path.write_bytes(raw)
             binding[key]=fixed[key]={'path':str(path),'sha256':P.digest(raw)}
         binding['http']['baseline_inputs']=fixed
+        outer_candidate=copy.deepcopy(binding['candidate'])
+        for key in ('cache_path','output_path'):
+            binding['candidate'][key]=str(Path(outer_candidate[key])/('b'*32))
         self.legacy=patch.object(self.B,'legacy_module',return_value=SimpleNamespace(client_plan=lambda b,s:{'selection':s}))
         self.legacy.start();self.addCleanup(self.legacy.stop)
         self.plan=self.B.http_plan(binding,'a'*32,'b'*32,binding['selection'])
         manifest=helper.manifest();manifest['jobs'][0]['selection']=binding['selection']
-        manifest.update(candidate=binding['candidate'],http_service=binding['http'])
-        self.session=SimpleNamespace(manifest=manifest)
+        manifest.update(candidate=outer_candidate,http_service=binding['http'],held_window={'schema_version':1})
+        self.session=SimpleNamespace(manifest=manifest,directory=root,capsule={'window_id':'a'*32})
+        capsule_raw=P.canonical(self.session.capsule);(root/'capsule.json').write_bytes(capsule_raw)
+        self.descriptor=dict(schema_version=1,window_id='a'*32,attempt_id='b'*32,
+            capsule_sha256=P.digest(capsule_raw),previous_receipt_sha256=None,candidate_updates={},
+            jobs=copy.deepcopy(manifest['jobs']),command_plan_sha256=P.digest(P.canonical([['http_service',self.plan]])))
         self.bridge=SimpleNamespace(PROFILE_SHA256=fixed['profile']['sha256'],
             EFFECTIVE_SHA256=fixed['effective_config']['sha256'],validate_jobs=self.B.validate_jobs,
             identity_module=self.B.identity_module,http_plan=self.B.http_plan)
 
     def test_actual_finite_plan_regeneration_without_host_or_remote_calls(self):
         with patch.object(subprocess,'run',side_effect=AssertionError('no process')):
-            P._fixed_plan(self.plan,self.session,self.bridge)
+            P._fixed_plan(self.plan,self.session,self.bridge,self.descriptor)
 
     def test_self_asserted_resource_projection_and_changed_rendered_command_rejected(self):
         plan=copy.deepcopy(self.plan);plan['binding']['profile_value']['serve_args'][1]='different'
         with self.assertRaisesRegex(RuntimeError,'resource bytes'):
-            P._fixed_plan(plan,self.session,self.bridge)
+            P._fixed_plan(plan,self.session,self.bridge,dict(self.descriptor,
+                command_plan_sha256=P.digest(P.canonical([['http_service',plan]]))))
         plan=copy.deepcopy(self.plan);plan['ranks'][0]['python_argv'].append('--unapproved')
         with self.assertRaisesRegex(RuntimeError,'does not reproduce'):
-            P._fixed_plan(plan,self.session,self.bridge)
+            P._fixed_plan(plan,self.session,self.bridge,dict(self.descriptor,
+                command_plan_sha256=P.digest(P.canonical([['http_service',plan]]))))
 
 
 
