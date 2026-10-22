@@ -361,29 +361,36 @@ class ReplayStopped(RuntimeError):
 
 
 def _response_evidence(raw_lines):
+    # Freeze every observed byte before interpreting it. A malformed event may
+    # stop the client before later wire bytes arrive: never invent that suffix.
+    raw_sse = [base64.b64encode(line).decode() for line in raw_lines]
     events, text, output_ids, parse_error = [], [], [], None
     for raw in raw_lines:
-        line = raw.decode('utf-8', errors='replace').strip()
-        if not line.startswith('data: ') or line == 'data: [DONE]':
-            continue
         try:
+            line = raw.decode('utf-8').strip()
+            if not line.startswith('data: ') or line == 'data: [DONE]':
+                continue
             event = json_bytes(line[6:])
+            require(isinstance(event, dict), 'SSE event is not an object')
+            events.append(event)
+            choices = event.get('choices')
+            require(choices is None or isinstance(choices, list), 'SSE choices is not an array')
+            require(event.get('usage') is None or isinstance(event['usage'], dict), 'SSE usage is not an object')
+            for choice in choices or []:
+                require(isinstance(choice, dict), 'SSE choice is not an object')
+                delta = choice.get('delta')
+                require(delta is None or isinstance(delta, dict), 'SSE delta is not an object')
+                delta = delta or {}
+                for key in ('content', 'reasoning_content', 'reasoning'):
+                    if isinstance(delta.get(key), str):
+                        text.append({'kind': key, 'text': delta[key]})
+                if isinstance(choice.get('token_ids'), list):
+                    output_ids.extend(choice['token_ids'])
         except Exception as exc:
             parse_error = f'{type(exc).__name__}: {exc}'; break
-        if not isinstance(event, dict):
-            parse_error = 'SSE event is not an object'; break
-        events.append(event)
-        for choice in event.get('choices') or []:
-            delta = choice.get('delta') or {}
-            for key in ('content', 'reasoning_content', 'reasoning'):
-                if isinstance(delta.get(key), str):
-                    text.append({'kind': key, 'text': delta[key]})
-            if isinstance(choice.get('token_ids'), list):
-                output_ids.extend(choice['token_ids'])
-    return {'raw_sse_base64': [base64.b64encode(line).decode() for line in raw_lines], 'events': events,
+    return {'raw_sse_base64': raw_sse, 'events': events,
             'response_parts': text, 'output_token_ids': output_ids or None,
             'output_ids_status': 'OBSERVED' if output_ids else 'NOT_RETURNED_BY_ORIGINAL_REQUEST', 'parse_error': parse_error}
-
 
 
 def validate_response(row):
@@ -517,6 +524,7 @@ def run_client(plan, main):
                 row.pop('_lines', None)
             if stop.is_set():
                 raise SystemExit()
+            require(row['response']['parse_error'] is None, 'malformed observed SSE: ' + str(row['response']['parse_error']))
             validate_record(record, prompt_ids, count)
             if primer:
                 with lock:
@@ -593,10 +601,7 @@ def run_client(plan, main):
         with lock:
             for row in evidence['requests']:
                 if '_lines' in row:
-                    try:
-                        row['response'] = _response_evidence(row.pop('_lines'))
-                    except Exception:
-                        row['response'] = {'capture_error': 'partial malformed stream'}
+                    row['response'] = _response_evidence(row.pop('_lines'))
             exclusive_json(evidence_path, evidence)
     result = receipt_identity(plan, context) | {'exit_code': code,
               'raw_sha256': digest(read_owned_bytes(raw_path)) if raw_path.exists() else None,

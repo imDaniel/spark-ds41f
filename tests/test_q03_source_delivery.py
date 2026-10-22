@@ -266,6 +266,142 @@ class DeliveryTests(unittest.TestCase):
                     source.prepare(copy.deepcopy(self.manifest), {'controller': str(self.repo)}, export)
             self.assertFalse((export / 'prepared-manifest.json').exists())
 
+    def test_real_global_unrelated_rewrites_allow_mac_prepare_without_export(self):
+        # Same public shape as the redacted field failure: two nonmatching
+        # prefixes, HTTPS github.com destinations without userinfo.
+        home = self.root / 'mac-home'
+        home.mkdir()
+        config = home / '.gitconfig'
+        config.write_text('[credential]\n\thelper = osxkeychain\n'
+            '[url "https://github.com/other-owner/"]\n'
+            '\tinsteadOf = git@github.com:other-owner/\n'
+            '[url "https://github.com/unrelated/"]\n'
+            '\tinsteadOf = https://github.com/elsewhere/\n')
+        original = source.git
+        observations = []
+        def git(root, *args, network=False):
+            if args[:2] == ('ls-remote', '--exit-code'):
+                observations.append(args)
+                return self.sha + '\t' + self.pub['ref']
+            return original(root, *args, network=network)
+        export = self.root / 'global-export'
+        with patch.dict(os.environ, {'HOME': str(home), 'XDG_CONFIG_HOME': str(home / 'xdg')}), \
+             patch.object(source.platform, 'system', return_value='Darwin'), \
+             patch.object(source, 'git', side_effect=git):
+            self.assertEqual(source.git(self.repo, 'ls-remote', '--get-url', self.url, network=True), self.url)
+            source.prepare(copy.deepcopy(self.manifest), {'controller': str(self.repo)}, export)
+        self.assertEqual(observations, [('ls-remote', '--exit-code', self.url, self.pub['ref'])])
+        self.assertEqual(source.digest(self.repo / '.git/config'), self.config_sha)
+        for path in export.iterdir():
+            self.assertNotIn(b'osxkeychain', path.read_bytes())
+            self.assertNotIn(b'other-owner', path.read_bytes())
+
+    def test_literal_prefix_guard_agrees_with_real_git_resolution(self):
+        cases = [
+            ([('https://github.com/other/', 'git@github.com:other/')], self.url, False),
+            ([('https://github.com/other/', self.url + '/')], self.url, False),
+            ([('https://github.com/other/', self.url + '-extra')], self.url, False),
+            ([('https://github.com/other/', 'https://github.com/imdaniel/')], self.url, False),
+            ([('https://github.com/other/', 'https://github.com/imDan')],
+             'https://github.com/other/iel/spark-ds41f.git', True),
+            ([('https://github.com/broad/', 'https://github.com/'),
+              ('https://github.com/long/', 'https://github.com/imDaniel/')],
+             'https://github.com/long/spark-ds41f.git', True),
+            # Even an identity rewrite is matching, not an unrelated exception.
+            ([('https://github.com/', 'https://github.com/')], self.url, True),
+        ]
+        for rules, expected, rejected in cases:
+            with self.subTest(rules=rules):
+                config = ''.join('url.' + base + '.insteadof\n' + prefix + '\0'
+                                 for base, prefix in rules)
+                command = ['git']
+                for base, prefix in rules:
+                    command += ['-c', 'url.' + base + '.insteadOf=' + prefix]
+                command += ['ls-remote', '--get-url', self.url]
+                resolved = subprocess.run(command, cwd=self.repo, env=source.clean_environment(),
+                    check=True, capture_output=True, text=True).stdout.strip()
+                self.assertEqual(resolved, expected)
+                if rejected:
+                    with self.assertRaises(ValueError):
+                        source.validate_mac_transport_config(config, self.url)
+                else:
+                    source.validate_mac_transport_config(config, self.url)
+
+    def test_matching_shadowed_and_tied_rewrites_fail_before_observation(self):
+        original = source.git
+        for rules in [
+                [('https://github.com/broad/', 'https://github.com/'),
+                 ('https://github.com/imDaniel/', 'https://github.com/imDaniel/')],
+                [('https://github.com/one/', 'https://github.com/'),
+                 ('https://github.com/two/', 'https://github.com/')],
+                [('https://github.com/one/', 'https://github.com/'),
+                 ('https://github.com/one/', 'https://unrelated.invalid/')]]:
+            config = ''.join('url.' + base + '.insteadof\n' + prefix + '\0'
+                             for base, prefix in rules)
+            def git(root, *args, network=False):
+                if network:
+                    self.assertEqual(args[0], 'config', 'rewrite must refuse before observation')
+                    return config
+                return original(root, *args)
+            export = self.root / ('reject-' + str(len(list(self.root.glob('reject-*')))))
+            with patch.object(source.platform, 'system', return_value='Darwin'), \
+                 patch.object(source, 'git', side_effect=git), self.assertRaises(ValueError):
+                source.prepare(copy.deepcopy(self.manifest), {'controller': str(self.repo)}, export)
+            self.assertEqual(list(export.iterdir()), [])
+
+    def test_url_record_serialization_and_unknown_options_fail_closed(self):
+        for config in [
+                'url.https://github.com/other/.insteadof',
+                'url.https://github.com/other/.insteadof\0',
+                'url.https://github.com/other/.insteadof\n\0',
+                'url..insteadof\nunrelated\0',
+                'url.https://github.com/other/.pushinsteadof\nunrelated\0',
+                'url.https://github.com/other/.futureoption\nunrelated\0',
+                'url.evil.insteadof\nX.insteadof\nhttps://github.com\0',
+                'url.evil.insteadof\rX.insteadof\nhttps://github.com\0',
+                'url.evil.insteadof\nunrelated\rhttps://github.com\0',
+                'url.evil.insteadof\nunrelated\tvalue\0',
+                'url.evil.insteadof\nunrelated\x7fvalue\0',
+                'url.evil.insteadof\nunrelated\0https://github.com\0',
+                'url.evil.insteadof\nunrelated\0\0']:
+            with self.subTest(config=repr(config)), self.assertRaises(ValueError):
+                source.validate_mac_transport_config(config, self.url)
+
+    def test_real_git_cr_subsection_serialization_is_rejected(self):
+        # Git accepts CR in a quoted subsection; text=True normalizes it to LF.
+        # A first-separator-only parser would misread the true matching prefix.
+        config = '[url "evil.insteadof\rX"]\n\tinsteadOf = https://github.com\n'
+        effective = subprocess.run(['git', 'config', '--file', '-', '--null', '--list'],
+            input=config, cwd=self.repo, env=source.clean_environment(), check=True,
+            capture_output=True, text=True).stdout
+        self.assertEqual(effective, 'url.evil.insteadof\nX.insteadof\nhttps://github.com\0')
+        with self.assertRaises(ValueError):
+            source.validate_mac_transport_config(effective, self.url)
+
+    def test_unrelated_local_rewrite_remains_forbidden_on_mac_and_receiver(self):
+        self.git('config', 'url.https://github.com/other/.insteadOf', 'git@github.com:other/')
+        pin = source.digest(self.repo / '.git/config')
+        for mac_source in (False, True):
+            with self.subTest(mac_source=mac_source), self.assertRaises(ValueError):
+                source.inspect_checkout(self.repo, self.pub, pin, mac_source=mac_source)
+
+    def test_unrelated_rewrites_do_not_mask_other_transport_overrides(self):
+        harmless = 'url.https://github.com/other/.insteadof\ngit@github.com:other/\0'
+        for dangerous in ['core.sshcommand\nevil\0', 'remote.origin.uploadpack\nevil\0',
+                          'http.sslverify\nfalse\0', 'http.https://github.com.sslverify\n0\0']:
+            with self.subTest(dangerous=dangerous), self.assertRaises(ValueError):
+                source.validate_mac_transport_config(harmless + dangerous, self.url)
+
+    def test_literal_url_values_preserve_case_and_space(self):
+        source.validate_mac_transport_config('.example.value\nharmless\0..value\nharmless\0', self.url)
+        source.validate_mac_transport_config('credential.https://unrelated.invalid/with\ttab.helper\nosxkeychain\0', self.url)
+        source.validate_mac_transport_config('URL.https://github.com/Other/.insteadOf\nHTTPS://github.com/\0', self.url)
+        source.validate_mac_transport_config('url.https://github.com/Other/.insteadof\n https://github.com/\0', self.url)
+        for config in ['url.https://github.com/Other/.insteadof\nhttps://github.com/\0',
+                       'url.https://github.com/Other/.insteadof\n' + self.url + '\0']:
+            with self.assertRaises(ValueError):
+                source.validate_mac_transport_config(config, self.url)
+
     def test_mac_local_helper_stays_on_mac_and_receiver_refuses_it(self):
         self.git('config', 'credential.helper', 'osxkeychain')
         pin = source.digest(self.repo / '.git/config')
