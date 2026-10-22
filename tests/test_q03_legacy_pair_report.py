@@ -434,6 +434,7 @@ class FixedPlanTests(TrustedFixtureTests):
         fixed={}
         for key,projection in (('profile','profile_value'),('nodes','nodes_value'),('effective_config','effective_value')):
             path=root/(key+'.json');raw=P.canonical(binding[projection]);path.write_bytes(raw)
+            binding[projection]=P.json_bytes(raw)  # Plan from the actual pinned input order.
             binding[key]=fixed[key]={'path':str(path),'sha256':P.digest(raw)}
         binding['http']['baseline_inputs']=fixed
         outer_candidate=copy.deepcopy(binding['candidate'])

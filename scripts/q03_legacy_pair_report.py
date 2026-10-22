@@ -177,18 +177,23 @@ def _fixed_plan(plan, session, bridge, descriptor):
             and binding['selection'] == plan['selection'] == manifest['jobs'][0]['selection'],
             'plan/derived attempt selected arm or candidate differs')
     fixed = binding['http']['baseline_inputs']
+    replay_binding = copy.deepcopy(binding)
     for key in ('profile', 'nodes', 'effective_config'):
         require(binding[key] == fixed[key], 'fixed resource binding differs: ' + key)
         value = H.owner.pinned_json(binding[key])
         projection = {'profile': 'profile_value', 'nodes': 'nodes_value', 'effective_config': 'effective_value'}[key]
         require(value == binding[projection], 'resolved fixed resource bytes differ: ' + key)
+        # Saved plans are canonical JSON, but the original renderer preserves
+        # nested mapping order inside string-valued environment/argv fields.
+        # Reuse only hash-verified original inputs after semantic binding checks.
+        replay_binding[projection] = value
     require(binding['profile']['sha256'] == bridge.PROFILE_SHA256
             and binding['effective_config']['sha256'] == bridge.EFFECTIVE_SHA256,
             'reviewed normal profile/effective configuration differs')
     identity = bridge.identity_module().validate_binding(binding['http']['baseline_identity'], binding['candidate'])
     require(all(binding['baseline_identity'][k] == v for k, v in identity.items()),
             'static provenance differs from retained plan')
-    regenerated = bridge.http_plan(binding, plan['window_id'], plan['attempt_id'], plan['selection'])
+    regenerated = bridge.http_plan(replay_binding, plan['window_id'], plan['attempt_id'], plan['selection'])
     require(canonical(regenerated) == canonical(plan), 'finite selected-case plan does not reproduce')
 
 
