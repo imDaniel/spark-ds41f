@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Finite schema-6 baseline bridge to the existing owned HTTP lifecycle.
 
-This is a selected-case pilot, not a second controller, an owner qualification,
-full 18-state matrix, or replay of the historical same-boot scale sequence.
+This is a selected-case pilot with an optional fixed-state C1/C4 batch, not a
+second controller, owner qualification, full 18-state matrix, or replay of the
+historical same-boot scale sequence.
 Planning is inert. Existing journals, epochs, watchdog, guards, logs and positive
 four-rank drain remain owned by q03_http_service / q03_owner_model.
 """
@@ -25,10 +26,11 @@ PROFILE_SHA256 = 'e935b492d1f76eeae09fe5a57b094c3bfbf8e63e83b37fe1be0e42fa46170a
 EFFECTIVE_SHA256 = 'a144ea7b1dbb12c50ca4cf0862d1ec9e83f34d87a2938ea441f8c57f181914c8'
 IDENTITY_SOURCE_SHA256 = '91dd7a755a1bba0b1315c7c73dbd882831c3a348be427ef3cd14acf9833bd268'
 LEGACY_SOURCE_SHA256 = '9ad779f7d2c93dcfacb5d1d734072547b6c8d4c71623a3e01c56735e7acc296c'
+BATCH_SOURCE_SHA256 = 'c71e9b214ec541c7a2fd8c26f010f14730577c0764ad179f53726b3249f64eb6'
 SOURCE_FILES = tuple(dict.fromkeys((*owner.SOURCE_FILES, 'q03_held_window.py',
     'q03_http_service.py', 'q03_http_client.py', 'q03_http_toolbox.json',
     'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py',
-    'q03_legacy_case_replay.py', 'q03_quality_pilot.py', 'q03_quality_capture.py', 'q03_qualification.py', 'q03_git_toolchain.py')))
+    'q03_legacy_case_replay.py', 'q03_baseline_batch.py', 'q03_quality_pilot.py', 'q03_quality_capture.py', 'q03_qualification.py', 'q03_git_toolchain.py')))
 CANDIDATE_FIELDS = {'image', 'component_head', 'runtime_manifest_path',
     'runtime_manifest_sha256', 'pytest_base_pythonpath', 'cache_path', 'output_path'}
 
@@ -75,6 +77,10 @@ def workload(value):
     if value.get('schema_version') == 7:
         return 'quality_pilot', quality_pilot_module()
     return 'legacy_case', legacy_module()
+
+
+def batch_module():
+    return _module('q03_baseline_batch', BATCH_SOURCE_SHA256)
 
 
 def validate_jobs(manifest):
@@ -126,6 +132,9 @@ def validate_binding(manifest, ops, *, remote=True):
               'api_port', 'startup_seconds', 'client_seconds'}
     work_key, module = workload(value) if isinstance(value, dict) else ('legacy_case', None)
     fields.add(work_key)
+    if isinstance(value, dict) and 'case_sequence' in value:
+        fields.add('case_sequence')
+        batch_module().validate_sequence(value)
     require(isinstance(value, dict) and set(value) == fields
         and type(value['schema_version']) is int and value['schema_version'] in (6, 7),
         'baseline HTTP binding fields differ')

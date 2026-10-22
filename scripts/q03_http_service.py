@@ -27,7 +27,7 @@ require, canonical, digest, json_bytes = owner.require, owner.canonical, owner.d
 IMAGE, SOURCE_HEAD, RUNTIME_SHA = owner.IMAGE, owner.SOURCE_HEAD, owner.RUNTIME_SHA
 PHASES = ('admitted', 'prepared4', 'created4', 'startup_guards4', 'started4',
           'config_ready', 'steady_guards4', 'client_running', 'client_terminal', 'drained')
-SOURCE_FILES = ('q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py', 'q03_quality_matrix.py', 'q03_performance.py', 'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py', 'q03_legacy_case_replay.py', 'q03_quality_capture.py', 'q03_quality_pilot.py')
+SOURCE_FILES = ('q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py', 'q03_quality_matrix.py', 'q03_performance.py', 'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py', 'q03_legacy_case_replay.py', 'q03_baseline_batch.py', 'q03_quality_capture.py', 'q03_quality_pilot.py')
 BOOT_MODES = ('off', 'off', 'dual')
 QUALIFICATION_SOURCE_SHA256 = 'f41e9fac23ee88defa71d6aed6dddaa6b0630b8c5e369f14b02c17ee2d242c1e'
 
@@ -83,7 +83,7 @@ def is_baseline(value):
     return type(http.get('schema_version')) is int and http['schema_version'] in (6, 7)
 
 
-BASELINE_SOURCE_SHA256 = 'ee427dd9d8919464d6d88c64bb663ce2d4c38f8ab48015e6344e6cf1e6fd1b1f'
+BASELINE_SOURCE_SHA256 = '592c534ac7f2e3fa9c246effafb8e1517c0eac9379eda7390d18b4c2aa84caac'
 
 def baseline_module():
     # This new finite lane is pinned with the complete controller recovery inventory.
@@ -674,14 +674,17 @@ def run_http(session, plan, poll=None, ops=None):
         journal.phase('steady_guards4')
         check()
         journal.phase('client_running')
-        ops.run_client()
-        ops.seal_all()  # No client descendants, late dispatch or unfinished RPC client.
-        check()
-        running('steady')
-        final_ready = ops.read_ready()
-        validate_ready(final_ready, plan)
-        require(json_bytes(final_ready)['reports'] == ready['reports'], 'HTTP workers changed during client')
-        result = ops.collect_result()
+        if is_baseline(plan['binding']) and 'case_sequence' in plan['binding']['http']:
+            result = baseline_module().batch_module().run_cases(ops, check, running, ready, validate_ready)
+        else:
+            ops.run_client()
+            ops.seal_all()  # No client descendants, late dispatch or unfinished RPC client.
+            check()
+            running('steady')
+            final_ready = ops.read_ready()
+            validate_ready(final_ready, plan)
+            require(json_bytes(final_ready)['reports'] == ready['reports'], 'HTTP workers changed during client')
+            result = ops.collect_result()
         require(result.get('result') == 'passed', 'HTTP client result did not pass')
         journal.phase('client_terminal')
         exclusive_json(journal.directory / 'result.json', result)
@@ -797,8 +800,9 @@ class HttpOps(owner.OwnerOps):
             'attempt_id': self.plan['attempt_id'], 'spec_sha256': self.plan['spec_sha256'],
             'reports': reports, 'reports_sha256': digest(canonical(reports))})
 
-    def legacy_runtime_context(self):
+    def legacy_runtime_context(self, client_plan=None):
         """Original bounded thermal admission and reset, outside client measurement."""
+        plan = self.plan if client_plan is None else client_plan
         started = time.monotonic()
         while True:
             self.check_authority()
@@ -841,16 +845,16 @@ class HttpOps(owner.OwnerOps):
         reset_result = json_bytes(raw)
         require(isinstance(reset_result, dict) and reset_result.get('success') is True,
                 'baseline prefix reset lacks positive native success')
-        reset = {k: self.plan[k] for k in ('window_id', 'attempt_id', 'plan_sha256')}
+        reset = {k: plan[k] for k in ('window_id', 'attempt_id', 'plan_sha256')}
         reset.update(url=self.plan['url'] + '/reset_prefix_cache', method='POST',
             completed_utc=time.time(), status=status, response_utf8=raw.decode('utf-8'), response_sha256=digest(raw))
         self.journal.event('baseline-prefix-reset', receipt=reset)
-        context = {k: self.plan[k] for k in ('window_id', 'attempt_id', 'plan_sha256', 'url')}
+        context = {k: plan[k] for k in ('window_id', 'attempt_id', 'plan_sha256', 'url')}
         context.update(ranks=[{k: row[k] for k in ('rank', 'container_id', 'config_sha256')}
                              for row in self.journal.state['ranks']],
             ready_sha256=digest(read_owned_bytes(self.journal.directory / 'ready-observed.json')),
             admission=dict(thermal=dict(wait_seconds=elapsed, fan_policy='UNCHANGED', samples=samples), prefix_reset=reset))
-        baseline_module().legacy_module().validate_runtime_context(context, self.plan)
+        baseline_module().legacy_module().validate_runtime_context(context, plan)
         self.check_authority()
         return context
 
@@ -865,21 +869,32 @@ class HttpOps(owner.OwnerOps):
         baseline_module().quality_pilot_module().validate_context(context, self.plan)
         return context
 
-    def run_client(self):
+    def client_scope(self, case_index=None):
+        if is_baseline(self.binding) and 'case_sequence' in self.binding['http']:
+            return baseline_module().batch_module().client_scope(self.plan, self.journal.directory, case_index)
+        require(case_index is None, 'single client cannot select a batch case')
+        return self.plan, self.journal.directory
+
+    def run_client(self, case_index=None):
         self.check_authority()
+        plan, directory = self.client_scope(case_index)
+        if case_index is not None:
+            directory.mkdir(mode=0o700)
+            Path(plan['client']['output']).parent.mkdir(mode=0o700)
         # Host-side fixed Python client, NOT docker exec: supervisor owns the
         # actual HTTP-client process and every descendant rather than a CLI proxy.
-        path = self.journal.directory / 'client-plan.json'
+        path = directory / 'client-plan.json'
         if 'quality_pilot' in self.plan['client']:
             context = self.quality_runtime_context()
             sha = exclusive_json(self.journal.directory / 'quality-runtime-context.json', context)
             self.journal.event('quality-runtime-context-pinned', context_sha256=sha)
             exclusive_json(Path(self.plan['client']['runtime_context']), context)
-        if 'legacy_case' in self.plan['client']:
-            context = self.legacy_runtime_context()
-            sha = exclusive_json(self.journal.directory / 'baseline-runtime-context.json', context)
-            self.journal.event('baseline-runtime-context-pinned', context_sha256=sha)
-            exclusive_json(Path(self.plan['client']['runtime_context']), context)
+        if 'legacy_case' in plan['client']:
+            context = self.legacy_runtime_context() if case_index is None else self.legacy_runtime_context(plan)
+            sha = exclusive_json(directory / 'baseline-runtime-context.json', context)
+            fields = {} if case_index is None else {'case_index': case_index}
+            self.journal.event('baseline-runtime-context-pinned', context_sha256=sha, **fields)
+            exclusive_json(Path(plan['client']['runtime_context']), context)
         if 'performance_screen' in self.plan['client']:
             context = {k: self.plan[k] for k in ('window_id', 'attempt_id', 'plan_sha256', 'url')}
             context.update(ranks=[{k: r[k] for k in ('rank', 'container_id', 'config_sha256')}
@@ -887,10 +902,13 @@ class HttpOps(owner.OwnerOps):
                            ready_sha256=digest(read_owned_bytes(self.journal.directory / 'ready-observed.json')))
             performance_module().validate_context(context, self.plan)
             exclusive_json(Path(self.plan['client']['runtime_context']), context)
-        sha = exclusive_json(path, self.plan)
+        sha = exclusive_json(path, plan)
         script = str(Path(self.binding['checkout']) / 'scripts/q03_http_client.py')
+        if case_index is not None:
+            require(self.end - time.time() >= plan['client']['timeout_seconds'],
+                    'baseline batch has insufficient remaining original client budget')
         self.mutate(0, 'http_client', ['python3', '-I', '-B', script, '--plan', str(path), '--sha256', sha],
-                    self.plan['client']['timeout_seconds'])
+                    plan['client']['timeout_seconds'])
 
     def seal_epoch(self, epoch):
         rows = [r for r in self.journal.state['epochs'] if r['epoch'] == epoch]
@@ -900,11 +918,19 @@ class HttpOps(owner.OwnerOps):
         # proves ONLY the fixed client's descendants empty; service removal and
         # all-four GPU drain remain mandatory before any next boot/release.
         record = rows[0]
-        path = self.journal.directory / 'client-plan.json'
-        require(json_bytes(read_owned_bytes(path)) == self.plan, 'frozen HTTP client plan changed')
         script = str(Path(self.binding['checkout']) / 'scripts/q03_http_client.py')
-        expected = self.helper.bound_command(['python3', '-I', '-B', script, '--plan', str(path),
-                                              '--sha256', digest(canonical(self.plan))])
+        indexes = (0, 1) if is_baseline(self.binding) and 'case_sequence' in self.binding['http'] else (None,)
+        candidates = []
+        for index in indexes:
+            client_plan, directory = self.client_scope(index)
+            path = directory / 'client-plan.json'
+            command = self.helper.bound_command(['python3', '-I', '-B', script, '--plan', str(path),
+                                                '--sha256', digest(canonical(client_plan))])
+            if record['argv_sha256'] == digest(canonical(command)):
+                candidates.append((client_plan, path, command))
+        require(len(candidates) == 1, 'client epoch is not the fixed admitted command')
+        client_plan, path, expected = candidates[0]
+        require(json_bytes(read_owned_bytes(path)) == client_plan, 'frozen HTTP client plan changed')
         require(record['rank'] == 0 and record['argv_sha256'] == digest(canonical(expected)),
                 'client epoch is not the fixed admitted command')
         for rank in range(4):
@@ -929,13 +955,17 @@ class HttpOps(owner.OwnerOps):
             sealed.append(epoch)
             self.journal.save()
 
-    def collect_result(self):
-        path = Path(self.plan['client']['output'])
+    def collect_result(self, case_index=None):
+        if case_index is None:
+            plan, directory = self.plan, None
+        else:
+            plan, directory = self.client_scope(case_index)
+        path = Path(plan['client']['output'])
         raw = read_owned_bytes(path)
         receipt = json_bytes(read_owned_bytes(path.with_name('client-receipt.json')))
-        require(receipt.get('window_id') == self.plan['window_id']
-                and receipt.get('attempt_id') == self.plan['attempt_id']
-                and receipt.get('plan_sha256') == self.plan['plan_sha256']
+        require(receipt.get('window_id') == plan['window_id']
+                and receipt.get('attempt_id') == plan['attempt_id']
+                and receipt.get('plan_sha256') == plan['plan_sha256']
                 and type(receipt.get('exit_code')) is int and receipt['exit_code'] == 0
                 and receipt.get('error') is None and receipt.get('output_sha256') == digest(raw),
                 'HTTP client receipt failed or differs')
@@ -957,14 +987,19 @@ class HttpOps(owner.OwnerOps):
             return dict(result='passed', window_id=self.plan['window_id'], attempt_id=self.plan['attempt_id'],
                 image=plan_image(self.plan), source_head=self.plan['source_head'], plan_sha256=self.plan['plan_sha256'],
                 result_sha256=digest(raw), toolbox_head=self.plan['client']['toolbox_head'], **result)
-        if 'legacy_case' in self.plan['client']:
-            context_raw = read_owned_bytes(self.journal.directory / 'baseline-runtime-context.json')
-            require(context_raw == read_owned_bytes(self.plan['client']['runtime_context']),
+        if 'legacy_case' in plan['client']:
+            if directory is None:
+                plan, directory = self.client_scope()
+            context_raw = read_owned_bytes(directory / 'baseline-runtime-context.json')
+            require(context_raw == read_owned_bytes(plan['client']['runtime_context']),
                     'baseline client context differs from controller-owned capture')
             context = json_bytes(context_raw)
             pins = [json_bytes(read_owned_bytes(path))
                     for path in sorted(self.journal.directory.glob('[0-9][0-9][0-9][0-9][0-9][0-9].json'))]
             pins = [event for event in pins if event.get('kind') == 'baseline-runtime-context-pinned']
+            if case_index is not None:
+                pins = [event for event in pins if type(event.get('case_index')) is int
+                        and event['case_index'] == case_index]
             require(len(pins) == 1 and pins[0].get('context_sha256') == digest(context_raw)
                     and pins[0].get('window_id') == self.plan['window_id']
                     and pins[0].get('attempt_id') == self.plan['attempt_id'],
@@ -973,10 +1008,10 @@ class HttpOps(owner.OwnerOps):
                                         for row in self.journal.state['ranks']]
                     and context['ready_sha256'] == digest(read_owned_bytes(self.journal.directory / 'ready-observed.json')),
                     'baseline context container/config/readiness differs from owned journal')
-            result = baseline_module().legacy_module().validate_output(value, self.plan)
-            return dict(result='passed', window_id=self.plan['window_id'], attempt_id=self.plan['attempt_id'],
-                image=plan_image(self.plan), source_head=self.plan['source_head'], plan_sha256=self.plan['plan_sha256'],
-                result_sha256=digest(raw), toolbox_head=self.plan['client']['toolbox_head'], **result)
+            result = baseline_module().legacy_module().validate_output(value, plan)
+            return dict(result='passed', window_id=plan['window_id'], attempt_id=plan['attempt_id'],
+                image=plan_image(self.plan), source_head=plan['source_head'], plan_sha256=plan['plan_sha256'],
+                result_sha256=digest(raw), toolbox_head=plan['client']['toolbox_head'], **result)
         if 'performance_screen' in self.plan['client']:
             module = performance_module()
             module.verify_runtime_context(self.journal.directory.parent, self.plan)

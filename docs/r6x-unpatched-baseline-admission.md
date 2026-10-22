@@ -81,3 +81,32 @@ fixed 1M plans and four-rank readiness. Existing baseline, legacy replay,
 quality capture/client/scoring and HTTP guard tests remain applicable. Loopback
 quality fixtures exercise both new selections without a native service.
 No image build, deployment, model load, device access or GPU test is performed.
+
+## Composed fixed warm batch and offline intake
+
+The same source checkpoint includes the finite schema-6 C1-then-C4 producer and
+its corrected retained reader. A new U `absent` or S `unloaded`/`loaded0`–`loaded4`
+capsule can declare exactly `case_sequence: [warm4k_c1, warm4k_c4]`. Both clients
+retain one image, one steering state and the same four workers for that boot,
+while each has separate thermal/reset admission, output, hash-bound plan,
+supervised operation/epoch, successful result and all-four descendant seal.
+The existing final all-four log/daemon/GPU drain remains mandatory. No original
+START, state-changing reuse, cross-image reuse, arbitrary sequence or partial
+resume is introduced. Independent repetitions still require new boots.
+
+The offline reader accepts only the ordered historical A188/B197-OFF pair or
+the new U/S pair. It does not mix them. Revised output labels are
+`R6X_UNPATCHED`/`R6X_STEER`, with U explicitly `absent` and the actual selected S
+state. Each profile and runtime must satisfy its own fixed admission; the pair
+must share the frozen common recipe/runtime, corpus, site and physical resource
+configuration. Only the declared steering configuration is removed for the
+cross-arm effective-config comparison. Historical report labels and equal-state
+requirements are unchanged. The full batch is one boot pair, not two independent
+repetitions; no quality, capacity, significance or performance acceptance follows.
+
+Schema-7 quality and schema-6 single-case entry points are preserved. The exact
+recovery inventory includes both batch and quality dependencies, using the
+`owned-http-finite-batch/2` reader contract and exact current source hashes.
+Earlier capsules require their matching archived checkout; they are not edited
+to pass the new source closure. All five missing actual admission hashes above
+remain `UNBOUND`, so these changes are not deployment or execution readiness.
