@@ -364,9 +364,16 @@ def validate_ready(raw, plan):
     expected_config = plan['spec']['expected_effective_config']
     seen, versions, profile = set(), None, None
     for report in reports:
+        require(isinstance(report, dict), 'baseline worker report is not an object')
         rank = report.get('worker_rank')
         require(type(rank) is int and rank in range(4) and rank not in seen, 'baseline duplicate/foreign worker rank')
         seen.add(rank)
+        # Linux PID namespaces can reuse the same PID on different ranks. Bind
+        # this pair to its existing rank/attempt/source and owned container/host
+        # evidence, never deduplicate or compare bare PIDs across hosts.
+        require(all(type(report.get(key)) is int and 0 < report[key] < limit
+                    for key, limit in (('worker_pid', 2**31), ('worker_starttime_ticks', 2**64))),
+                'baseline worker process identity is missing or invalid')
         for key, expected in (('tp_rank', rank), ('config_rank', rank), ('node_rank', rank),
                               ('node_rank_within_dp', rank), ('local_rank', 0)):
             require(type(report.get(key)) is int and report[key] == expected, 'baseline worker topology differs')

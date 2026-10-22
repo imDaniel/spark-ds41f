@@ -61,6 +61,7 @@ def plan_and_ready(arm='r6x188', steering='loaded4'):
     r = runtime(arm)
     for rank in range(4):
         reports.append(dict(worker_rank=rank, tp_rank=rank, config_rank=rank, node_rank=rank,
+            worker_pid=101, worker_starttime_ticks=123456 + rank,
             node_rank_within_dp=rank, local_rank=0, identity=B.checked_identity(arm),
             runtime_sha256='b' * 64, window_id=plan['window_id'], attempt_id=plan['attempt_id'],
             spec_sha256=plan['spec_sha256'], source_sha256=copy.deepcopy(r['source_sha256']),

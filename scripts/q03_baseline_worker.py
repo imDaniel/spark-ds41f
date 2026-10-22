@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import sys
 import types
 
@@ -27,6 +28,44 @@ def file_sha(path):
         for block in iter(lambda: stream.read(1024 * 1024), b''):
             value.update(block)
     return value.hexdigest()
+
+
+def process_starttime_ticks(raw, pid):
+    """Read Linux stat field 22 without splitting the parenthesized comm.
+
+    comm can itself contain spaces, newlines and parentheses. The final `) `
+    precedes state (field 3); starttime is therefore tail index 19. These ticks
+    identify a sampled process epoch, not its loaded weights or applied scale.
+    """
+    need(type(pid) is int and 0 < pid < 2**31, 'baseline worker PID is missing or invalid')
+    need(type(raw) is bytes and 0 < len(raw) <= 65536 and raw.endswith(b'\n'),
+         'baseline worker /proc/self/stat size/type/termination differs')
+    prefix = str(pid).encode('ascii') + b' ('
+    end = raw.rfind(b') ')
+    need(raw.startswith(prefix) and end >= len(prefix),
+         'baseline worker /proc/self/stat PID/comm differs')
+    fields = raw[end + 2:].split()
+    # Require the complete supported Linux record through field 52. Accepting
+    # just field 22 could turn a read cut within starttime into shorter ticks.
+    need(len(fields) >= 50 and fields[0] in (b'R', b'S', b'D', b'T', b't', b'W', b'K', b'P', b'I')
+         and all(re.fullmatch(rb'-?[0-9]+', field) for field in fields[1:])
+         and len(fields[19]) <= 20 and re.fullmatch(rb'[1-9][0-9]*', fields[19]) is not None,
+         'baseline worker /proc/self/stat is missing, dead or malformed')
+    ticks = int(fields[19])
+    need(ticks < 2**64, 'baseline worker starttime exceeds Linux field width')
+    return ticks
+
+
+def observe_worker_process():
+    """Observe this actual worker only; no caller PID, subprocess or signaling."""
+    need(sys.platform == 'linux', 'baseline worker process observation requires Linux')
+    pid = os.getpid()
+    try:
+        with Path('/proc/self/stat').open('rb') as stream:
+            raw = stream.read(65537)
+    except OSError as exc:
+        raise RuntimeError('baseline worker /proc/self/stat unavailable') from exc
+    return {'worker_pid': pid, 'worker_starttime_ticks': process_starttime_ticks(raw, pid)}
 
 
 def verify_bytecode_policy():
@@ -175,7 +214,7 @@ class HttpObservation:
             'identity': profile.identity, 'schedule_sha256': profile.schedule_sha256,
             'layers': list(profile.layers), 'alphas': list(profile.alphas)}
         parallel = self.parallel_config
-        return {'worker_rank': self.rank, 'tp_rank': get_tensor_model_parallel_rank(),
+        return {**observe_worker_process(), 'worker_rank': self.rank, 'tp_rank': get_tensor_model_parallel_rank(),
             'config_rank': parallel.rank, 'node_rank': parallel.node_rank,
             'node_rank_within_dp': parallel.node_rank_within_dp, 'local_rank': self.local_rank,
             'runner_type': type(self.model_runner).__name__, 'identity': checked['identity'],

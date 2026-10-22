@@ -22,7 +22,7 @@ PROFILE_SHA256 = 'e935b492d1f76eeae09fe5a57b094c3bfbf8e63e83b37fe1be0e42fa46170a
 # Independently frozen expected configuration, not a first-worker observation.
 # The scale is a request scalar, so loaded0 through loaded4 have identical config.
 EFFECTIVE_SHA256 = 'a144ea7b1dbb12c50ca4cf0862d1ec9e83f34d87a2938ea441f8c57f181914c8'
-IDENTITY_SOURCE_SHA256 = 'd1a72efdf4ea85d781b7d689064190957b5cef0e32de503c343a730292aed46f'
+IDENTITY_SOURCE_SHA256 = '527715fb2985ec6ae6d049e3c8e9955bfae9325740ef395e97f2892ae5bbdbe8'
 LEGACY_SOURCE_SHA256 = 'c8606e4b4fa91a1827ea465dbc3cde4b44b73c5ff92e494a326e5fddb726f9cf'
 SOURCE_FILES = tuple(dict.fromkeys((*owner.SOURCE_FILES, 'q03_held_window.py',
     'q03_http_service.py', 'q03_http_client.py', 'q03_http_toolbox.json',

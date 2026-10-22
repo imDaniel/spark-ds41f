@@ -144,6 +144,23 @@ class Tests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'immutable'):
                 B.http_plan(binding,'a'*32,'b'*32,selection)
 
+    def test_plan_pins_current_worker_bytes_and_changes_with_worker_source(self):
+        binding = self.binding()
+        worker = ROOT / 'scripts/q03_baseline_worker.py'
+        current = worker.read_bytes()
+        plans = []
+        case = SimpleNamespace(client_plan=lambda b, s: {'selection': s})
+        for raw in (current, current + b'\n# synthetic source drift\n'):
+            def read(path):
+                return raw if Path(path) == worker else Path(path).read_bytes()
+            with mock.patch.object(B, 'legacy_module', return_value=case), \
+                 mock.patch.object(B, 'read_owned_bytes', side_effect=read):
+                plan = B.http_plan(binding, 'a'*32, 'b'*32, binding['selection'])
+            self.assertEqual({r['environment']['Q03_HTTP_WORKER_SHA256'] for r in plan['ranks']},
+                             {B.digest(raw)})
+            plans.append(plan)
+        self.assertNotEqual(plans[0]['plan_sha256'], plans[1]['plan_sha256'])
+
     def test_capacity_or_custom_extension_cannot_change(self):
         for flag in ('--max-model-len','--max-num-seqs','--max-num-batched-tokens',
                      '--kv-cache-memory-bytes','--tensor-parallel-size','--nnodes'):
