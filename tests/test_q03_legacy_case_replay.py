@@ -62,8 +62,11 @@ def fake_ids(text, chat=False):
     return [1000000] + result + [1000001] if chat else result
 
 
-def fixture_corpus():
+def fixture_corpus(artifact_root=None):
     """Run real PR8 generator; only tokenizer network replies are synthetic."""
+    # Fixture metadata must obey the same canonical-path contract as a real
+    # corpus, including on hosts where /tmp aliases /private/tmp.
+    artifact_root = Path(artifact_root if artifact_root is not None else TOOLBOX / 'corpus-artifacts').resolve()
     captured = []
     def count(url, model, text):
         captured.append({'text': text, 'response': {'count': len(text), 'tokens': fake_ids(text)}})
@@ -93,12 +96,40 @@ def fixture_corpus():
                                     for p in prompts.standard_library_sources()]},
              'prompts': questions, 'prompts_sha256': L.PROMPTS_SHA256, 'documents': docs,
              'historical_document_identity': 'UNAVAILABLE_NEW_SHARED_CORPUS',
-             'artifacts': {'model_root': '/tmp/registered-model-fixture', 'special_tokens_file': 'tokenizer.json',
-                'weights_manifest': {'path': '/tmp/fixture-weights-manifest', 'sha256': identity['weights_manifest_sha256']},
-                'runtime_metadata': {'path': '/tmp/fixture-runtime-metadata', 'sha256': 'e' * 64},
-                'native_sources': {name: {'path': '/tmp/fixture-native/' + name, 'sha256': pin} for name, pin in native.items()}}}
+             'artifacts': {'model_root': str(artifact_root / 'registered-model-fixture'), 'special_tokens_file': 'tokenizer.json',
+                'weights_manifest': {'path': str(artifact_root / 'fixture-weights-manifest'), 'sha256': identity['weights_manifest_sha256']},
+                'runtime_metadata': {'path': str(artifact_root / 'fixture-runtime-metadata'), 'sha256': 'e' * 64},
+                'native_sources': {name: {'path': str(artifact_root / 'fixture-native' / name), 'sha256': pin} for name, pin in native.items()}}}
     L.validate_corpus(value)
     return value
+
+
+class FixturePortabilityTests(unittest.TestCase):
+    def test_real_symlink_parent_is_resolved_without_weakening_artifact_guards(self):
+        with tempfile.TemporaryDirectory(prefix='legacy-corpus-paths-') as tmp:
+            root = Path(tmp).resolve()
+            physical = root / 'physical'; physical.mkdir()
+            alias = root / 'alias'; alias.symlink_to(physical, target_is_directory=True)
+            corpus = fixture_corpus(alias)
+            artifacts = corpus['artifacts']
+            self.assertEqual(artifacts['model_root'], str(physical / 'registered-model-fixture'))
+            pins = [artifacts['weights_manifest'], artifacts['runtime_metadata'], *artifacts['native_sources'].values()]
+            for path in [artifacts['model_root'], *(pin['path'] for pin in pins)]:
+                self.assertEqual(Path(path), Path(path).resolve())
+                self.assertIn(physical, Path(path).parents)
+            bad = copy.deepcopy(corpus)
+            bad['artifacts']['model_root'] = str(alias / 'registered-model-fixture')
+            with self.assertRaisesRegex(RuntimeError, 'canonical registered model root required'):
+                L.validate_corpus(bad)
+            for pin in pins:
+                original = pin['path']
+                pin['path'] = str(alias / Path(original).relative_to(physical))
+                try:
+                    with self.subTest(path=original), self.assertRaisesRegex(RuntimeError, 'canonical immutable artifact pin required'):
+                        L.validate_corpus(corpus)
+                finally:
+                    pin['path'] = original
+            L.validate_corpus(corpus)
 
 
 class FakeServer(ThreadingHTTPServer):

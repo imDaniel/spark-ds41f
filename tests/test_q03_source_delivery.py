@@ -215,8 +215,13 @@ class DeliveryTests(unittest.TestCase):
     def test_mac_preparation_uses_lexical_spark_paths(self):
         with patch.object(source, 'canonical', side_effect=AssertionError('Mac resolved a Spark path')):
             source.validate_manifest(self.manifest, target_filesystem=False)
-        with self.assertRaises(ValueError):
+        # The refusal is a non-Mac contract, not an assumption about this host.
+        # On Darwin the old fixture reached a real, nonexistent public ref.
+        with patch.object(source.platform, 'system', return_value='Linux'), \
+             patch.object(source, 'git', side_effect=AssertionError('Git must not run')), \
+             self.assertRaisesRegex(ValueError, 'must run on the authenticated Mac'):
             source.prepare(self.manifest, {'controller': str(self.repo)}, self.root / 'export')
+        self.assertFalse((self.root / 'export').exists())
 
     def test_unsafe_existing_ancestry_refuses_before_mkdir(self):
         unsafe = self.root / 'unsafe'
@@ -228,12 +233,19 @@ class DeliveryTests(unittest.TestCase):
 
     def test_prepare_observes_exact_mac_ref_without_exporting_config(self):
         original = source.git
+        # Exercise real Git's missing/exact ref semantics in an owned local
+        # repository. Only the transport destination below is fixture-local.
+        with self.assertRaises(subprocess.CalledProcessError) as missing:
+            original(self.repo, 'ls-remote', '--exit-code', str(self.repo), self.pub['ref'])
+        self.assertEqual(missing.exception.returncode, 2)
+        self.git('update-ref', self.pub['ref'], self.sha)
         calls = []
         def git(root, *args, network=False):
             if network:
                 calls.append(args)
                 if args[0] == 'ls-remote':
-                    return self.sha + '\t' + self.pub['ref']
+                    self.assertEqual(args, ('ls-remote', '--exit-code', self.url, self.pub['ref']))
+                    return original(root, 'ls-remote', '--exit-code', str(self.repo), self.pub['ref'])
                 return 'credential.helper\nosxkeychain\0'
             return original(root, *args, network=network)
         export = self.root / 'export'
