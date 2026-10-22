@@ -27,7 +27,7 @@ require, canonical, digest, json_bytes = owner.require, owner.canonical, owner.d
 IMAGE, SOURCE_HEAD, RUNTIME_SHA = owner.IMAGE, owner.SOURCE_HEAD, owner.RUNTIME_SHA
 PHASES = ('admitted', 'prepared4', 'created4', 'startup_guards4', 'started4',
           'config_ready', 'steady_guards4', 'client_running', 'client_terminal', 'drained')
-SOURCE_FILES = ('q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py', 'q03_quality_matrix.py', 'q03_performance.py', 'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py', 'q03_legacy_case_replay.py')
+SOURCE_FILES = ('q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py', 'q03_quality_matrix.py', 'q03_performance.py', 'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py', 'q03_legacy_case_replay.py', 'q03_quality_capture.py', 'q03_quality_pilot.py')
 BOOT_MODES = ('off', 'off', 'dual')
 QUALIFICATION_SOURCE_SHA256 = 'f41e9fac23ee88defa71d6aed6dddaa6b0630b8c5e369f14b02c17ee2d242c1e'
 
@@ -80,10 +80,10 @@ def performance_module():
 
 def is_baseline(value):
     http = value.get('http_service', value.get('http', {}))
-    return type(http.get('schema_version')) is int and http['schema_version'] == 6
+    return type(http.get('schema_version')) is int and http['schema_version'] in (6, 7)
 
 
-BASELINE_SOURCE_SHA256 = 'f57e521ba64aba3a31d10232cfd7abc5304d831ccad237e1ff70a6cb78564958'
+BASELINE_SOURCE_SHA256 = '8c8f1293fa20480e47803ceaa316e1a8f7e0d4a5b3ec678fadc1349d839b8824'
 
 def baseline_module():
     # This new finite lane is pinned with the complete controller recovery inventory.
@@ -853,11 +853,27 @@ class HttpOps(owner.OwnerOps):
         self.check_authority()
         return context
 
+    def quality_runtime_context(self):
+        raw = read_owned_bytes(self.journal.directory / 'ready-observed.json')
+        ready = validate_ready(raw, self.plan)
+        context = {k: self.plan[k] for k in ('window_id', 'attempt_id', 'plan_sha256', 'url')}
+        context.update(ranks=[{k: row[k] for k in ('rank', 'container_id', 'config_sha256')}
+            for row in self.journal.state['ranks']], ready_sha256=digest(raw),
+            observed_loaded_state={'status': 'OBSERVED_FOUR_RANKS',
+                'profiles': [r.get('steering_profile') for r in ready['reports']]})
+        baseline_module().quality_pilot_module().validate_context(context, self.plan)
+        return context
+
     def run_client(self):
         self.check_authority()
         # Host-side fixed Python client, NOT docker exec: supervisor owns the
         # actual HTTP-client process and every descendant rather than a CLI proxy.
         path = self.journal.directory / 'client-plan.json'
+        if 'quality_pilot' in self.plan['client']:
+            context = self.quality_runtime_context()
+            sha = exclusive_json(self.journal.directory / 'quality-runtime-context.json', context)
+            self.journal.event('quality-runtime-context-pinned', context_sha256=sha)
+            exclusive_json(Path(self.plan['client']['runtime_context']), context)
         if 'legacy_case' in self.plan['client']:
             context = self.legacy_runtime_context()
             sha = exclusive_json(self.journal.directory / 'baseline-runtime-context.json', context)
@@ -923,6 +939,23 @@ class HttpOps(owner.OwnerOps):
                 and receipt.get('error') is None and receipt.get('output_sha256') == digest(raw),
                 'HTTP client receipt failed or differs')
         value = json_bytes(raw)
+        if 'quality_pilot' in self.plan['client']:
+            context_raw = read_owned_bytes(self.journal.directory / 'quality-runtime-context.json')
+            require(context_raw == read_owned_bytes(self.plan['client']['runtime_context']),
+                'quality runtime context differs from controller capture')
+            context = json_bytes(context_raw)
+            events = [json_bytes(read_owned_bytes(p)) for p in sorted(
+                self.journal.directory.glob('[0-9][0-9][0-9][0-9][0-9][0-9].json'))]
+            pins = [e for e in events if e.get('kind') == 'quality-runtime-context-pinned']
+            require(len(pins) == 1 and pins[0].get('context_sha256') == digest(context_raw)
+                and pins[0].get('window_id') == self.plan['window_id']
+                and pins[0].get('attempt_id') == self.plan['attempt_id'],
+                'quality runtime context missing durable controller event')
+            require(context == self.quality_runtime_context(), 'quality actual ranks/readiness changed')
+            result = baseline_module().quality_pilot_module().validate_output(value, self.plan, context=context)
+            return dict(result='passed', window_id=self.plan['window_id'], attempt_id=self.plan['attempt_id'],
+                image=plan_image(self.plan), source_head=self.plan['source_head'], plan_sha256=self.plan['plan_sha256'],
+                result_sha256=digest(raw), toolbox_head=self.plan['client']['toolbox_head'], **result)
         if 'legacy_case' in self.plan['client']:
             context_raw = read_owned_bytes(self.journal.directory / 'baseline-runtime-context.json')
             require(context_raw == read_owned_bytes(self.plan['client']['runtime_context']),

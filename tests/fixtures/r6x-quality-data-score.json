@@ -1,0 +1,32 @@
+{
+  "schema": "r6x-quality-data-score-fixtures/1",
+  "scope": "Synthetic boundary cases only; no model or original reference cases.",
+  "json": [
+    ["equal_decimal", "{\"n\":7,\"zero\":0}", " {\"zero\":-0,\"n\":7.0e0}\n", true],
+    ["precision", "0.1", "0.100000000000000000000000000000000000001", false],
+    ["large_integer", "9007199254740993", "9007199254740992", false],
+    ["bool_number", "1", "true", false],
+    ["null_missing", "{\"x\":null}", "{}", false],
+    ["decoded_duplicate", "{\"a\":1}", "{\"a\":1,\"\\u0061\":1}", false],
+    ["nan", "1", "NaN", false],
+    ["infinity", "1", "Infinity", false],
+    ["trailing_value", "1", "1 2", false],
+    ["fence", "1", "```json\n1\n```", false],
+    ["prose", "1", "Answer: 1", false],
+    ["array_order", "[1,2]", "[2,1]", false],
+    ["fraction_string", "\"1/2\"", "\"2/4\"", false],
+    ["fraction_kind", "\"1/2\"", "0.5", false],
+    ["non_json_whitespace", "1", "\u00a01", false],
+    ["negative_exponent", "0.001", "10e-4", true],
+    ["zero_sign", "0", "-0e999999999999999999999999999999", true]
+  ],
+  "text": [
+    ["crlf", "a\nb", "a\r\nb\r\n", true],
+    ["double_newline", "a", "a\n\n", false],
+    ["leading_space", "a", " a", false],
+    ["trailing_space", "a", "a ", false],
+    ["case", "a", "A", false],
+    ["standalone_cr", "a", "a\r", false],
+    ["unicode_normalization", "é", "é", false]
+  ]
+}
