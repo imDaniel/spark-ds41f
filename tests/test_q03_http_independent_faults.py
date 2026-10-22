@@ -731,7 +731,7 @@ class RecoveryRouteAndInventoryFaults(NoExternalOperations):
             "203de0598931c483c4aec61cb0a7749e06e197e49f04aab9ededf0819543d594", "owner run protocol remains the reviewed native-RPC baseline")
         expected = {"q03_window.py", "q03_window_preflight.py", "q03_window_watchdog.py",
             "q03_original_spark_adapter.py", "q03_remote_operation.py", "q03_build_adapter.py",
-            "q03_window_build.py", "q03_buildkit_plan.py", "q03_git_toolchain.py", "q03_held_window.py",
+            "q03_window_build.py", "q03_buildkit_plan.py", "q03_git_toolchain.py", "q03_held_window.py", "q03_source_delivery.py",
             "q03_owner_model.py", "q03_rank_logs.py", "q03_image_preparation.py", "memguard-start.sh", "memguard.sh",
             "../bin/spark", "mesh_fabric.py", "kernel_backend.py", "kernel_readiness.py", "topology.py",
             "transport_profiles.py", "model_layout.py", "recipe.py",

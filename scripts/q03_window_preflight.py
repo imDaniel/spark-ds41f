@@ -310,7 +310,7 @@ def _validate_publication(pub):
             "Publication must name an exact branch ref")
 
 
-def verify_build_publication(publication, ops):
+def verify_build_publication(publication, ops, manifest=None):
     """Verify an original build's published identity, not the current checkout.
 
     Image labels and the hashed successful build receipt must separately bind
@@ -318,6 +318,11 @@ def verify_build_publication(publication, ops):
     build; its own full checkout/publication preflight remains mandatory.
     """
     _validate_publication(publication)
+    if "source_bundle" in publication or (manifest is not None and "source_delivery" in manifest):
+        from q03_source_delivery import verify_publication
+        require(manifest is not None, "Bundle publication requires its frozen manifest")
+        verify_publication(publication, manifest)
+        return
     remote = _run(ops, ["git", "--no-optional-locks", "ls-remote", "--exit-code",
                         publication["url"], publication["ref"]])
     require(remote.split() == [publication["sha"], publication["ref"]],
@@ -350,7 +355,7 @@ def collect_preflight(manifest, ops, phase):
         require(_run(ops, git + ["remote", "get-url", "origin"]) == pub["url"], "Fork URL drift")
         require(_run(ops, git + ["rev-parse", "HEAD"]) == pub["sha"], "Candidate HEAD drift")
         require(not _run(ops, git + ["status", "--porcelain"]), "Dirty independent checkout")
-        verify_build_publication(pub, ops)
+        verify_build_publication(pub, ops, manifest)
     nodes = spec["nodes"]
     require(len(nodes) == 4 and len({n["name"] for n in nodes}) == 4
             and {n["rank"] for n in nodes} == {1, 2, 3, 4},
