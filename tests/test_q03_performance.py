@@ -188,6 +188,7 @@ class ScreenTest(unittest.TestCase):
         ops = SimpleNamespace(plan=self.plan, binding={'checkout': str(ROOT)},
                               journal=SimpleNamespace(directory=directory, state={'ranks': self.context['ranks']}),
                               check_authority=lambda: None, mutate=lambda *args: calls.append(args))
+        ops.client_scope = lambda index=None: H.HttpOps.client_scope(ops, index)
         H.HttpOps.run_client(ops)
         context = json.loads(Path(self.plan['client']['runtime_context']).read_text())
         self.assertEqual(context['ready_sha256'], P.digest(ready))

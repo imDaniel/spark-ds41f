@@ -348,7 +348,7 @@ class RuntimeOps:
         names = ("q03_window.py", "q03_window_preflight.py", "q03_window_watchdog.py",
                  "q03_original_spark_adapter.py", "q03_remote_operation.py", "q03_build_adapter.py",
                  "q03_window_build.py", "q03_buildkit_plan.py", "q03_git_toolchain.py",
-                 "q03_held_window.py")
+                 "q03_held_window.py", "q03_source_delivery.py")
         owner_sources = ("q03_owner_model.py", "q03_rank_logs.py", "q03_image_preparation.py", "memguard-start.sh", "memguard.sh", "../bin/spark",
                          "mesh_fabric.py", "kernel_backend.py", "kernel_readiness.py", "topology.py",
                          "transport_profiles.py", "model_layout.py", "recipe.py")
@@ -456,7 +456,7 @@ class RuntimeOps:
             return self.run([*git, *args]).stdout.strip()
         artifact_git = git_at(artifact["checkout"], artifact["git_config_sha256"])
         publication = artifact["publication"]
-        verify_build_publication(publication, self)
+        verify_build_publication(publication, self, manifest)
         if (run(artifact_git, "remote", "get-url", "origin") != publication["url"]
                 or run(artifact_git, "rev-parse", "HEAD") != publication["sha"]
                 or run(artifact_git, "status", "--porcelain")):
@@ -929,6 +929,8 @@ class Session:
             raise RuntimeError("pinned recovery dependencies changed")
         self.state = ops.read_json(self.directory / "state.json")
         self.manifest = self.capsule["manifest"]
+        from q03_source_delivery import validate_manifest as validate_source_delivery
+        validate_source_delivery(self.manifest, self.directory)
         self.hold = Path(self.manifest["preflight"]["hold_path"])
 
     def check(self, phase):
@@ -1321,6 +1323,8 @@ def run_session(manifest, directory, ops=None):
     ops = RuntimeOps() if ops is None else ops
     directory = Path(directory)
     validate_layout(manifest, directory)
+    from q03_source_delivery import validate_manifest as validate_source_delivery
+    validate_source_delivery(manifest, directory)
     if "image_preparation" in manifest:
         from q03_owner_model import is_owner
         if not is_owner(manifest) or "held_window" not in manifest:

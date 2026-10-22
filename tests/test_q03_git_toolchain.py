@@ -345,11 +345,11 @@ class LaunchContracts(unittest.TestCase):
             expected = {'q03_window.py', 'q03_window_preflight.py', 'q03_window_watchdog.py',
                 'q03_original_spark_adapter.py', 'q03_remote_operation.py', 'q03_build_adapter.py',
                 'q03_window_build.py', 'q03_buildkit_plan.py', 'q03_git_toolchain.py',
-                'q03_held_window.py', 'q03_owner_model.py', 'q03_rank_logs.py', 'q03_image_preparation.py',
+                'q03_held_window.py', 'q03_source_delivery.py', 'q03_owner_model.py', 'q03_rank_logs.py', 'q03_image_preparation.py',
                 'memguard-start.sh', 'memguard.sh', '../bin/spark', 'mesh_fabric.py',
                 'kernel_backend.py', 'kernel_readiness.py', 'topology.py',
                 'transport_profiles.py', 'model_layout.py', 'recipe.py',
-                'q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py', 'q03_quality_matrix.py', 'q03_performance.py', 'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py', 'q03_legacy_case_replay.py', 'q03_quality_capture.py', 'q03_quality_pilot.py'}
+                'q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py', 'q03_quality_matrix.py', 'q03_performance.py', 'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py', 'q03_legacy_case_replay.py', 'q03_baseline_batch.py', 'q03_quality_capture.py', 'q03_quality_pilot.py'}
             self.assertEqual(set(sources), expected)
             for name, digest in sources.items():
                 self.assertEqual(digest, hashlib.sha256((ROOT / 'scripts' / name).read_bytes()).hexdigest())
