@@ -100,6 +100,29 @@ def load_performance(client):
     return run_client
 
 
+class FrozenLegacy(FrozenQualification):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname not in ('q03_legacy_case_replay', 'q03_baseline_identity', 'q03_owner_model', 'q03_held_window'):
+            return None
+        return importlib.util.spec_from_file_location(fullname, self.root / self.relative(fullname), loader=self)
+
+
+def load_legacy(client):
+    names = ('q03_legacy_case_replay', 'q03_baseline_identity', 'q03_owner_model', 'q03_held_window')
+    pins = client.get('legacy_sources')
+    if not isinstance(pins, dict) or set(pins) != set(names) or any(name in sys.modules for name in names):
+        raise RuntimeError('legacy source closure differs or was preloaded')
+    root, sources = Path(__file__).resolve().parent, {}
+    for name in names:
+        raw = (root / (name + '.py')).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != pins[name]:
+            raise RuntimeError('frozen legacy source changed: ' + name)
+        sources[name + '.py'] = raw
+    sys.meta_path.insert(0, FrozenLegacy(root, sources))
+    from q03_legacy_case_replay import run_client
+    return run_client
+
+
 def run(plan):
     # No supplied argv/import path. The frozen plan has been admitted and is
     # rehashed by the controller and remote boundary before this fixed program.
@@ -129,7 +152,9 @@ def run(plan):
             'steering_scale': 0 if plan['selection']['steering'] == 'loaded_zero' else 1}}).decode()]
     error = None
     try:
-        if 'performance_screen' in client:
+        if 'legacy_case' in client:
+            code = load_legacy(client)(plan, main)
+        elif 'performance_screen' in client:
             code = load_performance(client)(plan, main)
         elif 'qualification' in client:
             code = load_qualification(client)(plan, main)

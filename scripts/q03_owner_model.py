@@ -1200,6 +1200,10 @@ class OwnerOps:
             if epoch not in self.journal.state.get("sealed_epochs", []):
                 self.seal_epoch(epoch)
 
+    def guard_input_contract(self):
+        """Closed input contract for guard bytes; subclasses retain their own lane pins."""
+        return input_contract(self.binding)
+
     def action(self, rank, kind, record):
         row = self.plan["ranks"][rank]
         ident = record.get("container_id")
@@ -1227,7 +1231,7 @@ class OwnerOps:
                 # Both script bytes are independently checked by preparation and
                 # the immutable recovery inventory; no original checkout script.
                 script = str(Path(self.binding["checkout"]) / "scripts/memguard-start.sh")
-                files = [v for v in input_contract(self.binding)["files"]
+                files = [v for v in self.guard_input_contract()["files"]
                          if Path(v["path"]).name in ("memguard-start.sh", "memguard.sh")]
                 payload = dict(script=script, files=files, arguments=[ident, phase, *settings])
                 argv = ["python3", "-I", "-B", "-c", GUARD_EXEC, canonical(payload).decode()]

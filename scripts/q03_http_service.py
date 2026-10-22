@@ -10,6 +10,7 @@ import argparse
 import copy
 import fcntl
 import json
+import math
 import types
 from pathlib import Path
 import re
@@ -26,7 +27,7 @@ require, canonical, digest, json_bytes = owner.require, owner.canonical, owner.d
 IMAGE, SOURCE_HEAD, RUNTIME_SHA = owner.IMAGE, owner.SOURCE_HEAD, owner.RUNTIME_SHA
 PHASES = ('admitted', 'prepared4', 'created4', 'startup_guards4', 'started4',
           'config_ready', 'steady_guards4', 'client_running', 'client_terminal', 'drained')
-SOURCE_FILES = ('q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py', 'q03_quality_matrix.py', 'q03_performance.py')
+SOURCE_FILES = ('q03_http_service.py', 'q03_http_worker.py', 'q03_http_client.py', 'q03_http_toolbox.json', 'q03_qualification.py', 'q03_quality_matrix.py', 'q03_performance.py', 'q03_baseline_service.py', 'q03_baseline_identity.py', 'q03_baseline_worker.py', 'q03_legacy_case_replay.py')
 BOOT_MODES = ('off', 'off', 'dual')
 QUALIFICATION_SOURCE_SHA256 = 'f41e9fac23ee88defa71d6aed6dddaa6b0630b8c5e369f14b02c17ee2d242c1e'
 
@@ -77,6 +78,33 @@ def performance_module():
     return module
 
 
+def is_baseline(value):
+    http = value.get('http_service', value.get('http', {}))
+    return type(http.get('schema_version')) is int and http['schema_version'] == 6
+
+
+BASELINE_SOURCE_SHA256 = 'f57e521ba64aba3a31d10232cfd7abc5304d831ccad237e1ff70a6cb78564958'
+
+def baseline_module():
+    # This new finite lane is pinned with the complete controller recovery inventory.
+    # It never changes the identity or meaning of any pre-existing schema.
+    path = Path(__file__).with_name('q03_baseline_service.py')
+    raw = read_owned_bytes(path)
+    require(digest(raw) == BASELINE_SOURCE_SHA256, 'baseline bridge source pin differs')
+    module = types.ModuleType('_q03_baseline_service_source')
+    module.__file__ = str(path)
+    exec(compile(raw, str(path), 'exec'), module.__dict__)
+    return module
+
+
+def plan_image(plan):
+    if is_baseline(plan.get('binding', {})):
+        expected = baseline_module().identity_module().checked_identity(plan['selection']['arm'])
+        require(plan.get('image') == expected['image'], 'baseline plan image differs')
+        return expected['image']
+    return IMAGE
+
+
 def finite_corpus(value, binding=None):
     if value.get('schema_version') == 4:
         config, module = value['performance_screen'], performance_module()
@@ -90,6 +118,8 @@ def is_http(manifest):
 
 
 def validate_jobs(manifest):
+    if is_baseline(manifest):
+        return baseline_module().validate_jobs(manifest)
     jobs = manifest.get('jobs')
     require(isinstance(jobs, list) and len(jobs) == 1, 'HTTP attempt has one bounded job')
     job = jobs[0]
@@ -104,6 +134,8 @@ def validate_jobs(manifest):
 
 
 def next_selection(session):
+    if is_baseline(session.manifest):
+        return baseline_module().next_selection(session)
     if session.manifest.get('http_service', {}).get('schema_version') == 4:
         return performance_module().next_selection(session)
     if session.manifest.get('http_service', {}).get('schema_version') in (2, 3):
@@ -171,6 +203,8 @@ def validate_owner_matrix(binding, candidate):
 
 
 def validate_binding(manifest, ops, *, remote=True):
+    if is_baseline(manifest):
+        return baseline_module().validate_binding(manifest, ops, remote=remote)
     validate_jobs(manifest)
     value = manifest.get('http_service')
     fields = {'schema_version', 'owner_inputs', 'owner_matrix', 'toolbox', 'api_port',
@@ -221,6 +255,8 @@ def validate_binding(manifest, ops, *, remote=True):
 
 
 def validate_paths(manifest, directory):
+    if is_baseline(manifest):
+        return baseline_module().validate_paths(manifest, directory)
     owner.validate_paths(owner_manifest(manifest), directory)
     from q03_original_spark_adapter import evidence_path
     resource = evidence_path(str(Path(manifest['independent_root']) / 'http-resources'), manifest)
@@ -267,6 +303,8 @@ def replace_flag(args, key, value):
 
 
 def http_plan(binding, window_id, attempt_id, selection, *, session=None):
+    if is_baseline(binding):
+        return baseline_module().http_plan(binding, window_id, attempt_id, selection, session=session)
     # The owner plan supplies pinned identity/expected resolved projection only.
     # Serving argv is rendered from the ACTUAL normal profile, not EngineArgs.
     plan = owner.owner_plan(binding, window_id, attempt_id, selection)
@@ -372,6 +410,8 @@ def http_plan(binding, window_id, attempt_id, selection, *, session=None):
 
 
 def validate_ready(raw, plan):
+    if is_baseline(plan.get("binding", {})):
+        return baseline_module().validate_ready(raw, plan)
     value = json_bytes(raw)
     reports = value.get('reports')
     require(isinstance(reports, list) and len(reports) == 4, 'HTTP readiness needs all four worker reports')
@@ -384,6 +424,8 @@ def validate_ready(raw, plan):
 
 
 def input_contract(binding, *, include_toolbox=True):
+    if is_baseline(binding):
+        return baseline_module().input_contract(binding, include_toolbox=include_toolbox)
     value = owner.input_contract(binding)
     for name in SOURCE_FILES:
         path = Path(binding['checkout']) / 'scripts' / name
@@ -404,6 +446,8 @@ def input_contract(binding, *, include_toolbox=True):
 
 
 def boundary_contract(binding, node, path):
+    if is_baseline(binding):
+        return baseline_module().boundary_contract(binding, node, path)
     value = owner.boundary_contract(binding, node, path)
     include_toolbox = node['rank'] == 1  # physical head is rank1; logical head is rank0
     value['input_files'] = input_contract(binding, include_toolbox=include_toolbox)['files']
@@ -419,6 +463,8 @@ def boundary_contract(binding, node, path):
 
 
 def validate_remote_inputs(manifest, binding, ops):
+    if is_baseline(manifest):
+        return baseline_module().validate_remote_inputs(manifest, binding, ops)
     from q03_window_preflight import _node_argv
     from q03_remote_operation import bound_command
     for node in owner.remote_nodes(binding):
@@ -486,7 +532,7 @@ def validate_container(item, plan, record, *, initial=False):
     rank = record["rank"]
     wanted = plan["ranks"][rank]
     require(isinstance(item, dict) and re.fullmatch(r"[0-9a-f]{64}", item.get("Id", ""))
-            and item["Id"] == record["container_id"] and item.get("Image") == IMAGE,
+            and item["Id"] == record["container_id"] and item.get("Image") == plan_image(plan),
             "owner exact container/image identity differs")
     config, host = item["Config"], item["HostConfig"]
     labels = config.get("Labels", {})
@@ -715,16 +761,20 @@ class HttpOps(owner.OwnerOps):
                     require(item['State'].get('Running') is True, 'HTTP rank lost during client')
                     require_guard(self.guard_state(row['rank'], row), self.plan, row, 'steady')
 
+    def guard_input_contract(self):
+        return input_contract(self.binding)
+
     def action(self, rank, kind, record):
         row = self.plan['ranks'][rank]
         if kind == 'prepare':
             contract = input_contract(self.binding, include_toolbox=rank == 0)
             contract.update(root=row['root'], independent_root=self.binding['independent_root'],
                             spec=canonical(self.plan['spec']).decode(), spec_sha256=self.plan['spec_sha256'])
-            return self.mutate(rank, kind, ['python3', '-I', '-B', '-c', owner.PREPARE, canonical(contract).decode()], 60)
+            prepare = baseline_module().PREPARE if is_baseline(self.binding) else owner.PREPARE
+            return self.mutate(rank, kind, ['python3', '-I', '-B', '-c', prepare, canonical(contract).decode()], 60)
         if kind == 'create':
             argv = [*row['create_prefix'], '--label', 'q03.plan=' + self.plan['plan_sha256'],
-                    '--entrypoint', 'python3', IMAGE, *row['python_argv']]
+                    '--entrypoint', 'python3', plan_image(self.plan), *row['python_argv']]
             return self.mutate(rank, kind, argv, 90).strip()
         return super().action(rank, kind, record)
 
@@ -746,11 +796,73 @@ class HttpOps(owner.OwnerOps):
             'attempt_id': self.plan['attempt_id'], 'spec_sha256': self.plan['spec_sha256'],
             'reports': reports, 'reports_sha256': digest(canonical(reports))})
 
+    def legacy_runtime_context(self):
+        """Original bounded thermal admission and reset, outside client measurement."""
+        started = time.monotonic()
+        while True:
+            self.check_authority()
+            samples = []
+            for record in self.journal.state['ranks']:
+                rank = record['rank']
+                self.check_authority()
+                item = self.inspect(rank, record)
+                validate_container(item, self.plan, record)
+                require(item['State'].get('Running') is True, 'baseline rank stopped during thermal admission')
+                require_guard(self.guard_state(rank, record), self.plan, record, 'steady')
+                sampled = time.time()
+                command = ['nvidia-smi', '--query-gpu=uuid,temperature.gpu', '--format=csv,noheader,nounits']
+                result = self.transport(rank, self.helper.bound_command(command))
+                self.journal.event('baseline-thermal-observation', rank=rank,
+                    container_id=record['container_id'], sampled_utc=sampled,
+                    stdout=result.stdout, stderr=result.stderr, exit_code=result.returncode)
+                lines = result.stdout.strip().splitlines()
+                require(result.returncode == 0 and len(lines) == 1, 'single native GPU thermal observation required')
+                fields = [v.strip() for v in lines[0].split(',')]
+                require(len(fields) == 2 and re.fullmatch(r'GPU-[0-9a-fA-F-]+', fields[0]),
+                        'thermal GPU identity/temperature output malformed')
+                try:
+                    temperature = float(fields[1])
+                except ValueError:
+                    raise RuntimeError('GPU thermal value unavailable')
+                require(math.isfinite(temperature) and temperature >= 0, 'GPU thermal value invalid')
+                samples.append(dict(rank=rank, container_id=record['container_id'],
+                    sampled_utc=sampled, hottest_c=temperature))
+            elapsed = time.monotonic() - started
+            require(elapsed <= 600, 'original bounded thermal wait expired')
+            if all(row['hottest_c'] < 55 and 0 <= time.time() - row['sampled_utc'] < 20 for row in samples):
+                break
+            self.sleep(min(2, max(0, 600 - elapsed)))
+        self.check_authority()
+        request = urllib.request.Request(self.plan['url'] + '/reset_prefix_cache', data=b'', method='POST')
+        with urllib.request.urlopen(request, timeout=min(15, max(.1, self.end - time.time()))) as response:
+            raw, status = response.read(1024 * 1024 + 1), response.status
+        require(status == 200 and len(raw) <= 1024 * 1024, 'baseline prefix reset failed or oversized')
+        reset_result = json_bytes(raw)
+        require(isinstance(reset_result, dict) and reset_result.get('success') is True,
+                'baseline prefix reset lacks positive native success')
+        reset = {k: self.plan[k] for k in ('window_id', 'attempt_id', 'plan_sha256')}
+        reset.update(url=self.plan['url'] + '/reset_prefix_cache', method='POST',
+            completed_utc=time.time(), status=status, response_utf8=raw.decode('utf-8'), response_sha256=digest(raw))
+        self.journal.event('baseline-prefix-reset', receipt=reset)
+        context = {k: self.plan[k] for k in ('window_id', 'attempt_id', 'plan_sha256', 'url')}
+        context.update(ranks=[{k: row[k] for k in ('rank', 'container_id', 'config_sha256')}
+                             for row in self.journal.state['ranks']],
+            ready_sha256=digest(read_owned_bytes(self.journal.directory / 'ready-observed.json')),
+            admission=dict(thermal=dict(wait_seconds=elapsed, fan_policy='UNCHANGED', samples=samples), prefix_reset=reset))
+        baseline_module().legacy_module().validate_runtime_context(context, self.plan)
+        self.check_authority()
+        return context
+
     def run_client(self):
         self.check_authority()
         # Host-side fixed Python client, NOT docker exec: supervisor owns the
         # actual HTTP-client process and every descendant rather than a CLI proxy.
         path = self.journal.directory / 'client-plan.json'
+        if 'legacy_case' in self.plan['client']:
+            context = self.legacy_runtime_context()
+            sha = exclusive_json(self.journal.directory / 'baseline-runtime-context.json', context)
+            self.journal.event('baseline-runtime-context-pinned', context_sha256=sha)
+            exclusive_json(Path(self.plan['client']['runtime_context']), context)
         if 'performance_screen' in self.plan['client']:
             context = {k: self.plan[k] for k in ('window_id', 'attempt_id', 'plan_sha256', 'url')}
             context.update(ranks=[{k: r[k] for k in ('rank', 'container_id', 'config_sha256')}
@@ -811,6 +923,26 @@ class HttpOps(owner.OwnerOps):
                 and receipt.get('error') is None and receipt.get('output_sha256') == digest(raw),
                 'HTTP client receipt failed or differs')
         value = json_bytes(raw)
+        if 'legacy_case' in self.plan['client']:
+            context_raw = read_owned_bytes(self.journal.directory / 'baseline-runtime-context.json')
+            require(context_raw == read_owned_bytes(self.plan['client']['runtime_context']),
+                    'baseline client context differs from controller-owned capture')
+            context = json_bytes(context_raw)
+            pins = [json_bytes(read_owned_bytes(path))
+                    for path in sorted(self.journal.directory.glob('[0-9][0-9][0-9][0-9][0-9][0-9].json'))]
+            pins = [event for event in pins if event.get('kind') == 'baseline-runtime-context-pinned']
+            require(len(pins) == 1 and pins[0].get('context_sha256') == digest(context_raw)
+                    and pins[0].get('window_id') == self.plan['window_id']
+                    and pins[0].get('attempt_id') == self.plan['attempt_id'],
+                    'baseline admission context differs from durable controller event')
+            require(context['ranks'] == [{k: row[k] for k in ('rank', 'container_id', 'config_sha256')}
+                                        for row in self.journal.state['ranks']]
+                    and context['ready_sha256'] == digest(read_owned_bytes(self.journal.directory / 'ready-observed.json')),
+                    'baseline context container/config/readiness differs from owned journal')
+            result = baseline_module().legacy_module().validate_output(value, self.plan)
+            return dict(result='passed', window_id=self.plan['window_id'], attempt_id=self.plan['attempt_id'],
+                image=plan_image(self.plan), source_head=self.plan['source_head'], plan_sha256=self.plan['plan_sha256'],
+                result_sha256=digest(raw), toolbox_head=self.plan['client']['toolbox_head'], **result)
         if 'performance_screen' in self.plan['client']:
             module = performance_module()
             module.verify_runtime_context(self.journal.directory.parent, self.plan)
