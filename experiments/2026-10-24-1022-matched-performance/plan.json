@@ -49,11 +49,12 @@
     "verify frozen historical client and seven raw historical references",
     "coordinate candidate startup",
     "scale 1/4 arithmetic and literal-tool quality smoke",
-    "six matched closed-load cases with cache reset and natural cooldown",
+    "six matched closed-load cases with isolated cache salts, observed cold priming and natural cooldown",
     "repeat quality smoke",
     "handoff passing candidate to owner on existing port/gateway; failure restores original r6x"
   ],
   "promotion_authorized": false,
   "success_action": "retain healthy candidate for owner trial via existing gateway; reopen ingress; keep exclusive hold until owner ends trial",
-  "failure_action": "restore exact original four-node r6x and verify gateway"
+  "failure_action": "restore exact original four-node r6x and verify gateway",
+  "cache_preparation": "Original independent per-stream salts; every prime cached_tokens=0; timed prefix hits >=90%; developer reset endpoint remains disabled"
 }

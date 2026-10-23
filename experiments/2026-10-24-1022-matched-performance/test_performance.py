@@ -1,4 +1,5 @@
 import gzip
+import io
 import json
 import runpy
 import unittest
@@ -105,6 +106,38 @@ class PerformanceContracts(unittest.TestCase):
         row["summary"]["server"]["prefix_cache_hit_rate"]["mean"] = 0.1
         with self.assertRaisesRegex(ValueError, "warm-prefix"):
             b.validate_run(row, docs)
+
+    def test_prime_cache_usage_is_captured_without_changing_client_record(self):
+        usage = {
+            "prompt_tokens": 4096,
+            "completion_tokens": 1,
+            "prompt_tokens_details": {"cached_tokens": 0},
+        }
+        stream = (
+            b"data: "
+            + json.dumps({"choices": [], "usage": usage}).encode()
+            + b"\n\ndata: [DONE]\n\n"
+        )
+        expected = {"error": None, "completion_tokens": 1}
+
+        def fake_client(url, body, **kwargs):
+            with b.urllib.request.urlopen(url) as response:
+                list(response)
+            return expected
+
+        with patch.object(b.urllib.request, "urlopen", return_value=io.BytesIO(stream)):
+            result, captured = b.prime_stream(fake_client, "http://test", {})
+        self.assertIs(result, expected)
+        self.assertEqual(captured, usage)
+        b.validate_prime(result, captured)
+
+    def test_missing_cache_usage_or_cache_hit_cannot_prove_cold_priming(self):
+        for usage in (None, {}, {"prompt_tokens_details": {"cached_tokens": 1}}):
+            with (
+                self.subTest(usage=usage),
+                self.assertRaisesRegex(ValueError, "cold cache miss"),
+            ):
+                b.validate_prime({"error": None}, usage)
 
 
 if __name__ == "__main__":

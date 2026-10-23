@@ -15,8 +15,16 @@ The same 16 questions, seed 2048, per-stream 4K standard-library document,
 256 fixed output tokens, 15-second warmup, 90-second measurement and six batch
 windows are used. No reasoning/chat-template override is introduced. Host Python
 standard-library inputs are pinned; generated documents are saved and their exact
-token counts must match the old receipts. Prefix cache resets before each run,
-then each stream's document is primed using the same historical algorithm.
+token counts must match the old receipts. Each stream's document is primed using
+the same historical algorithm and a fresh random cache salt for every case.
+The production-mode candidate has no developer cache-reset endpoint. The first
+attempt stopped at its HTTP 404 before measurement and restored r6x; its evidence
+is retained. The retry uses the frozen client's existing independent salts as
+logical cache isolation and requires actual zero cached tokens for every initial
+document prime, followed by at least 90% prefix hits during timed load (historical
+observations were about 93–94%). The old runs also issued a redundant global
+reset; the retry leaves unrelated cached blocks alone. This preparation difference
+is reported explicitly. No developer endpoint or runtime setting is enabled.
 
 All generated requests explicitly carry scale 1 or 4 and the pinned profile.
 The matrix is scale 1/C1, 1/C4, 4/C1, 1/C4, 4/C4, 1/C4. The additional C4

@@ -39,6 +39,55 @@ def validate_payload(body):
         raise ValueError("Every generation requires explicit scale 1 or 4")
 
 
+def prime_stream(function, url, body, **kwargs):
+    """Capture cache usage during serial document priming, outside the clock.
+
+    The frozen client's returned record and timed-run parsing stay unchanged.
+    No load threads or metric scraper have started during these priming calls.
+    """
+    original_open = urllib.request.urlopen
+    lines = []
+
+    class Capture:
+        def __init__(self, response):
+            self.response = response
+
+        def __enter__(self):
+            self.response.__enter__()
+            return self
+
+        def __exit__(self, *args):
+            return self.response.__exit__(*args)
+
+        def __iter__(self):
+            for line in self.response:
+                lines.append(line)
+                yield line
+
+    def capture_open(*args, **options):
+        return Capture(original_open(*args, **options))
+
+    urllib.request.urlopen = capture_open
+    try:
+        result = function(url, body, **kwargs)
+    finally:
+        urllib.request.urlopen = original_open
+    usage = None
+    for line in lines:
+        if line.startswith(b"data: ") and line[6:].strip() != b"[DONE]":
+            usage = json.loads(line[6:]).get("usage") or usage
+    return result, usage
+
+
+def validate_prime(result, usage):
+    if (
+        result.get("error")
+        or not usage
+        or usage.get("prompt_tokens_details", {}).get("cached_tokens") != 0
+    ):
+        raise ValueError("Document priming did not prove a cold cache miss")
+
+
 def validate_run(run, expected_documents):
     summary = run["summary"]
     counts = summary["requests"]
@@ -168,9 +217,24 @@ def run(output):
         p.replace(output / "progress.json")
 
     original_stream, original_documents = client.stream_chat, load.documents
+    primes = []
 
     def guarded_stream(url, body, **kwargs):
         validate_payload(body)
+        if body["max_tokens"] == 1:
+            result, usage = prime_stream(original_stream, url, body, **kwargs)
+            primes.append(
+                {
+                    "case": current_label,
+                    "cache_salt": body["cache_salt"],
+                    "scale": body["steering_scale"],
+                    "usage": usage,
+                    "record": result,
+                }
+            )
+            write(output / "cold-primes.json.gz", primes)
+            validate_prime(result, usage)
+            return result
         return original_stream(url, body, **kwargs)
 
     client.stream_chat = guarded_stream
@@ -188,14 +252,6 @@ def run(output):
             require_window()
             thermal = thermal_gate(m, output)
             prom.require_idle(BASE, "matched performance")
-            req = urllib.request.Request(
-                BASE + "/reset_prefix_cache",
-                data=b"{}",
-                headers={"Content-Type": "application/json"},
-            )
-            with urllib.request.urlopen(req, timeout=120) as response:
-                if response.status != 200:
-                    raise ValueError("Cache reset failed")
             current_label = f"run-{index}-s{scale}-c{concurrency}"
             spec = load.Load(
                 mode="closed",

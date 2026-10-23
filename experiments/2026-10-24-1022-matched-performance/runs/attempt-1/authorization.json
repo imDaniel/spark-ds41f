@@ -1,0 +1,8 @@
+{
+  "window_id": "62eb0d59-aedf-4007-8a99-8e15ee2fdada",
+  "manifest_sha256": "2cef1b1cd8291e735799ef3e25d073bb51798d3062646a06b8924fce6cdfe66b",
+  "scope": "window_and_restore",
+  "holder": "1022-matched-performance",
+  "owner_request": "2026-10-24: 按以前的同口径补测最终候选，旧基线不用重跑，只测请求带 scale 的，把 TPS、首 token 和尾延迟的新旧对比给我。暂时不要合并 PR #56 或更新正式服务。 Owner follow-up: 结束后先不复原，我亲自上去体验一下 scale 的程度。沿用现有网关和模型别名。 Retain candidate after successful measurements and gateway probes until owner ends trial; restore pinned r6x on failure.",
+  "open_before": 1792779264.406163
+}

@@ -1,0 +1,8 @@
+{
+  "window_id": "62eb0d59-aedf-4007-8a99-8e15ee2fdada",
+  "duration_minutes": 6.23384215037028,
+  "status": "failed before timing: developer-only reset_prefix_cache endpoint returned HTTP 404",
+  "timed_runs_completed": 0,
+  "quality_smoke_passed": 4,
+  "retained_restored": true
+}
