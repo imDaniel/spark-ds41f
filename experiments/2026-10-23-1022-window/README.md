@@ -53,3 +53,19 @@ original reservation end and restoration reserve; it must not reset the
 90-minute budget. The initial runtime revision and all results remain intact.
 This follow-up is skipped after a hardware fault or another hard failure, and
 is recorded as incomplete if there is insufficient remaining time.
+
+## Reviewed continuation after the rejection harness error
+
+The first hardware run completed U and E, then stopped after the S-unloaded
+server correctly returned an SSE `BadRequestError` with code 400 for a negative
+request. The original harness expected only an HTTP 400 and misclassified that
+stream response as a failure. Recovery ran immediately. The corrected harness
+checks both non-streaming HTTP 400 and streaming HTTP/SSE 400, rejects any content
+before a stream error, and still fails server errors. It also covers nonfinite
+doses and a valid named profile on an unloaded server.
+
+`run_remaining.py` reuses the hash-pinned completed E reference, runs only
+S-unloaded and S-loaded, then performs the long-prefix cache checks in that same
+loaded engine. Its authorization and absolute end guard preserve the original
+reservation. U/E, the initial 29 passing GPU cases and the interrupted S receipt
+remain evidence; this continuation does not rewrite or discard the first run.
