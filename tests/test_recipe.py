@@ -322,6 +322,9 @@ class PromotedRecipeTest(unittest.TestCase):
         reference = load(current["benchmark_reference"])
         self.assertEqual(reference["identity"]["image_id"], record["image_id"])
         self.assertEqual(reference["identity"]["profile_sha256"], record["profile"]["sha256"])
+        model = load("upstreams.lock.json")["sources"]["model"]
+        self.assertEqual(model["repository"], "deepseek-ai/DeepSeek-V4.1-Flash-1017")
+        self.assertEqual(model["revision"], "1bae0e1088993b9b82de08f59de5be5a34e42170")
 
     def test_unmeasured_tp3_shapes_do_not_inherit_tp4_acceptance(self):
         current = load("config/cluster.json")
