@@ -1,0 +1,8 @@
+.git/rebase-apply/patch:422: new blank line at EOF.
++
+warning: 1 line adds whitespace errors.
+vllm: prepared dea96d04ea9e (tree ab7b65054473)
+all 198 patches replayed; clean head/tree verified
+directory: /Users/daniel/Workspace/spark-ds41f/.work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-00432512
+head: dea96d04ea9eae7f7e19f1dcadd56b8e27f29875
+tree: ab7b6505447360a926fee000df5dc59b2ff770ff

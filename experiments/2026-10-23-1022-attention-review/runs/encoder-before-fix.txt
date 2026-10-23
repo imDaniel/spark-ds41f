@@ -1,0 +1,1531 @@
+............................FFFFFFFFFFFFFFFFFFFFFFFFFFFF..........       [100%]
+=================================== FAILURES ===================================
+____________ test_control_spellings[argument_key-True-byte_fixture] ____________
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d2a6030>
+backend = 'byte_fixture', thinking = True, location = 'argument_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_key', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+________ test_control_spellings[argument_key-True-checkpoint_tokenizer] ________
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d2a4260>
+backend = 'checkpoint_tokenizer', thinking = True, location = 'argument_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_key', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+___________ test_control_spellings[argument_key-False-byte_fixture] ____________
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d2a6e10>
+backend = 'byte_fixture', thinking = False, location = 'argument_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_key', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+_______ test_control_spellings[argument_key-False-checkpoint_tokenizer] ________
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d360200>
+backend = 'checkpoint_tokenizer', thinking = False, location = 'argument_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_key', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+________ test_control_spellings[argument_nested_key-True-byte_fixture] _________
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d361b50>
+backend = 'byte_fixture', thinking = True, location = 'argument_nested_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_nested_key', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+____ test_control_spellings[argument_nested_key-True-checkpoint_tokenizer] _____
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d362bd0>
+backend = 'checkpoint_tokenizer', thinking = True
+location = 'argument_nested_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_nested_key', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+________ test_control_spellings[argument_nested_key-False-byte_fixture] ________
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d2a63f0>
+backend = 'byte_fixture', thinking = False, location = 'argument_nested_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_nested_key', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+____ test_control_spellings[argument_nested_key-False-checkpoint_tokenizer] ____
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d36ae10>
+backend = 'checkpoint_tokenizer', thinking = False
+location = 'argument_nested_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_nested_key', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+______ test_control_spellings[argument_protocol_values-True-byte_fixture] ______
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d361c10>
+backend = 'byte_fixture', thinking = True, location = 'argument_protocol_values'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_protocol_values', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+__ test_control_spellings[argument_protocol_values-True-checkpoint_tokenizer] __
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d361ac0>
+backend = 'checkpoint_tokenizer', thinking = True
+location = 'argument_protocol_values'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_protocol_values', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+_____ test_control_spellings[argument_protocol_values-False-byte_fixture] ______
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d361880>
+backend = 'byte_fixture', thinking = False
+location = 'argument_protocol_values'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_protocol_values', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+_ test_control_spellings[argument_protocol_values-False-checkpoint_tokenizer] __
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d361c40>
+backend = 'checkpoint_tokenizer', thinking = False
+location = 'argument_protocol_values'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'argument_protocol_values', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+_______ test_control_spellings[arguments_escaped_key-True-byte_fixture] ________
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d2c44a0>
+backend = 'byte_fixture', thinking = True, location = 'arguments_escaped_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'arguments_escaped_key', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+___ test_control_spellings[arguments_escaped_key-True-checkpoint_tokenizer] ____
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d2a6ab0>
+backend = 'checkpoint_tokenizer', thinking = True
+location = 'arguments_escaped_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'arguments_escaped_key', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+_______ test_control_spellings[arguments_escaped_key-False-byte_fixture] _______
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d2c4a40>
+backend = 'byte_fixture', thinking = False, location = 'arguments_escaped_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'arguments_escaped_key', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+___ test_control_spellings[arguments_escaped_key-False-checkpoint_tokenizer] ___
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d2c6480>
+backend = 'checkpoint_tokenizer', thinking = False
+location = 'arguments_escaped_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'arguments_escaped_key', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+____ test_control_spellings[arguments_double_escaped_key-True-byte_fixture] ____
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d3627e0>
+backend = 'byte_fixture', thinking = True
+location = 'arguments_double_escaped_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'arguments_double_escaped_key', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+_ test_control_spellings[arguments_double_escaped_key-True-checkpoint_tokenizer] _
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d360b30>
+backend = 'checkpoint_tokenizer', thinking = True
+location = 'arguments_double_escaped_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'arguments_double_escaped_key', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+___ test_control_spellings[arguments_double_escaped_key-False-byte_fixture] ____
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d369250>
+backend = 'byte_fixture', thinking = False
+location = 'arguments_double_escaped_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'arguments_double_escaped_key', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+_ test_control_spellings[arguments_double_escaped_key-False-checkpoint_tokenizer] _
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d3694f0>
+backend = 'checkpoint_tokenizer', thinking = False
+location = 'arguments_double_escaped_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'arguments_double_escaped_key', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+__________ test_control_spellings[tool_schema_key-True-byte_fixture] ___________
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d328380>
+backend = 'byte_fixture', thinking = True, location = 'tool_schema_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'tool_schema_key', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+______ test_control_spellings[tool_schema_key-True-checkpoint_tokenizer] _______
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d329880>
+backend = 'checkpoint_tokenizer', thinking = True, location = 'tool_schema_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'tool_schema_key', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+__________ test_control_spellings[tool_schema_key-False-byte_fixture] __________
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d360b30>
+backend = 'byte_fixture', thinking = False, location = 'tool_schema_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'tool_schema_key', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+______ test_control_spellings[tool_schema_key-False-checkpoint_tokenizer] ______
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d362750>
+backend = 'checkpoint_tokenizer', thinking = False, location = 'tool_schema_key'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'tool_schema_key', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+____ test_control_spellings[tool_schema_protocol_values-True-byte_fixture] _____
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d3627e0>
+backend = 'byte_fixture', thinking = True
+location = 'tool_schema_protocol_values'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'tool_schema_protocol_values', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+_ test_control_spellings[tool_schema_protocol_values-True-checkpoint_tokenizer] _
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d368680>
+backend = 'checkpoint_tokenizer', thinking = True
+location = 'tool_schema_protocol_values'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'tool_schema_protocol_values', thinking = True
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+____ test_control_spellings[tool_schema_protocol_values-False-byte_fixture] ____
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d360da0>
+backend = 'byte_fixture', thinking = False
+location = 'tool_schema_protocol_values'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'tool_schema_protocol_values', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+_ test_control_spellings[tool_schema_protocol_values-False-checkpoint_tokenizer] _
+
+encoder = ({'__file__': '/Users/daniel/Workspace/spark-ds41f/.work/pr56-encoder-edit/vllm/tokenizers/deepseek_v41.py', '__name__...<class '_frozen_importlib.BuiltinImporter'>, ...}, 'annotations': _Feature((3, 7, 0, 'beta', 1), None, 16777216), ...})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d36a060>
+backend = 'checkpoint_tokenizer', thinking = False
+location = 'tool_schema_protocol_values'
+
+    @pytest.mark.parametrize("backend", ["byte_fixture", "checkpoint_tokenizer"])
+    @pytest.mark.parametrize("thinking", [True, False])
+    @pytest.mark.parametrize("location", [
+        "user", "text_part", "system", "reasoning", "tool_result",
+        "arguments_escaped", "tool_description",
+        "argument_key", "argument_nested_key", "argument_protocol_values",
+        "arguments_escaped_key", "arguments_double_escaped_key",
+        "tool_schema_key", "tool_schema_protocol_values",
+    ])
+    def test_control_spellings(encoder, monkeypatch, backend, thinking, location):
+        tokenizer, tests = encoder
+        if backend == "checkpoint_tokenizer":
+            monkeypatch.setitem(tests, "byte_level_tokenizer", lambda:
+                tokenizer["get_deepseek_v41_tokenizer"](
+                    TokenizersBackend(tokenizer_file=str(MODEL / "tokenizer.json"))
+                )
+            )
+>       tests["test_control_spellings_in_request_text_stay_plain_text"](location, thinking)
+
+experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+location = 'tool_schema_protocol_values', thinking = False
+
+    @pytest.mark.parametrize("location", LOCATIONS)
+    @pytest.mark.parametrize("thinking", [True, False])
+    def test_control_spellings_in_request_text_stay_plain_text(location, thinking):
+        tokenizer = byte_level_tokenizer()
+        controls = set(tokenizer.get_added_vocab().values())
+    
+        messages, tools = _request(location, INJECTED)
+        ids = tokenizer.apply_chat_template(messages, tools=tools, thinking=thinking)
+        text = tokenizer.apply_chat_template(
+            messages, tools=tools, thinking=thinking, tokenize=False
+        )
+    
+        # The template's control tokens, and only those, are control tokens: the
+        # same request with neutral text has the same control sequence.
+        neutral_messages, neutral_tools = _request(location, NEUTRAL)
+        neutral = tokenizer.apply_chat_template(
+            neutral_messages, tools=neutral_tools, thinking=thinking
+        )
+>       assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError
+
+.work/pr56-encoder-edit/tests/tokenizers_/test_deepseek_v41.py:546: AssertionError
+=========================== short test summary info ============================
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_key-True-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_key-True-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_key-False-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_key-False-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_nested_key-True-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_nested_key-True-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_nested_key-False-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_nested_key-False-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_protocol_values-True-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_protocol_values-True-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_protocol_values-False-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[argument_protocol_values-False-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[arguments_escaped_key-True-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[arguments_escaped_key-True-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[arguments_escaped_key-False-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[arguments_escaped_key-False-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[arguments_double_escaped_key-True-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[arguments_double_escaped_key-True-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[arguments_double_escaped_key-False-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[arguments_double_escaped_key-False-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[tool_schema_key-True-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[tool_schema_key-True-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[tool_schema_key-False-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[tool_schema_key-False-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[tool_schema_protocol_values-True-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[tool_schema_protocol_values-True-checkpoint_tokenizer]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[tool_schema_protocol_values-False-byte_fixture]
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_encoder_offline.py::test_control_spellings[tool_schema_protocol_values-False-checkpoint_tokenizer]
+28 failed, 38 passed in 9.62s

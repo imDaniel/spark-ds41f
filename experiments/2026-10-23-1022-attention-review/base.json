@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "status": "offline review successor; launch disabled",
+  "review_base": "223a3bb3498d12f470e876db3b9e1f5bdc8772b6",
+  "review_start_head": "a228375400bbf3b090e0921165adfd5dd852ace5",
+  "previous_experiment": "experiments/2026-10-23-1022-attention-steering",
+  "upstream_deployment_revision": "26aebf209534a2d43799bf4be7b7e344efe97c7c",
+  "runtime_reference": {
+    "deployment_commit": "223a3bb3498d12f470e876db3b9e1f5bdc8772b6",
+    "branch": "archive/r6x-attention-steering-20261023",
+    "image_id": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+    "profile_sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093",
+    "baseline": "2026-10-19-homelab-r6x-steering-acceptance"
+  },
+  "intended_variable": "Close the 1022 encoder control-spelling gaps in rendered JSON keys and values; rebind identical attention directions to that source identity.",
+  "retained_patch_count": 197,
+  "added_patch_count": 1,
+  "total_patch_count": 198,
+  "image_built": false,
+  "gpu_tests_run": false,
+  "four_node_operations_run": false,
+  "weights_modified": false,
+  "directions_reextracted": false
+}

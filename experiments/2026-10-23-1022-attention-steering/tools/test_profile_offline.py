@@ -7,7 +7,7 @@ import importlib.util
 import json
 import os
 import shutil
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 
 import pytest
@@ -53,16 +53,26 @@ def test_rebinding_reproduces_release_without_changing_directions(release):
     assert hashlib.sha256(args.input.read_bytes()).hexdigest() == TOOL.INPUT_SHA256
 
 
-@pytest.mark.parametrize("selector", ["file", "hf:default", "hf:heretic-1017-attn-v1"])
+@pytest.mark.parametrize("selector", ["file", "candidate_mount", "hf:default", "hf:heretic-1017-attn-v1"])
 def test_actual_startup_loader_accepts_new_binding(release, monkeypatch, selector):
     args, receipt, _, config, combined = release
     monkeypatch.setenv("VLLM_USE_V2_MODEL_RUNNER", "1")
     monkeypatch.setenv("VLLM_DS41_KERNEL_BACKEND", "tilelang")
     selected = str(args.output / receipt["artifact_file"]) if selector == "file" else selector
+    expected_sha = receipt["new_artifact_sha256"]
+    if selector == "candidate_mount":
+        candidate = json.loads((HERE.parent / "cluster.json").read_text())
+        serve_args = candidate["serve_args"]
+        startup = json.loads(serve_args[serve_args.index("--additional-config") + 1])["ds41_steering"]
+        mount = next(m for m in candidate["container"]["mounts"] if m[1] == "/steering-1022")
+        relative = PurePosixPath(startup["profile_path"]).relative_to(mount[1])
+        # Resolve the container's path against the real release directory on disk.
+        selected = str(Path(os.environ["STEERING_NEW_RELEASE"]) / relative)
+        expected_sha = startup["profile_sha256"]
     runtime = SimpleNamespace(
         additional_config={"ds41_steering": {
             "schema_version": 1, "operator_version": receipt["operator_version"],
-            "profile_path": selected, "profile_sha256": receipt["new_artifact_sha256"],
+            "profile_path": selected, "profile_sha256": expected_sha,
         }},
         parallel_config=SimpleNamespace(
             tensor_parallel_size=4, pipeline_parallel_size=1, data_parallel_size=1,

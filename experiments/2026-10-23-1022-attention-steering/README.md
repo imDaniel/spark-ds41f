@@ -1,5 +1,8 @@
 # 1022 attention steering 离线集成
 
+后续审查修订见 [1022 attention review](../2026-10-23-1022-attention-review/README.md)。
+本目录的 197 项补丁、source、profile 与原始验证记录保留；后续硬件验证应使用修订候选。
+
 状态：本地候选，禁止启动；未构建镜像、未运行 GPU 测试、未同步或更新任何服务。
 当前服务的回退点是 `archive/r6x-attention-steering-20261023`，部署提交
 `223a3bb3498d12f470e876db3b9e1f5bdc8772b6`，镜像 `sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a`。
@@ -131,3 +134,11 @@ Profile 检查实际文件、确定性重打包、file/hf:default/hf:NAME 三种
    然后递进至长上下文及有界的近 1M 配对检查。单请求 1M 不等于 16 路同时 1M。
 6. 完整 release gate、功能/质量/稳定性/性能验收及 owner 接受后，才考虑发布和协调部署。
    当前没有新的 GPU、性能、容量或服务验收结论。
+
+## PR #56 审查补充
+
+修正了候选启动路径：release 根目录挂载到 `/steering-1022` 后，文件路径为
+`/steering-1022/steering/heretic-1017-attn-v1.safetensors`。新增配置与实际加载器回归，
+本目录复测为 487 项仓库测试、126 项 steering CPU 测试、36 项编码器和 10 项 profile 检查；
+结果单独保留在 `runs/review-20261023/`，不改写原始 `results.json`。
+编码器 JSON 边界修复及新的模板/profile 身份在上述修订候选中记录。

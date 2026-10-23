@@ -4,7 +4,7 @@
 本站日常验收使用独立[配方](experiments/2026-10-19-r6x-steering-gpu/followup/acceptance.json)，保留 1M 和请求级动态强度，旧配置、模型和镜像作为回退保留。
 下文的上游晋级记录与本站验收范围分别记录；本站的吞吐和尾延迟限制见[后续验收](experiments/2026-10-19-r6x-steering-gpu/followup/README.md)。
 
-本地开发分支已合入固定的 1022 上游提交；[1022 attention steering 候选](experiments/2026-10-23-1022-attention-steering/README.md)
+本地开发分支已合入固定的 1022 上游提交；[1022 attention steering 审查修订候选](experiments/2026-10-23-1022-attention-review/README.md)
 记录补丁重放、独立 profile 绑定与离线检查。它尚未构建镜像或进行 GPU 验收，候选启动开关关闭，本站服务未更新。
 
 Reproducible Docker/vLLM deployment, tuning, and benchmarks for DeepSeek V4.1

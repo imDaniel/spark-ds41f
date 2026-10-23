@@ -93,7 +93,7 @@ jobs:
             echo patches=false >> "$GITHUB_OUTPUT"
           fi
           if [ "$EVENT" != pull_request ] || git diff --name-only HEAD^1 HEAD | grep -qE \
-              '^(experiments/(2026-10-18-request-steering|2026-10-18-steering-consume|2026-10-19-r6x-steering|2026-10-19-r6x-steering-gpu|2026-10-23-1022-attention-steering)/|bin/spark$|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
+              '^(experiments/(2026-10-18-request-steering|2026-10-18-steering-consume|2026-10-19-r6x-steering|2026-10-19-r6x-steering-gpu|2026-10-23-1022-attention-steering|2026-10-23-1022-attention-review)/|bin/spark$|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
             echo steering=true >> "$GITHUB_OUTPUT"
           else
             echo steering=false >> "$GITHUB_OUTPUT"
@@ -184,15 +184,20 @@ jobs:
     needs: changes
     if: needs.changes.outputs.steering == 'true' || needs.changes.outputs.patches == 'true'
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review]
+    env:
+      STEERING_EXPERIMENT: ${{ matrix.experiment }}
     steps:
       - uses: actions/checkout@v5
       - name: Use the example site and candidate four-node map
         run: |
           scripts/example_site.py
           python3 - <<'PY'
-          import json
+          import json, os
           from pathlib import Path
-          cluster = json.loads(Path("experiments/2026-10-23-1022-attention-steering/cluster.json").read_text())
+          cluster = json.loads(Path("experiments", os.environ["STEERING_EXPERIMENT"], "cluster.json").read_text())
           nodes = json.loads(Path("config/examples/nodes-ring4.json").read_text())
           next(node for node in nodes["nodes"] if node.get("head"))["management_ip"] = cluster["distributed"]["master_addr"]
           for node in nodes["nodes"]:
@@ -204,19 +209,54 @@ jobs:
               stream.write("\n")
           PY
       - name: Validate the isolated 1022 candidate recipe
-        run: bin/spark --cluster-config experiments/2026-10-23-1022-attention-steering/cluster.json doctor
-      - name: Replay all 197 patches and verify the 1022 candidate identity
-        run: bin/spark --cluster-config experiments/2026-10-23-1022-attention-steering/cluster.json build prepare --only vllm
+        run: bin/spark --cluster-config experiments/$STEERING_EXPERIMENT/cluster.json doctor
+      - name: Replay the complete series and verify the 1022 candidate identity
+        run: bin/spark --cluster-config experiments/$STEERING_EXPERIMENT/cluster.json build prepare --only vllm
       - name: Install the hash-pinned CPU gate dependencies
         run: |
           python3 -m venv .work/steering-1022-cpu-venv
           .work/steering-1022-cpu-venv/bin/python -m pip install --require-hashes -r requirements/steering-1022-cpu.txt
       - name: Execute the complete pinned 1022 CPU collection
-        run: .work/steering-1022-cpu-venv/bin/python scripts/check_steering_cpu.py --upstreams experiments/2026-10-23-1022-attention-steering/upstreams.lock.json --cases experiments/2026-10-23-1022-attention-steering/cpu-cases.json --report .work/steering-1022-cpu.xml
+        run: .work/steering-1022-cpu-venv/bin/python scripts/check_steering_cpu.py --upstreams experiments/$STEERING_EXPERIMENT/upstreams.lock.json --cases experiments/$STEERING_EXPERIMENT/cpu-cases.json --report .work/steering-1022-cpu.xml
+      - name: Check rendered JSON controls with the byte tokenizer fixture
+        if: matrix.experiment == '2026-10-23-1022-attention-review'
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+          PYTHONDONTWRITEBYTECODE: "1"
+          HF_HUB_OFFLINE: "1"
+          TRANSFORMERS_OFFLINE: "1"
+          # This selection does not open checkpoint files; real-tokenizer cases
+          # are validated locally and intentionally deselected in this job.
+          STEERING_MODEL_IDENTITY: .work/unused-checkpoint
+        run: |
+          export STEERING_VLLM_SOURCE=$(PYTHONPATH=scripts .work/steering-1022-cpu-venv/bin/python - <<'PY'
+          import os
+          from check_steering_cpu import load_spark
+          spark = load_spark()
+          lock = spark.read_json("experiments/" + os.environ["STEERING_EXPERIMENT"] + "/upstreams.lock.json")
+          print(spark.build_directory(spark.build_inputs(lock)) / "src/vllm")
+          PY
+          )
+          .work/steering-1022-cpu-venv/bin/python -m pytest -p no:cacheprovider \
+            --confcutdir=experiments/$STEERING_EXPERIMENT/tools -o addopts= -q \
+            experiments/$STEERING_EXPERIMENT/tools/test_encoder_offline.py \
+            -k 'not checkpoint_tokenizer' --junitxml=.work/steering-1022-encoder.xml
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          suites = list(ET.parse(".work/steering-1022-encoder.xml").getroot().iter("testsuite"))
+          counts = {key: sum(int(s.get(key, 0)) for s in suites) for key in ("tests", "failures", "errors", "skipped")}
+          assert counts == {"tests": 38, "failures": 0, "errors": 0, "skipped": 0}, counts
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.experiment == '2026-10-23-1022-attention-review'
+        with:
+          name: steering-1022-encoder
+          path: .work/steering-1022-encoder.xml
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: steering-1022-cpu
+          name: steering-1022-cpu-${{ matrix.experiment }}
           path: .work/steering-1022-cpu.xml
           if-no-files-found: error
 

@@ -1,0 +1,12 @@
+CPU gate: /Users/daniel/Workspace/spark-ds41f/.work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-deda0e56/src/vllm; tree=fe867f8e203120419f2108c46bcfcbb71fce99d3
+........................................................................ [ 57%]
+......................................................                   [100%]
+=============================== warnings summary ===============================
+vllm/__init__.py:7
+  /Users/daniel/Workspace/spark-ds41f/.work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-deda0e56/src/vllm/vllm/__init__.py:7: RuntimeWarning: Failed to read commit hash:
+  No module named 'vllm._version'
+    from .version import __version__, __version_tuple__  # isort:skip
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+126 passed, 1 warning in 5.78s
+CPU gate passed: {'tests': 126, 'failures': 0, 'errors': 0, 'skipped': 0}

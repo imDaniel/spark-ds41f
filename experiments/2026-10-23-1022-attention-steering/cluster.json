@@ -240,7 +240,7 @@
     "--mm-processor-cache-gb",
     "1",
     "--additional-config",
-    "{\"ds41_steering\":{\"schema_version\":1,\"operator_version\":\"attn-writer-project-bf16-rank-order-v1\",\"profile_path\":\"/steering-1022/heretic-1017-attn-v1.safetensors\",\"profile_sha256\":\"25016574ca90478ed62109005234d48d11dd0d343d36cce413db3a4bbefc7475\"}}",
+    "{\"ds41_steering\":{\"schema_version\":1,\"operator_version\":\"attn-writer-project-bf16-rank-order-v1\",\"profile_path\":\"/steering-1022/steering/heretic-1017-attn-v1.safetensors\",\"profile_sha256\":\"25016574ca90478ed62109005234d48d11dd0d343d36cce413db3a4bbefc7475\"}}",
     "--enable-prompt-tokens-details"
   ],
   "distributed": {

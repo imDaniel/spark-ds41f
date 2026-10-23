@@ -3,19 +3,20 @@
 import hashlib
 import json
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPERIMENT = ROOT / "experiments/2026-10-23-1022-attention-steering"
 
 
-def read(name):
-    return json.loads((EXPERIMENT / name).read_text())
-
-
 class Attention1022CandidateTest(unittest.TestCase):
-    def test_retained_patches_are_byte_identical_and_new_patch_is_tests_only(self):
-        mapping = read("patch-map.json")
+    experiment = EXPERIMENT
+
+    def read(self, name):
+        return json.loads((self.experiment / name).read_text())
+
+    def test_patch_map_preserves_published_series(self):
+        mapping = self.read("patch-map.json")
         retained = [entry for entry in mapping["mapping"] if entry["old_patch"]]
         self.assertEqual(len(retained), 12)
         for entry in retained:
@@ -31,7 +32,7 @@ class Attention1022CandidateTest(unittest.TestCase):
         self.assertTrue(all(path.startswith("tests/models/") for path in paths))
 
     def test_candidate_cannot_launch_and_has_isolated_resources(self):
-        candidate = read("cluster.json")
+        candidate = self.read("cluster.json")
         previous = json.loads((ROOT / "experiments/2026-10-19-r6x-steering-gpu/followup/acceptance.json").read_text())
         self.assertIs(candidate["deployment"]["launch_enabled"], False)
         self.assertEqual(candidate["deployment"]["repository"], "https://github.com/imDaniel/spark-ds41f.git")
@@ -48,8 +49,8 @@ class Attention1022CandidateTest(unittest.TestCase):
         self.assertEqual(candidate["environment"]["VLLM_SINK_REJECTION"], "1")
 
     def test_startup_pin_matches_rebound_profile_and_preserves_logical_name(self):
-        candidate = read("cluster.json")
-        receipt = read("profile-rebind.json")
+        candidate = self.read("cluster.json")
+        receipt = self.read("profile-rebind.json")
         args = candidate["serve_args"]
         startup = json.loads(args[args.index("--additional-config") + 1])["ds41_steering"]
         self.assertEqual(startup["profile_sha256"], receipt["new_artifact_sha256"])
@@ -64,14 +65,48 @@ class Attention1022CandidateTest(unittest.TestCase):
         self.assertFalse(receipt["gpu_qualified"])
         self.assertIn("--enable-prompt-tokens-details", args)
 
+    def test_startup_path_resolves_inside_the_generated_release(self):
+        candidate = self.read("cluster.json")
+        receipt = self.read("profile-rebind.json")
+        args = candidate["serve_args"]
+        startup = json.loads(args[args.index("--additional-config") + 1])["ds41_steering"]
+        mount = next(m for m in candidate["container"]["mounts"] if m[1] == "/steering-1022")
+        self.assertEqual(mount[2], "ro")
+        artifact = PurePosixPath(startup["profile_path"]).relative_to(mount[1])
+        self.assertEqual(str(artifact), receipt["artifact_file"])
+        self.assertNotIn("..", artifact.parts)
+
     def test_no_native_dependency_migration_is_hidden_in_the_steering_series(self):
-        source = read("source.json")
+        source = self.read("source.json")
         upstream = json.loads((ROOT / "manifests/sources/2026-10-22-spark-ds41f-1022-source.json").read_text())
         for name in ("b12x", "nccl", "tilelang", "tile_kernels", "sparknet"):
             self.assertEqual(source[name], upstream[name])
-        self.assertEqual(source["vllm"]["expected_tree"], read("patch-map.json")["expected_tree"])
-        lock = read("upstreams.lock.json")
+        self.assertEqual(source["vllm"]["expected_tree"], self.read("patch-map.json")["expected_tree"])
+        lock = self.read("upstreams.lock.json")
         self.assertEqual(lock["sources"]["sparknet"]["version"], "0.5.0")
+
+
+class Attention1022ReviewCandidateTest(Attention1022CandidateTest):
+    experiment = ROOT / "experiments/2026-10-23-1022-attention-review"
+
+    def test_patch_map_preserves_published_series(self):
+        # This successor intentionally adds a runtime encoder fix. It references
+        # every published patch unchanged instead of rewriting the old series.
+        mapping = self.read("patch-map.json")
+        retained = [entry for entry in mapping["mapping"] if entry["old_patch"]]
+        self.assertEqual(len(retained), 197)
+        for entry in retained:
+            self.assertEqual(entry["old_patch"], entry["new_patch"])
+            self.assertEqual(hashlib.sha256((ROOT / entry["new_patch"]).read_bytes()).hexdigest(),
+                             entry["sha256"])
+        additions = [entry for entry in mapping["mapping"] if not entry["old_patch"]]
+        self.assertEqual(len(additions), 1)
+        patch = (ROOT / additions[0]["new_patch"]).read_text()
+        paths = {line.split(" b/", 1)[1] for line in patch.splitlines() if line.startswith("diff --git ")}
+        self.assertEqual(paths, {"vllm/tokenizers/deepseek_v41.py", "tests/tokenizers_/test_deepseek_v41.py"})
+        previous = json.loads((EXPERIMENT / "source.json").read_text())["vllm"]
+        self.assertEqual(mapping["previous_head"], previous["patch_head"])
+        self.assertNotEqual(mapping["patch_head"], previous["patch_head"])
 
 
 if __name__ == "__main__":

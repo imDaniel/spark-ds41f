@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-23",
+  "platform": "macOS ARM64 / Python 3.12; same isolated CPU environment as previous candidate",
+  "source_head": "dea96d04ea9eae7f7e19f1dcadd56b8e27f29875",
+  "source_tree": "ab7b6505447360a926fee000df5dc59b2ff770ff",
+  "source_patchset_sha256": "047e56e4596a22fe3574f89b9893813631d58947b1522347320a45725eb8e159",
+  "profile_sha256": "e06b8cb60f3f382157ef6632a93efdd90185beafa2251a8c29575f09c45cd45b",
+  "directions_sha256": "f11e3762252448f547183d4b2daaf5b58c2d9023cd5b23365bc026a402c1a8e6",
+  "checks": {
+    "deployment_unit_tests": {
+      "tests": 492,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "steering-cpu": {
+      "tests": 126,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "encoder-profile": {
+      "tests": 77,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "encoder-ci-selection": {
+      "tests": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "encoder_local_tests": 66,
+    "profile_local_tests": 11,
+    "fresh_replay_patches": 198,
+    "default_doctor": true,
+    "candidate_doctor": true,
+    "build_inputs_check": true,
+    "deployment_diff_check": true,
+    "prepared_source_diff_check": true,
+    "release_classification": {
+      "selected": 129,
+      "gate": 72,
+      "excluded": 57,
+      "problems": 0
+    }
+  },
+  "failed_attempts": [
+    {
+      "check": "expanded encoder tests before fix",
+      "failed": 28,
+      "passed": 38,
+      "log": "runs/encoder-before-fix.txt"
+    },
+    {
+      "check": "first repository suite after adding successor",
+      "failed": 1,
+      "tests": 492,
+      "cause": "new TileLang experiment missing from historical-lock exclusion list; fixed",
+      "log": "runs/deployment-first.txt"
+    },
+    {
+      "check": "initial successor doctor",
+      "cause": "copied image tree label still named previous source tree; corrected to new source tree",
+      "resolved": true
+    }
+  ],
+  "gpu_tests_run": false,
+  "image_built": false,
+  "node_operations_run": false,
+  "release_gate_executed": false
+}

@@ -80,6 +80,10 @@ def measure(base_url: str, model: str, size: int, seed: int, texts: list[str], *
     tokens = record["prompt_tokens"] or counted
     ttft = first - sent if first is not None else None
     error = record["error"]
+    decode_errors = [f"stream {i}: {stream['error']}" for i, stream in enumerate(records)
+                     if stream and stream.get("error")]
+    if error is None and decode_errors:
+        error = "decode failed: " + "; ".join(decode_errors)
     if error is None and covering < len(texts):
         error = f"{len(texts) - covering} of {len(texts)} streams did not decode across the prefill"
     return {"size": size, "prompt_tokens": tokens, "ttft_s": ttft,

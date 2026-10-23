@@ -8,6 +8,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import http.server as t_http
 from pathlib import Path
@@ -395,6 +396,24 @@ class LiveTest(unittest.TestCase):
 
 
 class StallTest(unittest.TestCase):
+    def test_decode_errors_fail_even_when_timestamps_cover_the_prefill(self):
+        def stream_chat(_url, body, **_kwargs):
+            if body["max_tokens"] == 1:
+                return {"sent": 2.0, "first": 4.0, "prompt_tokens": 3000, "error": None}
+            return {"events": [[0.0, 1], [1.0, 2], [3.0, 3], [5.0, 4]],
+                    "error": "server: decode failed"}
+
+        with patch.object(prefill, "document", return_value=("document", 3000)), \
+                patch.object(client, "stream_chat", side_effect=stream_chat):
+            sample = stall.measure("http://unused", "model", 3000, 0, ["decode"],
+                                   max_tokens=128, warmup_s=0, tail_s=0, vllm=True,
+                                   extra_body={}, sleep=lambda _: None)
+        self.assertEqual(sample["covering"], 1)
+        self.assertIn("decode failed", sample["error"])
+        row = stall.summarize([sample])[0]
+        self.assertEqual(row["failed"], 1)
+        self.assertEqual(row["stall_s"]["n"], 0)
+
     def test_gaps_split_at_the_prefill(self):
         events = [[0.0, 1], [1.0, 2], [2.0, 3], [5.0, 4], [6.0, 5], [7.0, 6]]
         self.assertEqual(stall.split_gaps(events, 2.5, 5.5), ([1.0, 1.0], [3.0, 1.0]))
