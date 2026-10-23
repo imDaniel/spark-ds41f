@@ -1,0 +1,10 @@
+........................................................................ [ 57%]
+......................................................                   [100%]
+=============================== warnings summary ===============================
+vllm/__init__.py:7
+  /Users/daniel/Workspace/spark-ds41f/.work/integration-1022-attention-20261023/vllm/vllm/__init__.py:7: RuntimeWarning: Failed to read commit hash:
+  No module named 'vllm._version'
+    from .version import __version__, __version_tuple__  # isort:skip
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+126 passed, 1 warning in 6.08s

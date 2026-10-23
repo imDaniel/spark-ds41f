@@ -1,0 +1,30 @@
+[
+  {
+    "stage": "preview target cases",
+    "result": "22 passed; 48 deselected, before fresh full replay"
+  },
+  {
+    "stage": "profile packaging prototype",
+    "result": "failed closed: bundled index requires steering/{logical_profile_id}.safetensors; no release published; fixed basename while retaining separate release directory"
+  },
+  {
+    "stage": "fresh full steering CPU gate",
+    "result": "126 passed; 0 skipped"
+  },
+  {
+    "stage": "deployment full suite first run",
+    "result": "485 collected: three integration test failures and five missing-jsonschema skips. Fixed new TileLang namespace registration and bound two historical r6x checks to the frozen r6x recipe/lock, preserving historical data. Installed jsonschema in the isolated CPU environment for a complete rerun."
+  },
+  {
+    "stage": "targeted kernel-backend recheck before historical lock fix",
+    "result": "21 tests; one historical profile/root-lock mismatch; resolved by testing the immutable profile against its retained r6x lock"
+  },
+  {
+    "stage": "deployment regression after history fixes",
+    "result": "485 collected, 480 passed and 5 skipped because system Python lacked jsonschema. Retained report; complete isolated-environment rerun follows."
+  },
+  {
+    "stage": "complete deployment regression with jsonschema",
+    "result": "485 passed, 0 skipped; complete final source and candidate consistency checks"
+  }
+]

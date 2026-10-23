@@ -1,0 +1,161 @@
+From b0b4ca72f1e2558cbf36d338a330c2e897aff980 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 14:02:01 +0900
+Subject: [PATCH] Validate attention steering with 1022 host scheduling
+
+Upstream base: vLLM 19f2c20ed4d64ae22bd009ceacadd85e2a81e354 plus the 1022 upstream series through 8fc15c18f8903b97c36f5268ebd648b53d9f9689. Depends on downstream 0500-0511.
+
+Rationale: initialize the host profiling test stand-in for late admission, and cover draft-zero row layouts, late-admission hooks and encoder-bound cache identity together with steering. Quality: tests only; projection arithmetic, weights and runtime policy are unchanged. CPU host contracts do not qualify GPU replay, sink thresholds or KV rollback.
+
+Tests: 22 targeted CPU cases passed, including all four profiling cases; complete pinned CPU collection is recorded by the downstream experiment. Upstream status: downstream integration validation only; no upstream submission planned.
+---
+ .../test_deepseek_v4_1_steering_consume.py    | 93 +++++++++++++++++++
+ .../test_deepseek_v4_1_steering_profile.py    | 27 ++++++
+ 2 files changed, 120 insertions(+)
+
+diff --git a/tests/models/test_deepseek_v4_1_steering_consume.py b/tests/models/test_deepseek_v4_1_steering_consume.py
+index f76ac5bd5..98976a14c 100644
+--- a/tests/models/test_deepseek_v4_1_steering_consume.py
++++ b/tests/models/test_deepseek_v4_1_steering_consume.py
+@@ -419,6 +419,8 @@ def test_actual_runner_initial_profile_before_graph_manager(
+     )
+     runner = type("HostRunner", (), {name: ns[name] for name in methods})()
+     for key, value in dict(
++        # 1022 installs this before graph capture; dummy profiling must not reply.
++        layer_progress=SimpleNamespace(reply=lambda: pytest.fail("dummy progress reply")),
+         cudagraph_manager=None,
+         model_state=state,
+         model=model,
+@@ -597,3 +599,94 @@ def test_actual_consumer_formula_matches_fp64_and_skips_zero_loads(host_modules,
+             .float()
+         )
+         assert ((observed.float() - expected.float()).abs() <= 2 * spacing).all()
++
++
++@pytest.mark.parametrize("wrapper", ["causal", "vision"])
++@pytest.mark.parametrize("scale", [0, 1, 4])
++def test_1022_late_admission_hook_preserves_steering_inputs(tmp_path, wrapper, scale):
++    """Real LayerProgress host hooks with CPU tensors/events; no CUDA replay proof."""
++    ns = {"torch": torch, "nn": torch.nn, "AsyncModelRunnerOutput": object}
++    source_definitions(
++        "vllm/v1/worker/gpu/late_admission.py",
++        ["decoder_layers", "StepReachedLayer", "LayerProgress"], ns,
++    )
++    trace = []
++
++    class Layer(torch.nn.Module):
++        def forward(self, x):
++            trace.append("layer")
++            return x + 1
++
++    inner = torch.nn.Module()
++    inner.layers = torch.nn.ModuleList([Layer(), Layer(), Layer()])
++    model = torch.nn.Module()
++    if wrapper == "vision":
++        model.language_model = torch.nn.Module()
++        model.language_model.model = inner
++    else:
++        model.model = inner
++    event = SimpleNamespace(
++        record=lambda: trace.append("event"),
++        synchronize=lambda: trace.append("wait"),
++    )
++    progress = ns["LayerProgress"](model, 1, event_factory=lambda: event)
++    profile = valid_profile(tmp_path)
++    runtime = SteeringRuntime(profile, 2, 8, "cpu")
++    runtime.add_request(1, "r", {"steering_profile": profile.profile_id, "steering_scale": scale})
++    batch = SimpleNamespace(
++        num_reqs=1, req_ids=["r"], idx_mapping_np=np.array([1]),
++        num_tokens_after_padding=4, query_start_loc=torch.tensor([0, 2]),
++        is_padding=torch.tensor([False, False, True, True]),
++    )
++    for _ in range(2):
++        inputs = runtime.model_inputs(batch)
++        assert inputs["steering_active"] == bool(scale)
++        if scale:
++            assert inputs["steering_scales"].tolist() == [scale, scale, 0, 0]
++        x = torch.zeros(2)
++        for layer in inner.layers:
++            x = layer(x)
++        assert torch.equal(x, torch.full((2,), 3.0))
++        assert progress.reply().get_output() is None
++    assert trace == ["layer", "event", "layer", "layer", "wait"] * 2
++    assert runtime.requests["r"][1].scale == scale
++
++
++@pytest.mark.parametrize("drafts", [0, 2, 5])
++@pytest.mark.parametrize("scale", [0, 1, 4])
++def test_1022_draft_zero_keeps_controls_on_final_input_rows(tmp_path, drafts, scale):
++    """Exercise the actual draft-zero splitter and ragged row controls together.
++
++    This is a host layout contract, not execution of sink sampling or KV rollback.
++    """
++    ns = {}
++    source_definitions(
++        "vllm/v1/worker/gpu/model_runner.py", ["_drafter_spec_tokens"], ns,
++        owner="GPUModelRunner",
++    )
++    spec = {"r": [700, *range(drafts)], "stock": [800, 801]}
++    output = SimpleNamespace(scheduled_spec_decode_tokens=spec, sink_draft_zero_req_ids={"r"})
++    expected = {"stock": [800, 801]}
++    if drafts:
++        expected["r"] = list(range(drafts))
++    assert ns["_drafter_spec_tokens"](None, output) == expected
++    assert spec["r"] == [700, *range(drafts)]  # does not mutate the scheduler
++    profile = valid_profile(tmp_path)
++    runtime = SteeringRuntime(profile, 3, 32, "cpu")
++    runtime.add_request(2, "r", {"steering_profile": profile.profile_id, "steering_scale": scale})
++    runtime.add_request(0, "stock", None)
++    # Includes row zero regardless of how many drafter-only tokens remain.
++    for row_count in (drafts + 1, 1):
++        batch = SimpleNamespace(
++            num_reqs=2, req_ids=["stock", "r"], idx_mapping_np=np.array([0, 2]),
++            num_tokens_after_padding=16, query_start_loc=torch.tensor([0, 2, 2 + row_count]),
++            is_padding=torch.tensor([False] * (2 + row_count) + [True] * (14 - row_count)),
++        )
++        inputs = runtime.model_inputs(batch)
++        assert inputs["steering_active"] == bool(scale)
++        if scale:
++            assert inputs["steering_scales"].tolist() == [0, 0] + [scale] * row_count + [0] * (14 - row_count)
++    runtime.remove_request("r")
++    runtime.add_request(2, "next", None)
++    assert runtime.input_variant(["next", "stock"]) == 0
++    assert runtime.request_scales[2] == 0
+diff --git a/tests/models/test_deepseek_v4_1_steering_profile.py b/tests/models/test_deepseek_v4_1_steering_profile.py
+index 93e4dba89..f782f539e 100644
+--- a/tests/models/test_deepseek_v4_1_steering_profile.py
++++ b/tests/models/test_deepseek_v4_1_steering_profile.py
+@@ -240,3 +240,30 @@ def test_bundled_selection_checks_index_name_size_and_content(tmp_path):
+     index_path.write_text(json.dumps(index))
+     with pytest.raises(ValueError, match="not listed"):
+         artifact.resolve_bundled(release, "hf:missing")
++
++
++@pytest.mark.parametrize("scale", [0, 1, 4])
++def test_1022_template_rebinding_separates_active_prefix_cache(tmp_path, scale):
++    from ds41_steering_test.cache import steering_cache_salt
++    from ds41_steering_test.request import parse_selection
++
++    old_path, old_sha = make_profile(tmp_path)
++    new_path, new_sha = make_profile(
++        tmp_path, changes={"model.chat_template_sha256": "e" * 64}, suffix="-1022"
++    )
++    old = load_profile(old_path, old_sha, expected_template_identity="c" * 64)
++    new = load_profile(new_path, new_sha, expected_template_identity="e" * 64)
++    assert old.directions.tobytes() == new.directions.tobytes()
++    assert old.schedule_sha256 == new.schedule_sha256
++    assert old.identity != new.identity
++    with pytest.raises(ValueError, match="chat_template_sha256 identity mismatch"):
++        load_profile(old_path, old_sha, expected_template_identity="e" * 64)
++    with pytest.raises(ValueError, match="chat_template_sha256 identity mismatch"):
++        load_profile(new_path, new_sha, expected_template_identity="c" * 64)
++    args = {"steering_profile": old.profile_id, "steering_scale": scale}
++    before = steering_cache_salt("caller", parse_selection(args, old))
++    after = steering_cache_salt("caller", parse_selection(args, new))
++    if scale:
++        assert before != after
++    else:
++        assert before == after == "caller"
+-- 
+2.54.0 (Apple Git-157)
+

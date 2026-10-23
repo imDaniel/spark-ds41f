@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "upstream_deployment_revision": "26aebf209534a2d43799bf4be7b7e344efe97c7c",
+  "upstream_patch_head": "8fc15c18f8903b97c36f5268ebd648b53d9f9689",
+  "upstream_patch_count": 184,
+  "retained_downstream_patch_count": 12,
+  "new_test_only_patch_count": 1,
+  "total_patch_count": 197,
+  "patch_head": "e97617bd559691aac8cbf8239496f06dd87ded6c",
+  "expected_tree": "fe867f8e203120419f2108c46bcfcbb71fce99d3",
+  "patchset_sha256": "023b58d9e8d73872698368f29be094cb4b433eb8a11f0240a67d8136fd434c0d",
+  "mapping": [
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0500-checkpoint-bound-profile.patch",
+      "old_sha256": "8ea485b48627be4efca55afc4ac997b7d4795b596647ef9a641acb1107ef8952",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0500-checkpoint-bound-profile.patch",
+      "new_sha256": "8ea485b48627be4efca55afc4ac997b7d4795b596647ef9a641acb1107ef8952",
+      "replayed_commit": "9ce55c4ca4db9d8471be79cb30fea053093e6a05",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0501-request-contract-and-cache-identity.patch",
+      "old_sha256": "698fdcb4f71d052c2e55884e7c6487e5aa005f4e7f4f50c0562869aed16bb6fa",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0501-request-contract-and-cache-identity.patch",
+      "new_sha256": "698fdcb4f71d052c2e55884e7c6487e5aa005f4e7f4f50c0562869aed16bb6fa",
+      "replayed_commit": "771475823e49bc2078f30e634be728a3bf32aeb5",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0502-v2-request-control-data.patch",
+      "old_sha256": "951b5f4144448a0207cc3bd47d09cd8cf4e53086d4b27e2e191f13b4a98ab83c",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0502-v2-request-control-data.patch",
+      "new_sha256": "951b5f4144448a0207cc3bd47d09cd8cf4e53086d4b27e2e191f13b4a98ab83c",
+      "replayed_commit": "74e58dabe3291632a459fba2566d88631e0ed750",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0503-target-writer-projection.patch",
+      "old_sha256": "ec60018cc51b34657dbdb489420776cc28437da6e9eec6195c2ea86f445546c1",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0503-target-writer-projection.patch",
+      "new_sha256": "ec60018cc51b34657dbdb489420776cc28437da6e9eec6195c2ea86f445546c1",
+      "replayed_commit": "ad1adc6a73ab6acfda84130b120218170ab01b07",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0504-dummy-controls-and-wire-validation.patch",
+      "old_sha256": "98e1d45d71fca8d97a6fa94a5025f453b2f4ca77e2f694d72801087f32e4a9a6",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0504-dummy-controls-and-wire-validation.patch",
+      "new_sha256": "98e1d45d71fca8d97a6fa94a5025f453b2f4ca77e2f694d72801087f32e4a9a6",
+      "replayed_commit": "7f5d57c8ee8ed63f252b31316711c700952ab7c0",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0505-client-admission-errors.patch",
+      "old_sha256": "16a3c76ac1cb27771cf21c6f052b0faf8829f79c123a6fa2d6336c7d537255fa",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0505-client-admission-errors.patch",
+      "new_sha256": "16a3c76ac1cb27771cf21c6f052b0faf8829f79c123a6fa2d6336c7d537255fa",
+      "replayed_commit": "1db53fdd037f4513f3fdffbcdb6fb2bd8baa9900",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0506-top-level-request-contract.patch",
+      "old_sha256": "ce82a58d9aa24d30a1cecb15e59bbd9c444f426937357e32c384c1897efe31ad",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0506-top-level-request-contract.patch",
+      "new_sha256": "ce82a58d9aa24d30a1cecb15e59bbd9c444f426937357e32c384c1897efe31ad",
+      "replayed_commit": "eb102836910a42bf59a66bfc382b756c738a8fa1",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0507-profile-artifact-and-provenance.patch",
+      "old_sha256": "7ace00f4e4a3a5986dc1ef0af3a446142073d983deb100bfe4dc7d9232d7c3b2",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0507-profile-artifact-and-provenance.patch",
+      "new_sha256": "7ace00f4e4a3a5986dc1ef0af3a446142073d983deb100bfe4dc7d9232d7c3b2",
+      "replayed_commit": "1069f16bd3594aaf2b080b810c79dbb2e0589a7a",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0508-stock-route-and-consumer-fusion.patch",
+      "old_sha256": "88f186724b2271a632851402a46e669c7c5f8eac772a985fcae6cbb38c3cdedf",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0508-stock-route-and-consumer-fusion.patch",
+      "new_sha256": "88f186724b2271a632851402a46e669c7c5f8eac772a985fcae6cbb38c3cdedf",
+      "replayed_commit": "b99c04e284183a2d11ca34a41dc5b176798d5584",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0509-stock-and-consume-validation.patch",
+      "old_sha256": "36759c5befe0b390cac923217b0bca3d3f36f00557ae65808747766ed04db0a7",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0509-stock-and-consume-validation.patch",
+      "new_sha256": "36759c5befe0b390cac923217b0bca3d3f36f00557ae65808747766ed04db0a7",
+      "replayed_commit": "60aaaa6fe6409c561f24b848436d030a11e9473a",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0510-preserve-manager-less-profiling.patch",
+      "old_sha256": "2c5f5c074c765dc897d70973769f3ed29589e7ffea109e42413f9e43e8cb65a7",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0510-preserve-manager-less-profiling.patch",
+      "new_sha256": "2c5f5c074c765dc897d70973769f3ed29589e7ffea109e42413f9e43e8cb65a7",
+      "replayed_commit": "5ce261c93ae5896ca5182d2464aff6a604ac88e6",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": "experiments/2026-10-19-r6x-steering/vllm/0511-consumer-region-stores.patch",
+      "old_sha256": "b5a99b83dce751ae0b15575ac93412022247115455dcf5f52483defd765332fe",
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0511-consumer-region-stores.patch",
+      "new_sha256": "b5a99b83dce751ae0b15575ac93412022247115455dcf5f52483defd765332fe",
+      "replayed_commit": "bec9ef5a44299347cc3b37fe109995e234651487",
+      "change": "byte-identical retained patch"
+    },
+    {
+      "old_patch": null,
+      "old_sha256": null,
+      "new_patch": "experiments/2026-10-23-1022-attention-steering/vllm/0512-1022-offline-contracts.patch",
+      "new_sha256": "db7a3af4bd956d1f743c319cd2abc688aec6302bf944a8ce3ddf3ff2334dabd9",
+      "replayed_commit": "e97617bd559691aac8cbf8239496f06dd87ded6c",
+      "change": "1022 host test integration only"
+    }
+  ]
+}

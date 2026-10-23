@@ -88,7 +88,9 @@ class RecipeTest(unittest.TestCase):
         self.assertEqual(record["shape"], "tp3-triangle")
         self.assertEqual(record["source_identity"], json.loads(original)["source_identity"])
         self.assertEqual(record["image_id"], json.loads(original)["image_id"])
-        resolved = recipe.resolve(self.recipe, "tp3-triangle")
+        # This is r6x's immutable qualification, independent of the current release.
+        frozen = load("experiments/2026-10-22-spark-ds41f-1022/r6x/cluster.json")
+        resolved = recipe.resolve(frozen, "tp3-triangle")
         self.assertEqual(record["capacity"]["max_model_len"], int(argument(resolved, "--max-model-len")))
         self.assertEqual(record["capacity"]["kv_cache_memory_bytes"],
                          int(argument(resolved, "--kv-cache-memory-bytes")))

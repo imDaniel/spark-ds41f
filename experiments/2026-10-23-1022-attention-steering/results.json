@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "status": "offline validation passed; GPU/image/service qualification pending",
+  "source_replay": {
+    "upstream_commit": "26aebf209534a2d43799bf4be7b7e344efe97c7c",
+    "upstream_patches": 184,
+    "retained_downstream_patches": 12,
+    "test_only_patches": 1,
+    "total_patches": 197,
+    "patch_head": "e97617bd559691aac8cbf8239496f06dd87ded6c",
+    "tree": "fe867f8e203120419f2108c46bcfcbb71fce99d3",
+    "patchset_sha256": "023b58d9e8d73872698368f29be094cb4b433eb8a11f0240a67d8136fd434c0d",
+    "exact_upstream_head_reproduced": true,
+    "historical_series_unchanged": true,
+    "diff_check": true
+  },
+  "steering_cpu": {
+    "tests": 126,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "encoder_cpu": {
+    "tests": 36,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "real_profile_cpu": {
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "build_inputs": {
+    "complete": true,
+    "check_passed": true,
+    "directory": ".work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-deda0e56",
+    "image_built": false,
+    "native_compilation_tested": false
+  },
+  "release_test_classification": {
+    "selected_files": 129,
+    "gate_files": 72,
+    "excluded_files": 57,
+    "periodic_files": 0,
+    "problems": 0,
+    "gate_executed": false
+  },
+  "profile": {
+    "old_sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093",
+    "new_sha256": "25016574ca90478ed62109005234d48d11dd0d343d36cce413db3a4bbefc7475",
+    "directions_sha256": "f11e3762252448f547183d4b2daaf5b58c2d9023cd5b23365bc026a402c1a8e6",
+    "payload_bytes": 778240,
+    "deterministic_repack": true,
+    "strict_startup_file_and_bundled_loads": true,
+    "old_artifact_rejected_on_1022": true,
+    "new_namespace_for_active_prefix_cache": true,
+    "weights_modified": false,
+    "directions_reextracted": false
+  },
+  "limits": [
+    "CPU host hooks do not qualify CUDA graph replay, GPU projection math, native sparknet ABI or performance.",
+    "No real sink sampler, KV rollback or new sink-threshold calibration was run.",
+    "Encoder isolation covers real source bodies and tokenizer bytes; no online multimedia/API acceptance.",
+    "No service lifecycle, sync, image build, GPU or four-node operation performed."
+  ],
+  "next_gate": "Separately authorized GPU window: pure 1022 baseline, patched unloaded, loaded scale0, loaded scale1/4; functional, quality, performance and capacity comparisons.",
+  "deployment_cpu": {
+    "tests": 485,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "report": "runs/deployment-unittest-complete.txt",
+    "python": "3.12.15"
+  },
+  "configuration_doctor": {
+    "default_upstream_recipe": "passed",
+    "candidate": "passed"
+  }
+}

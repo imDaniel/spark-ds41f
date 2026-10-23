@@ -1,0 +1,5 @@
+# Additional offline encoder checks for the 1022 attention-steering candidate.
+-r steering-cpu.in
+transformers==5.16.1
+tokenizers==0.23.1
+jsonschema==4.23.0
