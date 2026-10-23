@@ -6,7 +6,7 @@
 
 本地开发分支已合入固定的 1022 上游提交；[1022 attention steering 审查修订候选](experiments/2026-10-23-1022-attention-review/README.md)
 记录补丁重放、独立 profile 绑定与离线检查。后续[离线准备与恢复评审](experiments/2026-10-23-1022-offline-preparation/README.md)
-已在 Mac 构建三组对照镜像并完成 CPU 检查；GPU 验收及恢复执行器接线仍待完成，候选启动开关关闭，本站服务未更新。
+已构建三组镜像并完成 CPU 检查；[有界 GPU／TP4 验证](experiments/2026-10-23-1022-window/RESULTS.md)和两次实际恢复已通过。本站继续运行原 r6x，PR #56 未合并；完整 release comparison 和满容量验证尚未完成。
 
 Reproducible Docker/vLLM deployment, tuning, and benchmarks for DeepSeek V4.1
 Flash on a switchless three-node DGX Spark fabric, and the same deployment on

@@ -37,6 +37,12 @@ jobs:
           python3 -m venv .venv
           .venv/bin/python -m pip install --quiet --require-hashes -r requirements/bench-client.txt
           .venv/bin/python -m unittest discover -s tests
+      - name: Recovery and window fault contracts (CPU only)
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-recovery-executor/tests
+          .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-window -p 'test_*.py'
       - name: Validate helpers
         run: |
           # scripts/ holds shell and Python helpers and JSON lab specs; check each by

@@ -1,5 +1,9 @@
 # Bounded 1022 GPU / TP4 window
 
+Status: bounded hardware screen complete; retained r6x restored. See
+[results, limits and the complete evidence index](RESULTS.md). The historical
+preparation and continuation decisions below are retained with their receipts.
+
 The owner authorized GPU/TP4 execution on 2026-10-23 after finishing use of the
 Spark service. This experiment temporarily uses the four nodes and restores
 r6x revision `223a3bb3498d12f470e876db3b9e1f5bdc8772b6` afterwards. PR #56 remains
