@@ -1,0 +1,11 @@
+{
+  "holder": "1022-matched-performance",
+  "window_id": "d8edd2b0-d183-42c4-9da4-e5a6ab332f42",
+  "manifest_sha256": "1bdf08c5e341eff513ee89977c928e79d5ef1c167a2875c5928a214ae0408e37",
+  "since": "2026-10-23T18:17:20.629789+00:00",
+  "heartbeat": "2026-10-23T18:37:20.547069+00:00",
+  "heartbeat_epoch": 1792780640.5470824,
+  "heartbeat_monotonic": 61540.547887214,
+  "expected_end": null,
+  "rule": "Owner personally testing final candidate through existing gateway; retain candidate until owner ends trial; no other GPU tests or service switches"
+}

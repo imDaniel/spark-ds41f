@@ -1,0 +1,63 @@
+2026-10-24T02:17:19+08:00 fusionxparkgb10-e4d3 systemd[1]: Started spark-release-run-d8edd2b0.service - /usr/bin/python3 /srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-24-1022-matched-performance/run_window.py --manifest /srv/ai-cluster/operations/1022-performance-20261024/window.json --authorization /srv/ai-cluster/operations/1022-performance-20261024/authorization.json --execute.
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096533]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096533]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096533]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096535]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096535]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096535]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096541]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096541]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096541]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096543]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096543]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096543]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096545]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -I INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096545]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:17:20+08:00 fusionxparkgb10-e4d3 sudo[1096545]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:17:50+08:00 fusionxparkgb10-e4d3 sudo[1098667]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -I INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:17:50+08:00 fusionxparkgb10-e4d3 sudo[1098667]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:17:50+08:00 fusionxparkgb10-e4d3 sudo[1098667]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:17:50+08:00 fusionxparkgb10-e4d3 sudo[1098669]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:17:50+08:00 fusionxparkgb10-e4d3 sudo[1098669]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:17:50+08:00 fusionxparkgb10-e4d3 sudo[1098669]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:17:50+08:00 fusionxparkgb10-e4d3 sudo[1098671]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -D INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:17:50+08:00 fusionxparkgb10-e4d3 sudo[1098671]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:17:50+08:00 fusionxparkgb10-e4d3 sudo[1098671]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:17:51+08:00 fusionxparkgb10-e4d3 sudo[1099584]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:17:51+08:00 fusionxparkgb10-e4d3 sudo[1099584]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:17:51+08:00 fusionxparkgb10-e4d3 sudo[1099584]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:18:22+08:00 fusionxparkgb10-e4d3 sudo[1103976]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:18:22+08:00 fusionxparkgb10-e4d3 sudo[1103976]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:18:22+08:00 fusionxparkgb10-e4d3 sudo[1103976]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:18:23+08:00 fusionxparkgb10-e4d3 sudo[1104601]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:18:23+08:00 fusionxparkgb10-e4d3 sudo[1104601]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:18:23+08:00 fusionxparkgb10-e4d3 sudo[1104601]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:18:37+08:00 fusionxparkgb10-e4d3 sudo[1107575]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:18:37+08:00 fusionxparkgb10-e4d3 sudo[1107575]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:18:37+08:00 fusionxparkgb10-e4d3 sudo[1107575]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:20:19+08:00 fusionxparkgb10-e4d3 sudo[1132754]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:20:19+08:00 fusionxparkgb10-e4d3 sudo[1132754]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:20:19+08:00 fusionxparkgb10-e4d3 sudo[1132754]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:37:03+08:00 fusionxparkgb10-e4d3 sudo[1293327]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:37:03+08:00 fusionxparkgb10-e4d3 sudo[1293327]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:37:03+08:00 fusionxparkgb10-e4d3 sudo[1293327]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:37:04+08:00 fusionxparkgb10-e4d3 sudo[1293940]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:37:04+08:00 fusionxparkgb10-e4d3 sudo[1293940]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:37:04+08:00 fusionxparkgb10-e4d3 sudo[1293940]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:37:05+08:00 fusionxparkgb10-e4d3 sudo[1293950]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:37:05+08:00 fusionxparkgb10-e4d3 sudo[1293950]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:37:05+08:00 fusionxparkgb10-e4d3 sudo[1293950]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:37:05+08:00 fusionxparkgb10-e4d3 sudo[1293952]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -D INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:37:05+08:00 fusionxparkgb10-e4d3 sudo[1293952]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:37:05+08:00 fusionxparkgb10-e4d3 sudo[1293952]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:37:05+08:00 fusionxparkgb10-e4d3 sudo[1293954]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:37:05+08:00 fusionxparkgb10-e4d3 sudo[1293954]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:37:05+08:00 fusionxparkgb10-e4d3 sudo[1293954]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:37:06+08:00 fusionxparkgb10-e4d3 sudo[1294550]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:37:06+08:00 fusionxparkgb10-e4d3 sudo[1294550]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:37:06+08:00 fusionxparkgb10-e4d3 sudo[1294550]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:37:06+08:00 fusionxparkgb10-e4d3 sudo[1294552]:    admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-d8edd2b0-d183-42c4-9da4-e5a6ab332f42 -j REJECT --reject-with tcp-reset
+2026-10-24T02:37:06+08:00 fusionxparkgb10-e4d3 sudo[1294552]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-24T02:37:06+08:00 fusionxparkgb10-e4d3 sudo[1294552]: pam_unix(sudo:session): session closed for user root
+2026-10-24T02:37:06+08:00 fusionxparkgb10-e4d3 systemd[1]: spark-release-run-d8edd2b0.service: Deactivated successfully.
+2026-10-24T02:37:06+08:00 fusionxparkgb10-e4d3 systemd[1]: spark-release-run-d8edd2b0.service: Consumed 33.040s CPU time.

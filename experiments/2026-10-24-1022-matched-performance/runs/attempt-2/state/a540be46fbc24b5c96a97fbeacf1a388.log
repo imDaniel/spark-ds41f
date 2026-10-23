@@ -1,0 +1,66 @@
+servebench: document 1/1 (4093 tokens) primed in 1 s
+servebench: closed warm-up 15 s, then 90 s in 6 windows
+servebench: window 1/6 done
+servebench: window 2/6 done
+servebench: window 3/6 done
+servebench: window 4/6 done
+servebench: window 5/6 done
+servebench: window 6/6 done
+{"completed": 1, "scale": 1, "concurrency": 1, "tps": 70.53333333333333}
+servebench: document 1/4 (4093 tokens) primed in 1 s
+servebench: document 2/4 (4073 tokens) primed in 1 s
+servebench: document 3/4 (4034 tokens) primed in 1 s
+servebench: document 4/4 (4203 tokens) primed in 1 s
+servebench: closed warm-up 15 s, then 90 s in 6 windows
+servebench: window 1/6 done
+servebench: window 2/6 done
+servebench: window 3/6 done
+servebench: window 4/6 done
+servebench: window 5/6 done
+servebench: window 6/6 done
+{"completed": 2, "scale": 1, "concurrency": 4, "tps": 139.35555555555555}
+servebench: document 1/1 (4093 tokens) primed in 1 s
+servebench: closed warm-up 15 s, then 90 s in 6 windows
+servebench: window 1/6 done
+servebench: window 2/6 done
+servebench: window 3/6 done
+servebench: window 4/6 done
+servebench: window 5/6 done
+servebench: window 6/6 done
+{"completed": 3, "scale": 4, "concurrency": 1, "tps": 70.43333333333334}
+servebench: document 1/4 (4093 tokens) primed in 1 s
+servebench: document 2/4 (4073 tokens) primed in 1 s
+servebench: document 3/4 (4034 tokens) primed in 1 s
+servebench: document 4/4 (4203 tokens) primed in 1 s
+servebench: closed warm-up 15 s, then 90 s in 6 windows
+servebench: window 1/6 done
+servebench: window 2/6 done
+servebench: window 3/6 done
+servebench: window 4/6 done
+servebench: window 5/6 done
+servebench: window 6/6 done
+{"completed": 4, "scale": 1, "concurrency": 4, "tps": 139.9333333333333}
+servebench: document 1/4 (4093 tokens) primed in 1 s
+servebench: document 2/4 (4073 tokens) primed in 1 s
+servebench: document 3/4 (4034 tokens) primed in 1 s
+servebench: document 4/4 (4203 tokens) primed in 1 s
+servebench: closed warm-up 15 s, then 90 s in 6 windows
+servebench: window 1/6 done
+servebench: window 2/6 done
+servebench: window 3/6 done
+servebench: window 4/6 done
+servebench: window 5/6 done
+servebench: window 6/6 done
+{"completed": 5, "scale": 4, "concurrency": 4, "tps": 137.96666666666667}
+servebench: document 1/4 (4093 tokens) primed in 1 s
+servebench: document 2/4 (4073 tokens) primed in 1 s
+servebench: document 3/4 (4034 tokens) primed in 1 s
+servebench: document 4/4 (4203 tokens) primed in 1 s
+servebench: closed warm-up 15 s, then 90 s in 6 windows
+servebench: window 1/6 done
+servebench: window 2/6 done
+servebench: window 3/6 done
+servebench: window 4/6 done
+servebench: window 5/6 done
+servebench: window 6/6 done
+{"completed": 6, "scale": 1, "concurrency": 4, "tps": 139.29999999999998}

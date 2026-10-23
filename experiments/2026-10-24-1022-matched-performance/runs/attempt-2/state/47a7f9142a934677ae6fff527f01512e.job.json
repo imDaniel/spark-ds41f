@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "/srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f/bin/spark",
+    "--shape",
+    "tp4-ring",
+    "--cluster-config",
+    "config/cluster-steering-r6x-cache-details-tp4.local.json",
+    "cluster",
+    "stop",
+    "--parallel",
+    "--apply"
+  ],
+  "cwd": "/srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f",
+  "context": {
+    "window_id": "d8edd2b0-d183-42c4-9da4-e5a6ab332f42",
+    "manifest": "/srv/ai-cluster/operations/1022-performance-20261024/window.json",
+    "state_dir": "/srv/ai-cluster/operations/1022-performance-20261024/windows/d8edd2b0-d183-42c4-9da4-e5a6ab332f42",
+    "recovery_step": null,
+    "original_ingress": {
+      "blocked": false,
+      "stage": "open",
+      "aliases_sha256": "06653eea708218e60b7382b3125fed707f73bdfee641d313112bdd98da10137f"
+    }
+  }
+}

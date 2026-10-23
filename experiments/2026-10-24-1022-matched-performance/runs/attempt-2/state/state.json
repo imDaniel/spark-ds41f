@@ -1,0 +1,19 @@
+{
+  "window_id": "d8edd2b0-d183-42c4-9da4-e5a6ab332f42",
+  "manifest_sha256": "1bdf08c5e341eff513ee89977c928e79d5ef1c167a2875c5928a214ae0408e37",
+  "phase": "owner_trial",
+  "opened_at": 1792779440.6297886,
+  "boot_id": "2830fbb4-e3e6-484b-8f08-6c1a4fd58131",
+  "restore_monotonic": 63040.630636961,
+  "restore_at": 1792782140.6297886,
+  "end_at": 1792783040.6297886,
+  "pending": null,
+  "original_ingress": {
+    "blocked": false,
+    "stage": "open",
+    "aliases_sha256": "06653eea708218e60b7382b3125fed707f73bdfee641d313112bdd98da10137f"
+  },
+  "last_arm": "s-loaded",
+  "ingress_reopened": true,
+  "owner_trial_started_at": 1792780626.7797165
+}

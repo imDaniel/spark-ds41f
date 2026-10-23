@@ -112,3 +112,9 @@ comparisons and unchanged component evidence. Broad model-quality evaluation,
 long-duration soak and a fresh statistical performance comparison were outside
 this window. The five quality prompts are smoke coverage. Promotion should use
 the exact candidate identities above; none of these receipts promotes it by itself.
+
+Subsequently, the owner required matched performance measurements against the
+preserved r6x baseline. [Those measurements and latency tradeoffs](../2026-10-24-1022-matched-performance/RESULTS.md)
+are now recorded. The owner also requested retaining the passing candidate on the
+existing gateway for personal scale testing; current state is an explicit owner
+trial, superseding this earlier window's restored-r6x state. PR #56 remains draft.

@@ -64,3 +64,5 @@ the accepted personal trial is owner-controlled. PR #56 stays draft/unmerged.
 python3 -m unittest discover -s experiments/2026-10-24-1022-matched-performance -p 'test_*.py'
 python3 experiments/2026-10-24-1022-matched-performance/run_window.py
 ```
+
+Completed: [matched TPS/latency comparison and current personal-trial status](RESULTS.md).
