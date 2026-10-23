@@ -9,7 +9,8 @@
 
 部署仓库从 `3ff57762036fc72c2221c3845a39e70850fd2d7e` 合入上游
 `26aebf209534a2d43799bf4be7b7e344efe97c7c`（1022），合并提交见 [base.json](base.json)。
-上游远端只读，工作分支为 `integrate/1022-attention-steering`；本轮只在本地提交。
+上游远端只读，工作分支为 `integrate/1022-attention-steering`，已发布到本站仓库的
+[草稿 PR #56](https://github.com/imDaniel/spark-ds41f/pull/56)，尚未合并。
 
 一项集成变量：将既有 attention writer steering 保留在固定 1022 基线上，并将相同方向数据绑定到新编码器。
 不加入 Q03、GLP、vLLM 0.32、投影优化、新方向或新强度策略。
@@ -55,6 +56,12 @@
 本轮主机是 macOS ARM64、Python 3.12；CPU 环境的完整版本见 `runs/cpu-environment.txt`。
 Linux x86_64 的复现依赖是 `requirements/steering-1022-cpu.txt`（带哈希）；
 macOS 使用本机 torch 2.14.1 wheel，不安装其中的 Linux CPU wheel。未在本轮执行 Linux 镜像测试。
+
+GitHub Actions 的 `steering-1022-cpu` 单独重放全部 197 项补丁、验证候选 head/tree，
+并执行 `cpu-cases.json` 固定的 126 项 CPU 测试；失败、缺项或跳过均不能通过。
+候选目录、补丁、锁文件及验证工具发生变化时会触发该检查，并保留 JUnit 报告。
+真实 tokenizer 和 profile 文件没有上传到 GitHub，下面的 36 项编码与 9 项真实文件检查
+仍是本地离线证据；CI 通过不代表这些文件已在云端重测，也不代表 GPU 或服务验收。
 
 ```sh
 bin/spark --cluster-config experiments/2026-10-23-1022-attention-steering/cluster.json doctor
