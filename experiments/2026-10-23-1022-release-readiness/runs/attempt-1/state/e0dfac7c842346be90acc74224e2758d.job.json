@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "/usr/bin/python3",
+    "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py",
+    "block_ingress"
+  ],
+  "cwd": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+  "context": {
+    "window_id": "650fedd7-db18-42a1-a94a-45131385c5e8",
+    "manifest": "/srv/ai-cluster/operations/1022-release-20261023/window.json",
+    "state_dir": "/srv/ai-cluster/operations/1022-release-20261023/windows/650fedd7-db18-42a1-a94a-45131385c5e8",
+    "recovery_step": null,
+    "original_ingress": {
+      "blocked": false,
+      "stage": "open",
+      "aliases_sha256": "06653eea708218e60b7382b3125fed707f73bdfee641d313112bdd98da10137f"
+    }
+  }
+}

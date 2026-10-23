@@ -8,6 +8,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "2026-10-23-1022-recovery-executor"))
 from window_executor import Executor, read, sha
 
+HOST_EXECUTABLES = ("/usr/bin/python3", "/usr/bin/docker")
+
 
 def implementation_paths():
     paths = [HERE / name for name in ("run_window.py", "qualification_requests.py", "base.json", "plan.json")]
@@ -17,8 +19,14 @@ def implementation_paths():
     paths += [HERE.parent / "2026-10-23-1022-recovery-executor" / name
               for name in ("window_executor.py", "command_worker.py")]
     paths += list((HERE.parent / "2026-10-23-1022-output-parser/release-bundle").glob("*"))
-    paths.append(Path("/usr/bin/python3"))
+    paths += [Path(p) for p in HOST_EXECUTABLES]
     return paths
+
+
+def validate_implementation(x):
+    if any(x.m["implementation_files"].get(str(p)) != sha(p) for p in implementation_paths()):
+        raise ValueError("Incomplete or changed implementation pins")
+    x.check_files(x.m["implementation_files"])
 
 
 def component_command(x):
@@ -27,9 +35,8 @@ def component_command(x):
     if candidate["image"] != x.m["services"]["s-loaded"]["identity"]["image_id"]:
         raise ValueError("Component gate image differs from TP4 candidate")
     output = x.directory / "component"
-    output.mkdir(exist_ok=False)
     model = "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1"
-    argv = ["docker", "run", "--rm", "--name", "ds41f-release-" + x.m["window_id"][:8],
+    argv = ["/usr/bin/docker", "run", "--rm", "--name", "ds41f-release-" + x.m["window_id"][:8],
             "--label", "spark.window=" + x.m["window_id"], "--label", "spark.role=component",
             "--gpus=all", "--network=none", "--ipc=host", "--ulimit=core=0",
             "--memory=64g", "--memory-swap=64g", "--security-opt=seccomp=unconfined",
@@ -55,9 +62,8 @@ def main():
         raise ValueError("Candidate image/profile differs")
     if x.m["window_seconds"] > 4500 or x.m["restore_reserve_seconds"] < 900:
         raise ValueError("Requires <=75 minutes with >=15-minute recovery reserve")
-    if any(x.m["implementation_files"].get(str(p)) != sha(p) for p in implementation_paths()):
-        raise ValueError("Incomplete or changed implementation pins")
-    x.check_files(x.m["implementation_files"])
+    validate_implementation(x)
+    argv, output = component_command(x)
     x.open()
     try:
         with x.lock():
@@ -66,7 +72,7 @@ def main():
             data = x.observe()
             if any(x.active(data, name) for name in x.m["services"]):
                 raise ValueError("A serving rank is still active before component tests")
-            argv, output = component_command(x)
+            output.mkdir(exist_ok=False)
             x.run(argv, str(HERE), x.m["implementation_files"], "release-component-gate", timeout=1500)
             results = [__import__("json").loads(line) for line in
                        (output / "release-tests/output-parser-rc1/results.jsonl").read_text().splitlines()]

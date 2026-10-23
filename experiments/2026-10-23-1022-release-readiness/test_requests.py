@@ -1,9 +1,16 @@
 import io
+import importlib.util
 import json
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import qualification_requests as q
+
+spec = importlib.util.spec_from_file_location("release_window", Path(__file__).with_name("run_window.py"))
+window = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(window)
 
 
 class StreamTests(unittest.TestCase):
@@ -45,6 +52,31 @@ class StreamTests(unittest.TestCase):
     def test_truncated_quality_cannot_pass(self):
         with self.assertRaisesRegex(ValueError, "did not finish"):
             q.check_quality("arithmetic", {"text": "42", "finish_reason": "length"})
+
+
+class WindowPreflightTests(unittest.TestCase):
+    def test_all_host_executables_are_absolute_and_required(self):
+        paths = window.implementation_paths()
+        for command in window.HOST_EXECUTABLES:
+            self.assertTrue(Path(command).is_absolute())
+            self.assertIn(Path(command), paths)
+
+    def test_missing_docker_pin_is_rejected_before_open(self):
+        files = {str(p): "expected" for p in window.implementation_paths()}
+        del files["/usr/bin/docker"]
+        x = SimpleNamespace(m={"implementation_files": files})
+        with patch.object(window, "sha", return_value="expected"):
+            with self.assertRaisesRegex(ValueError, "Incomplete"):
+                window.validate_implementation(x)
+
+    def test_component_plan_is_pinned_and_has_no_filesystem_side_effect(self):
+        image = window.read(window.HERE.parent / "2026-10-23-1022-output-parser/release-bundle/candidate.json")["image"]
+        x = SimpleNamespace(directory=Path("/nonexistent-release-window"), m={
+            "window_id": "test-window", "services": {"s-loaded": {"identity": {"image_id": image}}}})
+        with patch.object(Path, "mkdir") as mkdir:
+            argv, _ = window.component_command(x)
+        mkdir.assert_not_called()
+        self.assertIn(argv[0], window.HOST_EXECUTABLES)
 
 
 if __name__ == "__main__":

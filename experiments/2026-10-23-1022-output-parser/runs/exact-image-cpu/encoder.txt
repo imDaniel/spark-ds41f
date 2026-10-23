@@ -1,0 +1,8 @@
+..................................................................       [100%]
+=============================== warnings summary ===============================
+../../../../usr/local/lib/python3.12/dist-packages/_pytest/cacheprovider.py:469
+  /usr/local/lib/python3.12/dist-packages/_pytest/cacheprovider.py:469: PytestCacheWarning: could not create cache path /repo/experiments/2026-10-23-1022-attention-review/tools/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/repo/experiments/2026-10-23-1022-attention-review/tools/pytest-cache-files-yklulwoi'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+66 passed, 1 warning in 16.33s

@@ -5,18 +5,18 @@ import hashlib
 import json
 from pathlib import Path
 
-from transformers import TokenizersBackend
 from tests.parser.engine.test_deepseek_v41_token_provenance import EOS, NAMED, TOOLS, VALUE, output_for
 from tests.parser.engine.replay_harness import _test_request
 from vllm.parser.parser_manager import ParserManager
-from vllm.tokenizers.deepseek_v41 import _plain_text_encoder
+from vllm.tokenizers.deepseek_v41 import DeepseekV41Tokenizer, _plain_text_encoder
 from vllm.models.deepseek_v4_1.steering.profile import load_profile, model_identity, template_identity
 
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument("--model", type=Path, required=True)
 p.add_argument("--profile", type=Path, required=True)
 a = p.parse_args()
-tokenizer = TokenizersBackend(tokenizer_file=str(a.model / "tokenizer.json"))
+tokenizer = DeepseekV41Tokenizer.from_pretrained(str(a.model), local_files_only=True)
+assert EOS in tokenizer.all_special_tokens, "Load the checkpoint's special-token configuration"
 plain = _plain_text_encoder(tokenizer)
 vocab = tokenizer.get_vocab()
 literal_ids = plain([EOS])[0]

@@ -37,9 +37,18 @@ records their hashes and the appended `0500` patch. Source head is
 - CI replays this 199-patch stack independently, executes the pinned 126 steering
   CPU contracts and checks complete release-test classification. Parser-engine
   execution is a local image gate, not a claim about the minimal CI environment.
-- Build input/source checks, image audit, checkpoint tokenizer/profile checks,
-  release component gate, explicit-scale GPU requests, capacity and recovery
-  acceptance are still pending and will be recorded separately.
+- The exact distributed image passes 4,375 parser, 126 steering CPU and 66
+  encoder tests (including all 28 real-checkpoint cases), with no skips.
+  [Receipts](runs/exact-image-cpu/) also cover 16 real-checkpoint parser
+  combinations and unchanged profile binding/payload. The first checkpoint
+  helper omitted the special-token configuration; its failed receipt is retained.
+  Loading the complete checkpoint tokenizer fixes that fixture without changing
+  runtime code or the image.
+- Build input/source checks and distribution identity checks pass. The release
+  component gate, explicit-scale GPU requests and capacity gates remain pending.
+  [The first qualification attempt](../2026-10-23-1022-release-readiness/runs/attempt-1/README.md)
+  stopped before component execution because the harness omitted its Docker
+  executable pin; automatic recovery restored the original four-rank service.
 
 The profile remains `e06b8cb60f3f382157ef6632a93efdd90185beafa2251a8c29575f09c45cd45b`:
 its model and input-template binding did not change. The earlier rebind receipt
