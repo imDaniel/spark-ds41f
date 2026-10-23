@@ -1,0 +1,34 @@
+{
+  "status": "offline preparation passed; hardware not executed",
+  "tests": {
+    "count": 9,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "checks": {
+    "default_commands_plan_only": true,
+    "every_generation_has_profile_and_scale": true,
+    "wrong_candidate_refused_before_open": true,
+    "request_failure_restores_retained_in_fixture": true,
+    "default_doctor": "configuration OK",
+    "unchanged_candidate_build_check": "build inputs OK"
+  },
+  "current_scope": "S-loaded explicit scale requests only; 29 generations; no old-version comparison",
+  "remote_actions": [],
+  "live_runtime_changed": false,
+  "pr_merge_performed": false,
+  "next_window_minutes": 45,
+  "restore_reserve_minutes": 15,
+  "future_runtime_binding": [
+    "fresh four-node identity/hold check",
+    "clean published candidate checkout",
+    "new UUID and absolute deadline",
+    "remote interpreter and complete implementation hashes",
+    "independent watchdog readiness"
+  ],
+  "limits": [
+    "These are CPU fixtures, not a new GPU verdict.",
+    "Previous hardware results remain immutable."
+  ]
+}

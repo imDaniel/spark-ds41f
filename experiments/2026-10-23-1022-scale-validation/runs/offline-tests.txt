@@ -1,0 +1,14 @@
+test_all_29_generations_are_explicitly_scaled (test_scale_validation.RequestContracts.test_all_29_generations_are_explicitly_scaled) ... ok
+test_default_commands_only_print_plan (test_scale_validation.RequestContracts.test_default_commands_only_print_plan) ... ok
+test_failing_tool_output_is_preserved (test_scale_validation.RequestContracts.test_failing_tool_output_is_preserved) ... ok
+test_missing_window_refuses_execution (test_scale_validation.RequestContracts.test_missing_window_refuses_execution) ... ok
+test_outside_plan_scale_is_rejected (test_scale_validation.RequestContracts.test_outside_plan_scale_is_rejected) ... ok
+test_runner_restores_after_request_failure_and_never_selects_old_arms (test_scale_validation.RequestContracts.test_runner_restores_after_request_failure_and_never_selects_old_arms) ... ok
+test_tool_literal_mutation_is_rejected (test_scale_validation.RequestContracts.test_tool_literal_mutation_is_rejected) ... ok
+test_unscaled_generation_never_reaches_network (test_scale_validation.RequestContracts.test_unscaled_generation_never_reaches_network) ... ok
+test_wrong_candidate_is_rejected_before_window_open (test_scale_validation.RequestContracts.test_wrong_candidate_is_rejected_before_window_open) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.141s
+
+OK
