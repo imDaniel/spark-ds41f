@@ -41,7 +41,7 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: "1"
         run: |
-          .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-recovery-executor/tests
+          .venv/bin/python scripts/check-recovery-fixtures.py
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-window -p 'test_*.py'
       - name: Validate helpers
         run: |
