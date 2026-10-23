@@ -159,7 +159,8 @@ def external_connections(text):
 
 def aliases(m):
     key = Path(m['gateway_key_file']).read_text().strip()
-    ids = sorted(x['id'] for x in json.loads(api(m['gateway_base'],'/v1/models',key=key))['data'])
+    ids = sorted(x['id'] for x in json.loads(api(m['gateway_base'],'/v1/models',key=key))['data']
+                 if x['id'].startswith(m['gateway_alias_prefix']))
     if ids != m['gateway_model_ids']:
         raise ValueError('Gateway model aliases drift')
     return digest(ids)

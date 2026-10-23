@@ -23,7 +23,7 @@ class BindingTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):s.run(['x'])
     def test_alias_drift_rejected(self):
         with patch.object(s.Path,'read_text',return_value='fixture'),patch.object(s,'api',return_value=b'{"data":[{"id":"changed"}]}'):
-            with self.assertRaises(ValueError):s.aliases({'gateway_key_file':'unused','gateway_base':'unused','gateway_model_ids':['old']})
+            with self.assertRaises(ValueError):s.aliases({'gateway_key_file':'unused','gateway_base':'unused','gateway_model_ids':['old'],'gateway_alias_prefix':'old'})
     def test_drain_does_not_cut_live_stream(self):
         m={'window_id':'fixture'};calls=[]
         def run(args,**kwargs):
@@ -50,4 +50,8 @@ class BindingTests(unittest.TestCase):
         def run(args, **kwargs):
             return subprocess.CompletedProcess(args,0 if '--ctstate' in args else 1,'','')
         with patch.object(s,'run',side_effect=run):self.assertEqual(s.ingress_stage({'window_id':'fixture'}),'draining')
+    def test_unrelated_gateway_model_is_outside_window(self):
+        m={'gateway_key_file':'unused','gateway_base':'unused','gateway_alias_prefix':'DeepSeek-V4.1-Flash','gateway_model_ids':['DeepSeek-V4.1-Flash']}
+        with patch.object(s.Path,'read_text',return_value='fixture'),patch.object(s,'api',return_value=b'{"data":[{"id":"DeepSeek-V4.1-Flash"},{"id":"office-qwen3.8-iq3"}]}'):
+            self.assertEqual(s.aliases(m),s.digest(m['gateway_model_ids']))
 if __name__=='__main__':unittest.main()
