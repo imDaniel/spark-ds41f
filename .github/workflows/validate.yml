@@ -45,6 +45,7 @@ jobs:
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-window -p 'test_*.py'
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-scale-validation -p 'test_*.py'
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-release-readiness -p 'test_*.py'
+          .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-release-fixtures -p 'test_*.py'
       - name: Validate helpers
         run: |
           # scripts/ holds shell and Python helpers and JSON lab specs; check each by
@@ -101,7 +102,7 @@ jobs:
             echo patches=false >> "$GITHUB_OUTPUT"
           fi
           if [ "$EVENT" != pull_request ] || git diff --name-only HEAD^1 HEAD | grep -qE \
-              '^(experiments/(2026-10-18-request-steering|2026-10-18-steering-consume|2026-10-19-r6x-steering|2026-10-19-r6x-steering-gpu|2026-10-23-1022-attention-steering|2026-10-23-1022-attention-review|2026-10-23-1022-output-parser)/|bin/spark$|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
+              '^(experiments/(2026-10-18-request-steering|2026-10-18-steering-consume|2026-10-19-r6x-steering|2026-10-19-r6x-steering-gpu|2026-10-23-1022-attention-steering|2026-10-23-1022-attention-review|2026-10-23-1022-output-parser|2026-10-23-1022-release-fixtures)/|bin/spark$|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
             echo steering=true >> "$GITHUB_OUTPUT"
           else
             echo steering=false >> "$GITHUB_OUTPUT"
