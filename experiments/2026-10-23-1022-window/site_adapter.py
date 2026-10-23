@@ -121,6 +121,42 @@ def firewall(m, mode):
     return ['sudo','-n','iptables','-w','5',mode,*args]
 
 
+def new_connections_rule(m, mode):
+    args = firewall(m, mode)
+    pos = args.index('-m')
+    args[pos:pos] = ['-m', 'conntrack', '--ctstate', 'NEW']
+    return args
+
+
+def ingress_stage(m):
+    if run(firewall(m, '-C'), check=False).returncode == 0:
+        return 'blocked'
+    if run(new_connections_rule(m, '-C'), check=False).returncode == 0:
+        return 'draining'
+    return 'open'
+
+
+def restore_ingress(m):
+    # Both phases belong to this UUID, including a crash inside block().
+    for command in (firewall, new_connections_rule):
+        if run(command(m, '-C'), check=False).returncode == 0:
+            run(command(m, '-D'))
+
+
+def external_connections(text):
+    # ss -Htn emits recv-q, send-q, local endpoint, peer endpoint.
+    # Loopback probes cannot enter through the external interface being gated.
+    result=[]
+    for row in text.splitlines():
+        fields=row.split()
+        if len(fields) < 4:
+            raise ValueError('Malformed socket observation')
+        host=fields[3].rsplit(':',1)[0].strip('[]')
+        if host not in ('127.0.0.1','::1','::ffff:127.0.0.1'):
+            result.append(row)
+    return result
+
+
 def aliases(m):
     key = Path(m['gateway_key_file']).read_text().strip()
     ids = sorted(x['id'] for x in json.loads(api(m['gateway_base'],'/v1/models',key=key))['data'])
@@ -137,8 +173,9 @@ def observe(m):
     if nodes[0]['services']['retained']['running']:
         ready = api('http://127.0.0.1:8000','/health',timeout=5) == b''
         q = queue(api('http://127.0.0.1:8000','/metrics',timeout=5).decode())
+    stage=ingress_stage(m)
     return {'observed_at':time.time(),'nodes':nodes,'retained_ready':ready,
-            'requests':q,'ingress':{'blocked':run(firewall(m,'-C'),check=False).returncode==0,
+            'requests':q,'ingress':{'blocked':stage!='open','stage':stage,
                                   'aliases_sha256':aliases(m)}}
 
 
@@ -147,9 +184,7 @@ def block(m):
         return
     # First refuse new TCP connections. Existing streams get up to five minutes
     # to finish/close before the final gate; no packet in an existing stream is cut.
-    new = firewall(m,'-I')
-    pos = new.index('-m')
-    new[pos:pos] = ['-m','conntrack','--ctstate','NEW']
+    new = new_connections_rule(m,'-I')
     check = new.copy();check[check.index('-I')] = '-C'
     delete = new.copy();delete[delete.index('-I')] = '-D'
     if run(check,check=False).returncode:
@@ -159,7 +194,7 @@ def block(m):
         idle=None
         while time.monotonic()<deadline:
             q=queue(api('http://127.0.0.1:8000','/metrics',timeout=5).decode())
-            connections=run(['ss','-Htn','state','established','sport','=',':8000']).stdout.strip()
+            connections=external_connections(run(['ss','-Htn','state','established','sport','=',':8000']).stdout)
             if q == {'running':0,'waiting':0} and not connections:
                 idle=idle or time.monotonic()
                 if time.monotonic()-idle>=30:
@@ -197,7 +232,7 @@ def main():
     elif a.action=='observe':result=observe(m)
     elif a.action=='block_ingress':block(m);result={}
     elif a.action=='restore_ingress':
-        if run(firewall(m,'-C'),check=False).returncode==0:run(firewall(m,'-D'))
+        restore_ingress(m)
         result={}
     elif a.action=='verify_retained':result=verify(m,context)
     elif a.action=='stop_owned_jobs':

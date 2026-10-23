@@ -1,0 +1,14 @@
+test_alias_drift_rejected (test_site.BindingTests.test_alias_drift_rejected) ... ok
+test_command_errors_not_success (test_site.BindingTests.test_command_errors_not_success) ... ok
+test_drain_does_not_cut_live_stream (test_site.BindingTests.test_drain_does_not_cut_live_stream) ... ok
+test_firewall_scoped (test_site.BindingTests.test_firewall_scoped) ... ok
+test_loopback_probe_does_not_block_external_drain (test_site.BindingTests.test_loopback_probe_does_not_block_external_drain) ... ok
+test_partial_gate_is_observed_as_draining (test_site.BindingTests.test_partial_gate_is_observed_as_draining) ... ok
+test_queue_needs_both_metrics (test_site.BindingTests.test_queue_needs_both_metrics) ... ok
+test_queue_sums_engines (test_site.BindingTests.test_queue_sums_engines) ... ok
+test_restore_removes_both_owned_phases (test_site.BindingTests.test_restore_removes_both_owned_phases) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.002s
+
+OK

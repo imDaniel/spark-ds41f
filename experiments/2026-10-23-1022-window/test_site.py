@@ -29,9 +29,25 @@ class BindingTests(unittest.TestCase):
         def run(args,**kwargs):
             calls.append(args)
             if '-C' in args:return subprocess.CompletedProcess(args,1,'','')
-            if args[0]=='ss':return subprocess.CompletedProcess(args,0,'ESTABLISHED live request','')
+            if args[0]=='ss':return subprocess.CompletedProcess(args,0,'0 0 192.168.88.125:8000 192.168.88.210:1234','')
             return subprocess.CompletedProcess(args,0,'','')
         with patch.object(s,'run',side_effect=run),patch.object(s,'api',return_value=b'vllm:num_requests_running 1\nvllm:num_requests_waiting 0'),patch.object(s.time,'monotonic',side_effect=[0,1,301]),patch.object(s.time,'sleep'):
             with self.assertRaises(RuntimeError):s.block(m)
         self.assertFalse(any('-I' in c and '--ctstate' not in c for c in calls))
+    def test_loopback_probe_does_not_block_external_drain(self):
+        self.assertEqual(s.external_connections('0 0 127.0.0.1:8000 127.0.0.1:45'), [])
+        self.assertEqual(len(s.external_connections('0 0 192.168.88.125:8000 192.168.88.210:45')),1)
+    def test_restore_removes_both_owned_phases(self):
+        calls=[]
+        def run(args, **kwargs):
+            calls.append(args);return subprocess.CompletedProcess(args,0,'','')
+        with patch.object(s,'run',side_effect=run):s.restore_ingress({'window_id':'fixture'})
+        deletes=[c for c in calls if '-D' in c]
+        self.assertEqual(len(deletes),2)
+        self.assertTrue(all('spark-window-fixture' in c for c in deletes))
+        self.assertTrue(any('--ctstate' in c for c in deletes))
+    def test_partial_gate_is_observed_as_draining(self):
+        def run(args, **kwargs):
+            return subprocess.CompletedProcess(args,0 if '--ctstate' in args else 1,'','')
+        with patch.object(s,'run',side_effect=run):self.assertEqual(s.ingress_stage({'window_id':'fixture'}),'draining')
 if __name__=='__main__':unittest.main()
