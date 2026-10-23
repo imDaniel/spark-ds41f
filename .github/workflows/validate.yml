@@ -44,6 +44,7 @@ jobs:
           .venv/bin/python scripts/check-recovery-fixtures.py
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-window -p 'test_*.py'
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-scale-validation -p 'test_*.py'
+          .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-release-readiness -p 'test_*.py'
       - name: Validate helpers
         run: |
           # scripts/ holds shell and Python helpers and JSON lab specs; check each by
@@ -100,7 +101,7 @@ jobs:
             echo patches=false >> "$GITHUB_OUTPUT"
           fi
           if [ "$EVENT" != pull_request ] || git diff --name-only HEAD^1 HEAD | grep -qE \
-              '^(experiments/(2026-10-18-request-steering|2026-10-18-steering-consume|2026-10-19-r6x-steering|2026-10-19-r6x-steering-gpu|2026-10-23-1022-attention-steering|2026-10-23-1022-attention-review)/|bin/spark$|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
+              '^(experiments/(2026-10-18-request-steering|2026-10-18-steering-consume|2026-10-19-r6x-steering|2026-10-19-r6x-steering-gpu|2026-10-23-1022-attention-steering|2026-10-23-1022-attention-review|2026-10-23-1022-output-parser)/|bin/spark$|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
             echo steering=true >> "$GITHUB_OUTPUT"
           else
             echo steering=false >> "$GITHUB_OUTPUT"
@@ -193,7 +194,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review]
+        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review, 2026-10-23-1022-output-parser]
     env:
       STEERING_EXPERIMENT: ${{ matrix.experiment }}
     steps:
@@ -225,6 +226,21 @@ jobs:
           .work/steering-1022-cpu-venv/bin/python -m pip install --require-hashes -r requirements/steering-1022-cpu.txt
       - name: Execute the complete pinned 1022 CPU collection
         run: .work/steering-1022-cpu-venv/bin/python scripts/check_steering_cpu.py --upstreams experiments/$STEERING_EXPERIMENT/upstreams.lock.json --cases experiments/$STEERING_EXPERIMENT/cpu-cases.json --report .work/steering-1022-cpu.xml
+      - name: Classify all serving tests in the output-parser candidate
+        if: matrix.experiment == '2026-10-23-1022-output-parser'
+        run: |
+          python3 - <<'PY'
+          import json, runpy, subprocess
+          from pathlib import Path
+          root = Path("experiments/2026-10-23-1022-output-parser")
+          spark = runpy.run_path("bin/spark")
+          lock = json.loads((root / "upstreams.lock.json").read_text())
+          inputs = spark["build_inputs"](lock)
+          source = spark["build_directory"](inputs) / "src/vllm"
+          subprocess.run(["python3", "scripts/release_tests.py", "check", str(source),
+                          inputs["vllm"]["revision"], inputs["vllm"]["patch_head"],
+                          str(root / "release-tests.json")], check=True)
+          PY
       - name: Check rendered JSON controls with the byte tokenizer fixture
         if: matrix.experiment == '2026-10-23-1022-attention-review'
         env:

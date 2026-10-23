@@ -1,0 +1,328 @@
+From 9dd408b8ee85eec4491ce7176dc50dd7c87afe22 Mon Sep 17 00:00:00 2001
+From: Daniel <daniel@Daniels-MacBook-Pro.local>
+Date: Fri, 23 Oct 2026 11:46:52 +0000
+Subject: [PATCH] Preserve generated token provenance in DeepSeek V4.1 complete
+ responses
+
+Upstream base: 19f2c20ed4d64ae22bd009ceacadd85e2a81e354; applied after the
+198-patch 1022 attention stack (dea96d04ea9e).
+
+The delegating non-streaming path discarded generated token IDs between
+reasoning and tool extraction. Literal EOS spellings in ordinary text and
+tool arguments were consequently removed. Use the matching reasoning
+engine for one token-aware pass; retain the existing streaming adapters,
+JSON forced-tool conversion and mixed-parser routing.
+
+Quality: preserves literal arguments without changing weights, sampling,
+steering arithmetic, true special-token removal or the input encoder.
+Tests: 19 new regressions fail on both retained r6x and unmodified 1022;
+all 4375 parser-engine tests pass with this patch in the candidate image
+using CPU only. GPU requests remain to be qualified.
+Upstream status: downstream maintenance fix; not submitted upstream.
+---
+ .../test_deepseek_v41_token_provenance.py     | 153 ++++++++++++++++++
+ vllm/parser/deepseek_v41.py                   |  46 ++++++
+ vllm/parser/engine/adapters.py                |  24 +++
+ vllm/parser/parser_manager.py                 |  16 ++
+ 4 files changed, 239 insertions(+)
+ create mode 100644 tests/parser/engine/test_deepseek_v41_token_provenance.py
+
+diff --git a/tests/parser/engine/test_deepseek_v41_token_provenance.py b/tests/parser/engine/test_deepseek_v41_token_provenance.py
+new file mode 100644
+index 000000000..b1783ae19
+--- /dev/null
++++ b/tests/parser/engine/test_deepseek_v41_token_provenance.py
+@@ -0,0 +1,153 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Exercise the registered serving parser, including the JSON forced-tool path."""
++
++import json
++
++import pytest
++
++from tests.parser.engine.replay_harness import (
++    MockTokenizer,
++    _test_request,
++    collect_output,
++    replay_streaming,
++)
++from tests.parser.engine.test_deepseek_v41 import parser_for
++
++EOS = "<｜end▁of▁sentence｜>"
++VALUE = {
++    "role": "literal user value",
++    "type": "literal string value",
++    "nested": {'quote"key': EOS},
++}
++TOOLS = [
++    {
++        "type": "function",
++        "function": {
++            "name": "record_value",
++            "parameters": {
++                "type": "object",
++                "properties": {
++                    "role": {"type": "string"},
++                    "type": {"type": "string"},
++                    "nested": {"type": "object"},
++                },
++            },
++        },
++    }
++]
++NAMED = {"type": "function", "function": {"name": "record_value"}}
++
++
++def fixture(text):
++    vocab = {"<think>": 50, "</think>": 51, EOS: 52}
++    tokens = []
++    while text:
++        # EOS spelling in user data consists of ordinary tokens; only the
++        # actual reasoning boundary is a special token in this fixture.
++        piece = "</think>" if text.startswith("</think>") else text[0]
++        tokens.append((51 if piece == "</think>" else 100 + len(tokens), piece))
++        text = text[len(piece) :]
++    return MockTokenizer(vocab, tokens), tokens
++
++
++def output_for(choice):
++    args = json.dumps(VALUE, ensure_ascii=False)
++    if choice == "required":
++        return json.dumps(
++            [{"name": "record_value", "parameters": VALUE}], ensure_ascii=False
++        )
++    if choice == "auto":
++        return (
++            '<｜DSML｜ calls><｜DSML｜ invoke name="record_value">'
++            '<｜DSML｜ parameter name="role" string="true">literal user value'
++            '</｜DSML｜ parameter><｜DSML｜ parameter name="type" string="true">'
++            "literal string value</｜DSML｜ parameter>"
++            '<｜DSML｜ parameter name="nested" string="false">'
++            + json.dumps(VALUE["nested"], ensure_ascii=False)
++            + "</｜DSML｜ parameter></｜DSML｜ invoke></｜DSML｜ calls>"
++        )
++    return args
++
++
++@pytest.mark.parametrize("thinking", [False, True])
++@pytest.mark.parametrize("choice", ["named", "required", "auto", "none"])
++@pytest.mark.parametrize("json_tools", [False, True])
++def test_complete_output_retains_ordinary_control_spelling(
++    thinking, choice, json_tools
++):
++    syntax = "auto" if choice in ("named", "required") and not json_tools else choice
++    text = ("Plan.</think>" if thinking else "") + output_for(syntax)
++    tokenizer, tokens = fixture(text)
++    parser = parser_for(tokenizer, {"thinking": thinking})
++    request = _test_request(tools=TOOLS)
++    parser.tool_parser.supports_required_and_named = json_tools
++    # Validate the named choice into its real protocol object.
++    request = type(request).model_validate(
++        {**request.model_dump(), "tool_choice": NAMED if choice == "named" else choice}
++    )
++    ids = [tid for tid, _ in tokens]
++    reasoning, content, calls = parser.parse(
++        text, request, enable_auto_tools=True, model_output_token_ids=ids
++    )
++    assert (reasoning or "") == ("Plan." if thinking else "")
++    assert parser.count_reasoning_tokens(ids) == (5 if thinking else 0)
++    if choice == "none":
++        assert not calls
++        assert json.loads(content) == VALUE
++    else:
++        assert not (content or "").strip()
++        assert len(calls) == 1 and calls[0].name == "record_value"
++        assert json.loads(calls[0].arguments) == VALUE
++
++
++@pytest.mark.parametrize("thinking", [False, True])
++@pytest.mark.parametrize("chunk_size", [1, 7, 10000])
++def test_streaming_auto_retains_ordinary_control_spelling(thinking, chunk_size):
++    text = ("Plan.</think>" if thinking else "") + output_for("auto")
++    tokenizer, tokens = fixture(text)
++    parser = parser_for(tokenizer, {"thinking": thinking})
++    output = collect_output(
++        replay_streaming(
++            parser,
++            tokens,
++            chunk_size=chunk_size,
++            finished_on_last=True,
++            tools=TOOLS,
++            prompt_token_ids=[50 if thinking else 51],
++        )
++    )
++    assert output.reasoning == ("Plan." if thinking else "")
++    assert not output.content.strip()
++    assert json.loads(output.tool_calls[0]["arguments"]) == VALUE
++
++
++@pytest.mark.parametrize("thinking", [False, True])
++def test_real_eos_still_dropped_and_plain_spelling_retained(thinking):
++    text = ("Plan.</think>" if thinking else "") + "Literal: " + EOS
++    tokenizer, tokens = fixture(text)
++    tokens.append((52, EOS))
++    tokenizer = MockTokenizer(tokenizer.get_vocab(), tokens)
++    parser = parser_for(tokenizer, {"thinking": thinking})
++    reasoning, content, calls = parser.parse(
++        text + EOS,
++        _test_request(tools=TOOLS),
++        enable_auto_tools=True,
++        model_output_token_ids=[tid for tid, _ in tokens],
++    )
++    assert content == "Literal: " + EOS
++    assert not calls
++
++
++def test_auto_disabled_keeps_literal_content():
++    text = "Literal: " + EOS
++    tokenizer, tokens = fixture(text)
++    parser = parser_for(tokenizer, {"thinking": False})
++    _, content, calls = parser.parse(
++        text,
++        _test_request(tools=TOOLS),
++        enable_auto_tools=False,
++        model_output_token_ids=[tid for tid, _ in tokens],
++    )
++    assert content == text
++    assert not calls
+diff --git a/vllm/parser/deepseek_v41.py b/vllm/parser/deepseek_v41.py
+index 842160051..7217831d6 100644
+--- a/vllm/parser/deepseek_v41.py
++++ b/vllm/parser/deepseek_v41.py
+@@ -2,9 +2,14 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """DeepSeek V4.1 reasoning and spaced DSML tool calls."""
+ 
++from __future__ import annotations
++
+ import functools
++from collections.abc import Sequence
+ from dataclasses import replace
++from typing import TYPE_CHECKING
+ 
++from vllm.parser.abstract_parser import DelegatingParser
+ from vllm.parser.deepseek_v4 import (
+     DeepSeekV4Parser,
+     _dsml_arg_converter,
+@@ -13,6 +18,11 @@ from vllm.parser.deepseek_v4 import (
+ )
+ from vllm.parser.engine.parser_engine_config import ParserEngineConfig
+ 
++if TYPE_CHECKING:
++    from vllm.entrypoints.generate.base.protocol import FunctionCall
++    from vllm.entrypoints.openai.chat_completion.protocol import ChatCompletionRequest
++    from vllm.entrypoints.openai.responses.protocol import ResponsesRequest
++
+ DSML_TOOL_START = "<｜DSML｜ calls>"
+ DSML_TOOL_END = "</｜DSML｜ calls>"
+ DSML_INVOKE_PREFIX = '<｜DSML｜ invoke name="'
+@@ -52,3 +62,39 @@ def deepseek_v41_config(thinking: bool = False) -> ParserEngineConfig:
+ 
+ class DeepSeekV41Parser(DeepSeekV4Parser):
+     parser_config = staticmethod(deepseek_v41_config)
++
++
++class DeepSeekV41DelegatingParser(DelegatingParser):
++    """Keep streaming adapters; parse complete output once with its token IDs."""
++
++    def parse(
++        self,
++        model_output: str,
++        request: ChatCompletionRequest | ResponsesRequest,
++        enable_auto_tools: bool = False,
++        model_output_token_ids: Sequence[int] = (),
++    ) -> tuple[str | None, str | None, list[FunctionCall] | None]:
++        # Selected only when both adapters are DeepSeek V4.1. The reasoning
++        # engine has the request's thinking controls; it also receives the
++        # tool schemas through request. Splitting text into two parser passes
++        # would discard IDs and treat literal EOS spellings as control tokens.
++        from vllm.parser.engine.adapters import ParserEngineReasoningAdapter
++
++        assert isinstance(self._reasoning_parser, ParserEngineReasoningAdapter)
++        assert self._tool_parser is not None
++        self._initialize_history_tool_call_cnt(request)
++        json_tools = (
++            self._tool_parser.supports_required_and_named
++            and request.tool_choice not in (None, "auto", "none")
++        )
++        parse_tools = (
++            enable_auto_tools and not json_tools
++        ) or request.tool_choice == "none"
++        reasoning, content, calls = self._reasoning_parser.parse_complete(
++            model_output, request, model_output_token_ids, parse_tools=parse_tools
++        )
++        if not parse_tools:
++            calls, content = self._extract_tool_calls(
++                content, request, enable_auto_tools
++            )
++        return reasoning, content, calls
+diff --git a/vllm/parser/engine/adapters.py b/vllm/parser/engine/adapters.py
+index 3e2488f16..d223e7eff 100644
+--- a/vllm/parser/engine/adapters.py
++++ b/vllm/parser/engine/adapters.py
+@@ -22,6 +22,7 @@ if TYPE_CHECKING:
+     from vllm.entrypoints.generate.base.protocol import (
+         DeltaMessage,
+         ExtractedToolCallInformation,
++        FunctionCall,
+     )
+     from vllm.entrypoints.openai.chat_completion.protocol import (
+         ChatCompletionRequest,
+@@ -83,6 +84,29 @@ class ParserEngineReasoningAdapter(ReasoningParser):
+         with self._skip_tool_parsing():
+             return self._parser_engine.extract_reasoning(model_output, request)
+ 
++    def parse_complete(
++        self,
++        model_output: str,
++        request: ChatCompletionRequest | ResponsesRequest,
++        token_ids: Sequence[int],
++        *,
++        parse_tools: bool,
++    ) -> tuple[str | None, str | None, list[FunctionCall] | None]:
++        """Parse a complete response without losing token provenance.
++
++        Matching reasoning/tool adapters can share this pass. JSON forced
++        tools still need the caller's standard JSON conversion afterwards.
++        """
++        self._streaming_count_valid = True
++        saved = self._parser_engine.skip_tool_parsing
++        self._parser_engine.skip_tool_parsing = not parse_tools
++        try:
++            return self._parser_engine.parse(
++                model_output, request, model_output_token_ids=token_ids
++            )
++        finally:
++            self._parser_engine.skip_tool_parsing = saved
++
+     def extract_reasoning_streaming(
+         self,
+         previous_text: str,
+diff --git a/vllm/parser/parser_manager.py b/vllm/parser/parser_manager.py
+index cc9dd3a6c..fce9d881c 100644
+--- a/vllm/parser/parser_manager.py
++++ b/vllm/parser/parser_manager.py
+@@ -143,6 +143,22 @@ class ParserManager:
+ 
+         from vllm.parser.abstract_parser import DelegatingParser
+ 
++        if (
++            reasoning_parser_name == tool_parser_name == "deepseek_v41"
++            and reasoning_parser_cls is not None
++            and tool_parser_cls is not None
++        ):
++            from vllm.parser.deepseek_v41 import DeepSeekV41DelegatingParser
++
++            r_cls = reasoning_parser_cls
++            t_cls = tool_parser_cls
++
++            class _DeepSeekV41Parser(DeepSeekV41DelegatingParser):
++                reasoning_parser_cls = r_cls
++                tool_parser_cls = t_cls
++
++            return _DeepSeekV41Parser
++
+         r_cls = reasoning_parser_cls
+         t_cls = tool_parser_cls
+ 
