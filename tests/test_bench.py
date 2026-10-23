@@ -667,7 +667,7 @@ class ReferenceShapeTest(unittest.TestCase):
                     ([], []),
                 )
                 self.assertEqual(spark.benchmark_reference_problems(cluster, nodes), [])
-        # r6x was released on the ring, then on the triangle at 1M: each shape has its own run.
+        # spark-ds41f-1022 was released on the triangle at 1M, then on the ring: each shape has its own run.
         self.assertIn("benchmark_reference", recipe["shapes"]["tp3-triangle"])
         self.assertIn("benchmark_reference", recipe["shapes"]["tp4-ring"])
 

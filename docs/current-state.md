@@ -11,7 +11,33 @@ qualification is an additive
 with its own release suites and the original baseline's content hash.
 
 Production is the recipe's `tp4-ring` shape ([config/cluster.json](../config/cluster.json)) on
-**r6x**, serving DeepSeek-V4.1-Flash-1017, promoted 2026-10-19 as
+**spark-ds41f-1022**, serving DeepSeek-V4.1-Flash-1017 at 1,048,576 tokens on dgx1-dgx4 since
+2026-10-23 (the `tp3-triangle` shape on dgx1-dgx3 from 2026-10-22), promoted
+2026-10-22 as [`2026-10-22-spark-ds41f-1022`](../manifests/baselines/2026-10-22-spark-ds41f-1022.json)
+([promotion record](../experiments/2026-10-22-spark-ds41f-1022/README.md)), the first release named
+`spark-ds41f-MMDD`: image `vllm-ds41f-kkref:19f2c20ed4d6-1022-4`, r6x's sources with vLLM
+0185 and 0221-0227 (patch head `8fc15c18`, tree `e68aa19c`) and sparknet 0.5.0. 0185 runs the TP
+group's broadcast (DSpark's per-step confidences) on sparknet's one-shot all-gather, so serving
+never touches the PyTorch NCCL process group; 0221 and 0223 detect the model's sink and reject a
+held draft zero that lands on it, on by default for DeepSeek V4.1, so short prompts such as
+`Say hi.` no longer collapse to an empty answer; 0222 and 0226 decide the next step at decoder layer
+30 of the current one (late admission), so an arrival joins one step sooner, while a step that
+continues a prompt chunk decides its successor at once; 0227 keeps control-token spellings in
+request text as plain text (#449); sparknet 0.5.0 widens the one-shot read phase. Outputs are
+identical to r6x's. Against r6x on the trimmed promotion comparison (one session, the owner's choice): decode
+steps 1.1% faster, eight streams, one stream and prefill level once 0226 restored prefill (its A/B:
+0.6-1.4% on every paired prompt); time to first token level at four and eight streams and one decode
+step longer alone (0.127 to 0.159 s at p50). Release tests: 1,801 passed.
+`tp3-triangle`'s `benchmark_reference` is
+[manifests/suites/2026-10-22-spark-ds41f-1022-tp3](../manifests/suites/2026-10-22-spark-ds41f-1022-tp3/).
+On the ring (2026-10-23, trimmed comparison against r6x in one session): decode steps 1.7%
+faster, sixteen streams, one stream and prefill level, outputs identical to r6x's ring hashes;
+`tp4-ring`'s `benchmark_reference` is
+[manifests/suites/2026-10-22-spark-ds41f-1022-tp4](../manifests/suites/2026-10-22-spark-ds41f-1022-tp4/). r6x's recipe and lock are frozen in `experiments/2026-10-22-spark-ds41f-1022/r6x` as the
+rollback.
+
+Before spark-ds41f-1022 production was **r6x**, serving DeepSeek-V4.1-Flash-1017 on the recipe's
+`tp4-ring` shape, promoted 2026-10-19 as
 [`2026-10-19-karmic-kraken-r6x`](../manifests/baselines/2026-10-19-karmic-kraken-r6x.json)
 ([promotion record](../experiments/2026-10-18-r6x/README.md)): image
 `vllm-ds41f-kkref:19f2c20ed4d6-r6x` on dgx1-dgx4, r6v's sources with vLLM 0181-0184 (patch head
@@ -126,28 +152,27 @@ arrive:
 
 r6n was released on the servebench release suite. Its run
 ([manifests/suites/2026-10-15-karmic-kraken-r6n-tp4](../manifests/suites/2026-10-15-karmic-kraken-r6n-tp4/))
-is `tp4-ring`'s `benchmark_reference`. It ran release version 1, so `bin/spark bench
---suite release` (version 2, with the Poisson step) compares with it only once the next
-release records a version 2 run.
+was `tp4-ring`'s `benchmark_reference` until r6v. It ran release version 1; r6v's release
+recorded the first version 2 run (with the Poisson step).
 
 Since 2026-10-14 the TP4 profile pins serving to the GB10's ten fast cores
 (`--cpuset-cpus=5-9,15-19`; `experiments/2026-10-14-boot-spread`). Serving keeps three or
 four threads busy per node, so the slow cores are never needed. `doctor --live` checks the
 pin on every node.
 
-Since r6x DSpark's verifier budgets drafts by a fixed linear step cost and times nothing.
-Before it, the verifier scheduled on cost curves timed on a boot. A profile without a pinned
-directory got its build's own (`bin/spark` derives `SPARK3_DSPARK_COST_DIR` from the
-image's source trees, code overlays, environment and serve arguments, all but the
-dev-mode RPC switch): a new build profiles itself on its first boot and reuses its curves
-after. `tp3-triangle` does so since 2026-10-15; `tp4-ring` still pins r6h's until its
-next release.
+Since r6x DSpark's verifier budgets drafts by a fixed linear step cost and times nothing,
+on both shapes. Before it, the verifier scheduled on cost curves timed on a boot. A profile
+without a pinned directory got its build's own (`bin/spark` derives `SPARK3_DSPARK_COST_DIR`
+from the image's source trees, code overlays, environment and serve arguments, all but the
+dev-mode RPC switch): a new build profiled itself on its first boot and reused its curves
+after. `tp3-triangle` did so from 2026-10-15; `tp4-ring` pinned r6h's curves
+(`ring4-r6h-headout-20261012`) through r6n and ran on its build's own from r6v.
 
 TP4 keeps the embedding and head in regular memory
-(`SPARK3_DISPLAY_CARVEOUT_WEIGHTS=0`, `experiments/2026-10-12-r6h-loss`) and runs
-on r6h's cost curves for that placement (`ring4-r6h-headout-20261012`), as the r6k
-and r6n release comparisons did. The temperature-0 references are r6k's
-(70b3379cc289 / 708ec5b17482).
+(`SPARK3_DISPLAY_CARVEOUT_WEIGHTS=0`, `experiments/2026-10-12-r6h-loss`); TP3 keeps them in
+the display carve-out, which its KV budget needs. TP4's temperature-0 and greedy references
+are r6v's (3eab5112 / db25fde3, c9cf9dbe / c6bb4f4e), which r6x reproduces; TP3's are r6u's
+TP3 path (62313cb5 / 9742ac2c, 4d143977 / 12fd8257), which r6x at 1M reproduces.
 
 Before r6s, the three-node shape `tp3-triangle` ran r6n, promoted 2026-10-16 on its release
 against r6h ([experiments/2026-10-15-r6n-tp3](../experiments/2026-10-15-r6n-tp3/README.md),

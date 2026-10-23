@@ -8,14 +8,31 @@ Reproducible Docker/vLLM deployment, tuning, and benchmarks for DeepSeek V4.1
 Flash on a switchless three-node DGX Spark fabric, and the same deployment on
 a four-node ring.
 
-Production is **r6x**, serving DeepSeek-V4.1-Flash-1017 on the four-node TP4 1M
-profile on the ring the site is cabled as (2026-10-19,
-[promotion record](experiments/2026-10-18-r6x/README.md)). r6x is r6v with the routed
+Production is **spark-ds41f-1022**, serving DeepSeek-V4.1-Flash-1017 on the four-node TP4
+1M profile on the ring the site is cabled as (2026-10-23; the three-node TP3 1M profile on the
+triangle since 2026-10-22,
+[promotion record](experiments/2026-10-22-spark-ds41f-1022/README.md)), the first release named
+`spark-ds41f-MMDD`. It is r6x with the TP group's broadcast on sparknet's one-shot all-gather
+(serving never touches the PyTorch NCCL process group), sink detection and draft-zero rejection
+on by default for DeepSeek V4.1 (short prompts such as `Say hi.` no longer collapse to an empty
+answer), late admission (the next step is decided at decoder layer 30, so an arrival joins one
+step sooner), control-token spellings in request text kept as plain text (#449), and sparknet
+0.5.0's wider one-shot read phase. Outputs are identical to r6x's. Against r6x in one session on the triangle,
+decode steps are 1.1% faster and eight streams, one stream and prefill level (prefill once
+vLLM 0226 restored it); time to first token is level at four and eight streams, and a request
+alone waits one decode step longer (sink rejection holds its first token one step). On the ring,
+against r6x in one session, decode steps are 1.7% faster and sixteen streams, one stream and
+prefill level, outputs identical. r6x's recipe and lock are frozen in
+`experiments/2026-10-22-spark-ds41f-1022/r6x`.
+
+Before spark-ds41f-1022, production was **r6x**, serving DeepSeek-V4.1-Flash-1017 on the four-node TP4 1M
+profile on the ring (2026-10-19,
+[promotion record](experiments/2026-10-18-r6x/README.md)), then on the triangle. r6x is r6v with the routed
 experts' SwiGLU over the dispatch layout's live tiles, the routed experts' weight scales
 kept as row bases and 4-bit codes (exact, about 2.1 GiB a rank freed), and a DSpark draft
 budget that is a rule of the inputs (row cost 0.035), so nothing is timed at boot. Outputs
 are identical to r6v's; against r6v decode steps are 2.5% faster and 16 and 8 streams 3.6%
-and 3.8% faster, prefill level. The three-node TP3 profile serves r6x at 1M context since
+and 3.8% faster, prefill level. The three-node TP3 profile served r6x at 1M context from
 2026-10-19 (4.55 full 1M contexts of KV, from the memory the scale codes freed;
 [experiments/2026-10-19-r6x-tp3-1m](experiments/2026-10-19-r6x-tp3-1m/README.md)). r6v's recipe and lock are frozen
 in `experiments/2026-10-18-r6x/r6v`.
@@ -76,9 +93,9 @@ The deployment tools also generate and validate a
 [config/cluster.json](config/cluster.json), serves every shape on one image:
 four nodes in a ring (`tp4-ring`, the checkpoint's full 1,048,576-token
 context with 16 sequences, benchmarked at those limits, see
-[Performance](#performance)) and three in a triangle (`tp3-triangle`, 524,288
-tokens and 8 sequences). The shapes differ only in their cabling (node map,
-transport, NCCL settings) and their memory sizing.
+[Performance](#performance)) and three in a triangle (`tp3-triangle`, the same
+1,048,576-token context with 8 sequences since r6x). The shapes differ only in their
+cabling (node map, transport, NCCL settings) and their memory sizing.
 
 Named [TP3/TP4 transport tuning profiles](experiments/2026-10-03-transport-profiles/README.md)
 keep B12X's measured RoCEnante limits and NCCL settings together.
@@ -104,7 +121,7 @@ undo it.
 | Sparks | Shape of [config/cluster.json](config/cluster.json) | Context | Kernel | [Memory saver](https://github.com/christopherowen/dgx-spark-memory-saver) |
 | --- | --- | ---: | --- | --- |
 | 3 | `tp3-triangle-4k` | 262,144 | stock 4 KiB | not needed |
-| 3 | `tp3-triangle` | 524,288 | 64 KiB | required |
+| 3 | `tp3-triangle` | 1,048,576 | 64 KiB | required |
 | 4 | `tp4-ring` | 1,048,576 | 64 KiB | required |
 
 Name your cabling once with `bin/spark site shape NAME --apply`; every command
@@ -138,10 +155,10 @@ unless told to ([launch preflight](docs/doctor.md#launch-preflight)).
 ## Current baseline
 
 The baseline is
-[manifests/baselines/2026-10-17-karmic-kraken-r6v.json](manifests/baselines/2026-10-17-karmic-kraken-r6v.json)
-([promotion record](experiments/2026-10-17-r6v/README.md)), since 2026-10-17, on the ring
-and the triangle (whose release run is r6u's,
-[manifests/baselines/2026-10-17-karmic-kraken-r6u.json](manifests/baselines/2026-10-17-karmic-kraken-r6u.json)); see
+[manifests/baselines/2026-10-19-karmic-kraken-r6x.json](manifests/baselines/2026-10-19-karmic-kraken-r6x.json)
+([promotion record](experiments/2026-10-18-r6x/README.md)), since 2026-10-19, on the ring
+and the triangle (the triangle at 1M context:
+[experiments/2026-10-19-r6x-tp3-1m](experiments/2026-10-19-r6x-tp3-1m/README.md)); see
 [docs/current-state.md](docs/current-state.md). The three-node deployment:
 
 - three DGX Spark nodes using tensor parallelism 3, on DGX Spark 26.09.2 with
@@ -161,6 +178,10 @@ and the triangle (whose release run is r6u's,
     at decode tiles), and prefill rasterizes weights larger than L2 in panels;
   - DeepSeek's TileKernels 2.0.0 for the MoE top-k gate, the SwiGLU and
     quantization casts and mHC, with the mHC projection a TileLang kernel;
+  - the routed experts' SwiGLU and MXFP8 cast run over the dispatch layout's
+    live tiles only, and the routed experts' weight scales are kept as a row
+    base exponent and 4-bit codes (exact, half the scale bytes; about 2.7 GiB a
+    rank freed at TP3, which pays for the 1M context);
   - TileLang kernels for RoPE, the CSA compressor and its projection, the KV
     cache writers, the Engram gate, hash and row gather, the index-head weight
     scale, the sparse-MLA metadata (the first port off Triton), the WO
@@ -201,7 +222,8 @@ and the triangle (whose release run is r6u's,
   compressed entries for generated tokens match the ones prefill builds;
 - DSpark speculative decoding with five draft tokens (the drafter's trained
   block) and block rejection, full CUDA graphs for decode batches up to 48
-  tokens, verification-cost curves profiled for this image; verification rows
+  tokens, and a draft budget that is a rule of the inputs (a fixed linear step
+  cost, row cost 0.035), so nothing is timed at boot; verification rows
   whose drafts are unlikely to survive skip the routed experts, the drafter
   marks its padding rows for the MoE routers, and greedy drafts stay sharded
   by vocabulary over the checkpoint's BF16 drafter head and Markov projection;
@@ -211,8 +233,8 @@ and the triangle (whose release run is r6u's,
   the one-shot RoCE all-reduce (205 tokens);
 - mutating custom ops read their argument schema once per call, not once per
   argument as torch does;
-- 524,288-token per-request limit, eight admitted sequences, and 2,845,543
-  KV tokens (5.43 full windows) in a 3.5 GiB-per-rank cache;
+- 1,048,576-token per-request limit, eight admitted sequences, and 4,765,898
+  KV tokens (4.55 full 1M windows) in a 4.90625 GiB-per-rank cache;
 - one concurrent prefill, 4,096 batched tokens, and fail-closed 5 GiB startup
   and 3 GiB steady memory guards;
 - FlashInfer autotune disabled (`--no-enable-flashinfer-autotune`): only the
@@ -224,7 +246,7 @@ coherence gate 5/5; see [Performance](#performance).
 The machine-readable desired configuration is the recipe
 [config/cluster.json](config/cluster.json): everything the shapes share once,
 and a `shapes` table with each shape's node map, transport, NCCL settings,
-memory sizing, cost curves and qualifying benchmark
+memory sizing and qualifying benchmark
 ([scripts/recipe.py](scripts/recipe.py) resolves it; the
 [memory profiles](docs/memory-profiles.md) explain the page-size variants). The
 per-shape files it replaced are archived as release records in
@@ -233,6 +255,50 @@ To reproduce the deployment on your own Sparks, follow
 [docs/setup.md](docs/setup.md).
 
 ## Performance
+
+r6x against r6v on four nodes, both serving DeepSeek-V4.1-Flash-1017 (2026-10-18),
+measured with the `release` suite in one session (r6x, r6v, r6x again;
+[results](experiments/2026-10-18-r6x/README.md);
+[suite run](manifests/suites/2026-10-19-karmic-kraken-r6x-tp4/)).
+
+| Workload | TP4 r6v | TP4 r6x |
+| --- | ---: | ---: |
+| Source-text prefill, 32K (tok/s) | 5,987 | 5,989 (0.0% ±1.1) |
+| Prefill, 128K | 5,945 | 5,947 (0.0% ±0.7) |
+| Prefill, 256K | 5,681 | 5,680 (0.0% ±0.2) |
+| Prefill, 512K | 5,172 | 5,173 (0.0% ±0.3) |
+| Prefill, 1M | 4,406 | 4,407 (0.0% ±0.6) |
+| Decode step time, geometric mean of 20 shapes | | **-2.5%** ±0.15 |
+| Decode, 16 streams (tok/s) | 241.7 | 250.3 (**+3.6%** ±0.9) |
+| Decode, 8 streams | 184.4 | 191.5 (**+3.8%** ±1.1) |
+| Poisson arrivals at 0.7 req/s, output (tok/s) | 180.4 | 180.4 (0.0% ±17) |
+| One conversation at a time (tok/s, `single-stream`) | 71.0 | 74.1 (+4.5% ±4.5; TTFT p50 0.10 s) |
+
+All 256 greedy responses are identical to r6v's; acceptance length is level (2.27).
+
+r6x at 1M context against r6v at 512K on three nodes, both serving
+DeepSeek-V4.1-Flash-1017 (2026-10-19), measured with the `release-tp3` suite in one
+session (r6x, r6v, r6x again;
+[results](experiments/2026-10-19-r6x-tp3-1m/README.md);
+[suite run](manifests/suites/2026-10-19-karmic-kraken-r6x-tp3/)). The suite's prefill
+stops at 500K; one cold 1,000,000-token prefill was measured on its own.
+
+| Workload | TP3 r6v (512K) | TP3 r6x (1M) |
+| --- | ---: | ---: |
+| Source-text prefill, 32K (tok/s) | 4,425 | 4,465 (+0.9% ±0.9) |
+| Prefill, 128K | 4,357 | 4,390 (**+0.8%** ±0.7) |
+| Prefill, 256K | 4,167 | 4,196 (**+0.7%** ±0.3) |
+| Prefill, 500K | 3,810 | 3,835 (**+0.7%** ±0.3) |
+| Prefill, 1M (one cold run) | | 3,227 (310 s) |
+| Decode step time, geometric mean of 14 shapes | | **-1.3%** ±0.14 |
+| Decode, 8 streams (tok/s) | 147.1 | 152.7 (**+3.8%** ±1.5) |
+| Decode, 4 streams | 111.5 | 116.0 (**+4.0%** ±1.9) |
+| Poisson arrivals at 0.42 req/s, output (tok/s) | 117.6 | 118.3 (+0.7% ±22) |
+| One conversation at a time (tok/s, `single-stream`) | 57.0 | 59.7 (+4.7% ±6.3) |
+| KV pool | 2,845,543 tokens (5.43x 512K) | 4,765,898 tokens (4.55x 1M) |
+
+All 256 greedy responses are identical to r6v's. During the cold 1M prefill dgx1's
+lowest MemAvailable was 5.93 GiB, above its 3 GiB steady guard.
 
 r6v against r6n on four nodes, both serving DeepSeek-V4.1-Flash-1017 (2026-10-17),
 measured with the `release` suite in one session (r6v, r6n on its production ring
