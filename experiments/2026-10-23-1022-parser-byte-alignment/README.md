@@ -39,3 +39,7 @@ service. PR #56 remains draft/unmerged; qualification does not promote a service
 
 [The preceding failed request and successful recovery](runs/attempt-3/README.md)
 remain immutable evidence. Request acceptance of this successor is pending.
+
+Subsequent qualification completed in two RC3 windows. See the
+[same-image acceptance and recovery results](../2026-10-23-1022-capacity-validation/RESULTS.md)
+for the actual tool/quality/cache/1M/concurrency/stability gates and their scope.

@@ -41,3 +41,6 @@ The planned maintenance window is 20–40 minutes, bounded at 75 minutes with
 15 minutes reserved for recovery. Failure still triggers coordinated restoration
 of the exact retained four-node r6x service. PR #56 stays draft and unmerged.
 This bounded release screen makes no comparative throughput or long-soak claim.
+
+The continuation is complete: [final qualification results](RESULTS.md) record
+the passing same-image capacity/stability gates and verified r6x recovery.
