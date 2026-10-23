@@ -34,7 +34,7 @@ cluster keeps working while results are read and the next spec is written. An em
 queue keeps the window held for the next spec; --idle-minutes M closes it after M idle
 minutes instead. Terminal lines for watchers:
 "QUEUE job <name> done|failed", "QUEUE idle", "QUEUE closed". A "sync" job moves the node
-checkouts to origin/main between jobs, so newly published arms can join an open window.
+checkouts to the configured production branch between jobs, so published arms can join a window.
 
 A run spec is JSON: {"experiment": "experiments/<dir>", "run": "rec6", "jobs": [...]} with
 jobs of kind "measure" (arms booted in turn and measured; profile "lean" or "full";
@@ -82,7 +82,6 @@ REQUEST = Path.home() / "spark-request.json"
 LEGACY_HOLD = Path.home() / "spark3-hold.json"
 LEGACY_REQUEST = Path.home() / "spark3-request.json"
 HOLDER_PREFIX = "spark-lab"
-CONTAINER = "dsv41-karmic-kraken"
 CANDIDATE = "/opt/spark3/candidate"
 # The GPU's DRM card by PCI path, as the serving container mounts it for the display carve-out.
 DRM_CARD = "/dev/dri/by-path/pci-000f:01:00.0-card"
@@ -173,6 +172,15 @@ def write_json_atomic(path: Path, data: dict) -> None:
 
 def production_configuration() -> tuple[dict, dict, dict]:
     return spark.configuration(argparse.Namespace(cluster_config=PRODUCTION_CONFIG))
+
+
+def production_ref() -> str:
+    cluster, _, _ = production_configuration()
+    return "origin/" + (cluster.get("deployment", {}).get("branch") or "main")
+
+
+def production_container() -> str:
+    return spark.read_cluster(PRODUCTION_CONFIG)["container"]["name"]
 
 
 def nodes_config() -> dict:
@@ -292,8 +300,9 @@ def published_problems() -> list[str]:
     subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], check=False)
     head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True,
                           capture_output=True).stdout.strip()
-    if subprocess.run(["git", "-C", str(ROOT), "merge-base", "--is-ancestor", "HEAD", "origin/main"]).returncode:
-        problems.append(f"deployment commit {head[:8]} is not on origin/main")
+    ref = production_ref()
+    if subprocess.run(["git", "-C", str(ROOT), "merge-base", "--is-ancestor", "HEAD", ref]).returncode:
+        problems.append(f"deployment commit {head[:8]} is not on {ref}")
     cluster, nodes, _ = production_configuration()
     repo = spark.repository_path(cluster)
     for node in nodes["nodes"]:
@@ -593,7 +602,7 @@ class Telemetry:
                     ["ssh", *spark.ssh_options(), spark.ssh_target(nodes, node), command],
                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, text=True)
                 sampler = subprocess.Popen(
-                    ["ssh", *spark.ssh_options(), spark.ssh_target(nodes, node), "python3", "-", CONTAINER, "21600"],
+                    ["ssh", *spark.ssh_options(), spark.ssh_target(nodes, node), "python3", "-", production_container(), "21600"],
                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.PIPE, text=True)
                 sampler.stdin.write(THREAD_SAMPLER)
                 sampler.stdin.close()
@@ -650,7 +659,7 @@ def restore_production(dry: bool = False) -> bool:
 
 
 def container_running(node: dict | None = None) -> bool:
-    command = ["docker", "ps", "-q", "--filter", f"name=^{CONTAINER}$"]
+    command = ["docker", "ps", "-q", "--filter", f"name=^{production_container()}$"]
     if node is None:
         output = subprocess.run(command, text=True, capture_output=True).stdout
     else:
@@ -1094,7 +1103,7 @@ def describe_step(step: dict) -> str:
     if step["kind"] == "costs":
         return f"summarize kernels and compare costs against {step['labels'][0]} ({', '.join(step['workloads'])})"
     if step["kind"] == "sync":
-        return "sync node checkouts to origin/main"
+        return f"sync node checkouts to {production_ref()}"
     if step["kind"] == "stop":
         return "bin/spark " + shlex.join(stop_arguments(step.get("remove", False)))
     if step["kind"] == "curves":
@@ -1128,7 +1137,7 @@ def run_script(step: dict) -> int:
 def fresh_inventory() -> None:
     nodes = nodes_config()
     for node in nodes["nodes"]:
-        spark.run_ssh(nodes, node, "docker", "exec", CONTAINER, "sh", "-c",
+        spark.run_ssh(nodes, node, "docker", "exec", production_container(), "sh", "-c",
                        f"rm -f {TRACE_LOG_DIR}/inventory-* {TRACE_LOG_DIR}/plans-*")
 
 
@@ -1178,7 +1187,7 @@ def profile_workload(step: dict) -> None:
     workload = step["workload"]
 
     def in_container(node: dict, script: str) -> subprocess.CompletedProcess:
-        return spark.run_ssh(nodes, node, "docker", "exec", CONTAINER, "sh", "-c", script)
+        return spark.run_ssh(nodes, node, "docker", "exec", production_container(), "sh", "-c", script)
 
     def each(function):
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(nodes["nodes"])) as pool:
@@ -1259,9 +1268,10 @@ def profile_costs(step: dict) -> None:
 
 
 def sync_checkouts() -> bool:
-    """Move every node's checkout to origin/main (between jobs: nothing runs from them)."""
+    """Move every checkout to the configured production branch between jobs."""
     subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], check=False)
-    moved = subprocess.run(["git", "-C", str(ROOT), "checkout", "-q", "--detach", "origin/main"])
+    ref = production_ref()
+    moved = subprocess.run(["git", "-C", str(ROOT), "checkout", "-q", "--detach", ref])
     if moved.returncode:
         return False
     head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"], text=True,
@@ -1293,7 +1303,7 @@ def save_engine_logs(out: str, lines: int = 4000) -> None:
     try:
         nodes = nodes_config()
         for node in nodes["nodes"]:
-            result = spark.run_ssh(nodes, node, "docker", "logs", "--tail", str(lines), CONTAINER)
+            result = spark.run_ssh(nodes, node, "docker", "logs", "--tail", str(lines), production_container())
             path = ROOT / f"{out}.engine-{node['name']}.log"
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(result.stdout + result.stderr)
@@ -1308,7 +1318,7 @@ def save_curves(step: dict) -> None:
     The profile runs on padding rows, which the MoE routers skip, unless the arm sets
     SPARK3_DSPARK_PROFILE_TOKENS=random (real rows, routed experts included); the file
     records which, since padded-row costs leave out a real step's largest part."""
-    logs = subprocess.run(["docker", "logs", CONTAINER], text=True, capture_output=True)
+    logs = subprocess.run(["docker", "logs", production_container()], text=True, capture_output=True)
     lines = [l for l in (logs.stdout + logs.stderr).splitlines() if "Profiled DSpark step costs" in l]
     if not lines:
         return
@@ -1960,7 +1970,7 @@ def kernel_local(bundle_dir: str, out_dir: str | None, dry: bool) -> int:
         print(shlex.join(command))
         return 0
     if container_running():
-        raise SystemExit(f"{CONTAINER} is running on this node; the kernel lab needs the GPU to itself")
+        raise SystemExit(f"{production_container()} is running on this node; the kernel lab needs the GPU to itself")
     missing = [str(source) for source, _ in bundle_mounts(bundle, candidate) if not source.exists()]
     if missing:
         raise SystemExit("missing bundle inputs: " + ", ".join(missing))

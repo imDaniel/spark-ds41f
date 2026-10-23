@@ -49,6 +49,21 @@ class ExampleSiteTest(unittest.TestCase):
             previous_head = json.loads((root / frozen).read_text())["distributed"]["master_addr"]
             self.assertEqual(next(n for n in old["nodes"] if n.get("head"))["management_ip"], previous_head)
 
+    def test_new_maps_keep_each_shapes_gid(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in ("config/cluster.json", *example_site.EXAMPLES.values()):
+                (root / name).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(ROOT / name, root / name)
+            with mock.patch.object(example_site, "ROOT", root), contextlib.redirect_stdout(io.StringIO()):
+                example_site.main()
+            cluster = json.loads((root / "config/cluster.json").read_text())
+            for shape_name in ("tp4-ring", "tp3-triangle"):
+                shape = example_site.recipe.shape_entry(cluster, shape_name)
+                nodes = json.loads((root / shape["nodes_config"]).read_text())
+                expected = int(shape["environment"]["NCCL_IB_GID_INDEX"])
+                self.assertTrue(all(n["roce_gid_index"] == expected for n in nodes["nodes"]), shape_name)
+
 
 if __name__ == "__main__":
     unittest.main()

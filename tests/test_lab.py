@@ -538,6 +538,28 @@ class NewCommitTest(unittest.TestCase):
 class PlanProblemsTest(unittest.TestCase):
     """Mistakes that would cost a boot are found from the spec alone."""
 
+    def test_publish_and_sync_follow_the_configured_downstream_branch(self):
+        nodes = {"nodes": [{"name": "head", "head": True}]}
+        config = {"deployment": {"branch": "homelab/main", "path": "/srv/repo"}, "host": {"home": "/h"}}
+        completed = subprocess.CompletedProcess([], 0, stdout="abcdef\n")
+        with mock.patch.object(lab, "production_configuration", return_value=(config, nodes, {})), \
+                mock.patch.object(lab.subprocess, "run", return_value=completed) as run, \
+                mock.patch.object(lab, "spark_cli", return_value=0), \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(lab.published_problems(), [])
+            self.assertTrue(lab.sync_checkouts())
+        commands = [c.args[0] for c in run.call_args_list]
+        self.assertTrue(any(c[-2:] == ["HEAD", "origin/homelab/main"] for c in commands))
+        self.assertTrue(any(c[-2:] == ["--detach", "origin/homelab/main"] for c in commands))
+        self.assertFalse(any("origin/main" in c for c in commands))
+
+    def test_kernel_busy_guard_checks_the_selected_production_container(self):
+        completed = subprocess.CompletedProcess([], 0, stdout="running-id\n")
+        with mock.patch.object(lab.spark, "read_cluster", return_value={"container": {"name": "accepted-service"}}), \
+                mock.patch.object(lab.subprocess, "run", return_value=completed) as run:
+            self.assertTrue(lab.container_running())
+        self.assertEqual(run.call_args.args[0], ["docker", "ps", "-q", "--filter", "name=^accepted-service$"])
+
     def test_an_arm_cluster_start_would_refuse_is_named(self) -> None:
         # r6o's first gate stopped at its boot: its lock still named r6n's own baseline.
         arm = "experiments/2026-10-16-r6o/r6o-tp3.json"

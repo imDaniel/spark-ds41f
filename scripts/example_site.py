@@ -50,7 +50,10 @@ def main() -> int:
         nodes = json.loads((ROOT / EXAMPLES[name]).read_text())
         if name in selected:
             next(node for node in nodes["nodes"] if node.get("head"))["management_ip"] = address
-            gid = cluster.get("environment", {}).get("SPARKNET_ROCE_GID_INDEX")
+            shape = next(recipe.shape_entry(cluster, shape_name) for shape_name in cluster["shapes"]
+                         if recipe.shape_entry(cluster, shape_name).get("nodes_config", NODES_FILE) == name)
+            gid = shape.get("environment", {}).get("NCCL_IB_GID_INDEX",
+                                                   cluster.get("environment", {}).get("SPARKNET_ROCE_GID_INDEX"))
             if gid is not None:
                 for node in nodes["nodes"]:
                     node["roce_gid_index"] = int(gid)
