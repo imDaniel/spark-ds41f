@@ -1,7 +1,7 @@
 {
  "notes": "The ports arm plus the CED nonfinal row skip (vLLM beb1b2972) as runtime overlays; no test code.",
  "extends": {
-  "config": "config/cluster.json",
+  "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
   "shape": "tp3-triangle"
  },
  "set": {

@@ -25,6 +25,7 @@ CANDIDATE = "experiments/2026-10-03-tilelang-kernels"
 # Experiments that run the TileLang family and may therefore build its sources.
 TILELANG_EXPERIMENTS = (
     CANDIDATE,
+    "experiments/2026-10-24-1022-promotion/previous/",
     "experiments/2026-10-18-request-steering/",
     "experiments/2026-10-18-steering-consume/",
     "experiments/2026-10-19-steering-gpu/",
@@ -152,7 +153,7 @@ class KernelBackendTest(unittest.TestCase):
         lock = spark.read_json("upstreams.lock.json")
         nodes = spark.read_json("config/examples/nodes-ring4.json")
         cluster = spark.read_cluster("config/cluster.json", "tp4-ring")
-        self.assertEqual(cluster["nodes_config"], "config/nodes-ring4.local.json")
+        self.assertEqual(cluster["nodes_config"], "config/nodes-1022-attention.local.json")
         self.assertNotIn("upstreams_config", cluster)
         self.assertEqual(cluster["promoted_baseline"], lock["generated_from_baseline"])
         cluster["distributed"]["master_addr"] = next(n for n in nodes["nodes"] if n.get("head"))["management_ip"]

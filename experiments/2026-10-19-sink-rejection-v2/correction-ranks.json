@@ -1,7 +1,7 @@
 {
  "notes": "Production TP3 with the candidate's vLLM files, rejection on, and the lab check that every rank flags the same rows (one all-gather a step; not for speed).",
  "extends": {
-  "config": "config/cluster.json",
+  "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
   "shape": "tp3-triangle"
  },
  "set": {

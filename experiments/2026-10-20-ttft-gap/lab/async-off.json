@@ -1,7 +1,7 @@
 {
  "notes": "r6x TP3 with synchronous scheduling: --no-async-scheduling (async is otherwise enabled by default for DSpark), and --disable-cascade-attn, which async speculative decoding sets by itself, so only the scheduling differs. The step a new request misses disappears; the host's preparation is no longer hidden.",
  "extends": {
-  "config": "config/cluster.json",
+  "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
   "shape": "tp3-triangle"
  },
  "set": {

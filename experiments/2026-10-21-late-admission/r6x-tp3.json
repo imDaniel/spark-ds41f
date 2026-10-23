@@ -1,7 +1,7 @@
 {
  "notes": "r6x on the triangle at 1M: the late-admission screen's reference. KV pool 4.5 GiB.",
  "extends": {
-  "config": "config/cluster.json",
+  "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
   "shape": "tp3-triangle"
  },
  "set": {

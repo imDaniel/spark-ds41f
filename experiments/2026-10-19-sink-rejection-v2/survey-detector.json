@@ -1,7 +1,7 @@
 {
  "notes": "Production TP3 with the candidate's vLLM files and the detector alone at threshold 20,000: every sampled row above it is logged with its value (the scheduler's Sink: lines); decoding is r6x's.",
  "extends": {
-  "config": "config/cluster.json",
+  "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
   "shape": "tp3-triangle"
  },
  "set": {

@@ -254,5 +254,5 @@
     "transport": "oneshot-ring4"
   },
   "nodes_config": "config/nodes-1022-attention.local.json",
-  "upstreams_config": "upstreams.lock.json"
+  "upstreams_config": "experiments/2026-10-24-1022-promotion/previous/upstreams.lock.json"
 }

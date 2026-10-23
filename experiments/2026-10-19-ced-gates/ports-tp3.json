@@ -1,7 +1,7 @@
 {
  "notes": "r6x TP3 1M with the TileLang CED ports (vLLM 1a15f6b6b: requests, row map, row copy, and the state that declares them) as runtime overlays; no test code.",
  "extends": {
-  "config": "config/cluster.json",
+  "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
   "shape": "tp3-triangle"
  },
  "set": {

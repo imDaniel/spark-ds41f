@@ -23,6 +23,7 @@ NODES_FILE = "config/nodes.json"
 EXAMPLES = {
     NODES_FILE: "config/nodes.example.json",
     "config/nodes-ring4.local.json": "config/examples/nodes-ring4.json",
+    "config/nodes-1022-attention.local.json": "config/examples/nodes-ring4.json",
 }
 
 
@@ -34,7 +35,9 @@ def node_maps(cluster: dict) -> list[str]:
 
 def main() -> int:
     cluster = json.loads((ROOT / "config/cluster.json").read_text())
-    maps = node_maps(cluster)
+    selected = node_maps(cluster)
+    # Frozen historical arms still name the older example maps.
+    maps = sorted(set(selected) | set(EXAMPLES))
     missing = [name for name in maps if name not in EXAMPLES]
     if missing:
         raise SystemExit(f"no example for {', '.join(missing)}: add one to EXAMPLES in {Path(__file__).name}")
@@ -45,9 +48,16 @@ def main() -> int:
             print(f"kept {name} (this site's own)")
             continue
         nodes = json.loads((ROOT / EXAMPLES[name]).read_text())
-        next(node for node in nodes["nodes"] if node.get("head"))["management_ip"] = address
+        if name in selected:
+            next(node for node in nodes["nodes"] if node.get("head"))["management_ip"] = address
+        else:
+            previous = ROOT / "experiments/2026-10-24-1022-promotion/previous/cluster.json"
+            if previous.is_file():
+                old_address = json.loads(previous.read_text())["distributed"]["master_addr"]
+                next(node for node in nodes["nodes"] if node.get("head"))["management_ip"] = old_address
         target.write_text(json.dumps(nodes, indent=2) + "\n", encoding="utf-8")
-        print(f"wrote {name} from {EXAMPLES[name]}, head at {address}")
+        actual_head = next(node for node in nodes["nodes"] if node.get("head"))["management_ip"]
+        print(f"wrote {name} from {EXAMPLES[name]}, head at {actual_head}")
     return 0
 
 

@@ -1,6 +1,6 @@
 {
   "extends": {
-    "config": "config/cluster.json",
+    "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
     "shape": "tp3-triangle"
   },
   "set": {

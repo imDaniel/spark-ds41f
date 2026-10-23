@@ -1,7 +1,7 @@
 {
   "notes": "Promoted r6x TP3 at 1M, with torch profiling only. Pure production restore stays config/cluster.json.",
   "extends": {
-    "config": "config/cluster.json",
+    "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
     "shape": "tp3-triangle"
   },
   "set": {

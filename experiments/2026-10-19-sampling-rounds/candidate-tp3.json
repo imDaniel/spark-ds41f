@@ -1,7 +1,7 @@
 {
   "notes": "r6x TP3, candidate fd1b57e06 sampling repair only; three runtime overlays, no test code.",
   "extends": {
-    "config": "config/cluster.json",
+    "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
     "shape": "tp3-triangle"
   },
   "set": {

@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "promoted_baseline": "2026-10-22-spark-ds41f-1022",
+  "promoted_baseline": "2026-10-24-homelab-1022-attention",
   "model": "v41-flash-1017",
   "models": {
     "v41-flash": {
@@ -9,6 +9,10 @@
       "notes": "DeepSeek-V4.1-Flash, revision dba1be0a (2026-09-10)."
     },
     "v41-flash-1017": {
+      "snapshot": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1",
+      "notes": "Materialized, unchanged official 1017 checkpoint, model identity b35c43fda128481f17b7ee878df2c2f93fd6db416df451b080cc8d00e166f7d0; steering is a separate read-only sidecar."
+    },
+    "v41-flash-1017-hub": {
       "hub": "{home}/.cache/huggingface/hub",
       "snapshot": "models--deepseek-ai--DeepSeek-V4.1-Flash-1017/snapshots/1bae0e1088993b9b82de08f59de5be5a34e42170",
       "notes": "DeepSeek-V4.1-Flash-1017, revision 1bae0e10 (2026-10-17): new weights; config, tokenizer and tensor layout unchanged. Its blobs link on into the hub's shared store, so the hub is mounted."
@@ -19,10 +23,10 @@
     "top_p": 1.0
   },
   "container": {
-    "name": "dsv41-karmic-kraken",
-    "image": "vllm-ds41f-kkref:19f2c20ed4d6-1022-4",
+    "name": "ds41f-1022-parser-rc3",
+    "image": "ds41f-1022-parser:s-b70fe11a88b3-rc3",
     "expected_labels": {
-      "local.spark3.vllm.tree": "e68aa19c8027c34a3dcfeb3ed203f6d285fc4d67",
+      "local.spark3.vllm.tree": "dc13e8dd17ff4415f0330084c02bb684ad021420",
       "local.spark3.b12x.tree": "1a647a311ca55d45070ab83d60668d9c8fb8886c",
       "local.spark3.nccl.tree": "6af10aa730a64fcee8781d62340a9c9184e79469",
       "local.spark3.tilelang.tree": "222b895d04ee6cd75179155d06e0c0d450636f51",
@@ -49,14 +53,19 @@
     ],
     "mounts": [
       [
-        "{home}/projects/spark-ds41f/cache",
+        "/srv/ai-cluster/cache/1022-screen-20261023/s-loaded",
         "/cache",
         "rw"
+      ],
+      [
+        "/srv/ai-cluster/profiles/deepseek-1017-attention-1022/releases/e06b8cb60f3f",
+        "/steering-1022",
+        "ro"
       ]
     ]
   },
   "host": {
-    "home": "/home/swank",
+    "home": "/home/admin",
     "memguard_gib": 3,
     "memguard_interval_seconds": 2,
     "startup_memguard_gib": 5,
@@ -66,7 +75,9 @@
       "release": "7.0.0-1019-nvidia-64k",
       "page_size": 65536,
       "memory_saver_required": true
-    }
+    },
+    "fan_control": false,
+    "kernel_policy": "experiments/2026-10-19-r6x-steering-gpu/host-kernel-policy.json"
   },
   "environment": {
     "B12X_AUTOTUNE": "0",
@@ -83,7 +94,7 @@
     "CUTE_DSL_ARCH": "sm_121a",
     "CUTE_DSL_CACHE_DIR": "/cache/kkref/jit/cute-dsl",
     "FLASHINFER_WORKSPACE_BASE": "/cache/kkref/flashinfer",
-    "GLOO_SOCKET_IFNAME": "enP7s7",
+    "GLOO_SOCKET_IFNAME": "spark-mgmt0",
     "HF_HOME": "/cache/huggingface",
     "HF_HUB_OFFLINE": "1",
     "MAX_JOBS": "2",
@@ -96,11 +107,11 @@
     "SPARK3_DSPARK_VOCAB_PARALLEL": "1",
     "SPARKNET_ROCE_ALLREDUCE_CAPACITY_BYTES": "2097152",
     "SPARKNET_ROCE_ALLREDUCE_DISPATCH_MAX_BYTES": "2097152",
-    "SPARKNET_ROCE_GID_INDEX": "3",
+    "SPARKNET_ROCE_GID_INDEX": "5",
     "TILELANG_CACHE_DIR": "/cache/kkref/jit/tilelang",
     "TORCHINDUCTOR_CACHE_DIR": "/cache/kkref/jit/torchinductor",
     "TORCH_NCCL_ASYNC_ERROR_HANDLING": "1",
-    "TP_SOCKET_IFNAME": "enP7s7",
+    "TP_SOCKET_IFNAME": "spark-mgmt0",
     "TRANSFORMERS_OFFLINE": "1",
     "TRITON_CACHE_DIR": "/cache/kkref/jit/triton",
     "VLLM_ALLOW_LONG_MAX_MODEL_LEN": "1",
@@ -117,7 +128,6 @@
     "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
     "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "900",
     "VLLM_L2_PREFETCH_GRID": "2",
-    "VLLM_LATE_ADMISSION_LAYER": "30",
     "VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS": "1",
     "VLLM_MULTI_STREAM_GEMM_TOKEN_THRESHOLD": "1024",
     "VLLM_PLUGINS": "b12x_loader",
@@ -131,7 +141,10 @@
     "SPARK3_DSPARK_PROFILE_TOKENS": "random",
     "SPARKNET_ROCE_PROXY_CPU": "big",
     "VLLM_L2_PREFETCH_KERNELS": "tilelang",
-    "SPARKNET_ROCE_TIMEOUT_MS": "10000"
+    "SPARKNET_ROCE_TIMEOUT_MS": "10000",
+    "VLLM_STARTUP_HEARTBEAT_TIMEOUT_S": "120",
+    "VLLM_LATE_ADMISSION_LAYER": "30",
+    "VLLM_SINK_REJECTION": "1"
   },
   "drafts": 5,
   "serve_args": [
@@ -170,6 +183,8 @@
     "${max_cudagraph_capture_size}",
     "--generation-config",
     "vllm",
+    "--override-generation-config",
+    "{\"temperature\":1.0,\"top_p\":1.0}",
     "--engram-config",
     "{\"table_memory\":\"disk\",\"disk_resident_scales\":false,\"projection_tp\":true}",
     "--attention-backend",
@@ -201,29 +216,32 @@
     "--no-scheduler-reserve-full-isl",
     "--no-enable-flashinfer-autotune",
     "--limit-mm-per-prompt",
-    "{\"image\":4}",
+    "{\"image\":999}",
     "--mm-processor-cache-gb",
-    "0"
+    "1",
+    "--additional-config",
+    "{\"ds41_steering\":{\"schema_version\":1,\"operator_version\":\"attn-writer-project-bf16-rank-order-v1\",\"profile_path\":\"/steering-1022/steering/heretic-1017-attn-v1.safetensors\",\"profile_sha256\":\"e06b8cb60f3f382157ef6632a93efdd90185beafa2251a8c29575f09c45cd45b\"}}",
+    "--enable-prompt-tokens-details"
   ],
   "distributed": {
-    "master_addr": "10.0.1.71",
+    "master_addr": "10.42.0.1",
     "master_port": "9999"
   },
   "deployment": {
     "launch_enabled": true,
-    "repository": "https://github.com/christopherowen/spark-ds41f.git",
-    "branch": "main",
-    "path": "{home}/projects/spark-ds41f",
+    "repository": "https://github.com/imDaniel/spark-ds41f.git",
+    "branch": "homelab/main",
+    "path": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
     "ready_url": "http://127.0.0.1:8000/v1/models",
-    "ready_timeout_seconds": 3600
+    "ready_timeout_seconds": 900
   },
   "kernel_backend": "tilelang",
   "default_shape": "tp4-ring",
   "shapes": {
     "tp4-ring": {
-      "notes": "Four nodes in a cable ring (two ConnectX-7 paths per neighbour); NCCL settings are sparknet's tp4-ring profile. Its DSpark draft budget is a rule of the inputs (row cost 0.035, since r6x): nothing is timed at boot. The embedding and head stay in regular memory: in the carve-out the head lost its L2 reuse (2026-10-12).",
+      "notes": "Site-qualified TP4 ring, exact RC3 image/profile and unchanged 1M/16-sequence compute recipe; accepted by owner on 2026-10-24.",
       "nodes": 4,
-      "nodes_config": "config/nodes-ring4.local.json",
+      "nodes_config": "config/nodes-1022-attention.local.json",
       "fabric": {
         "transport": "oneshot-ring4"
       },
@@ -246,7 +264,7 @@
         "NCCL_GIN_ENABLE": "0",
         "NCCL_IB_ADDR_FAMILY": "AF_INET",
         "NCCL_IB_DISABLE": "0",
-        "NCCL_IB_GID_INDEX": "3",
+        "NCCL_IB_GID_INDEX": "5",
         "NCCL_IB_HCA": "rocep1s0f0,roceP2p1s0f0,rocep1s0f1,roceP2p1s0f1",
         "NCCL_IB_MERGE_NICS": "1",
         "NCCL_IB_ROCE_VERSION_NUM": "2",
@@ -267,16 +285,16 @@
         "NCCL_RMA_DISABLE": "1",
         "NCCL_RUNTIME_CONNECT": "1",
         "NCCL_SHM_DISABLE": "1",
-        "NCCL_SOCKET_IFNAME": "enP7s7",
+        "NCCL_SOCKET_IFNAME": "spark-mgmt0",
         "NCCL_SWITCHLESS_BIDIRECTIONAL": "2",
         "NCCL_THREAD_THRESHOLDS": "-2 -2 -2 1 1 1",
         "SPARK3_DISPLAY_CARVEOUT_WEIGHTS": "0",
         "SPARKNET_ROCE_ALLGATHER_MAX_BYTES": "2097152"
       },
-      "benchmark_reference": "manifests/suites/2026-10-22-spark-ds41f-1022-tp4"
+      "benchmark_reference": "manifests/benchmarks/2026-10-24-homelab-1022-attention-tp4.json"
     },
     "tp3-triangle": {
-      "notes": "Three nodes fully cabled (a triangle); NCCL settings are sparknet's tp3-triangle profile. The embedding and head live in the display carve-out, which TP3's KV budget needs (docs/current-state.md). Upstream qualified 1,048,576 tokens with a 4.90625 GiB KV pool (4.55 full 1M contexts), spent from the memory the expert scale codes freed; dgx1's 5 GiB startup guard bounds the pool. Qualification is recorded separately in manifests/baselines/2026-10-19-karmic-kraken-r6x-tp3.json; it does not qualify the site's steering deployment.",
+      "notes": "Unqualified on the new attention-steering image. Cabling and sizing remain templates; this promotion grants no TP3 serving acceptance. See previous/cluster.json in the 2026-10-24 promotion record for upstream 1022 historical recipes.",
       "nodes": 3,
       "nodes_config": "config/nodes.json",
       "fabric": {
@@ -314,11 +332,10 @@
         "NCCL_SOCKET_IFNAME": "enP7s7",
         "SPARK3_DISPLAY_CARVEOUT_WEIGHTS": "1",
         "SPARKNET_ROCE_ALLGATHER_MAX_BYTES": "4194304"
-      },
-      "benchmark_reference": "manifests/suites/2026-10-22-spark-ds41f-1022-tp3"
+      }
     },
     "tp3-triangle-4k": {
-      "notes": "TP3 on a stock 4 KiB-page kernel without Memory Saver: smaller KV and context (docs/memory-profiles.md).",
+      "notes": "Unqualified on the new attention-steering image. Cabling and sizing remain templates; this promotion grants no TP3 serving acceptance. See previous/cluster.json in the 2026-10-24 promotion record for upstream 1022 historical recipes.",
       "extends": "tp3-triangle",
       "host": {
         "kernel": {

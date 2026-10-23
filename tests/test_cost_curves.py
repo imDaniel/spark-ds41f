@@ -25,8 +25,9 @@ def head(cluster: dict) -> dict:
 
 class CostCurveDirectoryTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.tp3 = spark.read_cluster("config/cluster.json", "tp3-triangle")
-        self.tp4 = spark.read_cluster("config/cluster.json", "tp4-ring")
+        frozen = "experiments/2026-10-24-1022-promotion/previous/cluster.json"
+        self.tp3 = spark.read_cluster(frozen, "tp3-triangle")
+        self.tp4 = spark.read_cluster(frozen, "tp4-ring")
 
     def directory(self, cluster: dict) -> str:
         return spark.expected_environment(cluster, head(cluster))["SPARK3_DSPARK_COST_DIR"]

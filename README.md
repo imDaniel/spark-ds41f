@@ -1,12 +1,18 @@
 # spark-ds41f
 
-本站运行基线仍为 r6x 与独立 steering 补丁，四机实测见[硬件记录](experiments/2026-10-19-r6x-steering-gpu/RESULTS.md)。
-本站日常验收使用独立[配方](experiments/2026-10-19-r6x-steering-gpu/followup/acceptance.json)，保留 1M 和请求级动态强度，旧配置、模型和镜像作为回退保留。
-下文的上游晋级记录与本站验收范围分别记录；本站的吞吐和尾延迟限制见[后续验收](experiments/2026-10-19-r6x-steering-gpu/followup/README.md)。
+本站在 2026-10-24 经所有者确认，正式选择 **1022 + attention steering**：
+[晋级记录与恢复步骤](experiments/2026-10-24-1022-promotion/README.md)、
+[不可变 baseline](manifests/baselines/2026-10-24-homelab-1022-attention.json)。
+主配置 [config/cluster.json](config/cluster.json) 的 TP4 配方固定已验收镜像 `14d5bb2c…`、
+profile `e06b8cb6…`，保留 1M 上下文、16 路、原网关与模型别名、请求级 scale 0–4。
+原始 1017 权重不变。TP3/TP3-4K 尚未在该镜像上验收，没有本站晋级资格。
 
-本地开发分支已合入固定的 1022 上游提交；[1022 attention steering 审查修订候选](experiments/2026-10-23-1022-attention-review/README.md)
-记录补丁重放、独立 profile 绑定与离线检查。后续[离线准备与恢复评审](experiments/2026-10-23-1022-offline-preparation/README.md)
-已构建三组镜像并完成 CPU 检查；[有界 GPU／TP4 验证](experiments/2026-10-23-1022-window/RESULTS.md)和两次实际恢复已通过。本站继续运行原 r6x，PR #56 未合并；完整 release comparison 和满容量验证尚未完成。
+[功能与容量验证](experiments/2026-10-23-1022-capacity-validation/RESULTS.md)和
+[同口径性能对比](experiments/2026-10-24-1022-matched-performance/RESULTS.md)分别保留：
+输出 TPS 接近持平至小幅提高，单路首 token 增加约 33–34 ms，部分尾延迟回退；
+不宣称全面提速或统计等价。所有者已亲自确认 steering 正常，并取消重复性能测量。
+r6x 的 `archive/r6x-attention-steering-20261023` 分支、原镜像、配置、profile 与权重均保留。
+下文的上游发布史是来源背景，本站生产权威为上述主配置和 baseline。
 
 Reproducible Docker/vLLM deployment, tuning, and benchmarks for DeepSeek V4.1
 Flash on a switchless three-node DGX Spark fabric, and the same deployment on

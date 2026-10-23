@@ -1,7 +1,7 @@
 {
  "notes": "r6x on the triangle at 1M with synchronous scheduling: --no-async-scheduling (async is otherwise on by default for DSpark) and --disable-cascade-attn (which async speculative decoding sets by itself). KV pool 4.5 GiB.",
  "extends": {
-  "config": "config/cluster.json",
+  "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
   "shape": "tp3-triangle"
  },
  "set": {

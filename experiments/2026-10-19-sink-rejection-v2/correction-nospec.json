@@ -1,7 +1,7 @@
 {
  "notes": "Production TP3 with the candidate's vLLM files and rejection on, speculation off (its serve arguments without --speculative-config), on port 8001 so returning agent traffic cannot reach it: gate item 7, greedy tokens with and without speculation.",
  "extends": {
-  "config": "config/cluster.json",
+  "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
   "shape": "tp3-triangle"
  },
  "set": {

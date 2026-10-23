@@ -4,7 +4,11 @@
 cluster profile may select a separate repository-relative lock through
 `upstreams_config`; build preparation, doctor and image builds use that lock.
 This lets candidates add patches without changing the promoted image identity.
-The current production chain is:
+The site's promoted lock selects the tested 1022 attention-steering series:
+vLLM base `19f2c20e`, patch head `b70fe11a`, tree `dc13e8dd`; all native component
+trees are unchanged from the qualified RC3 image. Exact identities are in
+[`2026-10-24-homelab-1022-attention-source.json`](../manifests/sources/2026-10-24-homelab-1022-attention-source.json).
+The earlier r6 source chain below is historical background:
 
 ```text
 local-inference-lab/vllm integration/karmic-kraken-beta @ 04c30fa9

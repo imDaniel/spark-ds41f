@@ -31,14 +31,21 @@ class ExampleSiteTest(unittest.TestCase):
             for name in ("config/cluster.json", *example_site.EXAMPLES.values()):
                 (root / name).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(ROOT / name, root / name)
+            frozen = "experiments/2026-10-24-1022-promotion/previous/cluster.json"
+            (root / frozen).parent.mkdir(parents=True)
+            shutil.copy(ROOT / frozen, root / frozen)
             own = root / example_site.NODES_FILE
             own.write_text('{"site": "own"}\n')
             with mock.patch.object(example_site, "ROOT", root), contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(example_site.main(), 0)
             self.assertEqual(own.read_text(), '{"site": "own"}\n')
             address = json.loads((root / "config/cluster.json").read_text())["distributed"]["master_addr"]
-            ring = json.loads((root / "config/nodes-ring4.local.json").read_text())
+            selected = json.loads((root / "config/cluster.json").read_text())["shapes"]["tp4-ring"]["nodes_config"]
+            ring = json.loads((root / selected).read_text())
             self.assertEqual([node["management_ip"] for node in ring["nodes"] if node.get("head")], [address])
+            old = json.loads((root / "config/nodes-ring4.local.json").read_text())
+            previous_head = json.loads((root / frozen).read_text())["distributed"]["master_addr"]
+            self.assertEqual(next(n for n in old["nodes"] if n.get("head"))["management_ip"], previous_head)
 
 
 if __name__ == "__main__":

@@ -527,7 +527,7 @@ SPARKNET_BIND = "/home/swank/sparknet-port/sparknet:/usr/local/lib/python3.12/di
 
 class LiveMountsTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.cluster = spark.read_cluster("config/cluster.json", "tp4-ring")
+        self.cluster = spark.read_cluster("experiments/2026-10-24-1022-promotion/previous/cluster.json", "tp4-ring")
         self.wanted = spark.expected_binds(self.cluster)
 
     def test_docker_run_is_given_the_compared_binds(self) -> None:

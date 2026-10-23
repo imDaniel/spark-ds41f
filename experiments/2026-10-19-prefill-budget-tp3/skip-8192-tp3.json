@@ -1,7 +1,7 @@
 {
  "notes": "The CED gates' skip arm (TileLang CED ports and the nonfinal row skip, vLLM beb1b2972, runtime overlays) at a long-prefill budget of 8,192 (threshold 8,192 - 8 x 6 = 8,144).",
  "extends": {
-  "config": "config/cluster.json",
+  "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
   "shape": "tp3-triangle"
  },
  "set": {

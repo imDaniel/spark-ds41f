@@ -1,7 +1,7 @@
 {
  "notes": "The skip at a long-prefill budget of 4,096, with a prefill chunk every 2 steps while other requests decode (decode-only steps between).",
  "extends": {
-  "config": "config/cluster.json",
+  "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
   "shape": "tp3-triangle"
  },
  "set": {

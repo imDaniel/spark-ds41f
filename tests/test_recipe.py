@@ -77,7 +77,8 @@ def load_spark():
 
 class RecipeTest(unittest.TestCase):
     def setUp(self):
-        self.recipe = load("config/cluster.json")
+        # Historical release contracts keep the recipe they actually measured.
+        self.recipe = load("experiments/2026-10-24-1022-promotion/previous/cluster.json")
 
     def test_tp3_qualification_extends_the_immutable_tp4_record(self):
         record = load("manifests/baselines/2026-10-19-karmic-kraken-r6x-tp3.json")
@@ -121,7 +122,7 @@ class RecipeTest(unittest.TestCase):
         for shape in ("tp4-ring", "tp3-triangle"):
             arm = f"experiments/2026-10-22-spark-ds41f-1022/spark-ds41f-1022-{shape.split('-')[0]}.json"
             resolved = recipe.resolve(self.recipe, shape)
-            released = load_spark().read_cluster(arm)
+            released = recipe.overlay(load(arm), resolved)
             self.assertEqual({k: v for k, v in resolved.items() if k not in naming},
                              {k: v for k, v in released.items() if k not in naming}, shape)
 
@@ -297,6 +298,42 @@ class RecipeTest(unittest.TestCase):
         """One recipe: no per-shape copies beside it."""
         self.assertEqual(sorted(p.name for p in (ROOT / "config").glob("cluster*.json")), ["cluster.json"])
 
+
+
+class PromotedRecipeTest(unittest.TestCase):
+    def test_historical_reference_freezing_preserves_all_other_bytes(self):
+        folder = "experiments/2026-10-24-1022-promotion"
+        for row in load(folder + "/historical-reference-map.json"):
+            data = (ROOT / row["path"]).read_bytes()
+            self.assertEqual(hashlib.sha256(data).hexdigest(), row["new_sha256"])
+            original = data.replace((folder + "/previous/cluster.json").encode(), b"config/cluster.json")
+            original = original.replace((folder + "/previous/upstreams.lock.json").encode(), b"upstreams.lock.json")
+            self.assertEqual(hashlib.sha256(original).hexdigest(), row["previous_sha256"], row["path"])
+
+    def test_promoted_tp4_preserves_the_accepted_running_recipe(self):
+        current = recipe.resolve(load("config/cluster.json"), "tp4-ring")
+        accepted = load("experiments/2026-10-24-1022-matched-performance/cluster.json")
+        for field in ("container", "environment", "serve_args", "host", "distributed", "fabric", "nodes_config"):
+            self.assertEqual(current[field], accepted[field], field)
+        self.assertEqual(current["deployment"]["branch"], "homelab/main")
+        self.assertEqual(current["deployment"]["repository"], "https://github.com/imDaniel/spark-ds41f.git")
+        record = load("manifests/baselines/2026-10-24-homelab-1022-attention.json")
+        self.assertEqual(record["configuration_sha256"], hashlib.sha256((ROOT / "config/cluster.json").read_bytes()).hexdigest())
+        reference = load(current["benchmark_reference"])
+        self.assertEqual(reference["identity"]["image_id"], record["image_id"])
+        self.assertEqual(reference["identity"]["profile_sha256"], record["profile"]["sha256"])
+
+    def test_unmeasured_tp3_shapes_do_not_inherit_tp4_acceptance(self):
+        current = load("config/cluster.json")
+        for shape in ("tp3-triangle", "tp3-triangle-4k"):
+            self.assertNotIn("benchmark_reference", recipe.resolve(current, shape))
+
+    def test_materialized_and_hub_checkpoints_keep_distinct_mounts(self):
+        current = recipe.resolve(load("config/cluster.json"), "tp4-ring")
+        self.assertEqual(recipe.model_mounts(current), ([current["container"]["mounts"][0]], "/models"))
+        hub = recipe.overlay({"extends": {}, "set": {"model": "v41-flash-1017-hub"}}, current)
+        self.assertEqual(hub["container"]["mounts"][0][1], "/hub")
+        self.assertEqual(hub["container"]["mounts"][1:], current["container"]["mounts"][1:])
 
 
 class OverlayTest(unittest.TestCase):

@@ -1,16 +1,31 @@
 # Current state
 
-The release status and measurements below describe the upstream project.
-The site's separate r6x steering daily acceptance is recorded in
-[its immutable acceptance manifest](../manifests/baselines/2026-10-19-homelab-r6x-steering-acceptance.json).
-The site's TP4 service is not qualified by the upstream triangle's results.
+The site's accepted production baseline is **2026-10-24-homelab-1022-attention**:
+[manifest](../manifests/baselines/2026-10-24-homelab-1022-attention.json),
+[promotion and rollback](../experiments/2026-10-24-1022-promotion/README.md).
+The single recipe in `config/cluster.json` fixes the already qualified RC3 image
+`14d5bb2c…`, vLLM tree `dc13e8dd…`, profile `e06b8cb6…`, TP4 ring, 1M context,
+16 sequences, 8192 batched tokens and 10.5 GiB KV per rank. The existing gateway,
+aliases, sampling defaults, 999-image configuration and 1 GiB processor cache stay
+unchanged. No new image-request qualification is claimed. TP3 variants have no
+qualifying benchmark for this image and cannot start as qualified production.
+
+The owner confirmed live steering and accepted promotion on 2026-10-24. Matched
+performance is near level to modestly higher throughput, with recorded TTFT
+regressions; see the [full result](../experiments/2026-10-24-1022-matched-performance/RESULTS.md).
+Activation adopts the identical fleet after configuration and source checks;
+the per-node container start times must remain unchanged. Operational receipts
+live in `/srv/ai-cluster/operations/1022-promotion-20261024`.
+
+The release history and measurements below describe the upstream project, not a
+claim that its separate topology results qualify this site's steering deployment.
 
 The original r6x TP4 baseline remains unchanged. The later upstream TP3 1M
 qualification is an additive
 [triangle record](../manifests/baselines/2026-10-19-karmic-kraken-r6x-tp3.json),
 with its own release suites and the original baseline's content hash.
 
-Production is the recipe's `tp4-ring` shape ([config/cluster.json](../config/cluster.json)) on
+The upstream project's separate production release is the `tp4-ring` shape on
 **spark-ds41f-1022**, serving DeepSeek-V4.1-Flash-1017 at 1,048,576 tokens on dgx1-dgx4 since
 2026-10-23 (the `tp3-triangle` shape on dgx1-dgx3 from 2026-10-22), promoted
 2026-10-22 as [`2026-10-22-spark-ds41f-1022`](../manifests/baselines/2026-10-22-spark-ds41f-1022.json)
