@@ -1,0 +1,5 @@
+live: running: 4 nodes, TP4, context 1,048,576, KV 10.5 GiB, image ds41f-1022-parser:s-4f6461ca14a0-rc2, started from experiments/2026-10-23-1022-release-fixtures/cluster.json
+spark01: stop exact container ds41f-1022-parser-rc2 and stop its memguard
+spark02: stop exact container ds41f-1022-parser-rc2 and stop its memguard
+spark03: stop exact container ds41f-1022-parser-rc2 and stop its memguard
+spark04: stop exact container ds41f-1022-parser-rc2 and stop its memguard

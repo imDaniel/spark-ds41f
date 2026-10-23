@@ -1,0 +1,10 @@
+Using CPython 3.12.3 interpreter at: /usr/bin/python3
+Creating virtual environment at: /tmp/replay-env
+{
+  "generated_text": "\n\n<｜DSML｜ calls>\n<｜DSML｜ invoke name=\"record_value\">\n<｜DSML｜ parameter name=\"role\" string=\"true\">literal user value</｜DSML｜ parameter>\n<｜DSML｜ parameter name=\"type\" string=\"true\">literal string value</｜DSML｜ parameter>\n<｜DSML｜ parameter name=\"nested\" string=\"false\">{\"quote\\\"key\": \"<｜end▁of▁sentence｜>\"}</｜DSML｜ parameter>\n</｜DSML｜ invoke>\n</｜DSML｜ calls>",
+  "visible_text": "\n\n<｜DSML｜ calls>\n<｜DSML｜ invoke name=\"record_value\">\n<｜DSML｜ parameter name=\"role\" string=\"true\">literal user value</｜DSML｜ parameter>\n<｜DSML｜ parameter name=\"type\" string=\"true\">literal string value</｜DSML｜ parameter>\n<｜DSML｜ parameter name=\"nested\" string=\"false\">{\"quote\\\"key\": \"\"}</｜DSML｜ parameter>\n</｜DSML｜ invoke>\n</｜DSML｜ calls>",
+  "ordinary_literal_present": true,
+  "retained_after_scan": false,
+  "individual_decode_matches_batch": false,
+  "eos_id": 1
+}

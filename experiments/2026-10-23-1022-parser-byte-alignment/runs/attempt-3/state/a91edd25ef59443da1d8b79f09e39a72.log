@@ -1,0 +1,26 @@
+profile: experiments/2026-10-23-1022-release-fixtures/cluster.json on spark01, spark02, spark03, spark04
+live:    no engine container on the head node
+plan:    4 nodes, TP4, context 1,048,576, KV 10.5 GiB, image ds41f-1022-parser:s-4f6461ca14a0-rc2
+shape:   new engine
+start plan (fail-closed startup memory guards):
+  spark02: pre-arm startup memguard, launch rank 1
+  spark03: pre-arm startup memguard, launch rank 2
+  spark04: pre-arm startup memguard, launch rank 3
+  spark01: pre-arm startup memguard, launch rank 0
+  wait for API/JIT readiness, then switch every node to steady memguard
+spark02: startup memguard active for ds41f-1022-parser-rc2 (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark02: launched ad86b1150222e5ce4ad09b2957d8c99cbb2155d0133773422e944f8881bb10b2 (+0.4s)
+spark03: startup memguard active for ds41f-1022-parser-rc2 (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark03: launched 980adba1824b12259609b99b4a680d36f40b1c02d39c5d099b1d918426b426a3 (+0.8s)
+spark04: startup memguard active for ds41f-1022-parser-rc2 (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark04: launched e09acd3bb453c830cd8ca241d8cd6695133ea151a2464f91d42285559188ea13 (+1.1s)
+spark01: startup memguard active for ds41f-1022-parser-rc2 (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark01: launched af953fc6cae4096379f1a6e0b7206a75ecfe8d48c56f9af2ef99c8c5205fc1d7 (+1.4s)
+waiting up to 900s for spark01 API readiness
+API ready; JIT/autotuning startup has completed
+API ready at +95.2s
+spark01: steady memguard active for ds41f-1022-parser-rc2 (threshold 3 GiB, interval 2s, mode running)
+spark02: steady memguard active for ds41f-1022-parser-rc2 (threshold 3 GiB, interval 2s, mode running)
+spark03: steady memguard active for ds41f-1022-parser-rc2 (threshold 3 GiB, interval 2s, mode running)
+spark04: steady memguard active for ds41f-1022-parser-rc2 (threshold 3 GiB, interval 2s, mode running)
+cluster ready; memory guards are active on all nodes (+95.8s)

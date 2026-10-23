@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "candidate_arms": [
+    "s-loaded"
+  ],
+  "window_seconds": 4500,
+  "restore_reserve_seconds": 900,
+  "expected_minutes": [
+    20,
+    40
+  ],
+  "scales": [
+    0,
+    1,
+    4
+  ],
+  "stages": [
+    "reuse verified 73-file GPU component receipt; run new parser CPU gate before window",
+    "TP4 candidate start",
+    "literal tool arguments across streaming/complete and tool choices",
+    "complete quality outputs and return-to-zero",
+    "32K cold/warm/mixed/cancel cache separation",
+    "32K through 1M cold single requests",
+    "16-way 8K and four-way 256K/1M capacity",
+    "two-minute mixed request stability",
+    "pinned four-node r6x recovery and private/gateway checks"
+  ],
+  "historical_reference_only": true,
+  "performance_comparison_claim": false,
+  "promotion_authorized": false
+}

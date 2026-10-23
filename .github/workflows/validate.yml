@@ -46,6 +46,7 @@ jobs:
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-scale-validation -p 'test_*.py'
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-release-readiness -p 'test_*.py'
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-release-fixtures -p 'test_*.py'
+          .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-parser-byte-alignment -p 'test_*.py'
       - name: Validate helpers
         run: |
           # scripts/ holds shell and Python helpers and JSON lab specs; check each by
@@ -102,7 +103,7 @@ jobs:
             echo patches=false >> "$GITHUB_OUTPUT"
           fi
           if [ "$EVENT" != pull_request ] || git diff --name-only HEAD^1 HEAD | grep -qE \
-              '^(experiments/(2026-10-18-request-steering|2026-10-18-steering-consume|2026-10-19-r6x-steering|2026-10-19-r6x-steering-gpu|2026-10-23-1022-attention-steering|2026-10-23-1022-attention-review|2026-10-23-1022-output-parser|2026-10-23-1022-release-fixtures)/|bin/spark$|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
+              '^(experiments/(2026-10-18-request-steering|2026-10-18-steering-consume|2026-10-19-r6x-steering|2026-10-19-r6x-steering-gpu|2026-10-23-1022-attention-steering|2026-10-23-1022-attention-review|2026-10-23-1022-output-parser|2026-10-23-1022-release-fixtures|2026-10-23-1022-parser-byte-alignment)/|bin/spark$|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
             echo steering=true >> "$GITHUB_OUTPUT"
           else
             echo steering=false >> "$GITHUB_OUTPUT"
@@ -195,7 +196,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review, 2026-10-23-1022-output-parser, 2026-10-23-1022-release-fixtures]
+        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review, 2026-10-23-1022-output-parser, 2026-10-23-1022-release-fixtures, 2026-10-23-1022-parser-byte-alignment]
     env:
       STEERING_EXPERIMENT: ${{ matrix.experiment }}
     steps:
@@ -228,7 +229,7 @@ jobs:
       - name: Execute the complete pinned 1022 CPU collection
         run: .work/steering-1022-cpu-venv/bin/python scripts/check_steering_cpu.py --upstreams experiments/$STEERING_EXPERIMENT/upstreams.lock.json --cases experiments/$STEERING_EXPERIMENT/cpu-cases.json --report .work/steering-1022-cpu.xml
       - name: Classify all serving tests in the output-parser candidate
-        if: matrix.experiment == '2026-10-23-1022-output-parser' || matrix.experiment == '2026-10-23-1022-release-fixtures'
+        if: matrix.experiment == '2026-10-23-1022-output-parser' || matrix.experiment == '2026-10-23-1022-release-fixtures' || matrix.experiment == '2026-10-23-1022-parser-byte-alignment'
         run: |
           python3 - <<'PY'
           import json, os, runpy, subprocess

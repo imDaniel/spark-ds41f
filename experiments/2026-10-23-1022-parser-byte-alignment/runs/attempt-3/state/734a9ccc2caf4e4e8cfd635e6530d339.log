@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-release-fixtures/qualification_requests.py", line 272, in <module>
+    run(args.output)
+  File "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-release-fixtures/qualification_requests.py", line 152, in run
+    message, call_id = previous.check_tool(normalized)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-scale-validation/scale_requests.py", line 62, in check_tool
+    raise ValueError("Tool argument spelling or value changed")
+ValueError: Tool argument spelling or value changed

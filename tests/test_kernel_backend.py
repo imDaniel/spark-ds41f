@@ -68,6 +68,7 @@ TILELANG_EXPERIMENTS = (
     "experiments/2026-10-23-1022-attention-review/",
     "experiments/2026-10-23-1022-output-parser/",
     "experiments/2026-10-23-1022-release-fixtures/",
+    "experiments/2026-10-23-1022-parser-byte-alignment/",
 )
 FLAGS = ("--attention-backend", "--linear-backend", "--moe-backend")
 # Each TileLang profile and the B12X configuration it mirrors, with that

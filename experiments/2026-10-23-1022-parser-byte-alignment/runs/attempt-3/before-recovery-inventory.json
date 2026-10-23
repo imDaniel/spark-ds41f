@@ -1,0 +1,197 @@
+{
+  "captured_at": "2026-10-23T13:12:20.217933+00:00",
+  "nodes": [
+    {
+      "repository": "/srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f",
+      "head": "223a3bb3498d12f470e876db3b9e1f5bdc8772b6",
+      "tracked_changes": "",
+      "config": "config/cluster-steering-r6x-cache-details-tp4.local.json",
+      "file_hashes": {
+        "config/cluster-steering-r6x-cache-details-tp4.local.json": "c26d9fcb996da19b26b243dcc024664a9e004bfa1d91377274607c04dd8ff707",
+        "config/nodes-steering-r6x-acceptance.local.json": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+        "bin/spark": "d7744fd381e6a61c4a571ba27beec6a57ea682799abefb4dbfbdea27fb63a73f"
+      },
+      "container": {
+        "id": "24c10dc2457f59e64a70aaf26d58239e47da34c71fc34d4a7b654ba5b36fe0b7",
+        "image": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+        "status": "running",
+        "started_at": "2026-10-23T12:47:48.536349061Z",
+        "restart_count": 0,
+        "command_sha256": "1e336a680450e59307d29bd8de490921f4df9c38ee0a941609ba0de0d6245565",
+        "mounts": [
+          {
+            "Source": "/srv/ai-cluster/cache/steering-r6x-20261019/candidate",
+            "Destination": "/cache",
+            "RW": true
+          },
+          {
+            "Source": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1",
+            "Destination": "/models",
+            "RW": false
+          },
+          {
+            "Source": "/srv/ai-cluster/profiles/deepseek-1017-heretic-test/releases/5982288eb290",
+            "Destination": "/steering",
+            "RW": false
+          },
+          {
+            "Source": "/dev/dri/by-path/pci-000f:01:00.0-card",
+            "Destination": "/dev/dri/card0",
+            "RW": true
+          }
+        ],
+        "source_tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4"
+      },
+      "profile_path": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1/steering/heretic-1017-attn-v1.safetensors",
+      "profile_sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093",
+      "weights_present": 48,
+      "disk_free_bytes": 1149088735232,
+      "hold": null,
+      "node": 1
+    },
+    {
+      "repository": "/srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f",
+      "head": "223a3bb3498d12f470e876db3b9e1f5bdc8772b6",
+      "tracked_changes": "",
+      "config": "config/cluster-steering-r6x-cache-details-tp4.local.json",
+      "file_hashes": {
+        "config/cluster-steering-r6x-cache-details-tp4.local.json": "c26d9fcb996da19b26b243dcc024664a9e004bfa1d91377274607c04dd8ff707",
+        "config/nodes-steering-r6x-acceptance.local.json": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+        "bin/spark": "d7744fd381e6a61c4a571ba27beec6a57ea682799abefb4dbfbdea27fb63a73f"
+      },
+      "container": {
+        "id": "a19cbbeb530024619470b8ed39b046e8351642c4619fab4a30c9b2f0093f6b6f",
+        "image": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+        "status": "running",
+        "started_at": "2026-10-23T12:47:47.736725995Z",
+        "restart_count": 0,
+        "command_sha256": "7d7f90fba8824a04e43f3c89692319005d69289ca8bbb84946eeee6708d7e3b5",
+        "mounts": [
+          {
+            "Source": "/srv/ai-cluster/cache/steering-r6x-20261019/candidate",
+            "Destination": "/cache",
+            "RW": true
+          },
+          {
+            "Source": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1",
+            "Destination": "/models",
+            "RW": false
+          },
+          {
+            "Source": "/srv/ai-cluster/profiles/deepseek-1017-heretic-test/releases/5982288eb290",
+            "Destination": "/steering",
+            "RW": false
+          },
+          {
+            "Source": "/dev/dri/by-path/pci-000f:01:00.0-card",
+            "Destination": "/dev/dri/card0",
+            "RW": true
+          }
+        ],
+        "source_tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4"
+      },
+      "profile_path": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1/steering/heretic-1017-attn-v1.safetensors",
+      "profile_sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093",
+      "weights_present": 48,
+      "disk_free_bytes": 1173784064000,
+      "hold": null,
+      "node": 2
+    },
+    {
+      "repository": "/srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f",
+      "head": "223a3bb3498d12f470e876db3b9e1f5bdc8772b6",
+      "tracked_changes": "",
+      "config": "config/cluster-steering-r6x-cache-details-tp4.local.json",
+      "file_hashes": {
+        "config/cluster-steering-r6x-cache-details-tp4.local.json": "c26d9fcb996da19b26b243dcc024664a9e004bfa1d91377274607c04dd8ff707",
+        "config/nodes-steering-r6x-acceptance.local.json": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+        "bin/spark": "d7744fd381e6a61c4a571ba27beec6a57ea682799abefb4dbfbdea27fb63a73f"
+      },
+      "container": {
+        "id": "f68f9510c50ac9b8fd6990531435f4d9da435b9439cf9ba4b202f48ea0dd4b65",
+        "image": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+        "status": "running",
+        "started_at": "2026-10-23T12:47:47.944558006Z",
+        "restart_count": 0,
+        "command_sha256": "071895ba2ae6cb8009403762ddfc21a544c9100b5f4132693a41d2c36b559804",
+        "mounts": [
+          {
+            "Source": "/srv/ai-cluster/cache/steering-r6x-20261019/candidate",
+            "Destination": "/cache",
+            "RW": true
+          },
+          {
+            "Source": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1",
+            "Destination": "/models",
+            "RW": false
+          },
+          {
+            "Source": "/srv/ai-cluster/profiles/deepseek-1017-heretic-test/releases/5982288eb290",
+            "Destination": "/steering",
+            "RW": false
+          },
+          {
+            "Source": "/dev/dri/by-path/pci-000f:01:00.0-card",
+            "Destination": "/dev/dri/card0",
+            "RW": true
+          }
+        ],
+        "source_tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4"
+      },
+      "profile_path": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1/steering/heretic-1017-attn-v1.safetensors",
+      "profile_sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093",
+      "weights_present": 48,
+      "disk_free_bytes": 1175099514880,
+      "hold": null,
+      "node": 3
+    },
+    {
+      "repository": "/srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f",
+      "head": "223a3bb3498d12f470e876db3b9e1f5bdc8772b6",
+      "tracked_changes": "",
+      "config": "config/cluster-steering-r6x-cache-details-tp4.local.json",
+      "file_hashes": {
+        "config/cluster-steering-r6x-cache-details-tp4.local.json": "c26d9fcb996da19b26b243dcc024664a9e004bfa1d91377274607c04dd8ff707",
+        "config/nodes-steering-r6x-acceptance.local.json": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+        "bin/spark": "d7744fd381e6a61c4a571ba27beec6a57ea682799abefb4dbfbdea27fb63a73f"
+      },
+      "container": {
+        "id": "f344e354ef318dcb2bfa2ede5717e94ac23d6b8e19793863cd2594a3b3e93983",
+        "image": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+        "status": "running",
+        "started_at": "2026-10-23T12:47:48.239930798Z",
+        "restart_count": 0,
+        "command_sha256": "7d59b89da414996349d91ea2da1802061a1752d6a8213a167182d27830be4b05",
+        "mounts": [
+          {
+            "Source": "/srv/ai-cluster/cache/steering-r6x-20261019/candidate",
+            "Destination": "/cache",
+            "RW": true
+          },
+          {
+            "Source": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1",
+            "Destination": "/models",
+            "RW": false
+          },
+          {
+            "Source": "/srv/ai-cluster/profiles/deepseek-1017-heretic-test/releases/5982288eb290",
+            "Destination": "/steering",
+            "RW": false
+          },
+          {
+            "Source": "/dev/dri/by-path/pci-000f:01:00.0-card",
+            "Destination": "/dev/dri/card0",
+            "RW": true
+          }
+        ],
+        "source_tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4"
+      },
+      "profile_path": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1/steering/heretic-1017-attn-v1.safetensors",
+      "profile_sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093",
+      "weights_present": 48,
+      "disk_free_bytes": 1173739429888,
+      "hold": null,
+      "node": 4
+    }
+  ]
+}

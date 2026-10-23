@@ -1,0 +1,25 @@
+Using CPython 3.12.3 interpreter at: /usr/bin/python3
+Creating virtual environment at: /tmp/replay-env
+INFO 10-23 13:41:48 [importing.py:74] Triton is installed but 0 active driver(s) found (expected 1). Disabling Triton to prevent runtime errors.
+INFO 10-23 13:41:48 [importing.py:98] Triton not installed or not compatible; certain GPU-related functions will not be available.
+W1023 13:41:48.728000 13 torch/utils/cpp_extension.py:178] No CUDA runtime is found, using CUDA_HOME='/usr/local/cuda'
+INFO 10-23 13:41:50 [parser_manager.py:36] "auto" tool choice has been enabled.
+{
+  "parser": "DeepSeekV41DelegatingParser",
+  "text": "\n\n<｜DSML｜ calls>\n<｜DSML｜ invoke name=\"record_value\">\n<｜DSML｜ parameter name=\"role\" string=\"true\">literal user value</｜DSML｜ parameter>\n<｜DSML｜ parameter name=\"type\" string=\"true\">literal string value</｜DSML｜ parameter>\n<｜DSML｜ parameter name=\"nested\" string=\"false\">{\"quote\\\"key\": \"<｜end▁of▁sentence｜>\"}</｜DSML｜ parameter>\n</｜DSML｜ invoke>\n</｜DSML｜ calls>",
+  "arguments": {
+    "role": "literal user value",
+    "type": "literal string value",
+    "nested": {
+      "quote\"key": ""
+    }
+  },
+  "matches": false,
+  "reasoning": null,
+  "content": null
+}
+Traceback (most recent call last):
+  File "/work/1022-output-parser/replay_response.py", line 18, in <module>
+    assert actual==VALUE
+           ^^^^^^^^^^^^^
+AssertionError

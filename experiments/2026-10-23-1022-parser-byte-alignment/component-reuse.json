@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "receipt": "experiments/2026-10-23-1022-parser-byte-alignment/runs/attempt-3/state/component/release-tests/release-fixtures-rc2/results.jsonl",
+  "sha256": "450fc85bf72bad20857179f0c015698005b7ae78eeabe8fded16562b59a07442",
+  "previous_image_id": "sha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241",
+  "previous_vllm_head": "4f6461ca14a0e0771d70924fb5f1312205804226",
+  "candidate_vllm_head": "b70fe11a88b34e0987e0e8c1b6796869be7e9f71",
+  "source_changes": [
+    "tests/parser/engine/test_token_id_scanner.py",
+    "vllm/parser/engine/token_id_scanner.py"
+  ],
+  "native_inputs_changed": false,
+  "file_count": 73,
+  "totals": {
+    "passed": 1995,
+    "failed": 0,
+    "error": 0,
+    "skipped": 158
+  },
+  "scope": "Reuse GPU/model/steering component evidence; the sole runtime change is CPU parser token scanning, covered by complete parser regressions and captured-response replay. Explicit-scale TP4 requests remain mandatory."
+}

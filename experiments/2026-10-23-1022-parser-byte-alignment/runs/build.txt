@@ -1,0 +1,51 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 765B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/ds41f-1022-parser:s-4f6461ca14a0-rc2
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/6] FROM docker.io/library/ds41f-1022-parser:s-4f6461ca14a0-rc2@sha256:0d9caffeb7ef9bb542bd50b39946b9b00816db683d16007776d1a23bf1deff55
+#4 resolve docker.io/library/ds41f-1022-parser:s-4f6461ca14a0-rc2@sha256:0d9caffeb7ef9bb542bd50b39946b9b00816db683d16007776d1a23bf1deff55 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 130.09MB 1.2s done
+#5 DONE 1.2s
+
+#6 [2/6] COPY verify_image.py source-hashes.json deletions.json /opt/spark3/1022-offline/
+#6 CACHED
+
+#7 [3/6] RUN python3 /opt/spark3/1022-offline/verify_image.py before
+#7 CACHED
+
+#8 [4/6] ADD source.tar /opt/spark3/candidate/vllm/
+#8 DONE 1.0s
+
+#9 [5/6] RUN find /opt/spark3/candidate/vllm -type d -name __pycache__ -prune -exec rm -rf '{}' + && python3 /opt/spark3/1022-offline/verify_image.py after
+#9 0.930 {"source_files_verified": 7708, "native_libraries_unchanged": 32, "sparknet_version": "0.5.0", "gpu_verified": false}
+#9 DONE 1.0s
+
+#10 [6/6] WORKDIR /opt/spark3/candidate/vllm
+#10 DONE 0.0s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 3.0s done
+#11 exporting manifest sha256:8781b8bd72f7950e0f06d2f3484ad53bbf24d7f4694e9785bbc0e8e862d82204 done
+#11 exporting config sha256:14d5bb2c49aad6ad5b09c93beb70379c4088c128162e24bb418d593e5e7853f5 done
+#11 naming to docker.io/library/ds41f-1022-parser:s-b70fe11a88b3-rc3 done
+#11 unpacking to docker.io/library/ds41f-1022-parser:s-b70fe11a88b3-rc3
+#11 unpacking to docker.io/library/ds41f-1022-parser:s-b70fe11a88b3-rc3 0.9s done
+#11 DONE 3.9s
+
+#12 resolving provenance for metadata file
+#12 DONE 0.0s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/7dxy5jslh10kat25r9u66knng

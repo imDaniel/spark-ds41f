@@ -1,0 +1,142 @@
+From b70fe11a88b34e0987e0e8c1b6796869be7e9f71 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 22:44:51 +0900
+Subject: [PATCH] Reconstruct byte-fallback spans before matching stripped stop
+ tokens
+
+Upstream base: 19f2c20ed4d64ae22bd009ceacadd85e2a81e354, after the
+200-patch release-fixture stack at 4f6461ca14a0.
+
+Generated ordinary tokens can split a UTF-8 character into byte pieces.
+Decoding each piece separately produces replacement characters, defeating
+the stripped trailing-stop match. The fallback then assigns the real EOS
+ID to its literal spelling inside a tool argument and deletes that value.
+Reconstruct affected contiguous text spans together while retaining their
+per-token provenance and counts.
+
+Quality: preserves literal output; no weights, sampling, attention, GPU
+kernels, native build inputs or input-template changes.
+Tests: captured 91-token API output fails before and passes after; the
+four new scanner cases fail two before and pass four after; all 4,379
+parser-engine tests pass. TP4 request revalidation remains required.
+Upstream status: independently maintained downstream fix; not submitted.
+---
+ tests/parser/engine/test_token_id_scanner.py | 40 ++++++++++++++++++++
+ vllm/parser/engine/token_id_scanner.py       | 37 ++++++++++--------
+ 2 files changed, 61 insertions(+), 16 deletions(-)
+
+diff --git a/tests/parser/engine/test_token_id_scanner.py b/tests/parser/engine/test_token_id_scanner.py
+index 8723ac282..8277406bd 100644
+--- a/tests/parser/engine/test_token_id_scanner.py
++++ b/tests/parser/engine/test_token_id_scanner.py
+@@ -1033,6 +1033,46 @@ class TestRebuildFromAnchorsCascadingDeferral:
+ class TestStopStrippedTrailingDrop:
+     """Serving strips the stop token's text but keeps its ID in the delta."""
+ 
++    @pytest.mark.parametrize("stop_text_present", [False, True])
++    @pytest.mark.parametrize("reasoning_prefix", [False, True])
++    def test_byte_fallback_literal_does_not_steal_eos(
++        self, stop_text_present, reasoning_prefix
++    ):
++        eos = "<｜end▁of▁sentence｜>"
++        body = '{"value":"' + eos + '"}'
++        eos_id = 1000
++        prefix_id = 1001
++        prefix = "</think>"
++
++        class ByteTokenizer:
++            def decode(self, ids):
++                data = b"".join(
++                    (eos if tid == eos_id else prefix).encode()
++                    if tid in (eos_id, prefix_id)
++                    else bytes([tid])
++                    for tid in ids
++                )
++                return data.decode(errors="replace")
++
++        scanner = TokenIDScanner(
++            {eos_id: DROP_TERMINAL, prefix_id: "THINK_END"}, ByteTokenizer()
++        )
++        ids = list(body.encode()) + [eos_id]
++        text = body + (eos if stop_text_present else "")
++        if reasoning_prefix:
++            ids.insert(0, prefix_id)
++            text = prefix + text
++        items = [*scanner.scan(text, ids), *scanner.flush_pending()]
++        chunks = [item for item in items if isinstance(item, TextChunk)]
++        assert "".join(item.text for item in chunks) == body
++        assert sum(item.token_count for item in chunks) == len(body.encode())
++        terminals = [item for item in items if isinstance(item, PreLexedTerminal)]
++        assert terminals == (
++            [PreLexedTerminal("THINK_END", prefix_id, prefix)]
++            if reasoning_prefix
++            else []
++        ) + [PreLexedTerminal(DROP_TERMINAL, eos_id, eos)]
++
+     DROP_TEXT = "<|observation|>"
+     DROP_TEXT_2 = "<|user|>"
+     DROP_ID = 112
+diff --git a/vllm/parser/engine/token_id_scanner.py b/vllm/parser/engine/token_id_scanner.py
+index f663849f2..b6b39172f 100644
+--- a/vllm/parser/engine/token_id_scanner.py
++++ b/vllm/parser/engine/token_id_scanner.py
+@@ -130,35 +130,40 @@ class TokenIDScanner:
+         results: list[LexerInput] = []
+         text_accum: list[str] = []
+         token_text_accum: list[str] = []
++        token_id_accum: list[int] = []
++
++        def flush_text() -> None:
++            joined = "".join(text_accum)
++            # Byte-fallback tokens may each decode to U+FFFD while their
++            # contiguous span is valid UTF-8. Keep the per-token accounting,
++            # but match stop-token removal against the reconstructed span.
++            if "\ufffd" in joined and len(token_id_accum) > 1:
++                decoded = self.tokenizer.decode(token_id_accum)
++                if isinstance(decoded, str):
++                    joined = decoded
++            if joined:
++                results.append(
++                    TextChunk(joined, tuple(token_text_accum), len(token_text_accum))
++                )
++            text_accum.clear()
++            token_text_accum.clear()
++            token_id_accum.clear()
+ 
+         for idx, tid in enumerate(delta_token_ids):
+             terminal = self.token_id_to_terminal.get(tid)
+             if terminal is not None:
+                 if text_accum:
+-                    joined = "".join(text_accum)
+-                    if joined:
+-                        results.append(
+-                            TextChunk(
+-                                joined,
+-                                tuple(token_text_accum),
+-                                len(token_text_accum),
+-                            )
+-                        )
+-                    text_accum.clear()
+-                    token_text_accum.clear()
++                    flush_text()
+                 results.append(
+                     PreLexedTerminal(terminal, tid, decoded_token_texts[idx])
+                 )
+             else:
+                 text_accum.append(decoded_token_texts[idx])
+                 token_text_accum.append(decoded_token_texts[idx])
++                token_id_accum.append(tid)
+ 
+         if text_accum:
+-            joined = "".join(text_accum)
+-            if joined:
+-                results.append(
+-                    TextChunk(joined, tuple(token_text_accum), len(token_text_accum))
+-                )
++            flush_text()
+ 
+         if deferred_trailing_count:
+             results.insert(0, TextChunk("", token_count=deferred_trailing_count))
+-- 
+2.54.0 (Apple Git-157)
+
