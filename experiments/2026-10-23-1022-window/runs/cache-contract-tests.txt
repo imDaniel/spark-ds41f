@@ -1,0 +1,9 @@
+test_cross_scale_reuse_is_rejected (test_cache_screen.CacheContractTests.test_cross_scale_reuse_is_rejected) ... ok
+test_mixed_row_output_drift_is_rejected (test_cache_screen.CacheContractTests.test_mixed_row_output_drift_is_rejected) ... ok
+test_short_or_uncached_requests_cannot_pass (test_cache_screen.CacheContractTests.test_short_or_uncached_requests_cannot_pass) ... ok
+test_success_requires_real_cold_and_warm_evidence (test_cache_screen.CacheContractTests.test_success_requires_real_cold_and_warm_evidence) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.032s
+
+OK

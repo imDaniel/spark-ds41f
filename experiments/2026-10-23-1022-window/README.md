@@ -37,3 +37,19 @@ a manual state retains the hold. A failed 01 requires local console recovery.
 Every runtime start/stop uses the named `bin/spark` configuration and all four
 ranks. Passing local fixture tests is not hardware acceptance; actual results
 are recorded separately after the window.
+
+## Long-prefix cache follow-up
+
+Short functional prompts can remain below a retained prefix boundary, so their
+scale-alternation success alone cannot establish KV namespace separation.
+`cache_screen.py` adds a 32768-token nonce-prefixed workload with explicit
+`cached_tokens` assertions: cold 0/1/4 namespaces, warm reuse within each,
+stock return, mixed C4 and stock after cancellation. Four injected scenarios
+verify that cross-scale reuse, absent hits and mixed-row drift fail the check.
+
+After the initial four-arm run restores r6x, `run_cache_window.py` permits one
+additional S-loaded boot. Its separately frozen manifest must retain the
+original reservation end and restoration reserve; it must not reset the
+90-minute budget. The initial runtime revision and all results remain intact.
+This follow-up is skipped after a hardware fault or another hard failure, and
+is recorded as incomplete if there is insufficient remaining time.
