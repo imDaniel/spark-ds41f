@@ -1,0 +1,40 @@
+2026-10-23T22:01:51+08:00 fusionxparkgb10-e4d3 systemd[1]: Started spark-release-watch-18793c73.service - /usr/bin/python3 /srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py --manifest /srv/ai-cluster/operations/1022-release-20261023/window.json --authorization /srv/ai-cluster/operations/1022-release-20261023/authorization.json --execute watchdog.
+2026-10-23T22:01:51+08:00 fusionxparkgb10-e4d3 python3[3886893]: unarmed
+2026-10-23T22:02:21+08:00 fusionxparkgb10-e4d3 python3[3886893]: unarmed
+2026-10-23T22:02:51+08:00 fusionxparkgb10-e4d3 python3[3886893]: unarmed
+2026-10-23T22:03:21+08:00 fusionxparkgb10-e4d3 python3[3886893]: unarmed
+2026-10-23T22:03:51+08:00 fusionxparkgb10-e4d3 python3[3886893]: unarmed
+2026-10-23T22:04:21+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:04:51+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:05:21+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:05:51+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:06:21+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:06:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:07:22+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:07:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:08:22+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:08:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:09:22+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:09:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:10:22+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:10:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:11:22+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:11:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:12:22+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:12:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:13:22+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:13:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:14:22+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:14:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:15:22+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:15:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:16:22+08:00 fusionxparkgb10-e4d3 python3[3886893]: busy
+2026-10-23T22:16:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: unarmed
+2026-10-23T22:17:22+08:00 fusionxparkgb10-e4d3 python3[3886893]: unarmed
+2026-10-23T22:17:52+08:00 fusionxparkgb10-e4d3 python3[3886893]: unarmed
+2026-10-23T22:18:23+08:00 fusionxparkgb10-e4d3 python3[3886893]: unarmed
+2026-10-23T22:18:53+08:00 fusionxparkgb10-e4d3 python3[3886893]: unarmed
+2026-10-23T22:19:01+08:00 fusionxparkgb10-e4d3 systemd[1]: Stopping spark-release-watch-18793c73.service - /usr/bin/python3 /srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py --manifest /srv/ai-cluster/operations/1022-release-20261023/window.json --authorization /srv/ai-cluster/operations/1022-release-20261023/authorization.json --execute watchdog...
+2026-10-23T22:19:01+08:00 fusionxparkgb10-e4d3 systemd[1]: spark-release-watch-18793c73.service: Deactivated successfully.
+2026-10-23T22:19:01+08:00 fusionxparkgb10-e4d3 systemd[1]: Stopped spark-release-watch-18793c73.service - /usr/bin/python3 /srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py --manifest /srv/ai-cluster/operations/1022-release-20261023/window.json --authorization /srv/ai-cluster/operations/1022-release-20261023/authorization.json --execute watchdog.
+2026-10-23T22:19:01+08:00 fusionxparkgb10-e4d3 systemd[1]: spark-release-watch-18793c73.service: Consumed 1.175s CPU time.

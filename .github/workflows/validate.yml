@@ -47,6 +47,7 @@ jobs:
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-release-readiness -p 'test_*.py'
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-release-fixtures -p 'test_*.py'
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-parser-byte-alignment -p 'test_*.py'
+          .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-capacity-validation -p 'test_*.py'
       - name: Validate helpers
         run: |
           # scripts/ holds shell and Python helpers and JSON lab specs; check each by

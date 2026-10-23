@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "previous_window_id": "18793c73-06bb-4100-b0d8-8b836cacd869",
+  "image_id": "sha256:14d5bb2c49aad6ad5b09c93beb70379c4088c128162e24bb418d593e5e7853f5",
+  "files": {
+    "experiments/2026-10-23-1022-capacity-validation/runs/attempt-4/state/requests/requests.json": "ae1325b67d5467f820c89a352a90b0628fb5cb93e3eadb9c2e4f0af99b211a76",
+    "experiments/2026-10-23-1022-capacity-validation/runs/attempt-4/state/requests/cache.json": "ff2756a67655b8b91e9f56537b090c1d97e480894c506bd96cf77073f1821931",
+    "experiments/2026-10-23-1022-capacity-validation/runs/attempt-4/manifest.json": "572b7d9ea29ce91a501abc1923ec39f99f1839ed5d8a05044ae95ad8aadd25a0",
+    "experiments/2026-10-23-1022-capacity-validation/runs/attempt-4/identity-checks.json": "9a43d226fa0f0f75e9ad8665f271d1ae45330354229e80bea9b5099752e7858b"
+  }
+}
