@@ -12,3 +12,5 @@ experiments/2026-10-19-sink-rejection-v2/analysis/*.txt -whitespace
 # Preserve the exact upstream test snapshot, including its final blank line.
 experiments/2026-10-19-prefix-replay/bundles/prefix-tests/test_prefix_caching.py whitespace=-blank-at-eof
 *.csv -whitespace
+# Preserve the captured runtime log byte-for-byte, including emitted whitespace.
+experiments/2026-10-23-1022-scale-results/evidence/candidate-rank0.log -whitespace
