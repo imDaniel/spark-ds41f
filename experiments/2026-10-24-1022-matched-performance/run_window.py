@@ -11,7 +11,13 @@ ROOT = HERE.parent.parent
 parent = runpy.run_path(
     str(HERE.parent / "2026-10-23-1022-capacity-validation/run_window.py")
 )
-Executor, read, sha = (parent[k] for k in ("Executor", "read", "sha"))
+import sys
+import time
+
+sys.path.insert(0, str(HERE))
+from trial_executor import TrialExecutor as Executor
+
+read, sha = (parent[k] for k in ("read", "sha"))
 HOST_EXECUTABLES = (*parent["HOST_EXECUTABLES"], "/usr/bin/ssh")
 
 
@@ -27,6 +33,9 @@ def implementation_paths():
             "prompts.jsonl",
             "plan.json",
             "external-inputs.json",
+            "trial_executor.py",
+            "trial_probe.py",
+            "cluster.json",
         )
     ]
     paths += list((HERE / "measurement/servebench").glob("*.py"))
@@ -78,6 +87,26 @@ def validate_history():
     return len(rows)
 
 
+def validate_trial_config():
+    original = read(HERE.parent / "2026-10-23-1022-parser-byte-alignment/cluster.json")
+    candidate = read(HERE / "cluster.json")
+    args = candidate["serve_args"]
+    if (
+        args[args.index("--host") + 1] != "0.0.0.0"
+        or args[args.index("--port") + 1] != "8000"
+    ):
+        raise ValueError("Trial endpoint differs")
+    if candidate["deployment"]["ready_url"] != "http://127.0.0.1:8000/v1/models":
+        raise ValueError("Trial readiness endpoint differs")
+    for flag in ("--host", "--port"):
+        args[args.index(flag) + 1] = original["serve_args"][
+            original["serve_args"].index(flag) + 1
+        ]
+    candidate["deployment"]["ready_url"] = original["deployment"]["ready_url"]
+    if candidate != original:
+        raise ValueError("Trial changed non-network compute configuration")
+
+
 def validate_implementation(x):
     paths = implementation_paths() + [
         Path(p) for p in read(HERE / "external-inputs.json")["files"]
@@ -92,11 +121,22 @@ def main():
     p.add_argument("--manifest", type=Path)
     p.add_argument("--authorization", type=Path)
     p.add_argument("--execute", action="store_true")
+    p.add_argument("--watchdog", action="store_true")
+    p.add_argument("--recover", action="store_true")
     args = p.parse_args()
     if not args.execute:
         print((HERE / "plan.json").read_text())
         return
     x = Executor(args.manifest, args.authorization)
+    if args.watchdog:
+        while True:
+            result = x.watch_once()
+            if result in ("restored", "manual"):
+                return
+            time.sleep(x.m["poll_seconds"])
+    if args.recover:
+        x.recover()
+        return
     actual = x.m["services"]["s-loaded"]["identity"]
     expected = read(HERE / "base.json")["candidate"]
     if any(
@@ -107,6 +147,7 @@ def main():
         raise ValueError("Requires <=60 minutes and >=15-minute recovery reserve")
     validate_implementation(x)
     validate_history()
+    validate_trial_config()
     parent["validate_component_reuse"]()
     parent["validate_request_reuse"]()
     x.open()
@@ -135,10 +176,14 @@ def main():
             ):
                 raise ValueError("Candidate rank or memory guard stopped")
             x.event("matched_performance_completed")
+        x.handoff(x.m["implementation_files"])
     finally:
-        if x.hold.exists() and read(x.state_path)["phase"] != "manual":
+        if x.hold.exists() and read(x.state_path)["phase"] not in (
+            "manual",
+            "owner_trial",
+        ):
             x.recover()
-        if read(x.state_path)["phase"] != "closed":
+        if read(x.state_path)["phase"] not in ("closed", "owner_trial"):
             raise RuntimeError("Manual recovery required; retain hold")
 
 

@@ -1,8 +1,36 @@
 {
   "candidate": "RC3 image 14d5bb2c49aa, profile e06b8cb6, TP4 1M/16seq",
   "old_baseline_rerun": false,
-  "candidate_scales": [1, 4],
-  "cases_scale_concurrency": [[1,1],[1,4],[4,1],[1,4],[4,4],[1,4]],
+  "candidate_scales": [
+    1,
+    4
+  ],
+  "cases_scale_concurrency": [
+    [
+      1,
+      1
+    ],
+    [
+      1,
+      4
+    ],
+    [
+      4,
+      1
+    ],
+    [
+      1,
+      4
+    ],
+    [
+      4,
+      4
+    ],
+    [
+      1,
+      4
+    ]
+  ],
   "context_tokens": 4096,
   "output_tokens": 256,
   "seed": 2048,
@@ -11,9 +39,21 @@
   "batches_per_run": 6,
   "thermal_baseline_celsius_below": 55,
   "thermal_timeout_seconds_per_run": 600,
-  "expected_window_minutes": [20, 35],
+  "expected_window_minutes": [
+    20,
+    35
+  ],
   "window_seconds": 3600,
   "restore_reserve_seconds": 900,
-  "stages": ["verify frozen historical client and seven raw historical references", "coordinate candidate startup", "scale 1/4 arithmetic and literal-tool quality smoke", "six matched closed-load cases with cache reset and natural cooldown", "repeat quality smoke", "restore exact original four-node r6x service and gateway probes"],
-  "promotion_authorized": false
+  "stages": [
+    "verify frozen historical client and seven raw historical references",
+    "coordinate candidate startup",
+    "scale 1/4 arithmetic and literal-tool quality smoke",
+    "six matched closed-load cases with cache reset and natural cooldown",
+    "repeat quality smoke",
+    "handoff passing candidate to owner on existing port/gateway; failure restores original r6x"
+  ],
+  "promotion_authorized": false,
+  "success_action": "retain healthy candidate for owner trial via existing gateway; reopen ingress; keep exclusive hold until owner ends trial",
+  "failure_action": "restore exact original four-node r6x and verify gateway"
 }

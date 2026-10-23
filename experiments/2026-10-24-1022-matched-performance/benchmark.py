@@ -20,7 +20,7 @@ from servebench import client, load, prom, prompts, report
 sys.path.insert(0, str(HERE.parent / "2026-10-23-1022-parser-byte-alignment"))
 import qualification_requests as functional
 
-BASE = "http://127.0.0.1:18000"
+BASE = "http://127.0.0.1:8000"
 PROFILE = "heretic-1017-attn-v1"
 CASES = [(1, 1), (1, 4), (4, 1), (1, 4), (4, 4), (1, 4)]
 
@@ -133,6 +133,7 @@ def thermal_gate(m, output):
 
 
 def quality(output, stage):
+    functional.client.BASE = BASE
     rows = []
     for scale in (1, 4):
         body = functional.client.body(

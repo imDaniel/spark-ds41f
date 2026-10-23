@@ -2,8 +2,11 @@
 
 Base repository: `b8553de852becc7649e5914919ecfe33f8425cab`. This experiment
 measures only the previously qualified RC3 image `14d5bb2c…`, tree `dc13e8dd…`,
-profile `e06b8cb6…`. Runtime/build configuration, model weights and steering
-arithmetic remain unchanged. The intended variable is the serving version,
+profile `e06b8cb6…`. Build inputs, compute settings, model weights and steering
+arithmetic remain unchanged. The temporary configuration binds the existing
+port 8000 on the original interface so the existing gateway can reach the owner
+trial; only the host/port/readiness URL differ from the preceding RC3 recipe.
+The intended variable is the serving version,
 compared with preserved r6x observations; the old service is not benchmarked again.
 
 The original measurement modules are frozen byte-for-byte from historical
@@ -34,10 +37,20 @@ three-run daily followup. Historical references are not contemporaneous paired
 boots; even matched workloads do not establish causality or statistical equivalence
 across days. Six within-run windows are not six independent service startups.
 
-The independent recovery watchdog and executor restore the original four-node
-r6x image/config/profile and verify private/gateway routes. Estimated maintenance
-is 20–35 minutes, bounded at 60 with 15 minutes reserved for recovery. PR #56 stays
-draft/unmerged, and no production baseline or recipe is promoted.
+The owner subsequently requested that a passing candidate remain available for
+personal scale testing through the existing gateway and aliases. On success,
+the executor checks private and scale-1/4 gateway requests, reopens ingress and
+enters an explicit `owner_trial` state. The hold has no automatic end time; its
+watchdog keeps the exclusive hold alive and leaves the candidate running until
+the owner ends the trial. Per-node memory guards remain active. Gateway
+configuration, aliases and formal production recipe are unchanged.
+
+Before that accepted handoff, failure or controller loss retains the bounded
+recovery policy. A failed gateway probe cannot enter `owner_trial`. Recovery
+drains reopened ingress before stopping any rank and restores the original four-
+node r6x image/config/profile with private/gateway checks. Estimated benchmark
+maintenance is 20–35 minutes, bounded at 60 with 15 minutes reserved for recovery;
+the accepted personal trial is owner-controlled. PR #56 stays draft/unmerged.
 
 ```sh
 python3 -m unittest discover -s experiments/2026-10-24-1022-matched-performance -p 'test_*.py'

@@ -24,6 +24,23 @@ class PerformanceContracts(unittest.TestCase):
 
     def test_all_seven_historical_references_and_client_hashes_verified(self):
         self.assertEqual(window["validate_history"](), 7)
+        window["validate_trial_config"]()
+
+    def test_compute_change_cannot_hide_in_trial_configuration(self):
+        fn = window["validate_trial_config"]
+        original = fn.__globals__["read"]
+
+        def changed(path):
+            result = original(path)
+            if path.parent == HERE:
+                result["serve_args"].append("--fake-compute-change")
+            return result
+
+        with (
+            patch.dict(fn.__globals__, read=changed),
+            self.assertRaisesRegex(ValueError, "non-network"),
+        ):
+            fn()
 
     def test_changed_historical_receipt_cannot_pass(self):
         fn = window["validate_history"]
