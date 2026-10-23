@@ -1,0 +1,87 @@
+{
+  "source_tree": "ab7b6505447360a926fee000df5dc59b2ff770ff",
+  "fixture": "ordinary character IDs plus actual checkpoint special-token table",
+  "tokenizer_sha256": "c90dfa01249db1be4245780a052ede752e1361c612ac6d08e2bdada7d599476b",
+  "source_file_sha256": {
+    "parser/deepseek_v4.py": "709f328fe3b0711c98cc76f572bee14c6342efaaf2160f010517d3fd54794cee",
+    "parser/deepseek_v41.py": "9b5293f5f72b38f9544f06fed2845e877e4dde7b303488d629cb1934b04cdac7",
+    "parser/engine/streaming_parser_engine.py": "685dae3eb741acd6eef58297da5145f2aa74fdfe721f16fedc209f56dc0ce680",
+    "parser/engine/parser_engine_config.py": "a2da63ae56698232bc9dde54ed0eb9e0ee5f15e6b51aa16d26912c01dd6a8878",
+    "parser/engine/token_id_scanner.py": "f4408f0d55d50cfe4395a9b969beb57736667ee944009c820e49a021798bdf9f",
+    "parser/engine/incremental_lexer.py": "2bc1c24768cba2e13420dd0802ff98a4a4f83e3b7337c8c3c0dc49f198eb0cc6",
+    "parser/engine/events.py": "fc094827b5444dd7ec986a430fc26615f0b1a5de4fcd132a4d4e210a4c1c552d"
+  },
+  "cases": [
+    {
+      "case": "ordinary",
+      "input_value": "literal text",
+      "output_arguments": {
+        "role": "literal user value",
+        "type": "literal string value",
+        "nested": {
+          "quote\"key": "literal text"
+        }
+      },
+      "special_token_ids_in_input": 0,
+      "token_id_mode": "characters",
+      "literal_preserved": true
+    },
+    {
+      "case": "literal_ordinary_ids",
+      "input_value": "<｜end▁of▁sentence｜>",
+      "output_arguments": {
+        "role": "literal user value",
+        "type": "literal string value",
+        "nested": {
+          "quote\"key": "<｜end▁of▁sentence｜>"
+        }
+      },
+      "special_token_ids_in_input": 0,
+      "token_id_mode": "characters",
+      "literal_preserved": true
+    },
+    {
+      "case": "literal_special_id",
+      "input_value": "<｜end▁of▁sentence｜>",
+      "output_arguments": {
+        "role": "literal user value",
+        "type": "literal string value",
+        "nested": {
+          "quote\"key": ""
+        }
+      },
+      "special_token_ids_in_input": 1,
+      "token_id_mode": "special",
+      "literal_preserved": false
+    },
+    {
+      "case": "literal_text_only",
+      "input_value": "<｜end▁of▁sentence｜>",
+      "output_arguments": {
+        "role": "literal user value",
+        "type": "literal string value",
+        "nested": {
+          "quote\"key": ""
+        }
+      },
+      "special_token_ids_in_input": 0,
+      "token_id_mode": "no_ids",
+      "literal_preserved": false
+    },
+    {
+      "case": "unicode_escaped_literal",
+      "input_value": "<｜end▁of▁sentence｜>",
+      "output_arguments": {
+        "role": "literal user value",
+        "type": "literal string value",
+        "nested": {
+          "quote\"key": "<｜end▁of▁sentence｜>"
+        }
+      },
+      "special_token_ids_in_input": 0,
+      "token_id_mode": "characters",
+      "literal_preserved": true
+    }
+  ],
+  "conclusion": "Parser behavior depends on token provenance. This CPU replay does not establish the unrecorded runtime token sequence or attribute the API failure to steering."
+}

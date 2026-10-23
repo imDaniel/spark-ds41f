@@ -1,0 +1,6 @@
+live: running: 4 nodes, TP4, context 1,048,576, KV 10.5 GiB, image ds41f-1022-screen:s-dea96d04ea9e-offline1, started from experiments/2026-10-23-1022-window/arms/s-loaded.json
+spark01: stop exact container ds41f-1022-screen-s-loaded and stop its memguard
+spark02: stop exact container ds41f-1022-screen-s-loaded and stop its memguard
+spark03: stop exact container ds41f-1022-screen-s-loaded and stop its memguard
+spark04: stop exact container ds41f-1022-screen-s-loaded and stop its memguard
+plan only; pass --apply to stop the cluster
