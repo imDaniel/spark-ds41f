@@ -118,6 +118,10 @@ GRUB's default.
 
 ## GB10 GPU clock latch
 
+The measurements and node names in this section are upstream observations, updated in
+[upstream PR #461](https://github.com/christopherowen/spark-ds41f/pull/461).
+Their specific power-limit readings have not been verified on this site's nodes.
+
 A GB10 GPU can latch far below its normal clock: it stays in P0 at about
 500-720 MHz and 10-14 W with no clock-event reason and no driver errors, and a
 three-node TP3 cluster with one latched node runs about 45% slower. Neither a
@@ -137,19 +141,51 @@ latched node isolate the ceiling below the driver:
 | HDMI connector forced off, display inactive | 554 MHz |
 | `nvidia-smi -lgc 2400,3003` | 554 MHz (ignored) |
 
-It was not a power cap either: dgx3 had logged 3 s of software power capping
-against about four hours on dgx1. Firmware was identical on all three nodes
-(SMBIOS firmware inventory BIOS 5.36_0ACUM027, SoC 0x02009b0b, EC 0x03000508,
-PD 0x00000516). The latch appeared on the boot that first enabled nvidia-drm
-kernel mode setting, but it persists with the display off, so mode setting is
-not the cause. The reboot that preceded it was also the first on dgx3 after the
-fan-floor driver had been active, and on the latched boot the EC reported a
-fan lower floor of 0 instead of unset; dgx1 and dgx2 run the same driver and
-restore it on every reboot without latching, so that correlation is unproven.
+The ceiling is a platform power cap, applied below the GPU driver, so
+`nvidia-smi` shows no clock-event reason. The driver's own software power
+capping is not the cause: dgx3 had logged 3 s of it against about four hours on
+dgx1. On dgx3 the embedded controller (EC) had published zero for every power
+limit it supplies to the SoC, so the SoC ran on its fallback limits:
+
+| Effective limit | dgx3, latched | dgx1, healthy |
+|---|---:|---:|
+| Package PL1 / PL2 | 20 / 20 W | 140 / 142 W |
+| System PL1 / PL2 | 30 / 30 W | 231 / 244 W |
+
+The time the EC publishes had also stopped advancing. It looks as if the EC
+stops publishing after startup rather than sending a wrong value. That fits only
+AC removal clearing it, since the EC stays powered through a warm reboot. What
+stops the publication is unknown. No safe host command was found that
+republishes the limits or resets the EC without removing AC power; the
+investigation is in
+[dgx-spark-power-control](https://github.com/christopherowen/dgx-spark-power-control/blob/no-restart-recovery/docs/no-restart-recovery.md),
+on its `no-restart-recovery` branch.
+
+Firmware was identical on all three nodes (SMBIOS firmware inventory BIOS
+5.36_0ACUM027, SoC 0x02009b0b, EC 0x03000508, PD 0x00000516). The latch
+appeared on the boot that first enabled nvidia-drm kernel mode setting, but it
+persists with the display off, so mode setting is not the cause. The reboot that
+preceded it was also the first on dgx3 after the fan-floor driver had been
+active, and on the latched boot the EC reported a fan lower floor of 0 instead
+of unset. dgx1 and dgx2 run the same driver and restore it on every reboot
+without latching, so that correlation is unproven.
+
+The latch has also appeared right after firmware updates. After any update,
+let `fwupdmgr upgrade` and its reboot finish. Capsules flash during that boot,
+so never remove power while it runs. Then power the node off, remove AC power
+for at least a minute, power it on, and check the clock before trusting the
+node (below).
 
 `bin/spark doctor --live` reports a serving node whose GPU clock is below
-1,000 MHz. To recover: stop the service (so the peers' RoCE GIDs cannot move),
+1,000 MHz. A healthy GB10 stays near 2,400 MHz while serving, even between
+requests. To recover: stop the service (so the peers' RoCE GIDs cannot move),
 power the node off, remove AC power for at least a minute, and power it on.
+After a recovery or a firmware update, start the service and confirm that
+`doctor --live` reports no clock problem on any node.
+
+For this site, a suspected platform latch requires operator-led hardware recovery in
+an explicitly authorized cluster window. The software watchdog must not repeatedly
+restart containers or attempt power recovery for this fault.
 
 ## Recovery validation
 
