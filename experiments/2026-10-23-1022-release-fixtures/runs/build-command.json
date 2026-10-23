@@ -1,0 +1,15 @@
+[
+  "docker",
+  "--context",
+  "desktop-linux",
+  "buildx",
+  "build",
+  "--load",
+  "--network=none",
+  "--provenance=false",
+  "--metadata-file",
+  "/Users/daniel/Workspace/spark-ds41f/.work/1022-release-fixtures/image-metadata.json",
+  "-t",
+  "ds41f-1022-parser:s-4f6461ca14a0-rc2",
+  "/Users/daniel/Workspace/spark-ds41f/.work/1022-release-fixtures/context"
+]

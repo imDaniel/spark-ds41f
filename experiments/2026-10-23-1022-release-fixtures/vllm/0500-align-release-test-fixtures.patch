@@ -1,0 +1,129 @@
+From 4f6461ca14a0e0771d70924fb5f1312205804226 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 12:52:32 +0000
+Subject: [PATCH] Align steering release fixtures with model initialization and
+ GPU teardown
+
+Upstream base: 19f2c20ed4d64ae22bd009ceacadd85e2a81e354, after the
+199-patch output-parser stack at 9dd408b8ee85.
+
+The complete release gate exposed hand-built model/config objects missing
+the downstream steering defaults, and module-scoped CPU import stubs that
+remained installed during the real per-test GPU cleanup. Give stand-ins
+the constructor defaults and restore host stubs before cleanup.
+
+Quality: tests only; no serving source, weights, sampling or kernels change.
+Tests: previous full GPU gate had 20 assertion failures and 30 teardown
+errors in these five files. Corrected files pass 133 CPU cases, with 27
+GPU-only skips; full GPU rerun remains required.
+Upstream status: downstream test maintenance; not submitted upstream.
+---
+ tests/models/test_deepseek_v4_1_ced_model.py        | 1 +
+ tests/models/test_deepseek_v4_1_engram.py           | 3 +++
+ tests/models/test_deepseek_v4_1_sp_prefill.py       | 1 +
+ tests/models/test_deepseek_v4_1_steering_consume.py | 4 +++-
+ tests/v1/attention/test_b12x_v41_ced_metadata.py    | 3 +++
+ 5 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/tests/models/test_deepseek_v4_1_ced_model.py b/tests/models/test_deepseek_v4_1_ced_model.py
+index 3eea165d9..6cb1e47be 100644
+--- a/tests/models/test_deepseek_v4_1_ced_model.py
++++ b/tests/models/test_deepseek_v4_1_ced_model.py
+@@ -266,6 +266,7 @@ def test_ced_global_context_and_full_row_output_abi(monkeypatch, compact):
+         _mtp_hidden_buffer=buffer,
+         # The sink detector's column buffer: none, the detector is off here.
+         _sink_columns=None,
++        steering_profile=None,
+         norm=lambda hidden: hidden,
+     )
+     output, aux = native.DeepseekV4Model.forward(
+diff --git a/tests/models/test_deepseek_v4_1_engram.py b/tests/models/test_deepseek_v4_1_engram.py
+index d69a788d1..f8d8a7203 100644
+--- a/tests/models/test_deepseek_v4_1_engram.py
++++ b/tests/models/test_deepseek_v4_1_engram.py
+@@ -442,6 +442,7 @@ def test_disk_engram_preparation_refreshes_graph_and_rejects_stale_rows(
+     _prepare_engram(resident_session, resident)
+ 
+     state = DeepseekV41ModelState.__new__(DeepseekV41ModelState)
++    state.steering = None
+     state.ced_state = None
+     state.lookback_token_ids = torch.empty(2, 3, dtype=torch.int32, device="cuda")
+     state.disk_engram_models = (target,)
+@@ -608,6 +609,7 @@ def test_disk_engram_rows_the_host_hashed_equal_the_gpu_rows(
+ 
+     prompt = [5, 9, 13, 17, 19, 23]
+     state = DeepseekV41ModelState.__new__(DeepseekV41ModelState)
++    state.steering = None
+     state.ced_state = None
+     state.lookback_token_ids = torch.empty(2, 3, dtype=torch.int32, device="cuda")
+     state.disk_engram_models = (target,)
+@@ -988,6 +990,7 @@ def test_disk_engram_model_allocates_hash_buffer_from_declared_caps(monkeypatch)
+         scheduler_config=SimpleNamespace(max_num_batched_tokens=13),
+         lora_config=None,
+         speculative_config=None,
++        additional_config={},
+     )
+     monkeypatch.setattr(model_module, "_use_sequence_parallel", lambda _: False)
+     monkeypatch.setattr(
+diff --git a/tests/models/test_deepseek_v4_1_sp_prefill.py b/tests/models/test_deepseek_v4_1_sp_prefill.py
+index f54bab381..5f89e145b 100644
+--- a/tests/models/test_deepseek_v4_1_sp_prefill.py
++++ b/tests/models/test_deepseek_v4_1_sp_prefill.py
+@@ -546,6 +546,7 @@ def test_model_forward_matches_full_rows(
+             _l2pf_ready=True,
+             # The sink detector's column buffer: none, the detector is off here.
+             _sink_columns=None,
++            steering_profile=None,
+             norm=lambda hidden: hidden * 2,
+         )
+         output, aux = native.DeepseekV4Model.forward(
+diff --git a/tests/models/test_deepseek_v4_1_steering_consume.py b/tests/models/test_deepseek_v4_1_steering_consume.py
+index 98976a14c..6e91c255a 100644
+--- a/tests/models/test_deepseek_v4_1_steering_consume.py
++++ b/tests/models/test_deepseek_v4_1_steering_consume.py
+@@ -88,11 +88,13 @@ def install(monkeypatch, name, **attributes):
+     return module
+ 
+ 
+-@pytest.fixture(scope="module")
++@pytest.fixture
+ def host_modules():
+     # Substitute only the CUDA/compiler imports. The runner hooks, mHC Python
+     # consumer execute their actual source bodies. Bypass custom-op registration
+     # so this CPU fixture cannot replace/conflict with the real CUDA operators.
++    # Restore stubs before tests/conftest.py performs per-test GPU cleanup.
++    # A module-scoped fixture leaves them installed during that cleanup.
+     with pytest.MonkeyPatch.context() as mp:
+ 
+         def custom_op(*args, **kwargs):
+diff --git a/tests/v1/attention/test_b12x_v41_ced_metadata.py b/tests/v1/attention/test_b12x_v41_ced_metadata.py
+index 76241de27..e6e331846 100644
+--- a/tests/v1/attention/test_b12x_v41_ced_metadata.py
++++ b/tests/v1/attention/test_b12x_v41_ced_metadata.py
+@@ -123,6 +123,7 @@ def test_prompt_logprobs_zero_keeps_every_prompt_row(monkeypatch):
+     monkeypatch.setattr(DefaultModelState, "add_request", lambda *args: None)
+     monkeypatch.setattr(DefaultModelState, "remove_request", lambda *args: None)
+     state = DeepseekV41ModelState.__new__(DeepseekV41ModelState)
++    state.steering = None
+     state.ced_state, starts, seq = _state([4096, 4096])
+     state._ced_prompt_logprobs = set()
+     state._ced_prefix_start = {}
+@@ -444,6 +445,7 @@ def test_streaming_update_preserves_private_decoder_history(monkeypatch):
+     monkeypatch.setattr(DefaultModelState, "add_request", lambda *args: None)
+     monkeypatch.setattr(DefaultModelState, "remove_request", lambda *args: None)
+     state = DeepseekV41ModelState.__new__(DeepseekV41ModelState)
++    state.steering = None
+     state.ced_state, starts, seq = _state([1], [1025])
+     state._ced_prompt_logprobs = set()
+     state._ced_prefix_start = {"stream": 256}
+@@ -479,6 +481,7 @@ def test_large_full_capture_decodes_small_live_prefix(monkeypatch):
+     monkeypatch.setattr(DefaultModelState, "prepare_dummy_inputs", lambda *args: {})
+     monkeypatch.setattr(DefaultModelState, "prepare_attn", lambda *args: {})
+     state = DeepseekV41ModelState.__new__(DeepseekV41ModelState)
++    state.steering = None
+     state.ced_state, starts, seq = _state([256])
+     state._ced_prompt_logprobs = set()
+     state._ced_prefix_start = {}
+-- 
+2.54.0 (Apple Git-157)
+

@@ -194,7 +194,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review, 2026-10-23-1022-output-parser]
+        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review, 2026-10-23-1022-output-parser, 2026-10-23-1022-release-fixtures]
     env:
       STEERING_EXPERIMENT: ${{ matrix.experiment }}
     steps:
@@ -227,12 +227,12 @@ jobs:
       - name: Execute the complete pinned 1022 CPU collection
         run: .work/steering-1022-cpu-venv/bin/python scripts/check_steering_cpu.py --upstreams experiments/$STEERING_EXPERIMENT/upstreams.lock.json --cases experiments/$STEERING_EXPERIMENT/cpu-cases.json --report .work/steering-1022-cpu.xml
       - name: Classify all serving tests in the output-parser candidate
-        if: matrix.experiment == '2026-10-23-1022-output-parser'
+        if: matrix.experiment == '2026-10-23-1022-output-parser' || matrix.experiment == '2026-10-23-1022-release-fixtures'
         run: |
           python3 - <<'PY'
-          import json, runpy, subprocess
+          import json, os, runpy, subprocess
           from pathlib import Path
-          root = Path("experiments/2026-10-23-1022-output-parser")
+          root = Path("experiments") / os.environ["STEERING_EXPERIMENT"]
           spark = runpy.run_path("bin/spark")
           lock = json.loads((root / "upstreams.lock.json").read_text())
           inputs = spark["build_inputs"](lock)

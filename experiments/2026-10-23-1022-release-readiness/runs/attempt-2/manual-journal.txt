@@ -1,0 +1,43 @@
+Started spark-release-manual-recover-2fb58ec6.service - /usr/bin/python3 /srv/ai-cluster/operations/1022-release-20261023/manual-recovery-2fb58ec6.py.
+   admin : PWD=/ ; USER=root ; COMMAND=/usr/bin/journalctl -k --since '2026-10-23 12:24:11 UTC' --no-pager -o short-iso
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-2fb58ec6-68f8-457f-94f4-bce64c95c2f6 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/ ; USER=root ; COMMAND=/usr/bin/journalctl -k --since '2026-10-23 12:24:11 UTC' --no-pager -o short-iso
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-2fb58ec6-68f8-457f-94f4-bce64c95c2f6 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-2fb58ec6-68f8-457f-94f4-bce64c95c2f6 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -D INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-2fb58ec6-68f8-457f-94f4-bce64c95c2f6 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-2fb58ec6-68f8-457f-94f4-bce64c95c2f6 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/ ; USER=root ; COMMAND=/usr/bin/journalctl -k --since '2026-10-23 12:24:11 UTC' --no-pager -o short-iso
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-2fb58ec6-68f8-457f-94f4-bce64c95c2f6 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-2fb58ec6-68f8-457f-94f4-bce64c95c2f6 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/ ; USER=root ; COMMAND=/usr/bin/journalctl -k --since '2026-10-23 12:24:11 UTC' --no-pager -o short-iso
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-2fb58ec6-68f8-457f-94f4-bce64c95c2f6 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-2fb58ec6-68f8-457f-94f4-bce64c95c2f6 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+Original four-rank r6x restored and verified; ingress open; hold removed
+spark-release-manual-recover-2fb58ec6.service: Deactivated successfully.
+spark-release-manual-recover-2fb58ec6.service: Consumed 9.209s CPU time, 142.8M memory peak, 0B memory swap peak.

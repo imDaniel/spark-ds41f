@@ -1,0 +1,3 @@
+2026-10-23T20:32:32+08:00 fusionxparkgb10-e4d3 kernel: NVRM: GPU at PCI:000f:01:00: GPU-9ac83e39-e29b-fc1f-915b-55108821dcdd
+2026-10-23T20:32:32+08:00 fusionxparkgb10-e4d3 kernel: NVRM: Xid (PCI:000f:01:00): 43, pid=3325257, name=python3, channel 0x0000000a
+2026-10-23T20:32:40+08:00 fusionxparkgb10-e4d3 kernel: NVRM: Xid (PCI:000f:01:00): 43, pid=3325973, name=python3, channel 0x0000000a

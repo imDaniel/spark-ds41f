@@ -1,0 +1,61 @@
+chunk 000: exit 0, 369 s
+chunk 001: exit 0, 170 s
+chunk 002: exit 1, 86 s
+chunk 003: exit 1, 49 s
+chunk 004: exit 1, 155 s
+chunk 005: exit 0, 40 s
+chunk 006: exit 0, 46 s
+chunk 007: exit 0, 9 s
+
+73 files, 856 s of tests; 5 files not ok: fail: 5
+FAILED tests/models/test_deepseek_v4_1_ced_model.py::test_ced_global_context_and_full_row_output_abi[False] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_ced_model.py::test_ced_global_context_and_full_row_output_abi[True] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_engram.py::test_disk_engram_preparation_refreshes_graph_and_rejects_stale_rows - AttributeError: 'DeepseekV41ModelState' object has no attribute 'steering'
+FAILED tests/models/test_deepseek_v4_1_engram.py::test_disk_engram_rows_the_host_hashed_equal_the_gpu_rows - AttributeError: 'DeepseekV41ModelState' object has no attribute 'steering'
+FAILED tests/models/test_deepseek_v4_1_engram.py::test_disk_engram_model_allocates_hash_buffer_from_declared_caps - AttributeError: 'types.SimpleNamespace' object has no attribute 'additional_config'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[False-False-9] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[False-False-10] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[False-False-11] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[False-True-9] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[False-True-10] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[False-True-11] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[True-False-9] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[True-False-10] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[True-False-11] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[True-True-9] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[True-True-10] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+FAILED tests/models/test_deepseek_v4_1_sp_prefill.py::test_model_forward_matches_full_rows[True-True-11] - AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_dot_binding_and_sp_fallback_do_not_materialize_twice - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_model_state_real_dummy_and_capture_hooks - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_runner_initial_profile_before_graph_manager[None-False] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_runner_initial_profile_before_graph_manager[None-True] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_runner_initial_profile_before_graph_manager[1024-False] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_runner_initial_profile_before_graph_manager[1024-True] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_mhc_keeps_original_writer_and_stock_kernel_abi[1] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_mhc_keeps_original_writer_and_stock_kernel_abi[4] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_consumer_formula_matches_fp64_and_skips_zero_loads[0] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_consumer_formula_matches_fp64_and_skips_zero_loads[0.25] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_consumer_formula_matches_fp64_and_skips_zero_loads[0.5] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_consumer_formula_matches_fp64_and_skips_zero_loads[0.75] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_consumer_formula_matches_fp64_and_skips_zero_loads[1] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_consumer_formula_matches_fp64_and_skips_zero_loads[2] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_actual_consumer_formula_matches_fp64_and_skips_zero_loads[4] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_late_admission_hook_preserves_steering_inputs[0-causal] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_late_admission_hook_preserves_steering_inputs[0-vision] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_late_admission_hook_preserves_steering_inputs[1-causal] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_late_admission_hook_preserves_steering_inputs[1-vision] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_late_admission_hook_preserves_steering_inputs[4-causal] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_late_admission_hook_preserves_steering_inputs[4-vision] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_draft_zero_keeps_controls_on_final_input_rows[0-0] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_draft_zero_keeps_controls_on_final_input_rows[0-2] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_draft_zero_keeps_controls_on_final_input_rows[0-5] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_draft_zero_keeps_controls_on_final_input_rows[1-0] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_draft_zero_keeps_controls_on_final_input_rows[1-2] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_draft_zero_keeps_controls_on_final_input_rows[1-5] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_draft_zero_keeps_controls_on_final_input_rows[4-0] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_draft_zero_keeps_controls_on_final_input_rows[4-2] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+ERROR tests/models/test_deepseek_v4_1_steering_consume.py::test_1022_draft_zero_keeps_controls_on_final_input_rows[4-5] - failed on teardown with "ImportError: cannot import name 'HAS_TRITON' from 'vllm.triton_utils' (unknown location)"
+FAILED tests/v1/attention/test_b12x_v41_ced_metadata.py::test_prompt_logprobs_zero_keeps_every_prompt_row - AttributeError: 'DeepseekV41ModelState' object has no attribute 'steering'
+FAILED tests/v1/attention/test_b12x_v41_ced_metadata.py::test_streaming_update_preserves_private_decoder_history - AttributeError: 'DeepseekV41ModelState' object has no attribute 'steering'
+FAILED tests/v1/attention/test_b12x_v41_ced_metadata.py::test_large_full_capture_decodes_small_live_prefix - AttributeError: 'DeepseekV41ModelState' object has no attribute 'steering'
+20 failed, 1947 passed, 158 skipped, 30 errors

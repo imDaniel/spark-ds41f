@@ -1,0 +1,20 @@
+{
+  "window_id": "2fb58ec6-68f8-457f-94f4-bce64c95c2f6",
+  "manifest_sha256": "a74e60b7fe50d0c2a1ea159b3ca2c47b55596931348177172c04ae3e3c8147fa",
+  "phase": "closed",
+  "opened_at": 1792758332.358454,
+  "boot_id": "2830fbb4-e3e6-484b-8f08-6c1a4fd58131",
+  "restore_monotonic": 42832.359301623,
+  "restore_at": 1792761932.358454,
+  "end_at": 1792762832.358454,
+  "pending": null,
+  "original_ingress": {
+    "blocked": false,
+    "stage": "open",
+    "aliases_sha256": "06653eea708218e60b7382b3125fed707f73bdfee641d313112bdd98da10137f"
+  },
+  "last_arm": null,
+  "recovery_error": "GPU/driver fault needs operator review",
+  "recovery_step": "gateway_after_ingress",
+  "manual_review_sha256": "534a21820f1f5308556ac980fc7ba54165e67c010a16e661ba6870c96f1b3030"
+}
