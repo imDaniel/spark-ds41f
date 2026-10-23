@@ -1,0 +1,364 @@
+{
+  "client_commit": "8181e0cc9595f6370291bd8274c41878f8ada56b",
+  "client_hashes": {
+    "__init__.py": "be61499eac3eec7198fbb577d897ab5364ea604f30c09c71fa30da9e340382ef",
+    "load.py": "c70363d71f0aaed5753ecb107424d018085e2243a0fe7298036482b2413c3092",
+    "client.py": "fd4eb3e4c8b4071344f7afd0a55b8dca0cf8361a59e31486c52e6f5b73ea17cd",
+    "report.py": "a66a01f511ea7db9f458aac966e594a197f8fbda0051c2f35a27be9e7637dbf0",
+    "prom.py": "3c1245bbe30144d1575e2a491bbfb379d815e3fd6468be8937aa8949e61096b2",
+    "stats.py": "62e42ae9b37eb009b8787aaa69a91412de74a20dea38bb43893088af7639df7c",
+    "prompts.py": "9e8510326546e862c35ee286a10589470b2423b70e4ab10e36f5b2cbbc3da0c6"
+  },
+  "prompts_sha256": "ce2d8ed479d6cbf2f01e01de28faae01e311495472b2260b7c8bbf3c901a0961",
+  "runs": [
+    {
+      "path": "experiments/2026-10-19-r6x-steering-gpu/evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-2-s1-c1-1792377199922950891.json.gz",
+      "sha256": "4e35ef0ee21a16755259922eb875ae0be1fd6b262055c626490e4463603b0d99",
+      "scale": 1,
+      "concurrency": 1,
+      "kind": "initial",
+      "workload": {
+        "mode": "closed",
+        "concurrency": 1,
+        "rate": 1.0,
+        "warmup_s": 15.0,
+        "duration_s": 90.0,
+        "batches": 6,
+        "max_tokens": 256,
+        "fixed_length": true,
+        "seed": 2048,
+        "max_inflight": 512,
+        "context_tokens": 4096,
+        "prompts": "/srv/ai-cluster/runtimes/steering-r6x-20261019/api-runs/runs/candidate-loaded-bench-54c0cdf4e62a/workload-prompts.jsonl",
+        "prompt_count": 16,
+        "prompts_sha256": "ce2d8ed479d6cbf2f01e01de28faae01e311495472b2260b7c8bbf3c901a0961",
+        "extra_body": {
+          "temperature": 0,
+          "seed": 2048,
+          "steering_profile": "heretic-1017-attn-v1",
+          "steering_scale": 1
+        }
+      },
+      "documents": [
+        {
+          "slot": 0,
+          "tokens": 4093,
+          "prime_s": 0.85,
+          "prime_error": null
+        }
+      ]
+    },
+    {
+      "path": "experiments/2026-10-19-r6x-steering-gpu/evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-3-s1-c4-1792377351911916523.json.gz",
+      "sha256": "1ee7f80232ea86e157daa51d8fd33b4896ab7561d9944c3a3792773c5c6b178c",
+      "scale": 1,
+      "concurrency": 4,
+      "kind": "initial",
+      "workload": {
+        "mode": "closed",
+        "concurrency": 4,
+        "rate": 1.0,
+        "warmup_s": 15.0,
+        "duration_s": 90.0,
+        "batches": 6,
+        "max_tokens": 256,
+        "fixed_length": true,
+        "seed": 2048,
+        "max_inflight": 512,
+        "context_tokens": 4096,
+        "prompts": "/srv/ai-cluster/runtimes/steering-r6x-20261019/api-runs/runs/candidate-loaded-bench-54c0cdf4e62a/workload-prompts.jsonl",
+        "prompt_count": 16,
+        "prompts_sha256": "ce2d8ed479d6cbf2f01e01de28faae01e311495472b2260b7c8bbf3c901a0961",
+        "extra_body": {
+          "temperature": 0,
+          "seed": 2048,
+          "steering_profile": "heretic-1017-attn-v1",
+          "steering_scale": 1
+        }
+      },
+      "documents": [
+        {
+          "slot": 0,
+          "tokens": 4093,
+          "prime_s": 0.85,
+          "prime_error": null
+        },
+        {
+          "slot": 1,
+          "tokens": 4073,
+          "prime_s": 0.81,
+          "prime_error": null
+        },
+        {
+          "slot": 2,
+          "tokens": 4034,
+          "prime_s": 0.79,
+          "prime_error": null
+        },
+        {
+          "slot": 3,
+          "tokens": 4203,
+          "prime_s": 0.83,
+          "prime_error": null
+        }
+      ]
+    },
+    {
+      "path": "experiments/2026-10-19-r6x-steering-gpu/evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-4-s4-c1-1792377514768600685.json.gz",
+      "sha256": "2cb15d19e05f9f85cf32b7a8b541e98c1ee353e921b18d73f1f10884521c6c15",
+      "scale": 4,
+      "concurrency": 1,
+      "kind": "initial",
+      "workload": {
+        "mode": "closed",
+        "concurrency": 1,
+        "rate": 1.0,
+        "warmup_s": 15.0,
+        "duration_s": 90.0,
+        "batches": 6,
+        "max_tokens": 256,
+        "fixed_length": true,
+        "seed": 2048,
+        "max_inflight": 512,
+        "context_tokens": 4096,
+        "prompts": "/srv/ai-cluster/runtimes/steering-r6x-20261019/api-runs/runs/candidate-loaded-bench-54c0cdf4e62a/workload-prompts.jsonl",
+        "prompt_count": 16,
+        "prompts_sha256": "ce2d8ed479d6cbf2f01e01de28faae01e311495472b2260b7c8bbf3c901a0961",
+        "extra_body": {
+          "temperature": 0,
+          "seed": 2048,
+          "steering_profile": "heretic-1017-attn-v1",
+          "steering_scale": 4
+        }
+      },
+      "documents": [
+        {
+          "slot": 0,
+          "tokens": 4093,
+          "prime_s": 0.85,
+          "prime_error": null
+        }
+      ]
+    },
+    {
+      "path": "experiments/2026-10-19-r6x-steering-gpu/evidence/hardware/api/candidate-loaded-bench-54c0cdf4e62a/evidence/candidate-loaded-bench-load-5-s4-c4-1792377666666615860.json.gz",
+      "sha256": "6be630cb087ed9625074230638d3b2abeb35435943e79e1005a6181d11d838bb",
+      "scale": 4,
+      "concurrency": 4,
+      "kind": "initial",
+      "workload": {
+        "mode": "closed",
+        "concurrency": 4,
+        "rate": 1.0,
+        "warmup_s": 15.0,
+        "duration_s": 90.0,
+        "batches": 6,
+        "max_tokens": 256,
+        "fixed_length": true,
+        "seed": 2048,
+        "max_inflight": 512,
+        "context_tokens": 4096,
+        "prompts": "/srv/ai-cluster/runtimes/steering-r6x-20261019/api-runs/runs/candidate-loaded-bench-54c0cdf4e62a/workload-prompts.jsonl",
+        "prompt_count": 16,
+        "prompts_sha256": "ce2d8ed479d6cbf2f01e01de28faae01e311495472b2260b7c8bbf3c901a0961",
+        "extra_body": {
+          "temperature": 0,
+          "seed": 2048,
+          "steering_profile": "heretic-1017-attn-v1",
+          "steering_scale": 4
+        }
+      },
+      "documents": [
+        {
+          "slot": 0,
+          "tokens": 4093,
+          "prime_s": 0.85,
+          "prime_error": null
+        },
+        {
+          "slot": 1,
+          "tokens": 4073,
+          "prime_s": 0.81,
+          "prime_error": null
+        },
+        {
+          "slot": 2,
+          "tokens": 4034,
+          "prime_s": 0.79,
+          "prime_error": null
+        },
+        {
+          "slot": 3,
+          "tokens": 4203,
+          "prime_s": 0.83,
+          "prime_error": null
+        }
+      ]
+    },
+    {
+      "path": "experiments/2026-10-19-r6x-steering-gpu/followup/evidence/tail-1-s1.json.gz",
+      "sha256": "a6d0cd3e601dee343d9eea237504d5dafce9c18131a9f6fa24710b592ff9cb88",
+      "scale": 1,
+      "concurrency": 4,
+      "kind": "daily-followup",
+      "workload": {
+        "mode": "closed",
+        "concurrency": 4,
+        "rate": 1.0,
+        "warmup_s": 15.0,
+        "duration_s": 90.0,
+        "batches": 6,
+        "max_tokens": 256,
+        "fixed_length": true,
+        "seed": 2048,
+        "max_inflight": 512,
+        "context_tokens": 4096,
+        "prompts": "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/tail-prompts.jsonl",
+        "prompt_count": 16,
+        "prompts_sha256": "ce2d8ed479d6cbf2f01e01de28faae01e311495472b2260b7c8bbf3c901a0961",
+        "extra_body": {
+          "temperature": 0,
+          "seed": 2048,
+          "steering_profile": "heretic-1017-attn-v1",
+          "steering_scale": 1
+        }
+      },
+      "documents": [
+        {
+          "slot": 0,
+          "tokens": 4093,
+          "prime_s": 0.88,
+          "prime_error": null
+        },
+        {
+          "slot": 1,
+          "tokens": 4073,
+          "prime_s": 0.81,
+          "prime_error": null
+        },
+        {
+          "slot": 2,
+          "tokens": 4034,
+          "prime_s": 0.79,
+          "prime_error": null
+        },
+        {
+          "slot": 3,
+          "tokens": 4203,
+          "prime_s": 0.83,
+          "prime_error": null
+        }
+      ]
+    },
+    {
+      "path": "experiments/2026-10-19-r6x-steering-gpu/followup/evidence/tail-2-s1.json.gz",
+      "sha256": "14934b17e065133c642e517741da832982873fc449b7fa7b326984fc66ca9a6c",
+      "scale": 1,
+      "concurrency": 4,
+      "kind": "daily-followup",
+      "workload": {
+        "mode": "closed",
+        "concurrency": 4,
+        "rate": 1.0,
+        "warmup_s": 15.0,
+        "duration_s": 90.0,
+        "batches": 6,
+        "max_tokens": 256,
+        "fixed_length": true,
+        "seed": 2048,
+        "max_inflight": 512,
+        "context_tokens": 4096,
+        "prompts": "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/tail-prompts.jsonl",
+        "prompt_count": 16,
+        "prompts_sha256": "ce2d8ed479d6cbf2f01e01de28faae01e311495472b2260b7c8bbf3c901a0961",
+        "extra_body": {
+          "temperature": 0,
+          "seed": 2048,
+          "steering_profile": "heretic-1017-attn-v1",
+          "steering_scale": 1
+        }
+      },
+      "documents": [
+        {
+          "slot": 0,
+          "tokens": 4093,
+          "prime_s": 0.88,
+          "prime_error": null
+        },
+        {
+          "slot": 1,
+          "tokens": 4073,
+          "prime_s": 0.8,
+          "prime_error": null
+        },
+        {
+          "slot": 2,
+          "tokens": 4034,
+          "prime_s": 0.8,
+          "prime_error": null
+        },
+        {
+          "slot": 3,
+          "tokens": 4203,
+          "prime_s": 0.83,
+          "prime_error": null
+        }
+      ]
+    },
+    {
+      "path": "experiments/2026-10-19-r6x-steering-gpu/followup/evidence/tail-5-s1.json.gz",
+      "sha256": "cc8dd85df1dafe7dde0296ed808a97a3e40e09eef54a09775e50e6f39798da6e",
+      "scale": 1,
+      "concurrency": 4,
+      "kind": "daily-followup",
+      "workload": {
+        "mode": "closed",
+        "concurrency": 4,
+        "rate": 1.0,
+        "warmup_s": 15.0,
+        "duration_s": 90.0,
+        "batches": 6,
+        "max_tokens": 256,
+        "fixed_length": true,
+        "seed": 2048,
+        "max_inflight": 512,
+        "context_tokens": 4096,
+        "prompts": "/srv/ai-cluster/runtimes/steering-r6x-acceptance-20261019/tail-prompts.jsonl",
+        "prompt_count": 16,
+        "prompts_sha256": "ce2d8ed479d6cbf2f01e01de28faae01e311495472b2260b7c8bbf3c901a0961",
+        "extra_body": {
+          "temperature": 0,
+          "seed": 2048,
+          "steering_profile": "heretic-1017-attn-v1",
+          "steering_scale": 1
+        }
+      },
+      "documents": [
+        {
+          "slot": 0,
+          "tokens": 4093,
+          "prime_s": 0.88,
+          "prime_error": null
+        },
+        {
+          "slot": 1,
+          "tokens": 4073,
+          "prime_s": 0.81,
+          "prime_error": null
+        },
+        {
+          "slot": 2,
+          "tokens": 4034,
+          "prime_s": 0.79,
+          "prime_error": null
+        },
+        {
+          "slot": 3,
+          "tokens": 4203,
+          "prime_s": 0.83,
+          "prime_error": null
+        }
+      ]
+    }
+  ]
+}
