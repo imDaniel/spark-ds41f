@@ -215,10 +215,15 @@ jobs:
           for node in nodes["nodes"]:
               node["roce_gid_index"] = int(cluster["environment"]["SPARKNET_ROCE_GID_INDEX"])
           target = Path(cluster["nodes_config"])
-          # CI starts from a fresh checkout; never replace a contributor's map.
-          with target.open("x") as stream:
-              json.dump(nodes, stream, indent=2)
-              stream.write("\n")
+          # The promoted recipe may select this same map. Reuse only the exact
+          # generated example; never replace a contributor's existing map.
+          if target.exists():
+              if json.loads(target.read_text()) != nodes:
+                  raise SystemExit("existing candidate node map differs from the CI example")
+          else:
+              with target.open("x") as stream:
+                  json.dump(nodes, stream, indent=2)
+                  stream.write("\n")
           PY
       - name: Validate the isolated 1022 candidate recipe
         run: bin/spark --cluster-config experiments/$STEERING_EXPERIMENT/cluster.json doctor

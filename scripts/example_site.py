@@ -50,6 +50,10 @@ def main() -> int:
         nodes = json.loads((ROOT / EXAMPLES[name]).read_text())
         if name in selected:
             next(node for node in nodes["nodes"] if node.get("head"))["management_ip"] = address
+            gid = cluster.get("environment", {}).get("SPARKNET_ROCE_GID_INDEX")
+            if gid is not None:
+                for node in nodes["nodes"]:
+                    node["roce_gid_index"] = int(gid)
         else:
             previous = ROOT / "experiments/2026-10-24-1022-promotion/previous/cluster.json"
             if previous.is_file():
