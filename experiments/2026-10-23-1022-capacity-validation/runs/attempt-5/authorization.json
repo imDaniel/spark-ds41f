@@ -1,0 +1,8 @@
+{
+  "window_id": "3ead01df-5424-4f2b-9560-c68abc34a7f8",
+  "manifest_sha256": "a68175e479b7ddca43155c5559b941be8b1d39239f1e57f38ae0c543534d1404",
+  "scope": "window_and_restore",
+  "holder": "1022-release-qualification",
+  "owner_request": "2026-10-23: 可以执行 GPU/TP4 测试了。只测试请求带scale的。想办法解决调用失败的问题。你要想办法这个版本达到能发布的级别。 Keep PR #56 unmerged, restore pinned r6x; no production promotion.",
+  "open_before": 1792766791.814711
+}

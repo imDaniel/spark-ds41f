@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "candidate_repository_commit": "7252899c6498aae4a9149a6429e9f79d0dfdb538",
+  "scope": "offline build and recovery review only",
+  "arms": {
+    "u": {
+      "patch_count": 184,
+      "patch_head": "8fc15c18f8903b97c36f5268ebd648b53d9f9689",
+      "expected_tree": "e68aa19c8027c34a3dcfeb3ed203f6d285fc4d67",
+      "patchset_sha256": "db98c1acecfd27a8456e396536c5c6f15dd2b38fc698626137237208875a74a5"
+    },
+    "e": {
+      "patch_count": 185,
+      "patch_head": "a13d993616f6d3ff02b49cd5ef969a729a4d2146",
+      "expected_tree": "9d8c8336026722c1746d8a7582d6a603331b0348",
+      "patchset_sha256": "d5cb3b77802ca7dc823d77c88a5eb308c97b9d81e3c33fc880ff7d7c15643b79"
+    },
+    "s": {
+      "patch_count": 198,
+      "patch_head": "dea96d04ea9eae7f7e19f1dcadd56b8e27f29875",
+      "expected_tree": "ab7b6505447360a926fee000df5dc59b2ff770ff",
+      "patchset_sha256": "047e56e4596a22fe3574f89b9893813631d58947b1522347320a45725eb8e159"
+    }
+  },
+  "gpu_tests_run": false,
+  "service_mutations": false,
+  "pr_merge": false
+}

@@ -1,0 +1,14 @@
+{
+  "window_id": "0a986749-faef-4bcb-a0aa-05130a0bfe91",
+  "duration_minutes": 13.721451731522878,
+  "component_files": 73,
+  "component_totals": {
+    "passed": 1995,
+    "failed": 0,
+    "error": 0,
+    "skipped": 158
+  },
+  "request_status": "failed: literal control spelling dropped",
+  "restored": true,
+  "candidate_image_id": "sha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241"
+}

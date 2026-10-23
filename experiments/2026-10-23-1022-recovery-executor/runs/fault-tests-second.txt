@@ -1,0 +1,76 @@
+test_authorization_mismatch_or_expiry (test_executor.Admission.test_authorization_mismatch_or_expiry) ... ok
+test_bad_initial_inventory (test_executor.Admission.test_bad_initial_inventory) ... ok
+test_busy_queue_never_kills_request (test_executor.Admission.test_busy_queue_never_kills_request) ... ok
+test_disabled_manifest_cannot_even_probe (test_executor.Admission.test_disabled_manifest_cannot_even_probe) ... ok
+test_drifted_recipe_refused (test_executor.Admission.test_drifted_recipe_refused) ... ok
+test_foreign_hold_is_preserved (test_executor.Admission.test_foreign_hold_is_preserved) ... ok
+test_missing_queue_metrics_restores_without_stopping_user_service (test_executor.Admission.test_missing_queue_metrics_restores_without_stopping_user_service) ... ok
+test_missing_watchdog (test_executor.Admission.test_missing_watchdog) ... ok
+test_pinned_executable_drift (test_executor.Admission.test_pinned_executable_drift) ... ok
+test_stale_or_missing_rank (test_executor.Admission.test_stale_or_missing_rank) ... ok
+test_expired_open_authorization_still_allows_owned_restore (test_executor.Recovery.test_expired_open_authorization_still_allows_owned_restore) ... ok
+test_failed_candidate_stop_never_starts_retained (test_executor.Recovery.test_failed_candidate_stop_never_starts_retained) ... ok
+test_final_api_failure_preserves_hold (test_executor.Recovery.test_final_api_failure_preserves_hold) ... ok
+test_foreign_component_job_blocks_restore (test_executor.Recovery.test_foreign_component_job_blocks_restore) ... ok
+test_full_four_arm_sequence_and_pinned_restore (test_executor.Recovery.test_full_four_arm_sequence_and_pinned_restore) ... ok
+test_gpu_fault_does_not_attempt_restart (test_executor.Recovery.test_gpu_fault_does_not_attempt_restart) ... ok
+test_guard_or_gpu_process_survives_stop (test_executor.Recovery.test_guard_or_gpu_process_survives_stop) ... ok
+test_healthy_service_is_noop (test_executor.Recovery.test_healthy_service_is_noop) ... ok
+test_lost_node_does_not_attempt_restart (test_executor.Recovery.test_lost_node_does_not_attempt_restart) ... ok
+test_owned_job_stop_and_identity (test_executor.Recovery.test_owned_job_stop_and_identity) ... ok
+test_partial_candidate_launch_restores_all_ranks (test_executor.Recovery.test_partial_candidate_launch_restores_all_ranks) ... ok
+test_partial_retained_requires_coordinated_stop (test_executor.Recovery.test_partial_retained_requires_coordinated_stop) ... ok
+test_retained_start_failure_preserves_hold (test_executor.Recovery.test_retained_start_failure_preserves_hold) ... ok
+test_shape_change_is_never_applied (test_executor.Recovery.test_shape_change_is_never_applied) ... ok
+test_changed_hold_is_not_stolen (test_executor.Watchdog.test_changed_hold_is_not_stolen) ... ok
+test_command_timeout_stops_worker_and_restores (test_executor.Watchdog.test_command_timeout_stops_worker_and_restores) ... /opt/homebrew/Cellar/python@3.15/3.15.0_1/Frameworks/Python.framework/Versions/3.15/lib/python3.15/subprocess.py:1313: ResourceWarning: subprocess 5239 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_concurrent_controller_and_watchdog_share_lock (test_executor.Watchdog.test_concurrent_controller_and_watchdog_share_lock) ... ok
+test_deadline_restores_even_with_fresh_heartbeat (test_executor.Watchdog.test_deadline_restores_even_with_fresh_heartbeat) ... ok
+test_fresh_window_does_nothing (test_executor.Watchdog.test_fresh_window_does_nothing) ... ok
+test_heartbeat_loss_restores (test_executor.Watchdog.test_heartbeat_loss_restores) ... ok
+test_independent_process_recovers_killed_controller_during_launch (test_executor.Watchdog.test_independent_process_recovers_killed_controller_during_launch) ... FAIL
+test_pid_reuse_is_not_signalled (test_executor.Watchdog.test_pid_reuse_is_not_signalled) ... ok
+test_worker_eof_before_go_cannot_execute (test_executor.Watchdog.test_worker_eof_before_go_cannot_execute) ... ok
+
+======================================================================
+FAIL: test_command_timeout_stops_worker_and_restores (test_executor.Watchdog.test_command_timeout_stops_worker_and_restores)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 280, in run
+    raise CommandFailed(f"Command timeout: {label}")
+window_executor.CommandFailed: Command timeout: u:start:apply
+
+During handling of the above exception, another exception occurred:
+
+window_executor.Refused: Worker PID identity changed; refusing to signal it
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 347, in test_command_timeout_stops_worker_and_restores
+    with self.assertRaisesRegex(Refused, "timeout"): self.x.switch("u")
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+AssertionError: "timeout" does not match "Worker PID identity changed; refusing to signal it"
+
+======================================================================
+FAIL: test_independent_process_recovers_killed_controller_during_launch (test_executor.Watchdog.test_independent_process_recovers_killed_controller_during_launch)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 363, in test_independent_process_recovers_killed_controller_during_launch
+    self.assert_closed()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 114, in assert_closed
+    self.assertEqual(read(self.x.state_path)["phase"], "closed")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'manual' != 'closed'
+- manual
++ closed
+
+
+----------------------------------------------------------------------
+Ran 33 tests in 57.459s
+
+FAILED (failures=2)

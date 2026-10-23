@@ -11,7 +11,11 @@ the wheel's `libnccl.so.2`; the image build checks the installed library's
 version and checksum. FlashInfer 0.6.18.post1 comes from the base image. The r1
 and r2 images came from the same recipe in
 `experiments/2026-09-23-karmic-kraken-reference/`; r3 was the first built by
-`bin/spark build`, and the promoted image is `vllm-ds41f-kkref:04c30fa98e79-r6`.
+`bin/spark build`. The site's promoted image is the already built and tested
+`ds41f-1022-parser:s-b70fe11a88b3-rc3`, image ID `sha256:14d5bb2c49aad6ad5b09c93beb70379c4088c128162e24bb418d593e5e7853f5`.
+The retained tag/container names identify those exact tested artifacts; promotion
+does not rebuild, retag or rename them. `upstreams.lock.json` and its source
+manifest reproduce the qualified source trees.
 
 ```sh
 bin/spark build prepare        # create or repair the build directory

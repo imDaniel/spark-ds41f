@@ -1,0 +1,26 @@
+profile: config/cluster-steering-r6x-cache-details-tp4.local.json on spark01, spark02, spark03, spark04
+live:    stopped: 4 nodes, TP4, context 1,048,576, KV 10.5 GiB, image sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a, started from config/cluster-steering-r6x-cache-details-tp4.local.json
+plan:    4 nodes, TP4, context 1,048,576, KV 10.5 GiB, image sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a
+shape:   unchanged
+start plan (fail-closed startup memory guards):
+  spark02: pre-arm startup memguard, launch rank 1
+  spark03: pre-arm startup memguard, launch rank 2
+  spark04: pre-arm startup memguard, launch rank 3
+  spark01: pre-arm startup memguard, launch rank 0
+  wait for API/JIT readiness, then switch every node to steady memguard
+spark02: startup memguard active for steering-ds41f-r6x-test (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark02: launched a19cbbeb530024619470b8ed39b046e8351642c4619fab4a30c9b2f0093f6b6f (+0.4s)
+spark03: startup memguard active for steering-ds41f-r6x-test (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark03: launched f68f9510c50ac9b8fd6990531435f4d9da435b9439cf9ba4b202f48ea0dd4b65 (+0.7s)
+spark04: startup memguard active for steering-ds41f-r6x-test (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark04: launched f344e354ef318dcb2bfa2ede5717e94ac23d6b8e19793863cd2594a3b3e93983 (+1.0s)
+spark01: startup memguard active for steering-ds41f-r6x-test (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark01: launched 24c10dc2457f59e64a70aaf26d58239e47da34c71fc34d4a7b654ba5b36fe0b7 (+1.3s)
+waiting up to 3600s for spark01 API readiness
+API ready; JIT/autotuning startup has completed
+API ready at +93.7s
+spark01: steady memguard active for steering-ds41f-r6x-test (threshold 3 GiB, interval 2s, mode running)
+spark02: steady memguard active for steering-ds41f-r6x-test (threshold 3 GiB, interval 2s, mode running)
+spark03: steady memguard active for steering-ds41f-r6x-test (threshold 3 GiB, interval 2s, mode running)
+spark04: steady memguard active for steering-ds41f-r6x-test (threshold 3 GiB, interval 2s, mode running)
+cluster ready; memory guards are active on all nodes (+94.5s)

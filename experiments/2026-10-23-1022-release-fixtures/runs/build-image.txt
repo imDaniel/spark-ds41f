@@ -1,0 +1,54 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 760B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/ds41f-1022-parser:s-9dd408b8ee85-rc1
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 ...
+
+#5 [1/6] FROM docker.io/library/ds41f-1022-parser:s-9dd408b8ee85-rc1@sha256:59717a399b5707e08debbef5a2302172ecc15b5ed7c8552ec12cc080fb592f3a
+#5 resolve docker.io/library/ds41f-1022-parser:s-9dd408b8ee85-rc1@sha256:59717a399b5707e08debbef5a2302172ecc15b5ed7c8552ec12cc080fb592f3a 0.0s done
+#5 DONE 0.1s
+
+#4 [internal] load build context
+#4 transferring context: 131.04MB 1.3s done
+#4 DONE 1.3s
+
+#6 [2/6] COPY verify_image.py source-hashes.json deletions.json /opt/spark3/1022-offline/
+#6 DONE 0.1s
+
+#7 [3/6] RUN python3 /opt/spark3/1022-offline/verify_image.py before
+#7 DONE 1.7s
+
+#8 [4/6] ADD source.tar /opt/spark3/candidate/vllm/
+#8 DONE 1.1s
+
+#9 [5/6] RUN find /opt/spark3/candidate/vllm -type d -name __pycache__ -prune -exec rm -rf '{}' + && python3 /opt/spark3/1022-offline/verify_image.py after
+#9 0.686 {"source_files_verified": 7708, "native_libraries_unchanged": 32, "sparknet_version": "0.5.0", "gpu_verified": false}
+#9 DONE 0.7s
+
+#10 [6/6] WORKDIR /opt/spark3/candidate/vllm
+#10 DONE 0.0s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 2.9s done
+#11 exporting manifest sha256:0d9caffeb7ef9bb542bd50b39946b9b00816db683d16007776d1a23bf1deff55 done
+#11 exporting config sha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241 done
+#11 naming to docker.io/library/ds41f-1022-parser:s-4f6461ca14a0-rc2 done
+#11 unpacking to docker.io/library/ds41f-1022-parser:s-4f6461ca14a0-rc2
+#11 unpacking to docker.io/library/ds41f-1022-parser:s-4f6461ca14a0-rc2 1.0s done
+#11 DONE 4.0s
+
+#12 resolving provenance for metadata file
+#12 DONE 0.0s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/uj2n9wwssdfxsnmt1f1m3fwr9

@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/bin/spark",
+    "--shape",
+    "tp4-ring",
+    "--cluster-config",
+    "experiments/2026-10-23-1022-parser-byte-alignment/cluster.json",
+    "cluster",
+    "stop",
+    "--parallel",
+    "--apply"
+  ],
+  "cwd": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+  "context": {
+    "window_id": "3ead01df-5424-4f2b-9560-c68abc34a7f8",
+    "manifest": "/srv/ai-cluster/operations/1022-release-20261023/window.json",
+    "state_dir": "/srv/ai-cluster/operations/1022-release-20261023/windows/3ead01df-5424-4f2b-9560-c68abc34a7f8",
+    "recovery_step": null,
+    "original_ingress": {
+      "blocked": false,
+      "stage": "open",
+      "aliases_sha256": "06653eea708218e60b7382b3125fed707f73bdfee641d313112bdd98da10137f"
+    }
+  }
+}

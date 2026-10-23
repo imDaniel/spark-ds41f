@@ -1,0 +1,74 @@
+Started spark-release-run-650fedd7.service - /usr/bin/python3 /srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-release-readiness/run_window.py --manifest /srv/ai-cluster/operations/1022-release-20261023/window.json --authorization /srv/ai-cluster/operations/1022-release-20261023/authorization.json --execute.
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -I INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -I INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -D INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -D INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+   admin : PWD=/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f ; USER=root ; COMMAND=/usr/sbin/iptables -w 5 -C INPUT ! -i lo -p tcp --dport 8000 -m conntrack --ctstate NEW -m comment --comment spark-window-650fedd7-db18-42a1-a94a-45131385c5e8 -j REJECT --reject-with tcp-reset
+pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+pam_unix(sudo:session): session closed for user root
+Traceback (most recent call last):
+  File "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-release-readiness/run_window.py", line 101, in <module>
+    main()
+  File "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-release-readiness/run_window.py", line 70, in main
+    x.run(argv, str(HERE), x.m["implementation_files"], "release-component-gate", timeout=1500)
+  File "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 249, in run
+    require(str(Path(argv[0]).resolve()) in {str(Path(p).resolve()) for p in files},
+  File "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+spark-release-run-650fedd7.service: Main process exited, code=exited, status=1/FAILURE
+spark-release-run-650fedd7.service: Failed with result 'exit-code'.
+spark-release-run-650fedd7.service: Consumed 10.694s CPU time, 137.3M memory peak, 0B memory swap peak.

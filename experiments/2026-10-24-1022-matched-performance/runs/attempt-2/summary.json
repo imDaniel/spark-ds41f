@@ -1,0 +1,39 @@
+{
+  "window_id": "d8edd2b0-d183-42c4-9da4-e5a6ab332f42",
+  "source_commit": "4ec4bab7e29d4617a7d728bd589e67e58deb1331",
+  "status": "measurements completed; owner trial active",
+  "measurement_to_handoff_minutes": 19.7691654642423,
+  "candidate_image_id": "sha256:14d5bb2c49aad6ad5b09c93beb70379c4088c128162e24bb418d593e5e7853f5",
+  "cold_primes": 18,
+  "quality_smoke": 8,
+  "timed_runs": 6,
+  "benchmark_requests": 294,
+  "timed_requests": 241,
+  "failed": 0,
+  "foreign": 0,
+  "owner_trial_active": true,
+  "original_r6x_restored": false,
+  "gateway_configuration_unchanged": true,
+  "telemetry": {
+    "spark01": {
+      "minimum_mem_available_gib": 20.6685791015625,
+      "maximum_temperature_c": 66,
+      "swap_growth_kib": 0
+    },
+    "spark02": {
+      "minimum_mem_available_gib": 22.70361328125,
+      "maximum_temperature_c": 65,
+      "swap_growth_kib": 0
+    },
+    "spark03": {
+      "minimum_mem_available_gib": 22.79327392578125,
+      "maximum_temperature_c": 64,
+      "swap_growth_kib": 0
+    },
+    "spark04": {
+      "minimum_mem_available_gib": 22.75787353515625,
+      "maximum_temperature_c": 64,
+      "swap_growth_kib": 0
+    }
+  }
+}

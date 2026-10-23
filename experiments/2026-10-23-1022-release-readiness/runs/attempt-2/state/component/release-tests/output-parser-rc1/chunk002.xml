@@ -1,0 +1,1730 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="17" skipped="0" tests="278" time="80.042" timestamp="2026-10-23T12:35:51.181524+00:00" hostname="7086ca31c4cf"><testcase classname="tests.model_executor.test_b12x_op_boundary" name="test_b12x_custom_ops_take_only_tensors_primitives_and_layer_names" file="tests/model_executor/test_b12x_op_boundary.py" line="105" time="1.591" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_collective_describers_reject_process_local_identity[register0]" file="tests/model_executor/test_b12x_warmup.py" line="101" time="0.201" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_collective_describers_reject_process_local_identity[register1]" file="tests/model_executor/test_b12x_warmup.py" line="101" time="0.203" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[-qwen3_5-Qwen3_5Model]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.270" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[-qwen3_5_mtp-Qwen3_5MultiTokenPredictor]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.197" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[-qwen3_next-Qwen3NextModel]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[-qwen3_next_mtp-Qwen3NextMultiTokenPredictor]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.198" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[-nemotron_h-NemotronHModel]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.201" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[-nemotron_h_mtp-NemotronHMultiTokenPredictor]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.197" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[language_model.model-qwen3_5-Qwen3_5Model]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[language_model.model-qwen3_5_mtp-Qwen3_5MultiTokenPredictor]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[language_model.model-qwen3_next-Qwen3NextModel]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[language_model.model-qwen3_next_mtp-Qwen3NextMultiTokenPredictor]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[language_model.model-nemotron_h-NemotronHModel]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[language_model.model-nemotron_h_mtp-NemotronHMultiTokenPredictor]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.196" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[mtp-qwen3_5-Qwen3_5Model]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[mtp-qwen3_5_mtp-Qwen3_5MultiTokenPredictor]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[mtp-qwen3_next-Qwen3NextModel]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[mtp-qwen3_next_mtp-Qwen3NextMultiTokenPredictor]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[mtp-nemotron_h-NemotronHModel]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_embedding_collectives_have_rank_stable_names[mtp-nemotron_h_mtp-NemotronHMultiTokenPredictor]" file="tests/model_executor/test_b12x_warmup.py" line="137" time="0.196" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_preparation_token_counts_cover_every_serving_regime" file="tests/model_executor/test_b12x_warmup.py" line="228" time="0.208" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_workload_rejects_invalid_stage_and_counts" file="tests/model_executor/test_b12x_warmup.py" line="241" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_unit_rejects_duplicate_request_names" file="tests/model_executor/test_b12x_warmup.py" line="252" time="0.193" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_batches_group_timed_requests_before_default_only" file="tests/model_executor/test_b12x_warmup.py" line="257" time="0.193" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_tuning_pool_preserves_final_group_layout_with_less_storage[BLHNC]" file="tests/model_executor/test_b12x_warmup.py" line="270" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_tuning_pool_preserves_final_group_layout_with_less_storage[LBHNC]" file="tests/model_executor/test_b12x_warmup.py" line="270" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_tuning_pool_teardown_batches_plan_release_even_on_failure[False]" file="tests/model_executor/test_b12x_warmup.py" line="312" time="0.243" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_tuning_pool_teardown_batches_plan_release_even_on_failure[True]" file="tests/model_executor/test_b12x_warmup.py" line="312" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_collect_units_filters_by_stage_and_tunes_eager_shapes" file="tests/model_executor/test_b12x_warmup.py" line="352" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_vision_preparation_uses_encoder_and_connector_token_counts[qwen3_vl]" file="tests/model_executor/test_b12x_warmup.py" line="385" time="0.225" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_vision_preparation_uses_encoder_and_connector_token_counts[mimo_v2]" file="tests/model_executor/test_b12x_warmup.py" line="385" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_collect_units_asks_unit_providers_and_rejects_duplicate_names" file="tests/model_executor/test_b12x_warmup.py" line="428" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_draft_model_units_run_their_callbacks_in_the_draft_lane" file="tests/model_executor/test_b12x_warmup.py" line="459" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_scope_unit_calls_wraps_mapping_factories" file="tests/model_executor/test_b12x_warmup.py" line="488" time="0.197" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_shared_preparation_scratch_covers_both_model_owners[0]" file="tests/model_executor/test_b12x_warmup.py" line="497" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_shared_preparation_scratch_covers_both_model_owners[1]" file="tests/model_executor/test_b12x_warmup.py" line="497" time="0.193" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_blockscaled_holder_declares_provided_workspace_under_the_cap" file="tests/model_executor/test_b12x_warmup.py" line="521" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_profile_prepares_collectives_and_releases_only_fresh_plans[False]" file="tests/model_executor/test_b12x_warmup.py" line="604" time="0.199" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_profile_prepares_collectives_and_releases_only_fresh_plans[True]" file="tests/model_executor/test_b12x_warmup.py" line="604" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_layer_registry_resolves_live_layers_by_name" file="tests/model_executor/test_b12x_warmup.py" line="698" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_workload_declares_the_same_decode_counts_in_both_stages" file="tests/model_executor/test_b12x_warmup.py" line="747" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_state_workload_uses_allocated_block_table_widths_per_layer" file="tests/model_executor/test_b12x_warmup.py" line="788" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_provider_attachment_never_registers_a_child_module" file="tests/model_executor/test_b12x_warmup.py" line="808" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_declaration_dump_flattens_metadata_and_never_raises" file="tests/model_executor/test_b12x_warmup.py" line="823" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_b12x_batches_with_autotune_disabled_time_nothing" file="tests/model_executor/test_b12x_warmup.py" line="875" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_collect_units_handles_target_and_draft_embedding_aliases[0-True]" file="tests/model_executor/test_b12x_warmup.py" line="892" time="0.242" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_collect_units_handles_target_and_draft_embedding_aliases[0-False]" file="tests/model_executor/test_b12x_warmup.py" line="892" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_collect_units_handles_target_and_draft_embedding_aliases[1-True]" file="tests/model_executor/test_b12x_warmup.py" line="892" time="0.194" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_collect_units_handles_target_and_draft_embedding_aliases[1-False]" file="tests/model_executor/test_b12x_warmup.py" line="892" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_parallel_draft_counts_reach_owners_and_collectives[7]" file="tests/model_executor/test_b12x_warmup.py" line="923" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_parallel_draft_counts_reach_owners_and_collectives[8]" file="tests/model_executor/test_b12x_warmup.py" line="923" time="0.195" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_workload_prepares_every_adaptive_verification_profile_shape" file="tests/model_executor/test_b12x_warmup.py" line="964" time="0.202" /><testcase classname="tests.model_executor.test_b12x_warmup" name="test_workload_covers_sampler_warmup_prefill_request_limits" file="tests/model_executor/test_b12x_warmup.py" line="985" time="0.309" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[1-0-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.374" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[1-0-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.209" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[1-0-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.208" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[1-2-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.200" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[1-2-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[1-2-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.200" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[1-3-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.200" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[1-3-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.200" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[1-3-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.199" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[2-0-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.205" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[2-0-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[2-0-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.200" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[2-2-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[2-2-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[2-2-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[2-3-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.214" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[2-3-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[2-3-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[3-0-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.200" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[3-0-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[3-0-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.204" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[3-2-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[3-2-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[3-2-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[3-3-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[3-3-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_slices_land_on_the_owned_rows[3-3-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="19" time="0.204" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_wo_slices" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="56" time="0.197" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-1-0-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.240" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-1-0-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-1-0-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-1-2-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-1-2-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-1-2-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-1-3-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-1-3-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-1-3-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.200" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-2-0-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.208" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-2-0-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-2-0-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.212" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-2-2-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.208" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-2-2-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-2-2-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-2-3-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-2-3-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-2-3-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-3-0-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.203" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-3-0-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-3-0-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-3-2-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-3-2-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-3-2-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-3-3-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-3-3-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.203" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[False-3-3-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.204" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-1-0-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.214" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-1-0-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.212" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-1-0-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.206" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-1-2-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.204" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-1-2-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-1-2-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-1-3-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-1-3-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-1-3-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-2-0-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.215" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-2-0-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.208" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-2-0-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.206" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-2-2-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-2-2-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-2-2-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-2-3-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-2-3-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-2-3-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-3-0-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-3-0-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-3-0-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-3-2-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-3-2-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.209" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-3-2-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-3-3-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.202" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-3-3-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_unreduced_parts_hold_every_block[True-3-3-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="61" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_exchange_gives_each_rank_its_rows_of_every_block[3-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="127" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_exchange_gives_each_rank_its_rows_of_every_block[3-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="127" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_exchange_gives_each_rank_its_rows_of_every_block[3-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="127" time="0.200" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_exchange_gives_each_rank_its_rows_of_every_block[4-37]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="127" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_exchange_gives_each_rank_its_rows_of_every_block[4-40]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="127" time="0.200" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_exchange_gives_each_rank_its_rows_of_every_block[4-205]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="127" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_all_to_all_over_cabled_pairs[0-3]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="212" time="0.205" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_all_to_all_over_cabled_pairs[0-4]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="212" time="0.209" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_all_to_all_over_cabled_pairs[3-3]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="212" time="0.200" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_all_to_all_over_cabled_pairs[3-4]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="212" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_all_to_all_over_cabled_pairs[9-3]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="212" time="0.199" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_all_to_all_over_cabled_pairs[9-4]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="212" time="0.200" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_all_to_all_over_cabled_pairs[10-3]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="212" time="0.199" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_all_to_all_over_cabled_pairs[10-4]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="212" time="0.201" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_all_to_all_over_cabled_pairs[25-3]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="212" time="0.199" /><testcase classname="tests.models.test_deepseek_v41_sp_project_reduce_scatter" name="test_row_all_to_all_over_cabled_pairs[25-4]" file="tests/models/test_deepseek_v41_sp_project_reduce_scatter.py" line="212" time="0.200" /><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_compacted_prefill_graph_excludes_prompt_logprobs_and_other_batch_shapes" file="tests/models/test_deepseek_v4_1_ced_model.py" line="17" time="0.197" /><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_piecewise_capture_refreshes_compacted_indices_after_metadata_staging" file="tests/models/test_deepseek_v4_1_ced_model.py" line="29" time="0.197" /><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_attention_returns_owned_projection_without_copy[False-1]" file="tests/models/test_deepseek_v4_1_ced_model.py" line="43" time="0.317" /><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_attention_returns_owned_projection_without_copy[False-8]" file="tests/models/test_deepseek_v4_1_ced_model.py" line="43" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_attention_returns_owned_projection_without_copy[False-19]" file="tests/models/test_deepseek_v4_1_ced_model.py" line="43" time="0.225" /><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_attention_returns_owned_projection_without_copy[True-1]" file="tests/models/test_deepseek_v4_1_ced_model.py" line="43" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_attention_returns_owned_projection_without_copy[True-8]" file="tests/models/test_deepseek_v4_1_ced_model.py" line="43" time="0.235" /><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_attention_returns_owned_projection_without_copy[True-19]" file="tests/models/test_deepseek_v4_1_ced_model.py" line="43" time="0.228" /><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_attention_empty_batch_does_not_enter_cache_or_collectives" file="tests/models/test_deepseek_v4_1_ced_model.py" line="94" time="0.204" /><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_attention_owned_output_graph_reads_live_inputs" file="tests/models/test_deepseek_v4_1_ced_model.py" line="105" time="0.218" /><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_ced_global_context_and_full_row_output_abi[False]" file="tests/models/test_deepseek_v4_1_ced_model.py" line="235" time="0.221"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e712eb0b30&gt;
+compact = False
+
+    @pytest.mark.parametrize("compact", [False, True])
+    def test_ced_global_context_and_full_row_output_abi(monkeypatch, compact):
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "gather_rows", _gather)
+        monkeypatch.setattr(native, "scatter_rows", _scatter)
+        # L2 prefetch is on by default on GB10; this stand-in model has no prefetcher.
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        ids = torch.arange(8)
+        positions = torch.arange(100, 108)
+        inputs = torch.arange(16, dtype=torch.float32).reshape(8, 2) / 8
+        indices = torch.tensor([2, 3, 6, 7, -1, -1]) if compact else None
+        shared: dict[str, torch.Tensor | int] = {}
+        row_work: list[tuple[str, int, int]] = []
+        buffer = torch.empty(8, 8)
+        target = SimpleNamespace(
+            embed_input_ids=lambda _: inputs,
+            use_mega_moe=False,
+            use_sequence_parallel=False,
+            prefill_sp_min_rows=0,
+            disk_engram=False,
+            engram_hash=None,
+            start_layer=0,
+            end_layer=4,
+            ced_decoder_start=2,
+            layers=nn.ModuleList(_Layer(i, shared, row_work) for i in range(4)),
+            aux_hidden_state_layers={3, 4},
+            _mtp_hidden_buffer=buffer,
+            # The sink detector's column buffer: none, the detector is off here.
+            _sink_columns=None,
+            norm=lambda hidden: hidden,
+        )
+&gt;       output, aux = native.DeepseekV4Model.forward(
+            target, ids, positions, None, ced_indices=indices
+        )
+
+tests/models/test_deepseek_v4_1_ced_model.py:271: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_ced_global_context_and_full_row_output_abi.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e7125e840...sink_columns=None, norm=&lt;function test_ced_global_context_and_full_row_output_abi.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e7125e91c0&gt;)
+input_ids = tensor([0, 1, 2, 3, 4, 5, 6, 7])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107])
+intermediate_tensors = None, inputs_embeds = None, lookback_token_ids = None
+ced_indices = None, steering_active = False, steering_scales = None
+steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_ced_model" name="test_ced_global_context_and_full_row_output_abi[True]" file="tests/models/test_deepseek_v4_1_ced_model.py" line="235" time="0.221"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e712d0abd0&gt;
+compact = True
+
+    @pytest.mark.parametrize("compact", [False, True])
+    def test_ced_global_context_and_full_row_output_abi(monkeypatch, compact):
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "gather_rows", _gather)
+        monkeypatch.setattr(native, "scatter_rows", _scatter)
+        # L2 prefetch is on by default on GB10; this stand-in model has no prefetcher.
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        ids = torch.arange(8)
+        positions = torch.arange(100, 108)
+        inputs = torch.arange(16, dtype=torch.float32).reshape(8, 2) / 8
+        indices = torch.tensor([2, 3, 6, 7, -1, -1]) if compact else None
+        shared: dict[str, torch.Tensor | int] = {}
+        row_work: list[tuple[str, int, int]] = []
+        buffer = torch.empty(8, 8)
+        target = SimpleNamespace(
+            embed_input_ids=lambda _: inputs,
+            use_mega_moe=False,
+            use_sequence_parallel=False,
+            prefill_sp_min_rows=0,
+            disk_engram=False,
+            engram_hash=None,
+            start_layer=0,
+            end_layer=4,
+            ced_decoder_start=2,
+            layers=nn.ModuleList(_Layer(i, shared, row_work) for i in range(4)),
+            aux_hidden_state_layers={3, 4},
+            _mtp_hidden_buffer=buffer,
+            # The sink detector's column buffer: none, the detector is off here.
+            _sink_columns=None,
+            norm=lambda hidden: hidden,
+        )
+&gt;       output, aux = native.DeepseekV4Model.forward(
+            target, ids, positions, None, ced_indices=indices
+        )
+
+tests/models/test_deepseek_v4_1_ced_model.py:271: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_ced_global_context_and_full_row_output_abi.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e7125a2d4...sink_columns=None, norm=&lt;function test_ced_global_context_and_full_row_output_abi.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e7125a3ec0&gt;)
+input_ids = tensor([0, 1, 2, 3, 4, 5, 6, 7])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107])
+intermediate_tensors = None, inputs_embeds = None, lookback_token_ids = None
+ced_indices = tensor([ 2,  3,  6,  7, -1, -1]), steering_active = False
+steering_scales = None, steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_compressor" name="test_compressor_cache_rejects_duplicate_prefix_without_replacing_owner" file="tests/models/test_deepseek_v4_1_compressor.py" line="10" time="0.210" /><testcase classname="tests.models.test_deepseek_v4_1_compressor" name="test_compressor_ring_writes_follow_the_worker_slot_mapping" file="tests/models/test_deepseek_v4_1_compressor.py" line="26" time="0.662" /><testcase classname="tests.models.test_deepseek_v4_1_compressor_prepare" name="test_no_b12x_unit_and_no_b12x_plan[1]" file="tests/models/test_deepseek_v4_1_compressor_prepare.py" line="50" time="0.205" /><testcase classname="tests.models.test_deepseek_v4_1_compressor_prepare" name="test_no_b12x_unit_and_no_b12x_plan[2]" file="tests/models/test_deepseek_v4_1_compressor_prepare.py" line="50" time="0.204" /><testcase classname="tests.models.test_deepseek_v4_1_compressor_prepare" name="test_binding_allocates_the_serving_storage" file="tests/models/test_deepseek_v4_1_compressor_prepare.py" line="58" time="0.265" /><testcase classname="tests.models.test_deepseek_v4_1_compressor_prepare" name="test_forwarding_before_binding_fails_by_name" file="tests/models/test_deepseek_v4_1_compressor_prepare.py" line="74" time="0.204" /><testcase classname="tests.models.test_deepseek_v4_1_config" name="test_kernel_family_routes_deepseek_v41[b12x]" file="tests/models/test_deepseek_v4_1_config.py" line="16" time="0.694" /><testcase classname="tests.models.test_deepseek_v4_1_config" name="test_kernel_family_routes_deepseek_v41[tilelang]" file="tests/models/test_deepseek_v4_1_config.py" line="16" time="0.205" /><testcase classname="tests.models.test_deepseek_v4_1_config" name="test_deepseek_v41_tp3_padding_uses_generic_parallel_hook" file="tests/models/test_deepseek_v4_1_config.py" line="51" time="0.205" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_descriptor_loading_preserves_ordinary_weights[disk-safetensors]" file="tests/models/test_deepseek_v4_1_engram.py" line="211" time="3.458" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_descriptor_loading_preserves_ordinary_weights[disk-fastsafetensors]" file="tests/models/test_deepseek_v4_1_engram.py" line="211" time="0.679" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_descriptor_loading_preserves_ordinary_weights[disk-instanttensor]" file="tests/models/test_deepseek_v4_1_engram.py" line="211" time="0.690" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_descriptor_loading_preserves_ordinary_weights[ram-safetensors]" file="tests/models/test_deepseek_v4_1_engram.py" line="211" time="0.751" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_descriptor_loading_preserves_ordinary_weights[ram-fastsafetensors]" file="tests/models/test_deepseek_v4_1_engram.py" line="211" time="0.761" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_descriptor_loading_preserves_ordinary_weights[ram-instanttensor]" file="tests/models/test_deepseek_v4_1_engram.py" line="211" time="0.776" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_ram_engram_checkpoint_tp4_graph_reads_live_host_aliases[0]" file="tests/models/test_deepseek_v4_1_engram.py" line="276" time="1.060" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_ram_engram_checkpoint_tp4_graph_reads_live_host_aliases[3]" file="tests/models/test_deepseek_v4_1_engram.py" line="276" time="1.007" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_disk_engram_preparation_refreshes_graph_and_rejects_stale_rows" file="tests/models/test_deepseek_v4_1_engram.py" line="425" time="0.525"><failure message="AttributeError: 'DeepseekV41ModelState' object has no attribute 'steering'">tiny_engram_checkpoint = (&lt;function tiny_engram_checkpoint.&lt;locals&gt;.make_model at 0xe9e6f85d11c0&gt;, {'layers.1.engram.embed.weight': tensor([[1....ayer-0.safetensors'), PosixPath('/c/pytest-tmp-release/chunk002/test_disk_engram_preparation_r0/layer-1.safetensors')])
+tmp_path = PosixPath('/c/pytest-tmp-release/chunk002/test_disk_engram_preparation_r0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6f85a0710&gt;
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")
+    def test_disk_engram_preparation_refreshes_graph_and_rejects_stale_rows(
+        tiny_engram_checkpoint,
+        tmp_path,
+        monkeypatch,
+    ):
+        """Accepted GPU history, images, padding and failures cross the eager boundary."""
+        make_model, weights, paths = tiny_engram_checkpoint
+        root, target, session = make_model("disk")
+        resident_root, resident, resident_session = make_model("device")
+        _load_checkpoint(root, tmp_path)
+        with torch.no_grad():
+            resident_root.load_weights(weights.items())
+            for engram in (*_engrams(target), *_engrams(resident)):
+                engram.process_weights_after_loading()
+        _prepare_engram(session, target)
+        _prepare_engram(resident_session, resident)
+    
+        state = DeepseekV41ModelState.__new__(DeepseekV41ModelState)
+        state.ced_state = None
+        state.lookback_token_ids = torch.empty(2, 3, dtype=torch.int32, device="cuda")
+        state.disk_engram_models = (target,)
+        state._prefill_tokens = {}
+        state._host_engram_hash = None
+        monkeypatch.setattr(DefaultModelState, "prepare_inputs", lambda *args: {})
+        monkeypatch.setattr(DefaultModelState, "prepare_dummy_inputs", lambda *args: {})
+        batch = SimpleNamespace(
+            input_ids=torch.zeros(4, dtype=torch.int32, device="cuda"),
+            query_start_loc=torch.tensor([0, 2, 2], dtype=torch.int32, device="cuda"),
+            idx_mapping=torch.tensor([0], dtype=torch.int32, device="cuda"),
+            has_prefill=False,
+        )
+        req_states = SimpleNamespace(
+            num_computed_tokens=SimpleNamespace(
+                gpu=torch.tensor([3, 4], dtype=torch.int32, device="cuda")
+            ),
+            all_token_ids=SimpleNamespace(
+                gpu=torch.tensor(
+                    [[5, 9, 13, 17, 19, 23], [4, 129264, 6, 8, 10, 12]],
+                    dtype=torch.int32,
+                    device="cuda",
+                )
+            ),
+        )
+        hidden = torch.ones(4, 4, 64, dtype=torch.bfloat16, device="cuda")
+    
+        def consume():
+            mask = ~image_sentinel_mask(batch.input_ids)
+            return tuple(
+                engram(hidden, target.prepared_engram_hashes[:4, index], mask)
+                for index, engram in enumerate(_engrams(target))
+            )
+    
+        with pytest.raises(RuntimeError, match="not prepared"):
+            consume()
+        compiled_consume = torch.compile(consume, backend="eager", fullgraph=True)
+        stream = torch.cuda.Stream()
+        stream.wait_stream(torch.cuda.current_stream())
+        with torch.inference_mode(), torch.cuda.stream(stream):
+    
+            def forbid_lookup(*args, **kwargs):
+                raise AssertionError("capture preparation/consumer performed table lookup")
+    
+            with monkeypatch.context() as capture_guard:
+                capture_guard.setattr(native, "run_lookup", forbid_lookup)
+&gt;               state.prepare_dummy_inputs(2, 4)
+
+tests/models/test_deepseek_v4_1_engram.py:491: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;vllm.models.deepseek_v4_1.nvidia.model_state.DeepseekV41ModelState object at 0xe9e6f83b4c20&gt;
+num_reqs = 2, num_tokens = 4
+
+    def prepare_dummy_inputs(self, num_reqs: int, num_tokens: int) -&gt; dict[str, Any]:
+        model_inputs = super().prepare_dummy_inputs(num_reqs, num_tokens)
+&gt;       if self.steering is not None:
+           ^^^^^^^^^^^^^
+E       AttributeError: 'DeepseekV41ModelState' object has no attribute 'steering'
+
+vllm/models/deepseek_v4_1/nvidia/model_state.py:432: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_disk_engram_rows_the_host_hashed_equal_the_gpu_rows" file="tests/models/test_deepseek_v4_1_engram.py" line="585" time="0.533"><failure message="AttributeError: 'DeepseekV41ModelState' object has no attribute 'steering'">tiny_engram_checkpoint = (&lt;function tiny_engram_checkpoint.&lt;locals&gt;.make_model at 0xe9e6e81e42c0&gt;, {'layers.1.engram.embed.weight': tensor([[1....ayer-0.safetensors'), PosixPath('/c/pytest-tmp-release/chunk002/test_disk_engram_rows_the_host0/layer-1.safetensors')])
+tmp_path = PosixPath('/c/pytest-tmp-release/chunk002/test_disk_engram_rows_the_host0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e81d41a0&gt;
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA")
+    def test_disk_engram_rows_the_host_hashed_equal_the_gpu_rows(
+        tiny_engram_checkpoint, tmp_path, monkeypatch
+    ):
+        """The host hashes a step's prefill chunks and the reader reads their rows before
+        the GPU's hash; a decode row in the same step comes from the GPU's hash. With the
+        debug check on, every early ID equals the GPU's, and the rows equal the resident
+        table's: a first chunk, a later chunk with history, a mixed step (decode first,
+        an image token in its history) and a decode-only step."""
+        monkeypatch.setattr(engram_module, "ENGRAM_CHECK_EARLY_IDS", True)
+        make_model, weights, paths = tiny_engram_checkpoint
+        root, target, session = make_model("disk")
+        resident_root, resident, resident_session = make_model("device")
+        _load_checkpoint(root, tmp_path)
+        with torch.no_grad():
+            resident_root.load_weights(weights.items())
+            for engram in (*_engrams(target), *_engrams(resident)):
+                engram.process_weights_after_loading()
+        _prepare_engram(session, target)
+        _prepare_engram(resident_session, resident)
+        for engram in _engrams(target):
+            assert engram.embed_tokens.disk_rows.check_early
+    
+        prompt = [5, 9, 13, 17, 19, 23]
+        state = DeepseekV41ModelState.__new__(DeepseekV41ModelState)
+        state.ced_state = None
+        state.lookback_token_ids = torch.empty(2, 3, dtype=torch.int32, device="cuda")
+        state.disk_engram_models = (target,)
+        state._prefill_tokens = {"a": np.array(prompt, dtype=np.int32)}
+        state._host_engram_hash = None
+        monkeypatch.setattr(DefaultModelState, "prepare_inputs", lambda *args: {})
+        all_token_ids = torch.tensor(
+            [prompt, [4, 129264, 6, 8, 10, 12]], dtype=torch.int32, device="cuda"
+        )
+        slots = {"a": 0, "b": 1}
+        hidden = torch.ones(4, 4, 64, dtype=torch.bfloat16, device="cuda")
+        # (input ids, [(request, computed tokens, rows, prefilling)], early lookups)
+        steps = (
+            ([13, 17, 19, 31], [("a", 2, 3, True)], 4 * 24),
+            ([23, 31, 31, 31], [("a", 5, 1, True)], 4 * 24),
+            ([10, 13, 17, 31], [("b", 4, 1, False), ("a", 2, 2, True)], 3 * 24),
+            ([10, 31, 31, 31], [("b", 4, 1, False)], 0),
+        )
+        with torch.inference_mode():
+            for ids, requests, early in steps:
+                names = [name for name, *_ in requests]
+                computed = torch.zeros(2, dtype=torch.int32, device="cuda")
+                for name, done, _, _ in requests:
+                    computed[slots[name]] = done
+                rows = np.array([n for _, _, n, _ in requests], dtype=np.int32)
+                starts = np.zeros(len(requests) + 1, dtype=np.int32)
+                np.cumsum(rows, out=starts[1:])
+                loc = (
+                    np.concatenate([starts, [starts[-1]]]) if len(requests) == 1 else starts
+                )
+                prefilling = np.array([p for *_, p in requests], dtype=np.bool_)
+                batch = SimpleNamespace(
+                    input_ids=torch.tensor(ids, dtype=torch.int32, device="cuda"),
+                    query_start_loc=torch.tensor(loc, dtype=torch.int32, device="cuda"),
+                    idx_mapping=torch.tensor(
+                        [slots[n] for n in names], dtype=torch.int32, device="cuda"
+                    ),
+                    req_ids=names,
+                    query_start_loc_np=loc,
+                    num_scheduled_tokens=rows,
+                    num_computed_prefill_tokens_np=np.array(
+                        [d for _, d, _, _ in requests], dtype=np.int32
+                    ),
+                    is_prefilling_np=prefilling,
+                    has_prefill=bool(prefilling.any()),
+                    num_draft_tokens_per_req=None,
+                )
+                req_states = SimpleNamespace(
+                    num_computed_tokens=SimpleNamespace(gpu=computed),
+                    all_token_ids=SimpleNamespace(gpu=all_token_ids),
+                )
+                before = [s["early_lookups"] for s in _settled_reader_stats(target)]
+&gt;               state.prepare_inputs(batch, req_states)
+
+tests/models/test_deepseek_v4_1_engram.py:663: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;vllm.models.deepseek_v4_1.nvidia.model_state.DeepseekV41ModelState object at 0xe9e6f83aba10&gt;
+input_batch = namespace(input_ids=tensor([13, 17, 19, 31], device='cuda:0', dtype=torch.int32), query_start_loc=tensor([0, 3, 3], de...ll_tokens_np=array([2], dtype=int32), is_prefilling_np=array([ True]), has_prefill=True, num_draft_tokens_per_req=None)
+req_states = namespace(num_computed_tokens=namespace(gpu=tensor([2, 0], device='cuda:0', dtype=torch.int32)), all_token_ids=namespa...   19,     23],
+        [     4, 129264,      6,      8,     10,     12]], device='cuda:0',
+       dtype=torch.int32)))
+
+    def prepare_inputs(
+        self, input_batch: InputBatch, req_states: RequestState
+    ) -&gt; dict[str, torch.Tensor | None]:
+        model_inputs = super().prepare_inputs(input_batch, req_states)
+&gt;       if self.steering is not None:
+           ^^^^^^^^^^^^^
+E       AttributeError: 'DeepseekV41ModelState' object has no attribute 'steering'
+
+vllm/models/deepseek_v4_1/nvidia/model_state.py:356: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_dspark_checkpoint_filter_does_not_read_target_engram" file="tests/models/test_deepseek_v4_1_engram.py" line="696" time="0.232" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_rejects_removed_prefetch_option[0]" file="tests/models/test_deepseek_v4_1_engram.py" line="739" time="0.227" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_rejects_removed_prefetch_option[32]" file="tests/models/test_deepseek_v4_1_engram.py" line="739" time="0.227" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_rejects_removed_resident_scales" file="tests/models/test_deepseek_v4_1_engram.py" line="745" time="0.226" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_storage_selection_changes_graph_configuration[False]" file="tests/models/test_deepseek_v4_1_engram.py" line="751" time="0.225" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_storage_selection_changes_graph_configuration[True]" file="tests/models/test_deepseek_v4_1_engram.py" line="751" time="0.226" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_ram_engram_budget_reserves_memory_and_survives_worker_serialization" file="tests/models/test_deepseek_v4_1_engram.py" line="770" time="0.227" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_preparation_covers_masked_and_unmasked_graphs" file="tests/models/test_deepseek_v4_1_engram.py" line="807" time="1.833" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_hash_first_forward_uses_declared_geometry[1-1]" file="tests/models/test_deepseek_v4_1_engram.py" line="932" time="0.212" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_hash_first_forward_uses_declared_geometry[1-3]" file="tests/models/test_deepseek_v4_1_engram.py" line="932" time="0.216" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_hash_first_forward_uses_declared_geometry[13-1]" file="tests/models/test_deepseek_v4_1_engram.py" line="932" time="0.213" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_engram_hash_first_forward_uses_declared_geometry[13-3]" file="tests/models/test_deepseek_v4_1_engram.py" line="932" time="0.216" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_disk_engram_model_allocates_hash_buffer_from_declared_caps" file="tests/models/test_deepseek_v4_1_engram.py" line="964" time="0.219"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'additional_config'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6f87af080&gt;
+
+    def test_disk_engram_model_allocates_hash_buffer_from_declared_caps(monkeypatch):
+        from vllm.models.deepseek_v4_1.nvidia import model as model_module
+    
+        caps = SimpleNamespace(max_tokens=13, device=torch.device("cpu"))
+        layout = SimpleNamespace(caps=(caps,), layer_ids=(1, 14), table_memory="disk")
+        config = SimpleNamespace(
+            vocab_size=32,
+            hidden_size=64,
+            hc_mult=4,
+            hc_eps=1e-6,
+            rms_norm_eps=1e-6,
+            index_topk=8,
+            num_hidden_layers=0,
+        )
+        vllm_config = SimpleNamespace(
+            model_config=SimpleNamespace(
+                hf_config=config,
+                dtype=torch.bfloat16,
+                # The sink detector's settings follow the served architecture.
+                architecture="DeepseekV41ForCausalLM",
+            ),
+            quant_config=SimpleNamespace(get_name=lambda: "deepseek_v41_fp8"),
+            parallel_config=SimpleNamespace(use_ubatching=False, tensor_parallel_size=1),
+            scheduler_config=SimpleNamespace(max_num_batched_tokens=13),
+            lora_config=None,
+            speculative_config=None,
+        )
+        monkeypatch.setattr(model_module, "_use_sequence_parallel", lambda _: False)
+        monkeypatch.setattr(
+            model_module,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=False, is_last_rank=False),
+        )
+        monkeypatch.setattr(model_module.EngramLayout, "from_config", lambda _: layout)
+        monkeypatch.setattr(
+            model_module,
+            "make_layers",
+            lambda *args, **kwargs: (0, 0, nn.ModuleList()),
+        )
+&gt;       model = model_module.DeepseekV4Model(vllm_config=vllm_config)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_engram.py:1004: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+vllm/models/deepseek_v4_1/nvidia/model.py:511: in __init__
+    self.steering_profile = load_configured_profile(vllm_config)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+vllm_config = namespace(model_config=namespace(hf_config=namespace(vocab_size=32, hidden_size=64, hc_mult=4, hc_eps=1e-06, rms_norm_...sor_parallel_size=1), scheduler_config=namespace(max_num_batched_tokens=13), lora_config=None, speculative_config=None)
+
+    def load_configured_profile(vllm_config):
+&gt;       additional = vllm_config.additional_config or {}
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'additional_config'
+
+vllm/models/deepseek_v4_1/steering/config.py:14: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_disk_rows_read_whole_table_sources[0]" file="tests/models/test_deepseek_v4_1_engram.py" line="1010" time="1.390" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_disk_rows_read_whole_table_sources[3]" file="tests/models/test_deepseek_v4_1_engram.py" line="1010" time="1.396" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_disk_shards_interleave_hash_columns[1]" file="tests/models/test_deepseek_v4_1_engram.py" line="1089" time="0.238" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_disk_shards_interleave_hash_columns[2]" file="tests/models/test_deepseek_v4_1_engram.py" line="1089" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_disk_shards_interleave_hash_columns[3]" file="tests/models/test_deepseek_v4_1_engram.py" line="1089" time="0.235" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_disk_shards_interleave_hash_columns[4]" file="tests/models/test_deepseek_v4_1_engram.py" line="1089" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_disk_shards_interleave_hash_columns[6]" file="tests/models/test_deepseek_v4_1_engram.py" line="1089" time="0.244" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_interleaved_rows_restore_column_order[1]" file="tests/models/test_deepseek_v4_1_engram.py" line="1108" time="0.243" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_interleaved_rows_restore_column_order[2]" file="tests/models/test_deepseek_v4_1_engram.py" line="1108" time="0.244" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_interleaved_rows_restore_column_order[3]" file="tests/models/test_deepseek_v4_1_engram.py" line="1108" time="0.235" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_interleaved_rows_restore_column_order[4]" file="tests/models/test_deepseek_v4_1_engram.py" line="1108" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_engram" name="test_interleaved_rows_restore_column_order[6]" file="tests/models/test_deepseek_v4_1_engram.py" line="1108" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_prepare" name="test_declared_calls_are_collected_once_each" file="tests/models/test_deepseek_v4_1_prepare.py" line="18" time="0.232" /><testcase classname="tests.models.test_deepseek_v4_1_prepare" name="test_calls_are_listed_and_kernels_bound_when_preparing" file="tests/models/test_deepseek_v4_1_prepare.py" line="41" time="0.235" /><testcase classname="tests.models.test_deepseek_v4_1_prepare" name="test_standalone_declaration_prepares_and_binds_now" file="tests/models/test_deepseek_v4_1_prepare.py" line="57" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[1-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[1-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[1-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[2-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[2-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[2-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.243" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.241" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[7-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.238" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[7-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[7-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4095-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4095-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4095-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.232" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4096-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4096-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4096-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4097-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4097-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4097-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.235" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4098-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4098-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_partitions_real_rows[4098-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="23" time="0.235" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_for_the_prefill_chunk_at_tp3[4096]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="47" time="0.247" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_for_the_prefill_chunk_at_tp3[4097]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="47" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_row_layout_for_the_prefill_chunk_at_tp3[4098]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="47" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_plan_rows_threshold" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="56" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[1-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.239" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[1-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.244" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[1-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[10239-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[10239-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[10239-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[10240-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[10240-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[10240-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[2097152-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.244" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[2097152-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.241" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[2097152-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.243" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[2088960-2]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.238" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[2088960-3]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_rows_above_bytes_is_the_first_scattering_forward[2088960-4]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="93" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_resolve_min_rows_follows_the_one_shot_all_reduce" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="102" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_resolve_min_rows" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="115" time="0.241" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_reduce_scatter_then_gather_round_trips[9]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="146" time="0.236" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_reduce_scatter_then_gather_round_trips[10]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="146" time="0.234" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_reduce_scatter_then_gather_round_trips[11]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="146" time="0.233" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_embedding_reduce_scatter_has_one_owner_per_token" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="184" time="3.512" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_local_slice_zero_pads_the_last_rank[9]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="228" time="0.222" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_local_slice_zero_pads_the_last_rank[10]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="228" time="0.221" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_local_slice_zero_pads_the_last_rank[11]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="228" time="0.219" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_activate_scopes_the_rows" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="245" time="0.223" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_moe_reduce_scatter_sums_shared_and_routed_before_the_scatter" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="257" time="0.221" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_engram_gates_only_the_real_local_rows" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="295" time="0.222" /><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[False-False-9]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.222"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e054f080&gt;
+num_tokens = 9, use_embeds = False, skip_mtp_buffer = False
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6f86b7...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6f86b7100&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108])
+intermediate_tensors = None, inputs_embeds = None, lookback_token_ids = None
+ced_indices = None, steering_active = False, steering_scales = None
+steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[False-False-10]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.222"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e0276d20&gt;
+num_tokens = 10, use_embeds = False, skip_mtp_buffer = False
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6f876e...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e2fc0&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8, 15])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108, 109])
+intermediate_tensors = None, inputs_embeds = None, lookback_token_ids = None
+ced_indices = None, steering_active = False, steering_scales = None
+steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[False-False-11]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.239"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e02755e0&gt;
+num_tokens = 11, use_embeds = False, skip_mtp_buffer = False
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e2...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e3ba0&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8, 15,  6])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110])
+intermediate_tensors = None, inputs_embeds = None, lookback_token_ids = None
+ced_indices = None, steering_active = False, steering_scales = None
+steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[False-True-9]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.222"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e054f920&gt;
+num_tokens = 9, use_embeds = True, skip_mtp_buffer = False
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e1...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e2fc0&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108])
+intermediate_tensors = None
+inputs_embeds = tensor([[ 0.7898, -0.7358],
+        [ 1.2537,  0.8904],
+        [-1.4756,  0.5160],
+        [ 1.4288, -0.6122],
+      ...19,  1.1829],
+        [ 0.0330, -0.1307],
+        [-2.2210,  0.5909],
+        [ 1.6509,  1.1014]], dtype=torch.float64)
+lookback_token_ids = None, ced_indices = None, steering_active = False
+steering_scales = None, steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[False-True-10]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.221"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e0275970&gt;
+num_tokens = 10, use_embeds = True, skip_mtp_buffer = False
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e0...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e3ba0&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8, 15])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108, 109])
+intermediate_tensors = None
+inputs_embeds = tensor([[-0.0514,  0.4430],
+        [ 0.1764,  0.3958],
+        [ 0.8154,  1.3967],
+        [ 0.2827, -0.0673],
+      ...49,  1.1084],
+        [-0.0687, -0.5743],
+        [-2.9719,  1.4022],
+        [-1.4914,  0.5735]], dtype=torch.float64)
+lookback_token_ids = None, ced_indices = None, steering_active = False
+steering_scales = None, steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[False-True-11]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.223"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e0276240&gt;
+num_tokens = 11, use_embeds = True, skip_mtp_buffer = False
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e2...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e1080&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8, 15,  6])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110])
+intermediate_tensors = None
+inputs_embeds = tensor([[-0.9528, -0.1818],
+        [ 0.5588, -1.1293],
+        [-0.8326, -0.6249],
+        [ 0.4743,  0.5217],
+      ...59,  1.4628],
+        [-1.4120, -2.0725],
+        [ 0.9095, -0.5562],
+        [-0.8077,  1.5171]], dtype=torch.float64)
+lookback_token_ids = None, ced_indices = None, steering_active = False
+steering_scales = None, steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[True-False-9]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.235"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e054dd30&gt;
+num_tokens = 9, use_embeds = False, skip_mtp_buffer = True
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e2...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e0360&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108])
+intermediate_tensors = None, inputs_embeds = None, lookback_token_ids = None
+ced_indices = None, steering_active = False, steering_scales = None
+steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[True-False-10]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.223"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e0275700&gt;
+num_tokens = 10, use_embeds = False, skip_mtp_buffer = True
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e0...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e0720&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8, 15])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108, 109])
+intermediate_tensors = None, inputs_embeds = None, lookback_token_ids = None
+ced_indices = None, steering_active = False, steering_scales = None
+steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[True-False-11]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.221"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e054d550&gt;
+num_tokens = 11, use_embeds = False, skip_mtp_buffer = True
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e1...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e3ba0&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8, 15,  6])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110])
+intermediate_tensors = None, inputs_embeds = None, lookback_token_ids = None
+ced_indices = None, steering_active = False, steering_scales = None
+steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[True-True-9]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.223"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e0275490&gt;
+num_tokens = 9, use_embeds = True, skip_mtp_buffer = True
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e1...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e2e80&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108])
+intermediate_tensors = None
+inputs_embeds = tensor([[ 0.1819, -0.7964],
+        [ 0.0355, -2.2018],
+        [ 1.3049, -0.9361],
+        [ 0.6962,  0.5544],
+      ...63,  0.3611],
+        [-0.1314, -0.1028],
+        [ 0.4303, -0.0507],
+        [ 1.4316, -0.2923]], dtype=torch.float64)
+lookback_token_ids = None, ced_indices = None, steering_active = False
+steering_scales = None, steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[True-True-10]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.222"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e6e054f770&gt;
+num_tokens = 10, use_embeds = True, skip_mtp_buffer = True
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e1...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e27a0&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8, 15])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108, 109])
+intermediate_tensors = None
+inputs_embeds = tensor([[-1.2030, -0.6847],
+        [ 0.1590, -0.9620],
+        [ 0.2134,  1.0679],
+        [ 0.4790, -0.1097],
+      ...19,  0.8370],
+        [ 0.2754, -1.0522],
+        [ 1.5354,  0.0227],
+        [-0.0815, -1.0910]], dtype=torch.float64)
+lookback_token_ids = None, ced_indices = None, steering_active = False
+steering_scales = None, steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase><testcase classname="tests.models.test_deepseek_v4_1_sp_prefill" name="test_model_forward_matches_full_rows[True-True-11]" file="tests/models/test_deepseek_v4_1_sp_prefill.py" line="497" time="0.222"><failure message="AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe9e71347a7e0&gt;
+num_tokens = 11, use_embeds = True, skip_mtp_buffer = True
+
+    @pytest.mark.parametrize("num_tokens", (9, 10, 11))
+    @pytest.mark.parametrize("use_embeds", (False, True))
+    @pytest.mark.parametrize("skip_mtp_buffer", (False, True))
+    def test_model_forward_matches_full_rows(
+        monkeypatch, num_tokens, use_embeds, skip_mtp_buffer
+    ):
+        pytest.importorskip("b12x")
+        from vllm.models.deepseek_v4_1.nvidia import model as native
+    
+        world = _World(3)
+        monkeypatch.setattr(
+            native,
+            "get_pp_group",
+            lambda: SimpleNamespace(is_first_rank=True, is_last_rank=True),
+        )
+        monkeypatch.setattr(native, "get_tensor_model_parallel_world_size", lambda: 3)
+        monkeypatch.setattr(native, "get_tensor_model_parallel_rank", lambda: world.rank)
+        monkeypatch.setattr(native.l2_prefetch, "ENABLED", False)
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_all_gather", world.all_gather
+        )
+        monkeypatch.setattr(
+            sp_prefill, "tensor_model_parallel_reduce_scatter", world.reduce_scatter
+        )
+        # Float64 keeps the reordered TP partial sums well inside the tolerance.
+        table = torch.randn(16, 2, dtype=torch.float64)
+        ids = (torch.arange(num_tokens) * 7) % 16
+        positions = torch.arange(100, 100 + num_tokens)
+    
+        def run(min_rows, local_rows):
+            buffer = torch.full((16, 8), -7.0, dtype=torch.float64)
+            target = SimpleNamespace(
+                embed_input_ids=lambda input_ids: table[input_ids],
+                embed_tokens=_Embedding(table, world),
+                use_mega_moe=False,
+                use_sequence_parallel=False,
+                prefill_sp_min_rows=min_rows,
+                prefill_sp_unreduced=False,
+                prefill_sp_skips_mtp_buffer=skip_mtp_buffer,
+                disk_engram=False,
+                engram_hash=None,
+                start_layer=0,
+                end_layer=3,
+                ced_decoder_start=None,
+                layers=nn.ModuleList(_Layer(i, world, local_rows) for i in range(3)),
+                aux_hidden_state_layers={2, 3},
+                _mtp_hidden_buffer=buffer,
+                # L2 prefetch is on by default on SM121; its plans are built.
+                _l2pf_ready=True,
+                # The sink detector's column buffer: none, the detector is off here.
+                _sink_columns=None,
+                norm=lambda hidden: hidden * 2,
+            )
+            output, aux = native.DeepseekV4Model.forward(
+                target,
+                ids,
+                positions,
+                None,
+                inputs_embeds=table[ids] if use_embeds else None,
+            )
+            return output, aux, buffer
+    
+&gt;       expected, expected_aux, expected_buffer = run(0, [])
+                                                  ^^^^^^^^^^
+
+tests/models/test_deepseek_v4_1_sp_prefill.py:560: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/models/test_deepseek_v4_1_sp_prefill.py:551: in run
+    output, aux = native.DeepseekV4Model.forward(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = namespace(embed_input_ids=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e1...nk_columns=None, norm=&lt;function test_model_forward_matches_full_rows.&lt;locals&gt;.run.&lt;locals&gt;.&lt;lambda&gt; at 0xe9e6e03e1a80&gt;)
+input_ids = tensor([ 0,  7, 14,  5, 12,  3, 10,  1,  8, 15,  6])
+positions = tensor([100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110])
+intermediate_tensors = None
+inputs_embeds = tensor([[ 1.2889,  1.2705],
+        [ 1.7102,  0.0864],
+        [ 0.2227,  0.5219],
+        [ 1.3452,  0.4375],
+      ...54, -0.0221],
+        [-0.6362,  1.1466],
+        [-0.3448,  1.2312],
+        [ 0.4634,  1.5914]], dtype=torch.float64)
+lookback_token_ids = None, ced_indices = None, steering_active = False
+steering_scales = None, steering_dots = None, steering_scratch = None
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        positions: torch.Tensor,
+        intermediate_tensors: IntermediateTensors | None,
+        inputs_embeds: torch.Tensor | None = None,
+        lookback_token_ids: torch.Tensor | None = None,
+        ced_indices: torch.Tensor | None = None,
+        steering_active: bool = False,
+        steering_scales: torch.Tensor | None = None,
+        steering_dots: torch.Tensor | None = None,
+        steering_scratch: torch.Tensor | None = None,
+    ) -&gt; torch.Tensor | IntermediateTensors:
+        from ..steering.runtime import validate_model_inputs
+    
+        validate_model_inputs(
+&gt;           self.steering_profile,
+            ^^^^^^^^^^^^^^^^^^^^^
+            steering_active,
+            steering_scales,
+            steering_dots,
+            positions.shape[0],
+            scratch=steering_scratch,
+        )
+E       AttributeError: 'types.SimpleNamespace' object has no attribute 'steering_profile'
+
+vllm/models/deepseek_v4_1/nvidia/model.py:731: AttributeError</failure></testcase></testsuite></testsuites>

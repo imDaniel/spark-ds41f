@@ -1,0 +1,18 @@
+{
+  "parent_image_id": "sha256:f17320f38b419efa296a9862f634afb0ef4272e24818f1a6b20943bcca779239",
+  "image_id": "sha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241",
+  "local_store_id": "sha256:0d9caffeb7ef9bb542bd50b39946b9b00816db683d16007776d1a23bf1deff55",
+  "tag": "ds41f-1022-parser:s-4f6461ca14a0-rc2",
+  "changed_source_files": [
+    "tests/models/test_deepseek_v4_1_ced_model.py",
+    "tests/models/test_deepseek_v4_1_engram.py",
+    "tests/models/test_deepseek_v4_1_sp_prefill.py",
+    "tests/models/test_deepseek_v4_1_steering_consume.py",
+    "tests/v1/attention/test_b12x_v41_ced_metadata.py"
+  ],
+  "source_archive_sha256": "f5167cc801cc49789f2416183f78f0e586c37bb957d184ed028b5cec0a4151a5",
+  "source_tree": "d0ad0209a27395199385cf8cb69de6f9c72edf75",
+  "source_head": "4f6461ca14a0e0771d70924fb5f1312205804226",
+  "native_inputs_changed": false,
+  "runtime_source_changed": false
+}

@@ -1,0 +1,200 @@
+[
+  {
+    "path": "experiments/2026-10-17-site-tp4-4k-1017/candidate-arm.json",
+    "previous_sha256": "4194efe22d04d8de6cf544d1d84ec0009f9bdb705c9bcb3e82b8b659edb35866",
+    "new_sha256": "21354a7e803dfa07ce9830e98ee3a88072a95e8baf409cf6932d33559307eb0f",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-ced-gates/ports-tp3.json",
+    "previous_sha256": "79f380559ba6dc19e38e5dcada674981af7b71ca0a39f9f684369845743fd7aa",
+    "new_sha256": "e4303b40056d7ec8f50150d2ba2aa7aa15419087e216f1f2e3fd62d27d4b77ed",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-ced-gates/skip-tp3.json",
+    "previous_sha256": "1c2fce08623649a295a2250b75989b760082b7d11b0ae43cfd5728d0dacb0a27",
+    "new_sha256": "373c6c1ef459944fb6909c8bc97f893ac37ac0833798f5d9e36117e7f6e742c4",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-prefill-budget-tp3/skip-4096-tp3.json",
+    "previous_sha256": "38a40388a3cb09affe8c655dff45bd0e43c29b08265cce89b376d606dfcf5bd8",
+    "new_sha256": "bddde62b7e1b0e8f9b71415e3b70e5f616a887952d37e5ed03bf1908fd1fcdd7",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-prefill-budget-tp3/skip-6144-tp3.json",
+    "previous_sha256": "d51e1926568077280b7a814bab0b613023a4e56ee73cac215f7f74fd6f3bd343",
+    "new_sha256": "374e1963f8bf3beee210376b88bdd435c6398246b907b08245ff33737cfbed72",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-prefill-budget-tp3/skip-8192-tp3.json",
+    "previous_sha256": "620976c9607de4dd674aa1f413de470597060749816c64b5733f55ec83b366ff",
+    "new_sha256": "c20431befe491455f0472d438eca39c2ae43c70d302a80d44e145295bcac1ad1",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-prefill-ceiling/r6x-tp3-prof-bounded.json",
+    "previous_sha256": "66051b2260d78ea80e87cb3ecd90d95daa6f10e2639c816ac8603aa933ac978d",
+    "new_sha256": "a27d48b3f953dfb7fe740b4bc87407d9d7801c9cec45bd4a63c5bf72ca7a07e2",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-prefill-ceiling/r6x-tp3-prof.json",
+    "previous_sha256": "a2e0f2a0e7e262cd1e14ce222a3f014eee53eddd4c64081f004a6bb4063ecc22",
+    "new_sha256": "107fb1aa7a0fb9f2a3064bb824482ede34dcb8acafc86733ad9309ec676f01f1",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-prefill-interleave-tp3/skip-4096-i1-tp3.json",
+    "previous_sha256": "5251d59589c9f7a2cd5fc50e0d92a75efbb0ac81631e991f0a64923d2f2e7d13",
+    "new_sha256": "e629b9a2905384f7b669d6f2f00650bf3423679caecf2fe2fef771c5ec46cdca",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-prefill-interleave-tp3/skip-4096-i2-tp3.json",
+    "previous_sha256": "615fd66b1857480c95e14a0c1a94acf7129621e0ad0b50737c82115358ebbc07",
+    "new_sha256": "50383cca4bdba1de1675d59d4281689ebcdbb8ccad4b4f5aba6b06810ad92493",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-prefill-interleave-tp3/skip-4096-i3-tp3.json",
+    "previous_sha256": "11c0c95379412da1d5d05ae522182e98751e5e5c5cc3c4e535867c5159b766f6",
+    "new_sha256": "7be057c6e0a4d41961aed066c1891956f781af557491f1f52e2f46e10d3be8b5",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-prefill-interleave-tp3/skip-8192-i1-tp3.json",
+    "previous_sha256": "44156cded4fed88ed3a5e15515da60fb6ec39f0876d52974e7703d010f420256",
+    "new_sha256": "02133dcd58cb4ab43029b2bcb96f8b747c386ad30ddaae08fd141d13f9122576",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-prefill-interleave-tp3/skip-8192-i2-tp3.json",
+    "previous_sha256": "faea2d6592a423e061046663f6e0fe88eed639cc9bc567591cf5bc841e2b01c0",
+    "new_sha256": "8510b0031e35f04b395f25e3641e16529a76c02db0dc010fb829f0a1d6aacf10",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-prefill-interleave-tp3/skip-8192-i3-tp3.json",
+    "previous_sha256": "7f242904e6b8999ae190faefc1c929ece551d2171c6dd5ded5e173c07aa543f7",
+    "new_sha256": "8d95812bd88cf69793aefcbe35b7d127736cb81dee497989df0bcacb4a8f5053",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-r6x-tp3-1m/r6x-tp3-1m-8192-1017.json",
+    "previous_sha256": "1b9555cb95e2320de2c68de15f0bbad567dda70f312b664192802fa35336471e",
+    "new_sha256": "3cb7021df50324d6d020aea6472c6f35390a4898eba88396bc2e8aa8797da5b4",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-sampling-rounds/candidate-tp3.json",
+    "previous_sha256": "94d70eff8e098ac04a5bdfb55c72ad903091fe879addba74eed746089138b279",
+    "new_sha256": "1bab5a916ea7e87dc50f26bdcc35aa2322eba36a5f10c0bba10d2ffff59c1cf5",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-sampling-rounds/reference-tp3.json",
+    "previous_sha256": "186b9ef7c6623c15be383a1005d48c180898ce4483b798d8850dbecc99a62152",
+    "new_sha256": "dd751e66931f9c786f7905d23c89396101adf3b8bca7e08293a4aca3ee730043",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-sink-rejection-v2/correction-nospec.json",
+    "previous_sha256": "e97bc0598babe124b0b465b636b16a5bdc22f772d1003f4f3b4154269c136c11",
+    "new_sha256": "d41f2bc082878d498ad50eb5c9d355d6f765f541da5a8fe3ad283669bb0102de",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-sink-rejection-v2/correction-ranks.json",
+    "previous_sha256": "ee443d2e999ec6395631f7e16e98ae33ec603256f73e2e405903b83ee9422efc",
+    "new_sha256": "bc10b60af6ad4cd1b5477c39c9fb77feea9f6424b9438d536a43ed4a426c6af2",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-sink-rejection-v2/detector.json",
+    "previous_sha256": "ba63fc550d4aff0ae7d4528d899dce3a20def35279465744daa7dbd2d8584d7a",
+    "new_sha256": "41b688a37e60b40c3b0f5e792e38a5cf51048aa23ae14ac3ecf71c4723321af4",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-sink-rejection-v2/r6x-dev.json",
+    "previous_sha256": "f44295a34b8dde8a935332e4a26b2d0e6b8721a7c816fcc56d1eeb69a67c70b9",
+    "new_sha256": "2f357b9672196e63408fe3022b568ed5d43ac820717c2eefcbdad3075a62c93e",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-19-sink-rejection-v2/survey-detector.json",
+    "previous_sha256": "d7e7d8352addc136649a2a6782d90c0ac6cce2de63e0a9d199327f455ae051bb",
+    "new_sha256": "f62b54f85387f9cb48be26e33c1133a69caf9bb63e4fc5546ee047b62b0f43b1",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-20-dsv41-control-spellings/candidate-tp3.json",
+    "previous_sha256": "2136c4cd6339d5e0595ef6527789595225f0faa60f016f713ff79d219f917a75",
+    "new_sha256": "5940cc9a8d7c0d1eb8f6c8f1009f2187c8c7d6d9358aa5aca4dad13fced7acc5",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-20-ttft-gap/lab/async-off.json",
+    "previous_sha256": "01ad0c89906d824e105294a9b90db8ea140a03e382ac378833d7f10aec69fc87",
+    "new_sha256": "fa5f655c2491e854cc29c2e0225e4624841b389197122ae2f9d8fb9e89f549a3",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-20-ttft-gap/lab/r6x-prof.json",
+    "previous_sha256": "6e4a7b0fa914705a614246a96f6576f063d10441758933a7ace774ad5245be95",
+    "new_sha256": "ee458c0a2eeec4e28f7df0309479546dbfe74a6b093b7718803c497df7bfe8df",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-20-ttft-gap/lab/r6x.json",
+    "previous_sha256": "a0cae16945f5a8da0099ef399e2a9da2c2f3cb2eb5e1c7d374b8f790bbde4a31",
+    "new_sha256": "3c139b761ccf336d40c89177d50d937192d30872fd20d7145de21cd6822f6909",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-21-late-admission/async-off-tp3.json",
+    "previous_sha256": "330157aa3e0960c84856a662ca78d34d1b37f014712b2cc7f96019b2b2e40709",
+    "new_sha256": "72d4803f984e88e1c91e53db395f54378ac69425bb07b6b8969e09ba58294a35",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-21-late-admission/late-tp3.json",
+    "previous_sha256": "15f9c7ddcaef8caa394151b63ae8a60397ffc66d91d2a33e16b0f19462e289f9",
+    "new_sha256": "47d18707cc6425a139d9e0e0323f3de85e38b8ef17f79e5bfc3a3a270b44022a",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-21-late-admission/r6x-tp3.json",
+    "previous_sha256": "416f7bf50d2e0b871435c0d6435f8dad10f715aa0b9d9b7e488fab2fcb55fdf5",
+    "new_sha256": "ba40881393dccf09f5ec40602bac9e6c601575162f73665e45bb5914e6887233",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-22-spark-ds41f-1022/spark-ds41f-1022-tp3.json",
+    "previous_sha256": "7b4e2eebd79b0401354d7aabedeac814c2735218d95eef3ec3909adc37a14716",
+    "new_sha256": "d57b5440bbe8389da26edca0c8dd7c105265077e9fc310a290457c238d5b426a",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-22-spark-ds41f-1022/spark-ds41f-1022-tp4.json",
+    "previous_sha256": "31e03f978b025bfd813679f9875af46518c91a9e240073faccb561f47d9084b2",
+    "new_sha256": "814733dac0a55164e9f5ffab7cc4a3f2a2b823bee602aed48ff668e09eec264d",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-23-1022-offline-preparation/arms/u.json",
+    "previous_sha256": "69f892fcd095df7b713aadc8a48b8ea9264d6df3aafb7a63ba8db77e4a37b914",
+    "new_sha256": "273f6349415fa8fac43abda6bfc909f28c363c81608020e26dc1071990376c98",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  },
+  {
+    "path": "experiments/2026-10-23-1022-window/arms/u.json",
+    "previous_sha256": "0caeecfcbdf6bf33248bcffba86957b7c1ef9ef8d932ab809e47a95553b8313c",
+    "new_sha256": "a13a47a74ab4e38391d43d99059a86124afd2a9067fb3387e287f01822749e8d",
+    "change": "pin historical root recipe or lock; runtime input values preserved"
+  }
+]

@@ -667,8 +667,7 @@ class ReferenceShapeTest(unittest.TestCase):
                     ([], []),
                 )
                 self.assertEqual(spark.benchmark_reference_problems(cluster, nodes), [])
-        # r6x was released on the ring; it changes TP3's path too, so the triangle has no
-        # reference until a triangle release run.
+        # This site's attention-steering release is qualified on TP4 only.
         self.assertNotIn("benchmark_reference", recipe["shapes"]["tp3-triangle"])
         self.assertIn("benchmark_reference", recipe["shapes"]["tp4-ring"])
 

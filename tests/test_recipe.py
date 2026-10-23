@@ -2,6 +2,7 @@
 configurations that used to be separate files, and the shapes differ only where
 the cabling or the memory per rank differs."""
 
+import hashlib
 import json
 import sys
 import tempfile
@@ -39,6 +40,24 @@ def serving_arguments(cluster: dict) -> list[str]:
     return args
 
 
+CONTEXT_ARGS = ("--max-model-len", "--kv-cache-memory-bytes")
+
+
+def argument(cluster: dict, flag: str) -> str:
+    args = cluster["serve_args"]
+    return args[args.index(flag) + 1]
+
+
+def without_context(args: list[str]) -> list[str]:
+    """``args`` without the context length and KV pool, the sizing r6x's TP3 1M changed."""
+    out = list(args)
+    for flag in CONTEXT_ARGS:
+        if flag in out:
+            at = out.index(flag)
+            del out[at : at + 2]
+    return out
+
+
 def draft_budget(cluster: dict) -> dict:
     args = cluster["serve_args"]
     speculative = json.loads(args[args.index("--speculative-config") + 1])
@@ -58,7 +77,25 @@ def load_spark():
 
 class RecipeTest(unittest.TestCase):
     def setUp(self):
-        self.recipe = load("config/cluster.json")
+        # Historical release contracts keep the recipe they actually measured.
+        self.recipe = load("experiments/2026-10-24-1022-promotion/previous/cluster.json")
+
+    def test_tp3_qualification_extends_the_immutable_tp4_record(self):
+        record = load("manifests/baselines/2026-10-19-karmic-kraken-r6x-tp3.json")
+        original = (ROOT / record["source_baseline"]["path"]).read_bytes()
+        digest = hashlib.sha256(original).hexdigest()
+        self.assertEqual(digest, "883af3c8e811bd797fce2b677240af74ab1a8165ea21787da91c2a467b3b24e9")
+        self.assertEqual(record["source_baseline"]["sha256"], digest)
+        self.assertEqual(record["shape"], "tp3-triangle")
+        self.assertEqual(record["source_identity"], json.loads(original)["source_identity"])
+        self.assertEqual(record["image_id"], json.loads(original)["image_id"])
+        # This is r6x's immutable qualification, independent of the current release.
+        frozen = load("experiments/2026-10-22-spark-ds41f-1022/r6x/cluster.json")
+        resolved = recipe.resolve(frozen, "tp3-triangle")
+        self.assertEqual(record["capacity"]["max_model_len"], int(argument(resolved, "--max-model-len")))
+        self.assertEqual(record["capacity"]["kv_cache_memory_bytes"],
+                         int(argument(resolved, "--kv-cache-memory-bytes")))
+        self.assertEqual(record["benchmark_reference"], resolved["benchmark_reference"])
 
     def test_tp4_ring_was_r6ks_production_file(self):
         """The unification changed nothing for TP4: r6k's recipe, frozen at r6n's
@@ -78,14 +115,27 @@ class RecipeTest(unittest.TestCase):
         self.assertEqual({k: v for k, v in resolved.items() if k not in naming},
                          {k: v for k, v in released.items() if k not in naming})
 
-    def test_each_shape_is_its_r6x_arm(self):
-        """tp4-ring resolves to r6x's release arm on the ring, tp3-triangle to r6x's arm on the
-        triangle (unqualified), apart from the names (the arms extend the frozen r6v recipe
-        and name r6x's lock)."""
+    def test_each_shape_is_its_1022_arm(self):
+        """Each shape resolves to spark-ds41f-1022's arm at that shape, apart from the names (the
+        arms extend the recipe and name the release's experiment lock)."""
         naming = ("promoted_baseline", "upstreams_config", "benchmark_reference", "shape", "notes")
-        for shape, arm in (("tp4-ring", "r6x-tp4-1017.json"), ("tp3-triangle", "r6x-tp3-1017.json")):
+        for shape in ("tp4-ring", "tp3-triangle"):
+            arm = f"experiments/2026-10-22-spark-ds41f-1022/spark-ds41f-1022-{shape.split('-')[0]}.json"
             resolved = recipe.resolve(self.recipe, shape)
-            released = load_spark().read_cluster(f"experiments/2026-10-18-r6x/{arm}")
+            released = recipe.overlay(load(arm), resolved)
+            self.assertEqual({k: v for k, v in resolved.items() if k not in naming},
+                             {k: v for k, v in released.items() if k not in naming}, shape)
+
+    def test_r6x_frozen_at_1022_is_its_arms(self):
+        """r6x's recipe, frozen at spark-ds41f-1022's promotion, resolves at each shape to r6x's
+        arm there: its release arm on the ring (which extends the frozen r6v recipe) and its 1M
+        arm on the triangle."""
+        frozen = load("experiments/2026-10-22-spark-ds41f-1022/r6x/cluster.json")
+        naming = ("promoted_baseline", "upstreams_config", "benchmark_reference", "shape", "notes")
+        for shape, arm in (("tp4-ring", "experiments/2026-10-18-r6x/r6x-tp4-1017.json"),
+                           ("tp3-triangle", "experiments/2026-10-19-r6x-tp3-1m/r6x-tp3-1m-1017.json")):
+            resolved = recipe.resolve(frozen, shape)
+            released = load_spark().read_cluster(arm)
             self.assertEqual({k: v for k, v in resolved.items() if k not in naming},
                              {k: v for k, v in released.items() if k not in naming}, shape)
 
@@ -146,8 +196,11 @@ class RecipeTest(unittest.TestCase):
         """TP3 keeps what the triangle and its memory need, and nothing else of r6h."""
         resolved = recipe.resolve(self.recipe, "tp3-triangle")
         old = load("experiments/2026-10-14-one-recipe/tp3-r6h-production.json")
-        # Sizing, drafts and capture ladder (r6u serves another checkpoint with sampling defaults).
-        self.assertEqual(serving_arguments(resolved), serving_arguments(old))
+        # Since r6x the triangle serves 1M with a 4.90625 GiB pool (the expert scale codes freed
+        # the memory); everything else of r6h's sizing, drafts and capture ladder stays.
+        self.assertEqual(argument(resolved, "--max-model-len"), "1048576")
+        self.assertEqual(argument(resolved, "--kv-cache-memory-bytes"), "5268045824")
+        self.assertEqual(without_context(serving_arguments(resolved)), without_context(serving_arguments(old)))
         self.assertEqual(resolved["fabric"], old["fabric"])
         for key, value in old["environment"].items():
             if key.startswith("NCCL_") or key in ("SPARKNET_ROCE_ALLGATHER_MAX_BYTES", "SPARK3_DISPLAY_CARVEOUT_WEIGHTS"):
@@ -159,10 +212,9 @@ class RecipeTest(unittest.TestCase):
         # Every shape budgets drafts by the row cost; nothing is timed at boot (since r6x).
         self.assertEqual(draft_budget(resolved), {"adaptive_verification_row_cost": 0.035})
         self.assertEqual(draft_budget(tp4), draft_budget(resolved))
-        # r6x changes TP3's path, so the triangle has no reference until its own release run;
-        # the ring has r6x's.
-        self.assertNotIn("benchmark_reference", resolved)
-        self.assertEqual(tp4["benchmark_reference"], "manifests/suites/2026-10-19-karmic-kraken-r6x-tp4")
+        # spark-ds41f-1022 was released on the triangle, then on the ring: each shape has its own run.
+        self.assertEqual(resolved["benchmark_reference"], "manifests/suites/2026-10-22-spark-ds41f-1022-tp3")
+        self.assertEqual(tp4["benchmark_reference"], "manifests/suites/2026-10-22-spark-ds41f-1022-tp4")
         self.assertNotIn("benchmark_reference", recipe.resolve(self.recipe, "tp3-triangle-4k"))  # not benched
 
     def test_only_the_cabling_and_memory_differ_between_shapes(self):
@@ -183,6 +235,18 @@ class RecipeTest(unittest.TestCase):
         self.assertEqual(values["max_cudagraph_capture_size"], "96")
         self.assertEqual(values["long_prefill_token_threshold"], "8096")
         self.assertEqual(values["tensor_parallel_size"], "4")
+
+    def test_each_shape_pins_its_prefill_budget(self):
+        """Each shape's long-prefill budget is its own sweep's answer (a TP3 rank holds a
+        third of the model, so its headroom differs): changing one must not move another.
+        The threshold is the budget less streams x (1 + drafts)."""
+        expected = {"tp4-ring": ("8192", "8096"), "tp3-triangle": ("4096", "4048"),
+                    "tp3-triangle-4k": ("4096", "4048")}
+        self.assertEqual(set(self.recipe["shapes"]), set(expected))
+        for name, budget in expected.items():
+            values = recipe.values(self.recipe, recipe.shape_entry(self.recipe, name))
+            self.assertEqual((values["max_num_batched_tokens"], values["long_prefill_token_threshold"]),
+                             budget, name)
 
     def test_a_variant_is_qualified_on_its_own(self):
         resolved = recipe.resolve(self.recipe, "tp3-triangle-4k")
@@ -234,6 +298,45 @@ class RecipeTest(unittest.TestCase):
         """One recipe: no per-shape copies beside it."""
         self.assertEqual(sorted(p.name for p in (ROOT / "config").glob("cluster*.json")), ["cluster.json"])
 
+
+
+class PromotedRecipeTest(unittest.TestCase):
+    def test_historical_reference_freezing_preserves_all_other_bytes(self):
+        folder = "experiments/2026-10-24-1022-promotion"
+        for row in load(folder + "/historical-reference-map.json"):
+            data = (ROOT / row["path"]).read_bytes()
+            self.assertEqual(hashlib.sha256(data).hexdigest(), row["new_sha256"])
+            original = data.replace((folder + "/previous/cluster.json").encode(), b"config/cluster.json")
+            original = original.replace((folder + "/previous/upstreams.lock.json").encode(), b"upstreams.lock.json")
+            self.assertEqual(hashlib.sha256(original).hexdigest(), row["previous_sha256"], row["path"])
+
+    def test_promoted_tp4_preserves_the_accepted_running_recipe(self):
+        current = recipe.resolve(load("config/cluster.json"), "tp4-ring")
+        accepted = load("experiments/2026-10-24-1022-matched-performance/cluster.json")
+        for field in ("container", "environment", "serve_args", "host", "distributed", "fabric", "nodes_config"):
+            self.assertEqual(current[field], accepted[field], field)
+        self.assertEqual(current["deployment"]["branch"], "homelab/main")
+        self.assertEqual(current["deployment"]["repository"], "https://github.com/imDaniel/spark-ds41f.git")
+        record = load("manifests/baselines/2026-10-24-homelab-1022-attention.json")
+        self.assertEqual(record["configuration_sha256"], hashlib.sha256((ROOT / "config/cluster.json").read_bytes()).hexdigest())
+        reference = load(current["benchmark_reference"])
+        self.assertEqual(reference["identity"]["image_id"], record["image_id"])
+        self.assertEqual(reference["identity"]["profile_sha256"], record["profile"]["sha256"])
+        model = load("upstreams.lock.json")["sources"]["model"]
+        self.assertEqual(model["repository"], "deepseek-ai/DeepSeek-V4.1-Flash-1017")
+        self.assertEqual(model["revision"], "1bae0e1088993b9b82de08f59de5be5a34e42170")
+
+    def test_unmeasured_tp3_shapes_do_not_inherit_tp4_acceptance(self):
+        current = load("config/cluster.json")
+        for shape in ("tp3-triangle", "tp3-triangle-4k"):
+            self.assertNotIn("benchmark_reference", recipe.resolve(current, shape))
+
+    def test_materialized_and_hub_checkpoints_keep_distinct_mounts(self):
+        current = recipe.resolve(load("config/cluster.json"), "tp4-ring")
+        self.assertEqual(recipe.model_mounts(current), ([current["container"]["mounts"][0]], "/models"))
+        hub = recipe.overlay({"extends": {}, "set": {"model": "v41-flash-1017-hub"}}, current)
+        self.assertEqual(hub["container"]["mounts"][0][1], "/hub")
+        self.assertEqual(hub["container"]["mounts"][1:], current["container"]["mounts"][1:])
 
 
 class OverlayTest(unittest.TestCase):

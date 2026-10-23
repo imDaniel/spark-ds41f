@@ -1,0 +1,383 @@
+{
+  "schema_version": 1,
+  "bounded_hardware_screen_passed": true,
+  "candidate_promoted": false,
+  "pr_merged": false,
+  "runtime_revisions": {
+    "main": "1f9bd3f52491337df19a2dbd345e981cbf372ee5",
+    "continuation": "0c186e221c16069e493aa8f53ef51511d699d430"
+  },
+  "component_gpu": {
+    "passed": 29,
+    "failed": 0,
+    "skipped": 0
+  },
+  "arm_checks": {
+    "u": {
+      "completed_rows": 19,
+      "kinds": {
+        "functional": 5,
+        "interleaved-c4": 4,
+        "performance": 10
+      }
+    },
+    "e": {
+      "completed_rows": 19,
+      "kinds": {
+        "functional": 5,
+        "interleaved-c4": 4,
+        "performance": 10
+      }
+    },
+    "s-unloaded": {
+      "completed_rows": 37,
+      "kinds": {
+        "functional": 5,
+        "invalid": 16,
+        "cancel": 1,
+        "after-cancel": 1,
+        "interleaved-c4": 4,
+        "performance": 10
+      }
+    },
+    "s-loaded": {
+      "completed_rows": 50,
+      "kinds": {
+        "functional": 20,
+        "invalid": 14,
+        "cancel": 1,
+        "after-cancel": 1,
+        "interleaved-c4": 4,
+        "performance": 10
+      }
+    }
+  },
+  "all_five_stock_outputs_equal_across_four_arms": true,
+  "loaded_stock_return_equal": true,
+  "cache_checks": 13,
+  "cache_cold_tokens": [
+    0,
+    0,
+    0
+  ],
+  "cache_warm_tokens": 32512,
+  "original_window_opened_at": 1792748575.0329032,
+  "original_reservation_end": 1792753975.0329032,
+  "final_restored_at": 1792750845.2930703,
+  "elapsed_from_main_open_minutes": 37.84,
+  "retained_revision": "223a3bb3498d12f470e876db3b9e1f5bdc8772b6",
+  "retained_image_id": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+  "resources": {
+    "spark01": {
+      "min_sampled_memavailable_gib": 21.471,
+      "max_sampled_gpu_temperature_c": 62,
+      "max_swap_growth_mib": 0.0,
+      "samples": 146
+    },
+    "spark02": {
+      "min_sampled_memavailable_gib": 22.692,
+      "max_sampled_gpu_temperature_c": 60,
+      "max_swap_growth_mib": 0.0,
+      "samples": 146
+    },
+    "spark03": {
+      "min_sampled_memavailable_gib": 22.591,
+      "max_sampled_gpu_temperature_c": 60,
+      "max_swap_growth_mib": 0.0,
+      "samples": 146
+    },
+    "spark04": {
+      "min_sampled_memavailable_gib": 22.611,
+      "max_sampled_gpu_temperature_c": 60,
+      "max_swap_growth_mib": 0.0,
+      "samples": 146
+    }
+  },
+  "performance_screen": [
+    {
+      "arm": "u",
+      "prefill_tokens": 1024,
+      "concurrency": 1,
+      "scale": 0,
+      "ttft_s": [
+        0.284
+      ],
+      "decode_tps": [
+        162.382
+      ],
+      "batch_s": 1.0669,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "u",
+      "prefill_tokens": 1024,
+      "concurrency": 4,
+      "scale": 0,
+      "ttft_s": [
+        0.3579,
+        0.4081,
+        0.357,
+        0.4073
+      ],
+      "decode_tps": [
+        126.475,
+        127.963,
+        126.485,
+        127.941
+      ],
+      "batch_s": 1.4018,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "u",
+      "prefill_tokens": 32768,
+      "concurrency": 1,
+      "scale": 0,
+      "ttft_s": [
+        4.6648
+      ],
+      "decode_tps": [
+        169.055
+      ],
+      "batch_s": 5.4163,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "u",
+      "prefill_tokens": 32768,
+      "concurrency": 4,
+      "scale": 0,
+      "ttft_s": [
+        0.4072,
+        0.4718,
+        0.4692,
+        0.4665
+      ],
+      "decode_tps": [
+        122.748,
+        125.681,
+        125.662,
+        125.635
+      ],
+      "batch_s": 1.4854,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "e",
+      "prefill_tokens": 1024,
+      "concurrency": 1,
+      "scale": 0,
+      "ttft_s": [
+        0.2865
+      ],
+      "decode_tps": [
+        169.025
+      ],
+      "batch_s": 1.0383,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "e",
+      "prefill_tokens": 1024,
+      "concurrency": 4,
+      "scale": 0,
+      "ttft_s": [
+        0.3558,
+        0.4075,
+        0.4073,
+        0.4064
+      ],
+      "decode_tps": [
+        127.913,
+        129.279,
+        129.337,
+        129.256
+      ],
+      "batch_s": 1.3908,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "e",
+      "prefill_tokens": 32768,
+      "concurrency": 1,
+      "scale": 0,
+      "ttft_s": [
+        4.6503
+      ],
+      "decode_tps": [
+        164.147
+      ],
+      "batch_s": 5.4243,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "e",
+      "prefill_tokens": 32768,
+      "concurrency": 4,
+      "scale": 0,
+      "ttft_s": [
+        0.4202,
+        0.4943,
+        0.4935,
+        0.491
+      ],
+      "decode_tps": [
+        120.88,
+        124.827,
+        124.876,
+        124.868
+      ],
+      "batch_s": 1.5145,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "s-unloaded",
+      "prefill_tokens": 1024,
+      "concurrency": 1,
+      "scale": 0,
+      "ttft_s": [
+        0.2857
+      ],
+      "decode_tps": [
+        168.951
+      ],
+      "batch_s": 1.038,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "s-unloaded",
+      "prefill_tokens": 1024,
+      "concurrency": 4,
+      "scale": 0,
+      "ttft_s": [
+        0.3552,
+        0.4025,
+        0.3545,
+        0.3535
+      ],
+      "decode_tps": [
+        126.759,
+        128.324,
+        126.758,
+        126.736
+      ],
+      "batch_s": 1.3935,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "s-unloaded",
+      "prefill_tokens": 32768,
+      "concurrency": 1,
+      "scale": 0,
+      "ttft_s": [
+        4.6434
+      ],
+      "decode_tps": [
+        165.749
+      ],
+      "batch_s": 5.4098,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "s-unloaded",
+      "prefill_tokens": 32768,
+      "concurrency": 4,
+      "scale": 0,
+      "ttft_s": [
+        0.4494,
+        0.4472,
+        0.4962,
+        0.4936
+      ],
+      "decode_tps": [
+        121.475,
+        121.461,
+        122.954,
+        122.955
+      ],
+      "batch_s": 1.535,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "s-loaded",
+      "prefill_tokens": 1024,
+      "concurrency": 1,
+      "scale": 1,
+      "ttft_s": [
+        0.2904
+      ],
+      "decode_tps": [
+        166.51
+      ],
+      "batch_s": 1.0536,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "s-loaded",
+      "prefill_tokens": 1024,
+      "concurrency": 4,
+      "scale": 1,
+      "ttft_s": [
+        0.4147,
+        0.4143,
+        0.3613,
+        0.4129
+      ],
+      "decode_tps": [
+        125.239,
+        125.21,
+        123.816,
+        125.223
+      ],
+      "batch_s": 1.4293,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "s-loaded",
+      "prefill_tokens": 32768,
+      "concurrency": 1,
+      "scale": 1,
+      "ttft_s": [
+        4.6988
+      ],
+      "decode_tps": [
+        166.101
+      ],
+      "batch_s": 5.4639,
+      "completion_tokens_per_request": 128
+    },
+    {
+      "arm": "s-loaded",
+      "prefill_tokens": 32768,
+      "concurrency": 4,
+      "scale": 1,
+      "ttft_s": [
+        0.5032,
+        0.4262,
+        0.4984,
+        0.4954
+      ],
+      "decode_tps": [
+        123.977,
+        120.313,
+        123.943,
+        123.899
+      ],
+      "batch_s": 1.5282,
+      "completion_tokens_per_request": 128
+    }
+  ],
+  "transport_copy_allocated_bytes_removed": 127472095232,
+  "limitations": [
+    "Single batches and repetitive prefixes; not a statistical full release comparison",
+    "No full 1M request or 16-way capacity workload",
+    "No broad quality or refusal benchmark",
+    "GPU driver/01-loss faults were not deliberately injected on physical serving hardware"
+  ],
+  "reviewed_harness_issues": [
+    "Loopback health connections initially prevented ingress drain",
+    "An unrelated gateway model addition initially tripped an overly broad alias invariant",
+    "A correct SSE code-400 rejection was initially classified as a test failure"
+  ],
+  "recovery": "Two actual coordinated r6x restorations passed private/gateway stock+steered checks; hold released and scoped ingress rules removed"
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "files": {
+    "README.md": "7b4884d7e252d59813acde14e3065a17c2f409e23e445f8699ad73ecbb7a94a9",
+    "base.json": "309babd02be31fe51f992a08b2289f799dcf0824f591aa9fc08992e63b69c9f4",
+    "plan.json": "3a922edfef2b05e0382c6af15e291bb10cc78b9bde529028b9cd1679ec78a6a0",
+    "results.json": "863fad790760d32c2beacd856ac93939000c5b21d66b2664982cf594d9e14e80",
+    "run_window.py": "7ec57eee0a77746e6a5f365e58f73aa3af63242babc50976bb054386e4f2c52b",
+    "runs/offline-tests.txt": "3e1c10f1c79060ffbcd5a4e0671355abb6bb65494b277b874aa103c22c6c6fa4",
+    "scale_requests.py": "d971923a074524ef2f7085b79f7650c7aec81c7a7fa039dd3fe840ec2f105780",
+    "test_scale_validation.py": "3e73a9649b5ea4487b606ea1d6b494bc500ed7a86d95e159d5155d19611eee78"
+  },
+  "repository_dependencies": {
+    "experiments/2026-10-23-1022-window/request_screen.py": "fbf2159deeb5d486a34fbc39132c35073eb612714fe84c2d7920006cbc387bc8",
+    "experiments/2026-10-23-1022-window/cache_screen.py": "6381a08029dd23656dc7d0de159366e5bd5c5532a6ab0753729b130d2c7f019f",
+    "experiments/2026-10-23-1022-window/site_adapter.py": "2c4adf0554f25993213666d69d538ceb3e292d516a2268394b3c2094c293ada5",
+    "experiments/2026-10-23-1022-recovery-executor/window_executor.py": "673dea16f9501f336be3f0fd8d825ed02d7bec149e23f52601239854fc18bff0",
+    "experiments/2026-10-23-1022-recovery-executor/command_worker.py": "9d36a77037e8614488eb32b43c120d95b977c610ba17ae7d542b1a635de4c22e",
+    "experiments/2026-10-23-1022-window/arms/s-loaded.json": "ad976735ee8ff41ae208861fd9dc5c4d0b4935eb87eab1b8e118d1191e652c98"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "window_id": "3ead01df-5424-4f2b-9560-c68abc34a7f8",
+  "duration_minutes": 25.144008215268453,
+  "status": "passed",
+  "capacity": [
+    {
+      "input_tokens": 8192,
+      "output_tokens": 256,
+      "concurrency": 16,
+      "peak_running": 16.0,
+      "batch_seconds": 23.876486472996476,
+      "metric_samples": 48,
+      "metric_errors": 0,
+      "peak_kv_fraction": 0.04045915686512269,
+      "first_visible_overlap_seconds": 1.2843971252441406
+    },
+    {
+      "input_tokens": 262144,
+      "output_tokens": 768,
+      "concurrency": 4,
+      "peak_running": 4.0,
+      "batch_seconds": 173.7018391390011,
+      "metric_samples": 343,
+      "metric_errors": 0,
+      "peak_kv_fraction": 0.12398447920455924,
+      "first_visible_overlap_seconds": 1.7142918109893799
+    },
+    {
+      "input_tokens": 1000000,
+      "output_tokens": 3072,
+      "concurrency": 4,
+      "peak_running": 4.0,
+      "batch_seconds": 881.4919632849997,
+      "metric_samples": 1740,
+      "metric_errors": 0,
+      "peak_kv_fraction": 0.3568368295541813,
+      "first_visible_overlap_seconds": 11.716532468795776
+    }
+  ],
+  "stability_batches": 472,
+  "stability_requests": 1888,
+  "stability_seconds": 120.01954293251038,
+  "restored": true,
+  "telemetry": {
+    "spark01": {
+      "minimum_mem_available_gib": 20.77227783203125,
+      "maximum_temperature_c": 78,
+      "swap_growth_kib": 0
+    },
+    "spark02": {
+      "minimum_mem_available_gib": 22.62396240234375,
+      "maximum_temperature_c": 80,
+      "swap_growth_kib": 0
+    },
+    "spark03": {
+      "minimum_mem_available_gib": 22.419189453125,
+      "maximum_temperature_c": 79,
+      "swap_growth_kib": 0
+    },
+    "spark04": {
+      "minimum_mem_available_gib": 22.53826904296875,
+      "maximum_temperature_c": 82,
+      "swap_growth_kib": 0
+    }
+  }
+}

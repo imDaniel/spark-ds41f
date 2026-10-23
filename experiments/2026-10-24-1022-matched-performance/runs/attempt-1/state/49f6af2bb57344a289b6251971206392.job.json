@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/usr/bin/python3",
+    "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py",
+    "observe"
+  ],
+  "cwd": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+  "context": {
+    "window_id": "62eb0d59-aedf-4007-8a99-8e15ee2fdada",
+    "manifest": "/srv/ai-cluster/operations/1022-performance-20261024/window.json",
+    "state_dir": "/srv/ai-cluster/operations/1022-performance-20261024/windows/62eb0d59-aedf-4007-8a99-8e15ee2fdada",
+    "recovery_step": null,
+    "original_ingress": null
+  }
+}

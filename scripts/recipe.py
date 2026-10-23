@@ -99,14 +99,17 @@ def _model_profile(cluster: dict) -> dict:
 
 def model_mounts(cluster: dict) -> tuple[list[list[str]], str]:
     """The mounts of the selected model (``model``, one of ``models``) and the path vLLM
-    serves it from. A profile names a ``snapshot`` and its ``blobs`` (mounted at /models
-    and /blobs), or a ``hub`` cache root and the ``snapshot`` path within it (the root
+    serves it from. A profile names a ``snapshot`` (and optional external ``blobs``
+    store, mounted at /models and /blobs), or a ``hub`` cache root and the ``snapshot`` path within it (the root
     mounted at /hub, served from /hub/<snapshot>); every mount is read-only."""
     profile = _model_profile(cluster)
     if "hub" in profile:
         return [[profile["hub"], "/hub", "ro"]], f"/hub/{profile['snapshot']}"
-    return ([[profile["snapshot"], "/models", "ro"], [profile["blobs"], "/blobs", "ro"]],
-            "/models")
+    mounts = [[profile["snapshot"], "/models", "ro"]]
+    # A materialized checkpoint has no external blob store to mount.
+    if "blobs" in profile:
+        mounts.append([profile["blobs"], "/blobs", "ro"])
+    return mounts, "/models"
 
 
 def model_snapshot(cluster: dict) -> str:

@@ -1,0 +1,100 @@
+Using CPython 3.12.3 interpreter at: /usr/bin/python3
+Creating virtual environment at: /tmp/replay-env
+F.F.                                                                     [100%]
+=================================== FAILURES ===================================
+_ TestStopStrippedTrailingDrop.test_byte_fallback_literal_does_not_steal_eos[False-False] _
+
+self = <tests.parser.engine.test_token_id_scanner.TestStopStrippedTrailingDrop object at 0xfffe93d6cb30>
+stop_text_present = False, reasoning_prefix = False
+
+    @pytest.mark.parametrize("stop_text_present", [False, True])
+    @pytest.mark.parametrize("reasoning_prefix", [False, True])
+    def test_byte_fallback_literal_does_not_steal_eos(
+        self, stop_text_present, reasoning_prefix
+    ):
+        eos = "<｜end▁of▁sentence｜>"
+        body = '{"value":"' + eos + '"}'
+        eos_id = 1000
+        prefix_id = 1001
+        prefix = "</think>"
+    
+        class ByteTokenizer:
+            def decode(self, ids):
+                data = b"".join(
+                    (eos if tid == eos_id else prefix).encode()
+                    if tid in (eos_id, prefix_id)
+                    else bytes([tid])
+                    for tid in ids
+                )
+                return data.decode(errors="replace")
+    
+        scanner = TokenIDScanner(
+            {eos_id: DROP_TERMINAL, prefix_id: "THINK_END"}, ByteTokenizer()
+        )
+        ids = list(body.encode()) + [eos_id]
+        text = body + (eos if stop_text_present else "")
+        if reasoning_prefix:
+            ids.insert(0, prefix_id)
+            text = prefix + text
+        items = [*scanner.scan(text, ids), *scanner.flush_pending()]
+        chunks = [item for item in items if isinstance(item, TextChunk)]
+>       assert "".join(item.text for item in chunks) == body
+E       assert '{"value":""}' == '{"value":"<｜...▁sentence｜>"}'
+E         
+E         - {"value":"<｜end▁of▁sentence｜>"}
+E         + {"value":""}
+
+tests/parser/engine/test_token_id_scanner.py:1067: AssertionError
+_ TestStopStrippedTrailingDrop.test_byte_fallback_literal_does_not_steal_eos[True-False] _
+
+self = <tests.parser.engine.test_token_id_scanner.TestStopStrippedTrailingDrop object at 0xfffe93d87e00>
+stop_text_present = False, reasoning_prefix = True
+
+    @pytest.mark.parametrize("stop_text_present", [False, True])
+    @pytest.mark.parametrize("reasoning_prefix", [False, True])
+    def test_byte_fallback_literal_does_not_steal_eos(
+        self, stop_text_present, reasoning_prefix
+    ):
+        eos = "<｜end▁of▁sentence｜>"
+        body = '{"value":"' + eos + '"}'
+        eos_id = 1000
+        prefix_id = 1001
+        prefix = "</think>"
+    
+        class ByteTokenizer:
+            def decode(self, ids):
+                data = b"".join(
+                    (eos if tid == eos_id else prefix).encode()
+                    if tid in (eos_id, prefix_id)
+                    else bytes([tid])
+                    for tid in ids
+                )
+                return data.decode(errors="replace")
+    
+        scanner = TokenIDScanner(
+            {eos_id: DROP_TERMINAL, prefix_id: "THINK_END"}, ByteTokenizer()
+        )
+        ids = list(body.encode()) + [eos_id]
+        text = body + (eos if stop_text_present else "")
+        if reasoning_prefix:
+            ids.insert(0, prefix_id)
+            text = prefix + text
+        items = [*scanner.scan(text, ids), *scanner.flush_pending()]
+        chunks = [item for item in items if isinstance(item, TextChunk)]
+>       assert "".join(item.text for item in chunks) == body
+E       assert '{"value":""}' == '{"value":"<｜...▁sentence｜>"}'
+E         
+E         - {"value":"<｜end▁of▁sentence｜>"}
+E         + {"value":""}
+
+tests/parser/engine/test_token_id_scanner.py:1067: AssertionError
+=============================== warnings summary ===============================
+../../../../usr/local/lib/python3.12/dist-packages/torch/jit/_script.py:365: 14 warnings
+  /usr/local/lib/python3.12/dist-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/parser/engine/test_token_id_scanner.py::TestStopStrippedTrailingDrop::test_byte_fallback_literal_does_not_steal_eos[False-False]
+FAILED tests/parser/engine/test_token_id_scanner.py::TestStopStrippedTrailingDrop::test_byte_fallback_literal_does_not_steal_eos[True-False]
+2 failed, 2 passed, 36 deselected, 14 warnings in 0.41s

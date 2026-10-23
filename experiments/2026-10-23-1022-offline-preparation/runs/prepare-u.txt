@@ -1,0 +1,13 @@
+preparing .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-99695427
+.git/rebase-apply/patch:422: new blank line at EOF.
++
+warning: 1 line adds whitespace errors.
+vllm: prepared 8fc15c18f890 (tree e68aa19c8027)
+b12x: reusing .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-99695427/src/b12x
+nccl: reusing .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-99695427/src/nccl
+tilelang: reusing .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-99695427/src/tilelang
+tile_kernels: reusing .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-99695427/src/tile_kernels
+sparknet: reusing .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-99695427/src/sparknet
+cutlass: reusing .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-99695427/src/cutlass
+cutlass-dsl wheels: reusing verified wheels
+build inputs ready: .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-99695427 (1 vLLM deletions)

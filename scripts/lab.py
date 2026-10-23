@@ -34,7 +34,7 @@ cluster keeps working while results are read and the next spec is written. An em
 queue keeps the window held for the next spec; --idle-minutes M closes it after M idle
 minutes instead. Terminal lines for watchers:
 "QUEUE job <name> done|failed", "QUEUE idle", "QUEUE closed". A "sync" job moves the node
-checkouts to origin/main between jobs, so newly published arms can join an open window.
+checkouts to the configured production branch between jobs, so published arms can join a window.
 
 A run spec is JSON: {"experiment": "experiments/<dir>", "run": "rec6", "jobs": [...]} with
 jobs of kind "measure" (arms booted in turn and measured; profile "lean" or "full";
@@ -82,7 +82,6 @@ REQUEST = Path.home() / "spark-request.json"
 LEGACY_HOLD = Path.home() / "spark3-hold.json"
 LEGACY_REQUEST = Path.home() / "spark3-request.json"
 HOLDER_PREFIX = "spark-lab"
-CONTAINER = "dsv41-karmic-kraken"
 CANDIDATE = "/opt/spark3/candidate"
 # The GPU's DRM card by PCI path, as the serving container mounts it for the display carve-out.
 DRM_CARD = "/dev/dri/by-path/pci-000f:01:00.0-card"
@@ -173,6 +172,15 @@ def write_json_atomic(path: Path, data: dict) -> None:
 
 def production_configuration() -> tuple[dict, dict, dict]:
     return spark.configuration(argparse.Namespace(cluster_config=PRODUCTION_CONFIG))
+
+
+def production_ref() -> str:
+    cluster, _, _ = production_configuration()
+    return "origin/" + (cluster.get("deployment", {}).get("branch") or "main")
+
+
+def production_container() -> str:
+    return spark.read_cluster(PRODUCTION_CONFIG)["container"]["name"]
 
 
 def nodes_config() -> dict:
@@ -292,8 +300,9 @@ def published_problems() -> list[str]:
     subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], check=False)
     head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True,
                           capture_output=True).stdout.strip()
-    if subprocess.run(["git", "-C", str(ROOT), "merge-base", "--is-ancestor", "HEAD", "origin/main"]).returncode:
-        problems.append(f"deployment commit {head[:8]} is not on origin/main")
+    ref = production_ref()
+    if subprocess.run(["git", "-C", str(ROOT), "merge-base", "--is-ancestor", "HEAD", ref]).returncode:
+        problems.append(f"deployment commit {head[:8]} is not on {ref}")
     cluster, nodes, _ = production_configuration()
     repo = spark.repository_path(cluster)
     for node in nodes["nodes"]:
@@ -457,7 +466,8 @@ def summarize_telemetry(text: str) -> dict:
 
 # Runs on each node (python3 - CONTAINER SECONDS): every 2 s, one JSON line with the serving
 # container's threads (name, CPU seconds, current core); the first line lists the fast cores
-# (cpu_capacity above the midpoint, as sparknet's "big"). Ends at SECONDS or a closed pipe.
+# (cpu_capacity above the midpoint, as sparknet's "big") and the cores that share each L3.
+# Ends at SECONDS or a closed pipe.
 THREAD_SAMPLER = r"""
 import json, os, subprocess, sys, time
 caps = {}
@@ -468,10 +478,26 @@ for name in os.listdir("/sys/devices/system/cpu"):
         except OSError:
             pass
 middle = (min(caps.values()) + max(caps.values())) / 2 if caps else 0
+def cpu_list(text):
+    cpus = []
+    for part in text.strip().split(","):
+        low, _, high = part.partition("-")
+        if low:
+            cpus += range(int(low), int(high or low) + 1)
+    return cpus
+clusters = []
+for cpu in sorted(caps):
+    try:
+        group = cpu_list(open(f"/sys/devices/system/cpu/cpu{cpu}/cache/index3/shared_cpu_list").read())
+    except OSError:
+        continue
+    if group not in clusters:
+        clusters.append(group)
 tick = os.sysconf("SC_CLK_TCK")
 end = time.time() + float(sys.argv[2])
 try:
-    print(json.dumps({"fast": sorted(c for c, v in caps.items() if v > middle)}), flush=True)
+    print(json.dumps({"fast": sorted(c for c, v in caps.items() if v > middle), "clusters": clusters}),
+          flush=True)
     while time.time() < end:
         pids = subprocess.run(["docker", "top", sys.argv[1], "-eo", "pid"], capture_output=True,
                               text=True).stdout.split()[1:]
@@ -497,9 +523,13 @@ except BrokenPipeError:
 
 
 def summarize_threads(text: str, busy_share: float = 0.10) -> dict:
-    """Thread-sampler lines as each busy thread's share of a core and how much of its CPU
-    time ran on slow cores (each interval's CPU time counted on the core seen at its end)."""
-    fast, samples = None, []
+    """Thread-sampler lines as each busy thread's share of a core, how much of its CPU time
+    ran on slow cores, and (when the sampler listed the L3 clusters) the cluster where most
+    of it ran, that share, and how many intervals ended on a different core than they began
+    (each interval's CPU time counted on the core seen at its end). ``busy_l3`` lists the
+    clusters the busy threads mostly ran in: two means one step's hot threads span both
+    L3s, so their shared cache lines cross clusters."""
+    fast, clusters, samples = None, None, []
     for line in text.splitlines():
         try:
             record = json.loads(line)
@@ -507,27 +537,46 @@ def summarize_threads(text: str, busy_share: float = 0.10) -> dict:
             continue
         if "fast" in record:
             fast = set(record["fast"])
+            clusters = record.get("clusters")
         elif "threads" in record:
             samples.append(record)
     if fast is None or len(samples) < 2:
         return {"samples": len(samples)}
-    used: dict[str, list] = {}  # tid -> [name, cpu seconds, seconds on slow cores]
+    l3 = {cpu: index for index, group in enumerate(clusters or []) for cpu in group}
+    used: dict[str, list] = {}  # tid -> [name, cpu seconds, seconds on slow cores, {l3: seconds}, moves]
     for before, after in zip(samples, samples[1:]):
         for tid, (name, cpu, core) in after["threads"].items():
             if tid in before["threads"]:
                 spent = max(0.0, cpu - before["threads"][tid][1])
-                entry = used.setdefault(tid, [name, 0.0, 0.0])
+                entry = used.setdefault(tid, [name, 0.0, 0.0, {}, 0])
                 entry[1] += spent
                 entry[2] += spent if core not in fast else 0.0
+                if core in l3:
+                    entry[3][l3[core]] = entry[3].get(l3[core], 0.0) + spent
+                if spent and core != before["threads"][tid][2]:
+                    entry[4] += 1
     window = samples[-1]["t"] - samples[0]["t"]
     total = sum(entry[1] for entry in used.values())
-    busy = sorted(((entry[1] / window, entry[2] / entry[1] if entry[1] else 0.0, entry[0], tid)
-                   for tid, entry in used.items() if entry[1] / window >= busy_share), reverse=True)
-    return {"samples": len(samples), "window_s": round(window, 1), "fast_cores": sorted(fast),
-            "container_cores": round(total / window, 3) if window else None,
-            "slow_core_share": round(sum(e[2] for e in used.values()) / total, 3) if total else None,
-            "busy_threads": [{"name": name, "tid": tid, "core_share": round(share, 3), "slow_share": round(slow, 3)}
-                             for share, slow, name, tid in busy]}
+    busy = []
+    for tid, (name, cpu, slow, by_l3, moves) in used.items():
+        if cpu / window < busy_share:
+            continue
+        thread = {"name": name, "tid": tid, "core_share": round(cpu / window, 3),
+                  "slow_share": round(slow / cpu if cpu else 0.0, 3)}
+        if clusters:
+            home = max(by_l3, key=by_l3.get) if by_l3 else None
+            thread.update(l3=home, l3_share=round(by_l3.get(home, 0.0) / cpu, 3) if cpu and home is not None else None,
+                          core_changes=moves)
+        busy.append(thread)
+    busy.sort(key=lambda thread: thread["core_share"], reverse=True)
+    summary = {"samples": len(samples), "window_s": round(window, 1), "fast_cores": sorted(fast),
+               "container_cores": round(total / window, 3) if window else None,
+               "slow_core_share": round(sum(e[2] for e in used.values()) / total, 3) if total else None,
+               "busy_threads": busy}
+    if clusters:
+        summary["l3_clusters"] = clusters
+        summary["busy_l3"] = sorted({thread["l3"] for thread in busy if thread["l3"] is not None})
+    return summary
 
 
 class Telemetry:
@@ -553,7 +602,7 @@ class Telemetry:
                     ["ssh", *spark.ssh_options(), spark.ssh_target(nodes, node), command],
                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, text=True)
                 sampler = subprocess.Popen(
-                    ["ssh", *spark.ssh_options(), spark.ssh_target(nodes, node), "python3", "-", CONTAINER, "21600"],
+                    ["ssh", *spark.ssh_options(), spark.ssh_target(nodes, node), "python3", "-", production_container(), "21600"],
                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, stdin=subprocess.PIPE, text=True)
                 sampler.stdin.write(THREAD_SAMPLER)
                 sampler.stdin.close()
@@ -610,7 +659,7 @@ def restore_production(dry: bool = False) -> bool:
 
 
 def container_running(node: dict | None = None) -> bool:
-    command = ["docker", "ps", "-q", "--filter", f"name=^{CONTAINER}$"]
+    command = ["docker", "ps", "-q", "--filter", f"name=^{production_container()}$"]
     if node is None:
         output = subprocess.run(command, text=True, capture_output=True).stdout
     else:
@@ -879,6 +928,7 @@ PROFILE_WORKLOADS = {
     "decode": ("profile_decode.py", ["--tokens", "128"]),
     "c8": ("profile_c8.py", ["--case", "json", "--streams", "8", "--tokens", "128"]),
     "prefill": ("profile_prefill.py", ["--tokens", "16384"]),
+    "one_row": ("profile_one_row.py", []),
     # The bench's code point at sixteen streams (the experiment's profile_c8.py needs a
     # code case).
     "code16": ("profile_c8.py", ["--case", "code", "--streams", "16", "--tokens", "256"]),
@@ -886,11 +936,12 @@ PROFILE_WORKLOADS = {
 
 
 def profile_steps(spec: dict, job: dict) -> list[dict]:
-    """Torch-profiled arms (run55's method): per arm and workload one rank-0 trace, then kernel
-    summaries and cost comparisons against the first arm, computed while the cluster is stopped."""
+    """Torch-profiled arms (run55's method): per arm and workload every rank's trace, with
+    each node's thread telemetry beside it, then kernel summaries and cost comparisons against
+    the first arm, computed while the cluster is stopped."""
     experiment = spec["experiment"]
     out = f"results/private/determinism/{spec['run']}"
-    workloads = job.get("workloads", list(PROFILE_WORKLOADS))
+    workloads = job.get("workloads", [name for name in PROFILE_WORKLOADS if name != "one_row"])
     steps = []
     for arm in job["arms"]:
         config = arm_config_path(experiment, arm["config"])
@@ -898,7 +949,8 @@ def profile_steps(spec: dict, job: dict) -> list[dict]:
         steps.append({"kind": "curves", "label": arm["label"], "config": config,
                       "out": f"{out}/curves-{arm['label']}.json"})
         for workload in workloads:
-            script, extra = PROFILE_WORKLOADS[workload]
+            script, defaults = PROFILE_WORKLOADS[workload]
+            extra = job.get("workload_args", {}).get(workload, defaults)
             steps.append({"kind": "profile", "config": config, "label": arm["label"], "workload": workload,
                           "argv": [f"{experiment}/{script}", head_url(), *extra],
                           "out": f"{out}/{arm['label']}"})
@@ -1051,7 +1103,7 @@ def describe_step(step: dict) -> str:
     if step["kind"] == "costs":
         return f"summarize kernels and compare costs against {step['labels'][0]} ({', '.join(step['workloads'])})"
     if step["kind"] == "sync":
-        return "sync node checkouts to origin/main"
+        return f"sync node checkouts to {production_ref()}"
     if step["kind"] == "stop":
         return "bin/spark " + shlex.join(stop_arguments(step.get("remove", False)))
     if step["kind"] == "curves":
@@ -1085,7 +1137,7 @@ def run_script(step: dict) -> int:
 def fresh_inventory() -> None:
     nodes = nodes_config()
     for node in nodes["nodes"]:
-        spark.run_ssh(nodes, node, "docker", "exec", CONTAINER, "sh", "-c",
+        spark.run_ssh(nodes, node, "docker", "exec", production_container(), "sh", "-c",
                        f"rm -f {TRACE_LOG_DIR}/inventory-* {TRACE_LOG_DIR}/plans-*")
 
 
@@ -1135,7 +1187,7 @@ def profile_workload(step: dict) -> None:
     workload = step["workload"]
 
     def in_container(node: dict, script: str) -> subprocess.CompletedProcess:
-        return spark.run_ssh(nodes, node, "docker", "exec", CONTAINER, "sh", "-c", script)
+        return spark.run_ssh(nodes, node, "docker", "exec", production_container(), "sh", "-c", script)
 
     def each(function):
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(nodes["nodes"])) as pool:
@@ -1147,6 +1199,8 @@ def profile_workload(step: dict) -> None:
         code = subprocess.run([sys.executable, *step["argv"]], cwd=ROOT, stdout=handle,
                               stderr=subprocess.STDOUT).returncode
     log(f"profile {step['label']} {workload} exit {code}")
+    if code:
+        raise RuntimeError(f"profile {step['label']} {workload} failed with exit {code}; see {out / (workload + '.json')}")
 
     def trace_bytes(node: dict) -> int:
         result = spark.run_ssh(nodes, node, "sh", "-c",
@@ -1161,7 +1215,8 @@ def profile_workload(step: dict) -> None:
         before = sizes
         time.sleep(5)
     else:
-        log(f"traces under {host_relative} did not settle: {before}")
+        raise RuntimeError(f"profile {step['label']} {workload}: traces under {host_relative} "
+                           f"did not settle on every rank: {before}")
     each(lambda node: in_container(node, f"mkdir -p {container_dir}/{workload} && "
                                          f"mv {container_dir}/*rank*.json.gz {container_dir}/{workload}/"))
 
@@ -1213,9 +1268,10 @@ def profile_costs(step: dict) -> None:
 
 
 def sync_checkouts() -> bool:
-    """Move every node's checkout to origin/main (between jobs: nothing runs from them)."""
+    """Move every checkout to the configured production branch between jobs."""
     subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], check=False)
-    moved = subprocess.run(["git", "-C", str(ROOT), "checkout", "-q", "--detach", "origin/main"])
+    ref = production_ref()
+    moved = subprocess.run(["git", "-C", str(ROOT), "checkout", "-q", "--detach", ref])
     if moved.returncode:
         return False
     head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"], text=True,
@@ -1247,7 +1303,7 @@ def save_engine_logs(out: str, lines: int = 4000) -> None:
     try:
         nodes = nodes_config()
         for node in nodes["nodes"]:
-            result = spark.run_ssh(nodes, node, "docker", "logs", "--tail", str(lines), CONTAINER)
+            result = spark.run_ssh(nodes, node, "docker", "logs", "--tail", str(lines), production_container())
             path = ROOT / f"{out}.engine-{node['name']}.log"
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(result.stdout + result.stderr)
@@ -1262,7 +1318,7 @@ def save_curves(step: dict) -> None:
     The profile runs on padding rows, which the MoE routers skip, unless the arm sets
     SPARK3_DSPARK_PROFILE_TOKENS=random (real rows, routed experts included); the file
     records which, since padded-row costs leave out a real step's largest part."""
-    logs = subprocess.run(["docker", "logs", CONTAINER], text=True, capture_output=True)
+    logs = subprocess.run(["docker", "logs", production_container()], text=True, capture_output=True)
     lines = [l for l in (logs.stdout + logs.stderr).splitlines() if "Profiled DSpark step costs" in l]
     if not lines:
         return
@@ -1628,7 +1684,9 @@ def execute(spec: dict, dry: bool, keep_open: bool, close_on_failure: bool = Tru
                     failed = "GPU clock change failed"
                     break
             elif step["kind"] == "profile":
-                profile_workload(step)
+                # The threads' cores and L3 clusters beside the kernel traces.
+                with Telemetry(f"{step['out']}/{step['workload']}"):
+                    profile_workload(step)
             elif step["kind"] == "costs":
                 profile_costs(step)
             elif step["kind"] == "curves":
@@ -1912,7 +1970,7 @@ def kernel_local(bundle_dir: str, out_dir: str | None, dry: bool) -> int:
         print(shlex.join(command))
         return 0
     if container_running():
-        raise SystemExit(f"{CONTAINER} is running on this node; the kernel lab needs the GPU to itself")
+        raise SystemExit(f"{production_container()} is running on this node; the kernel lab needs the GPU to itself")
     missing = [str(source) for source, _ in bundle_mounts(bundle, candidate) if not source.exists()]
     if missing:
         raise SystemExit("missing bundle inputs: " + ", ".join(missing))

@@ -1,0 +1,6 @@
+preparing .work/build/vllm-19f2c20ed4d6-b12x-236ddff04a5f-7e1edfa7
+.git/rebase-apply/patch:422: new blank line at EOF.
++
+warning: 1 line adds whitespace errors.
+vllm: prepared 4f6461ca14a0 (tree d0ad0209a273)
+partial preparation; run bin/spark build prepare for the complete inputs

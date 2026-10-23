@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "status": "prepared; no GPU or API execution in this preparation",
+  "runtime_enabled": false,
+  "candidate_arms": [
+    "s-loaded"
+  ],
+  "scales": [
+    0,
+    1,
+    4
+  ],
+  "window_seconds": 2700,
+  "restore_reserve_seconds": 900,
+  "request_timeout_seconds": 1200,
+  "stages": [
+    {
+      "name": "functional",
+      "requests": 12,
+      "scale_order": [
+        0,
+        1,
+        4,
+        0
+      ],
+      "prompts": 3
+    },
+    {
+      "name": "forced-tool-call-and-followup",
+      "requests": 4,
+      "scales": [
+        1,
+        4
+      ]
+    },
+    {
+      "name": "32K-cold-warm-mixed-cancel-cache",
+      "requests": 13,
+      "source": "experiments/2026-10-23-1022-window/cache_screen.py"
+    }
+  ],
+  "generation_requests": 29,
+  "max_concurrency": 4,
+  "max_input_tokens": 32768,
+  "max_output_tokens": 256,
+  "pass_criteria": [
+    "all 29 generations explicitly name heretic-1017-attn-v1 and scale",
+    "no failed or empty streams",
+    "arithmetic correct at each scale",
+    "scale 0 output stable after 1 and 4",
+    "exact tool arguments including JSON control spelling and nested escaped key",
+    "same-scale cache reuse observed; cross-scale first request has zero cached tokens",
+    "mixed and post-cancel output matches own scale baseline",
+    "all ranks and guards healthy; retained identity and gateway restoration verified"
+  ],
+  "not_claimed": [
+    "complete release gate",
+    "1M or full-capacity acceptance",
+    "new quality score across broad tasks",
+    "statistical performance improvement/regression",
+    "new old-version comparison"
+  ],
+  "notes": [
+    "The tokenize endpoint is preparation, not generation; it has no steering arguments.",
+    "Existing r6x restoration verification remains mandatory; it is not a comparison arm.",
+    "15 minutes of the 45-minute window are reserved for recovery. Stop and record incomplete at the deadline."
+  ]
+}

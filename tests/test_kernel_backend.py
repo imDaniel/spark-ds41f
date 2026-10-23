@@ -25,10 +25,12 @@ CANDIDATE = "experiments/2026-10-03-tilelang-kernels"
 # Experiments that run the TileLang family and may therefore build its sources.
 TILELANG_EXPERIMENTS = (
     CANDIDATE,
+    "experiments/2026-10-24-1022-promotion/previous/",
     "experiments/2026-10-18-request-steering/",
     "experiments/2026-10-18-steering-consume/",
     "experiments/2026-10-19-steering-gpu/",
     "experiments/2026-10-19-r6x-steering/",
+    "experiments/2026-10-23-1022-offline-preparation/encoder/",
     "experiments/2026-10-03-packed-bf16-head/tilelang-tp4",
     "experiments/2026-10-03-tilelang-tp4-performance",
     "experiments/2026-10-04-tilelang-1m",
@@ -62,6 +64,12 @@ TILELANG_EXPERIMENTS = (
     "experiments/2026-10-18-r6w-swiglu",
     "experiments/2026-10-18-apple-rsi",
     "experiments/2026-10-18-r6x",
+    "experiments/2026-10-22-spark-ds41f-1022",
+    "experiments/2026-10-23-1022-attention-steering/",
+    "experiments/2026-10-23-1022-attention-review/",
+    "experiments/2026-10-23-1022-output-parser/",
+    "experiments/2026-10-23-1022-release-fixtures/",
+    "experiments/2026-10-23-1022-parser-byte-alignment/",
 )
 FLAGS = ("--attention-backend", "--linear-backend", "--moe-backend")
 # Each TileLang profile and the B12X configuration it mirrors, with that
@@ -145,7 +153,7 @@ class KernelBackendTest(unittest.TestCase):
         lock = spark.read_json("upstreams.lock.json")
         nodes = spark.read_json("config/examples/nodes-ring4.json")
         cluster = spark.read_cluster("config/cluster.json", "tp4-ring")
-        self.assertEqual(cluster["nodes_config"], "config/nodes-ring4.local.json")
+        self.assertEqual(cluster["nodes_config"], "config/nodes-1022-attention.local.json")
         self.assertNotIn("upstreams_config", cluster)
         self.assertEqual(cluster["promoted_baseline"], lock["generated_from_baseline"])
         cluster["distributed"]["master_addr"] = next(n for n in nodes["nodes"] if n.get("head"))["management_ip"]
@@ -471,6 +479,12 @@ if __name__ == "__main__":
 
 
 class TileLangProfileLabelTest(unittest.TestCase):
+    # This historical arm explicitly named the then-current root lock. Resolve it
+    # against the retained release lock instead of today's promoted upstream.
+    HISTORICAL_LOCKS = {
+        "experiments/2026-10-19-r6x-steering-gpu/official.json":
+            "experiments/2026-10-22-spark-ds41f-1022/r6x/upstreams.lock.json",
+    }
     # Diagnostics whose locks moved on to a later series; frozen as they ran.
     HISTORICAL = {
         "experiments/2026-10-03-tilelang-tp4-performance/round2-tilelang.json",
@@ -491,7 +505,10 @@ class TileLangProfileLabelTest(unittest.TestCase):
             if (not isinstance(data, dict) or data.get("kernel_backend") != "tilelang"
                     or "container" not in data or relative in self.HISTORICAL):
                 continue
-            lock = spark.read_json(data.get("upstreams_config", "upstreams.lock.json"))
+            lock_path = self.HISTORICAL_LOCKS.get(
+                relative, data.get("upstreams_config", "upstreams.lock.json")
+            )
+            lock = spark.read_json(lock_path)
             manifest = spark.read_json(lock["source_manifest"])
             with self.subTest(profile=relative):
                 self.assertEqual(kernel_backend.source_problems(data, lock, manifest), [])

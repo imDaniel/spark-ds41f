@@ -1,0 +1,66 @@
+{
+  "buildx.build.provenance": {
+    "builder": {
+      "id": ""
+    },
+    "buildType": "https://mobyproject.org/buildkit@v1",
+    "materials": [
+      {
+        "uri": "pkg:docker/ds41f-1022-screen@native-ed6af327-offline1?platform=linux%2Farm64",
+        "digest": {
+          "sha256": "9735df00c0c5146532a24d9a8ffb39691fe1f383c14903cda240a452216f3b36"
+        }
+      }
+    ],
+    "invocation": {
+      "configSource": {
+        "entryPoint": "Dockerfile"
+      },
+      "parameters": {
+        "frontend": "dockerfile.v0",
+        "args": {
+          "force-network-mode": "none"
+        },
+        "locals": [
+          {
+            "name": "context"
+          },
+          {
+            "name": "dockerfile"
+          }
+        ],
+        "root": {
+          "configSource": {
+            "path": "Dockerfile"
+          },
+          "request": {
+            "args": {
+              "force-network-mode": "none",
+              "vcs:localdir:context": ".work/1022-offline-preparation/context-u",
+              "vcs:localdir:dockerfile": ".work/1022-offline-preparation/context-u",
+              "vcs:revision": "7252899c6498aae4a9149a6429e9f79d0dfdb538",
+              "vcs:source": "https://github.com/imDaniel/spark-ds41f.git"
+            }
+          }
+        },
+        "compatibilityVersion": 30
+      },
+      "environment": {
+        "dockerfileVersion": "1.27.0",
+        "platform": "linux/arm64"
+      }
+    }
+  },
+  "buildx.build.ref": "desktop-linux/desktop-linux/eiiiqo1rvtjsewh61fsgg8xpr",
+  "containerimage.descriptor": {
+    "mediaType": "application/vnd.oci.image.manifest.v1+json",
+    "digest": "sha256:83e11030b3cfbd4c8437ed8dd7a500e02a8a11fbfd01b5aa7967c96634627c24",
+    "size": 16525,
+    "platform": {
+      "architecture": "arm64",
+      "os": "linux"
+    }
+  },
+  "containerimage.digest": "sha256:83e11030b3cfbd4c8437ed8dd7a500e02a8a11fbfd01b5aa7967c96634627c24",
+  "image.name": "docker.io/library/ds41f-1022-screen:u-8fc15c18f890-offline1"
+}

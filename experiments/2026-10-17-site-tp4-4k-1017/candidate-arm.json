@@ -1,7 +1,7 @@
 {
   "notes": "External site: the recipe at tp4-ring on a stock 4 KiB kernel (6.17.0-1032-nvidia, no memory saver, Secure Boot on), serving DeepSeek-V4.1-Flash-1017 from a snapshot whose shards link over read-only NFS to the head's copy; shards 47/48 (the Engram tables) are local on every node. DSpark cost curves per build. Runtime: the r6u image plus upstream r6v's 0180 pynccl.py (ring relay of opposite-rank row blocks), mounted read-only; native kernels unchanged.",
   "extends": {
-    "config": "config/cluster.json",
+    "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
     "shape": "tp4-ring"
   },
   "set": {

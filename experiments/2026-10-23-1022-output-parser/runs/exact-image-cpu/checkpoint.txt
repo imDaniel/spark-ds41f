@@ -1,0 +1,124 @@
+WARNING 10-23 12:08:34 [interface.py:369] Failed to import from vllm._C: ModuleNotFoundError("No module named 'vllm._C'")
+INFO 10-23 12:08:37 [parser_manager.py:36] "auto" tool choice has been enabled.
+{
+  "tokenizer_sha256": "c90dfa01249db1be4245780a052ede752e1361c612ac6d08e2bdada7d599476b",
+  "literal_token_ids": [
+    30,
+    28217,
+    523,
+    5487,
+    226,
+    2154,
+    5487,
+    226,
+    85,
+    51015,
+    28217,
+    32
+  ],
+  "real_eos_id": 1,
+  "parser_cases": [
+    {
+      "thinking": false,
+      "json_tools": false,
+      "choice": "named",
+      "passed": true
+    },
+    {
+      "thinking": false,
+      "json_tools": false,
+      "choice": "required",
+      "passed": true
+    },
+    {
+      "thinking": false,
+      "json_tools": false,
+      "choice": "auto",
+      "passed": true
+    },
+    {
+      "thinking": false,
+      "json_tools": false,
+      "choice": "none",
+      "passed": true
+    },
+    {
+      "thinking": false,
+      "json_tools": true,
+      "choice": "named",
+      "passed": true
+    },
+    {
+      "thinking": false,
+      "json_tools": true,
+      "choice": "required",
+      "passed": true
+    },
+    {
+      "thinking": false,
+      "json_tools": true,
+      "choice": "auto",
+      "passed": true
+    },
+    {
+      "thinking": false,
+      "json_tools": true,
+      "choice": "none",
+      "passed": true
+    },
+    {
+      "thinking": true,
+      "json_tools": false,
+      "choice": "named",
+      "passed": true
+    },
+    {
+      "thinking": true,
+      "json_tools": false,
+      "choice": "required",
+      "passed": true
+    },
+    {
+      "thinking": true,
+      "json_tools": false,
+      "choice": "auto",
+      "passed": true
+    },
+    {
+      "thinking": true,
+      "json_tools": false,
+      "choice": "none",
+      "passed": true
+    },
+    {
+      "thinking": true,
+      "json_tools": true,
+      "choice": "named",
+      "passed": true
+    },
+    {
+      "thinking": true,
+      "json_tools": true,
+      "choice": "required",
+      "passed": true
+    },
+    {
+      "thinking": true,
+      "json_tools": true,
+      "choice": "auto",
+      "passed": true
+    },
+    {
+      "thinking": true,
+      "json_tools": true,
+      "choice": "none",
+      "passed": true
+    }
+  ],
+  "model_identity": "b35c43fda128481f17b7ee878df2c2f93fd6db416df451b080cc8d00e166f7d0",
+  "template_identity": "e27cffc1791e4da15a669f16223dd4b7b7745e0fed48de8d61f958dea939c8cb",
+  "profile_sha256": "e06b8cb60f3f382157ef6632a93efdd90185beafa2251a8c29575f09c45cd45b",
+  "directions_sha256": "f11e3762252448f547183d4b2daaf5b58c2d9023cd5b23365bc026a402c1a8e6",
+  "profile_rebinding_required": false
+}
+W1023 12:08:34.536000 1 usr/local/lib/python3.12/dist-packages/torch/utils/cpp_extension.py:178] No CUDA runtime is found, using CUDA_HOME='/usr/local/cuda'

@@ -1,0 +1,8 @@
+{
+  "source_window": "2fb58ec6-68f8-457f-94f4-bce64c95c2f6",
+  "source_image_id": "sha256:f17320f38b419efa296a9862f634afb0ef4272e24818f1a6b20943bcca779239",
+  "destination": "/srv/ai-cluster/cache/1022-release-20261023/components",
+  "runtime_and_native_changes": [],
+  "source_proof": "runs/source-proof.json",
+  "semantics": "Copied only compiled TileLang artifacts to a new task cache; exact source/native inputs unchanged; test outcomes are not reused except the two explicitly documented deliberate CUDA-failure cases."
+}

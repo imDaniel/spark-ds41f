@@ -1,0 +1,22 @@
+[
+  {
+    "step": "prepare U",
+    "result": "rejected absolute --cluster-config path before build; rerun with repository-relative path passed",
+    "evidence": "runs/prepare-u-first.txt"
+  },
+  {
+    "step": "doctor U",
+    "result": "new comparison label did not match lock baseline; aligned each arm with its selected lock, all four doctor checks passed",
+    "evidence": "runs/doctor-u-first.txt"
+  },
+  {
+    "step": "profile tests",
+    "result": "10 passed, 1 failed because STEERING_PREVIOUS_RELEASE was omitted; complete rerun with the fixture path passed all 11",
+    "evidence": "runs/profile-first.txt"
+  },
+  {
+    "step": "native image build receipt",
+    "result": "image build succeeded but accessor expected absent containerimage.config.digest metadata; recovered config.digest from inspected Descriptor, verified input receipts and resumed without overwriting images",
+    "evidence": "runs/build-images-first.txt"
+  }
+]

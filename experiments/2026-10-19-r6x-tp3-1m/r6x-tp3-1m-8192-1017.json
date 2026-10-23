@@ -1,7 +1,7 @@
 {
  "notes": "r6x-tp3-1m-1017.json with TP4's prefill budget: --max-num-batched-tokens 8192 (threshold 8192 - 8 x 6 = 8144). A memory probe first: in September 8192 tripped dgx1's startup guard on TP3.",
  "extends": {
-  "config": "config/cluster.json",
+  "config": "experiments/2026-10-24-1022-promotion/previous/cluster.json",
   "shape": "tp3-triangle"
  },
  "set": {

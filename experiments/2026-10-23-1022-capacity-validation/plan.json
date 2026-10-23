@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "candidate_config": "experiments/2026-10-23-1022-parser-byte-alignment/cluster.json",
+  "candidate_arms": ["s-loaded"],
+  "window_seconds": 4500,
+  "restore_reserve_seconds": 900,
+  "expected_minutes": [20, 40],
+  "scales": [0, 1, 4],
+  "stages": [
+    "verify and reuse same-image tool, quality, cache and cold C1 receipts",
+    "reuse component and exact-image parser receipts under existing scope guards",
+    "start unchanged RC3 TP4 candidate",
+    "repeat one scale-1 literal tool request as a route smoke check",
+    "cold C16 at 8192 input with 256 output tokens",
+    "cold C4 at 262144 input with 768 output tokens",
+    "cold C4 at 1000000 input with 3072 output tokens",
+    "retain peak admitted concurrency assertions and complete metric samples",
+    "two-minute mixed-scale C4 arithmetic stability",
+    "restore pinned r6x on all four nodes and verify private/gateway routes"
+  ],
+  "historical_reference_only": true,
+  "performance_comparison_claim": false,
+  "promotion_authorized": false
+}

@@ -1,0 +1,394 @@
+test_authorization_mismatch_or_expiry (test_executor.Admission.test_authorization_mismatch_or_expiry) ... ok
+test_bad_initial_inventory (test_executor.Admission.test_bad_initial_inventory) ... ok
+test_busy_queue_never_kills_request (test_executor.Admission.test_busy_queue_never_kills_request) ... FAIL
+test_disabled_manifest_cannot_even_probe (test_executor.Admission.test_disabled_manifest_cannot_even_probe) ... ok
+test_drifted_recipe_refused (test_executor.Admission.test_drifted_recipe_refused) ... ok
+test_foreign_hold_is_preserved (test_executor.Admission.test_foreign_hold_is_preserved) ... ok
+test_missing_queue_metrics_restores_without_stopping_user_service (test_executor.Admission.test_missing_queue_metrics_restores_without_stopping_user_service) ... FAIL
+test_missing_watchdog (test_executor.Admission.test_missing_watchdog) ... ok
+test_pinned_executable_drift (test_executor.Admission.test_pinned_executable_drift) ... ok
+test_stale_or_missing_rank (test_executor.Admission.test_stale_or_missing_rank) ... ok
+test_expired_open_authorization_still_allows_owned_restore (test_executor.Recovery.test_expired_open_authorization_still_allows_owned_restore) ... ERROR
+test_failed_candidate_stop_never_starts_retained (test_executor.Recovery.test_failed_candidate_stop_never_starts_retained) ... ERROR
+test_final_api_failure_preserves_hold (test_executor.Recovery.test_final_api_failure_preserves_hold) ... ERROR
+test_foreign_component_job_blocks_restore (test_executor.Recovery.test_foreign_component_job_blocks_restore) ... ok
+test_full_four_arm_sequence_and_pinned_restore (test_executor.Recovery.test_full_four_arm_sequence_and_pinned_restore) ... ERROR
+test_gpu_fault_does_not_attempt_restart (test_executor.Recovery.test_gpu_fault_does_not_attempt_restart) ... ERROR
+test_guard_or_gpu_process_survives_stop (test_executor.Recovery.test_guard_or_gpu_process_survives_stop) ... ERROR
+test_healthy_service_is_noop (test_executor.Recovery.test_healthy_service_is_noop) ... ERROR
+test_lost_node_does_not_attempt_restart (test_executor.Recovery.test_lost_node_does_not_attempt_restart) ... ERROR
+test_owned_job_stop_and_identity (test_executor.Recovery.test_owned_job_stop_and_identity) ... ERROR
+test_partial_candidate_launch_restores_all_ranks (test_executor.Recovery.test_partial_candidate_launch_restores_all_ranks) ... FAIL
+test_partial_retained_requires_coordinated_stop (test_executor.Recovery.test_partial_retained_requires_coordinated_stop) ... ERROR
+test_retained_start_failure_preserves_hold (test_executor.Recovery.test_retained_start_failure_preserves_hold) ... ERROR
+test_shape_change_is_never_applied (test_executor.Recovery.test_shape_change_is_never_applied) ... FAIL
+test_changed_hold_is_not_stolen (test_executor.Watchdog.test_changed_hold_is_not_stolen) ... ok
+test_command_timeout_stops_worker_and_restores (test_executor.Watchdog.test_command_timeout_stops_worker_and_restores) ... FAIL
+test_concurrent_controller_and_watchdog_share_lock (test_executor.Watchdog.test_concurrent_controller_and_watchdog_share_lock) ... ok
+test_deadline_restores_even_with_fresh_heartbeat (test_executor.Watchdog.test_deadline_restores_even_with_fresh_heartbeat) ... ERROR
+test_fresh_window_does_nothing (test_executor.Watchdog.test_fresh_window_does_nothing) ... ok
+test_heartbeat_loss_restores (test_executor.Watchdog.test_heartbeat_loss_restores) ... ERROR
+test_independent_process_recovers_killed_controller_during_launch (test_executor.Watchdog.test_independent_process_recovers_killed_controller_during_launch) ... FAIL
+test_pid_reuse_is_not_signalled (test_executor.Watchdog.test_pid_reuse_is_not_signalled) ... ok
+test_worker_eof_before_go_cannot_execute (test_executor.Watchdog.test_worker_eof_before_go_cannot_execute) ... ok
+
+======================================================================
+ERROR: test_expired_open_authorization_still_allows_owned_restore (test_executor.Recovery.test_expired_open_authorization_still_allows_owned_restore)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 299, in test_expired_open_authorization_still_allows_owned_restore
+    self.x.recover(); self.assert_closed()
+    ~~~~~~~~~~~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 506, in recover
+    self._recover()
+    ~~~~~~~~~~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 482, in _recover
+    self.run([service["repository"] + "/bin/spark", "--shape", "tp4-ring", "--cluster-config",
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              service["config"], "doctor", "--live"], service["repository"], service["files"],
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+             "retained:doctor", recovering=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_failed_candidate_stop_never_starts_retained (test_executor.Recovery.test_failed_candidate_stop_never_starts_retained)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 241, in test_failed_candidate_stop_never_starts_retained
+    self.x.open(); self.x.switch("u"); self.fault(**{"u:stop:fail": True})
+                   ~~~~~~~~~~~~~^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 429, in switch
+    self.cluster(name, "stop")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 398, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+                      recovering=recovering)
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_final_api_failure_preserves_hold (test_executor.Recovery.test_final_api_failure_preserves_hold)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 280, in test_final_api_failure_preserves_hold
+    self.x.open(); self.x.switch("u"); self.fault(steered_request=True)
+                   ~~~~~~~~~~~~~^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 429, in switch
+    self.cluster(name, "stop")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 398, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+                      recovering=recovering)
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_full_four_arm_sequence_and_pinned_restore (test_executor.Recovery.test_full_four_arm_sequence_and_pinned_restore)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 212, in test_full_four_arm_sequence_and_pinned_restore
+    for arm in ARMS: self.x.switch(arm)
+                     ~~~~~~~~~~~~~^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 429, in switch
+    self.cluster(name, "stop")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 398, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+                      recovering=recovering)
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_gpu_fault_does_not_attempt_restart (test_executor.Recovery.test_gpu_fault_does_not_attempt_restart)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 266, in test_gpu_fault_does_not_attempt_restart
+    self.x.open(); self.x.switch("u"); self.load_world()
+                   ~~~~~~~~~~~~~^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 429, in switch
+    self.cluster(name, "stop")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 398, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+                      recovering=recovering)
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_guard_or_gpu_process_survives_stop (test_executor.Recovery.test_guard_or_gpu_process_survives_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 251, in test_guard_or_gpu_process_survives_stop
+    self.x.open(); self.x.switch("u"); self.fault(**{"u:stop:guard": True})
+                   ~~~~~~~~~~~~~^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 429, in switch
+    self.cluster(name, "stop")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 398, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+                      recovering=recovering)
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_healthy_service_is_noop (test_executor.Recovery.test_healthy_service_is_noop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 223, in test_healthy_service_is_noop
+    self.x.open(); self.x.recover()
+                   ~~~~~~~~~~~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 506, in recover
+    self._recover()
+    ~~~~~~~~~~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 482, in _recover
+    self.run([service["repository"] + "/bin/spark", "--shape", "tp4-ring", "--cluster-config",
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              service["config"], "doctor", "--live"], service["repository"], service["files"],
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+             "retained:doctor", recovering=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_lost_node_does_not_attempt_restart (test_executor.Recovery.test_lost_node_does_not_attempt_restart)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 258, in test_lost_node_does_not_attempt_restart
+    self.x.open(); self.x.switch("u"); self.load_world()
+                   ~~~~~~~~~~~~~^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 429, in switch
+    self.cluster(name, "stop")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 398, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+                      recovering=recovering)
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_owned_job_stop_and_identity (test_executor.Recovery.test_owned_job_stop_and_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 287, in test_owned_job_stop_and_identity
+    self.write_world(); self.x.recover(); self.assert_closed()
+                        ~~~~~~~~~~~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 506, in recover
+    self._recover()
+    ~~~~~~~~~~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 482, in _recover
+    self.run([service["repository"] + "/bin/spark", "--shape", "tp4-ring", "--cluster-config",
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              service["config"], "doctor", "--live"], service["repository"], service["files"],
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+             "retained:doctor", recovering=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_partial_retained_requires_coordinated_stop (test_executor.Recovery.test_partial_retained_requires_coordinated_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 237, in test_partial_retained_requires_coordinated_stop
+    self.x.recover(); self.assert_closed()
+    ~~~~~~~~~~~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 506, in recover
+    self._recover()
+    ~~~~~~~~~~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 474, in _recover
+    self.cluster("retained", "stop", recovering=True)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 398, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+                      recovering=recovering)
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_retained_start_failure_preserves_hold (test_executor.Recovery.test_retained_start_failure_preserves_hold)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 274, in test_retained_start_failure_preserves_hold
+    self.x.open(); self.x.switch("u"); self.fault(**{"retained:start:fail": True})
+                   ~~~~~~~~~~~~~^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 429, in switch
+    self.cluster(name, "stop")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 398, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+                      recovering=recovering)
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_deadline_restores_even_with_fresh_heartbeat (test_executor.Watchdog.test_deadline_restores_even_with_fresh_heartbeat)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 327, in test_deadline_restores_even_with_fresh_heartbeat
+    self.x.open(); self.x.switch("u"); self.expire(deadline=True)
+                   ~~~~~~~~~~~~~^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 429, in switch
+    self.cluster(name, "stop")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 398, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+                      recovering=recovering)
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+ERROR: test_heartbeat_loss_restores (test_executor.Watchdog.test_heartbeat_loss_restores)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 323, in test_heartbeat_loss_restores
+    self.x.open(); self.x.switch("u"); self.expire()
+                   ~~~~~~~~~~~~~^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 429, in switch
+    self.cluster(name, "stop")
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 398, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+                      recovering=recovering)
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 239, in run
+    require(str(Path(argv[0]).resolve()) in files, "Command executable must be pinned")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py", line 46, in require
+    raise Refused(message)
+window_executor.Refused: Command executable must be pinned
+
+======================================================================
+FAIL: test_busy_queue_never_kills_request (test_executor.Admission.test_busy_queue_never_kills_request)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 200, in test_busy_queue_never_kills_request
+    self.assert_closed()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 114, in assert_closed
+    self.assertEqual(read(self.x.state_path)["phase"], "closed")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'manual' != 'closed'
+- manual
++ closed
+
+
+======================================================================
+FAIL: test_missing_queue_metrics_restores_without_stopping_user_service (test_executor.Admission.test_missing_queue_metrics_restores_without_stopping_user_service)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 194, in test_missing_queue_metrics_restores_without_stopping_user_service
+    self.assert_closed()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 114, in assert_closed
+    self.assertEqual(read(self.x.state_path)["phase"], "closed")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'manual' != 'closed'
+- manual
++ closed
+
+
+======================================================================
+FAIL: test_partial_candidate_launch_restores_all_ranks (test_executor.Recovery.test_partial_candidate_launch_restores_all_ranks)
+----------------------------------------------------------------------
+window_executor.Refused: Command executable must be pinned
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 228, in test_partial_candidate_launch_restores_all_ranks
+    with self.assertRaisesRegex(Refused, "Partial candidate"): self.x.switch("u")
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "Partial candidate" does not match "Command executable must be pinned"
+
+======================================================================
+FAIL: test_shape_change_is_never_applied (test_executor.Recovery.test_shape_change_is_never_applied)
+----------------------------------------------------------------------
+window_executor.Refused: Command executable must be pinned
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 303, in test_shape_change_is_never_applied
+    with self.assertRaisesRegex(Refused, "shape change"): self.x.switch("u")
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "shape change" does not match "Command executable must be pinned"
+
+======================================================================
+FAIL: test_command_timeout_stops_worker_and_restores (test_executor.Watchdog.test_command_timeout_stops_worker_and_restores)
+----------------------------------------------------------------------
+window_executor.Refused: Command executable must be pinned
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 347, in test_command_timeout_stops_worker_and_restores
+    with self.assertRaisesRegex(Refused, "timeout"): self.x.switch("u")
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+AssertionError: "timeout" does not match "Command executable must be pinned"
+
+======================================================================
+FAIL: test_independent_process_recovers_killed_controller_during_launch (test_executor.Watchdog.test_independent_process_recovers_killed_controller_during_launch)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 359, in test_independent_process_recovers_killed_controller_during_launch
+    self.wait_for(launching)
+    ~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/tests/test_executor.py", line 138, in wait_for
+    self.fail("Timed out waiting for fixture state")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Timed out waiting for fixture state
+
+----------------------------------------------------------------------
+Ran 33 tests in 34.091s
+
+FAILED (failures=6, errors=13)

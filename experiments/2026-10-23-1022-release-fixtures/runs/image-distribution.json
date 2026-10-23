@@ -1,0 +1,26 @@
+[
+  {
+    "node": 1,
+    "image_id": "sha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241",
+    "tag": "ds41f-1022-parser:s-4f6461ca14a0-rc2",
+    "load_output": "Loaded image: ds41f-1022-parser:s-4f6461ca14a0-rc2\nsha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241"
+  },
+  {
+    "node": 2,
+    "image_id": "sha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241",
+    "tag": "ds41f-1022-parser:s-4f6461ca14a0-rc2",
+    "load_output": "Loaded image: ds41f-1022-parser:s-4f6461ca14a0-rc2\nsha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241"
+  },
+  {
+    "node": 3,
+    "image_id": "sha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241",
+    "tag": "ds41f-1022-parser:s-4f6461ca14a0-rc2",
+    "load_output": "Loaded image: ds41f-1022-parser:s-4f6461ca14a0-rc2\nsha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241"
+  },
+  {
+    "node": 4,
+    "image_id": "sha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241",
+    "tag": "ds41f-1022-parser:s-4f6461ca14a0-rc2",
+    "load_output": "Loaded image: ds41f-1022-parser:s-4f6461ca14a0-rc2\nsha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241"
+  }
+]

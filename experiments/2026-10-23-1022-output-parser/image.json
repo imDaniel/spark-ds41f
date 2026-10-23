@@ -1,0 +1,16 @@
+{
+  "parent_image_id": "sha256:bae44d0a14175bdc6c7a3fdbc5a8422e7493c2a0872857a83a88b304ab6b82cc",
+  "image_id": "sha256:f17320f38b419efa296a9862f634afb0ef4272e24818f1a6b20943bcca779239",
+  "local_store_id": "sha256:59717a399b5707e08debbef5a2302172ecc15b5ed7c8552ec12cc080fb592f3a",
+  "tag": "ds41f-1022-parser:s-9dd408b8ee85-rc1",
+  "changed_source_files": [
+    "tests/parser/engine/test_deepseek_v41_token_provenance.py",
+    "vllm/parser/deepseek_v41.py",
+    "vllm/parser/engine/adapters.py",
+    "vllm/parser/parser_manager.py"
+  ],
+  "source_archive_sha256": "56f9e57b2219c8980a5fde1597da8f42622a4ed21ec683d80b5a750f5a32a27c",
+  "source_tree": "2ac30bad166054360075fc2def3143e76f3757c2",
+  "source_head": "9dd408b8ee85eec4491ce7176dc50dd7c87afe22",
+  "native_inputs_changed": false
+}

@@ -1,0 +1,43 @@
+{
+  "window_id": "18793c73-06bb-4100-b0d8-8b836cacd869",
+  "duration_minutes": 12.33792443672816,
+  "candidate_image_id": "sha256:14d5bb2c49aad6ad5b09c93beb70379c4088c128162e24bb418d593e5e7853f5",
+  "tool_calls_passed": 12,
+  "tool_followups_passed": 2,
+  "quality_passed": 20,
+  "cache_checks_passed": 13,
+  "single_request_lengths_passed": [
+    32768,
+    131072,
+    262144,
+    524288,
+    1000000
+  ],
+  "failed_assertion": "AssertionError: Requested concurrency was not observed",
+  "c16_successful_requests": 16,
+  "c16_peak_running": 5.0,
+  "failed_rc2_and_fixed_rc3_token_ids_identical": true,
+  "restored": true,
+  "telemetry": {
+    "spark01": {
+      "minimum_mem_available_gib": 21.09625244140625,
+      "maximum_temperature_c": 78,
+      "swap_growth_kib": 0
+    },
+    "spark02": {
+      "minimum_mem_available_gib": 22.406494140625,
+      "maximum_temperature_c": 78,
+      "swap_growth_kib": 0
+    },
+    "spark03": {
+      "minimum_mem_available_gib": 22.55291748046875,
+      "maximum_temperature_c": 79,
+      "swap_growth_kib": 0
+    },
+    "spark04": {
+      "minimum_mem_available_gib": 22.1964111328125,
+      "maximum_temperature_c": 79,
+      "swap_growth_kib": 0
+    }
+  }
+}

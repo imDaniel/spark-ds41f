@@ -1,0 +1,6 @@
+live: running: 4 nodes, TP4, context 1,048,576, KV 10.5 GiB, image ds41f-1022-parser:s-b70fe11a88b3-rc3, started from experiments/2026-10-23-1022-parser-byte-alignment/cluster.json
+spark01: stop exact container ds41f-1022-parser-rc3 and stop its memguard
+spark02: stop exact container ds41f-1022-parser-rc3 and stop its memguard
+spark03: stop exact container ds41f-1022-parser-rc3 and stop its memguard
+spark04: stop exact container ds41f-1022-parser-rc3 and stop its memguard
+plan only; pass --apply to stop the cluster

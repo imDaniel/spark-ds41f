@@ -1,0 +1,20 @@
+{
+  "window_id": "2fb58ec6-68f8-457f-94f4-bce64c95c2f6",
+  "kernel_sha256": "98a749611f22748d76fa3a0726b43617cde67f27a5f66a712d2b99ae5d1df52b",
+  "reviewed_xids": [
+    {
+      "code": 43,
+      "pid": 3325257,
+      "at": "2026-10-23T20:32:32+08:00"
+    },
+    {
+      "code": 43,
+      "pid": 3325973,
+      "at": "2026-10-23T20:32:40+08:00"
+    }
+  ],
+  "basis": "Two Engram child tests intentionally stop their CUDA contexts on read failure/timeout; both tests passed. Subsequent GPU tests ran successfully. Fresh deterministic CUDA probe passed with no new kernel event. nvidia-smi reports GPU Recovery Action None, no GPU processes, 41 C. Xid 43 is an application-level fault per NVIDIA. Exact timestamps/codes plus continuing successful GPU execution support attribution; child host PID mapping was not recorded.",
+  "source": "https://docs.nvidia.com/deploy/xid-errors/analyzing-xid-catalog.html",
+  "scope": "Restore only the pinned original r6x under existing window authorization; no GPU reset, Docker restart, service promotion or PR merge",
+  "probe_sha256": "fd0cfabc3295b1abd73bbfbd2575da7be6f14a144dd65924540e85ebdbaa025f"
+}

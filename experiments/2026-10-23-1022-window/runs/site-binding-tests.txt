@@ -1,0 +1,11 @@
+test_alias_drift_rejected (test_site.BindingTests.test_alias_drift_rejected) ... ok
+test_command_errors_not_success (test_site.BindingTests.test_command_errors_not_success) ... ok
+test_drain_does_not_cut_live_stream (test_site.BindingTests.test_drain_does_not_cut_live_stream) ... ok
+test_firewall_scoped (test_site.BindingTests.test_firewall_scoped) ... ok
+test_queue_needs_both_metrics (test_site.BindingTests.test_queue_needs_both_metrics) ... ok
+test_queue_sums_engines (test_site.BindingTests.test_queue_sums_engines) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.001s
+
+OK

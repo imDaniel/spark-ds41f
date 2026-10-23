@@ -1,0 +1,26 @@
+test_cross_scale_reuse_is_rejected (test_cache_screen.CacheContractTests.test_cross_scale_reuse_is_rejected) ... ok
+test_mixed_row_output_drift_is_rejected (test_cache_screen.CacheContractTests.test_mixed_row_output_drift_is_rejected) ... ok
+test_short_or_uncached_requests_cannot_pass (test_cache_screen.CacheContractTests.test_short_or_uncached_requests_cannot_pass) ... ok
+test_success_requires_real_cold_and_warm_evidence (test_cache_screen.CacheContractTests.test_success_requires_real_cold_and_warm_evidence) ... ok
+test_accepted_request_is_failure (test_rejection.RejectionTests.test_accepted_request_is_failure) ... ok
+test_generated_content_cannot_precede_rejection (test_rejection.RejectionTests.test_generated_content_cannot_precede_rejection) ... ok
+test_http_400 (test_rejection.RejectionTests.test_http_400) ... ok
+test_server_fault_is_not_client_rejection (test_rejection.RejectionTests.test_server_fault_is_not_client_rejection) ... ok
+test_sse_400_without_content (test_rejection.RejectionTests.test_sse_400_without_content) ... ok
+test_alias_drift_rejected (test_site.BindingTests.test_alias_drift_rejected) ... ok
+test_command_errors_not_success (test_site.BindingTests.test_command_errors_not_success) ... ok
+test_drain_does_not_cut_live_stream (test_site.BindingTests.test_drain_does_not_cut_live_stream) ... /opt/homebrew/Cellar/python@3.15/3.15.0_1/Frameworks/Python.framework/Versions/3.15/lib/python3.15/tempfile.py:538: ResourceWarning: Implicitly cleaning up <HTTPError 400: ''>
+  _warnings.warn(self.warn_message, ResourceWarning)
+ok
+test_firewall_scoped (test_site.BindingTests.test_firewall_scoped) ... ok
+test_loopback_probe_does_not_block_external_drain (test_site.BindingTests.test_loopback_probe_does_not_block_external_drain) ... ok
+test_partial_gate_is_observed_as_draining (test_site.BindingTests.test_partial_gate_is_observed_as_draining) ... ok
+test_queue_needs_both_metrics (test_site.BindingTests.test_queue_needs_both_metrics) ... ok
+test_queue_sums_engines (test_site.BindingTests.test_queue_sums_engines) ... ok
+test_restore_removes_both_owned_phases (test_site.BindingTests.test_restore_removes_both_owned_phases) ... ok
+test_unrelated_gateway_model_is_outside_window (test_site.BindingTests.test_unrelated_gateway_model_is_outside_window) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.030s
+
+OK

@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "runtime_commit": "c8de3319537dd0ffe842dd99b671656a62fe5837",
+  "window_id": "06ad9132-7d71-4777-81d9-8a776e3a9e98",
+  "status": "failed_then_restored",
+  "scope": "S-loaded only; every test generation explicitly carries profile and scale",
+  "candidate": {
+    "head": "c8de3319537dd0ffe842dd99b671656a62fe5837",
+    "image_id": "sha256:bae44d0a14175bdc6c7a3fdbc5a8422e7493c2a0872857a83a88b304ab6b82cc",
+    "profile_sha256": "e06b8cb60f3f382157ef6632a93efdd90185beafa2251a8c29575f09c45cd45b",
+    "config_sha256": "ad976735ee8ff41ae208861fd9dc5c4d0b4935eb87eab1b8e118d1191e652c98",
+    "nodes_sha256": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+    "mounts_sha256": "220a7e5e69099c68f7b4b3ad12aa59b84a22875566b07878a524f8e0385a7673",
+    "model_identity": "b35c43fda128481f17b7ee878df2c2f93fd6db416df451b080cc8d00e166f7d0",
+    "vllm_tree": "ab7b6505447360a926fee000df5dc59b2ff770ff"
+  },
+  "planned_generations": 29,
+  "attempted_generations": 13,
+  "passed_bounded_functional_checks": 12,
+  "failed_tool_literal_checks": 1,
+  "not_run": 16,
+  "unrun_breakdown": {
+    "scale1_tool_followup": 1,
+    "scale4_tool_call_and_followup": 2,
+    "cache_mixed_and_cancel": 13
+  },
+  "scale_zero_return_identical": true,
+  "functional_responses_hitting_128_token_limit": 5,
+  "failure": {
+    "scale": 1,
+    "expected": "<｜end▁of▁sentence｜>",
+    "actual": "",
+    "path": "nested[quote\"key]",
+    "normal_role_type_and_escaped_key_preserved": true,
+    "raw_generated_token_ids_available": false,
+    "root_cause_confirmed": false
+  },
+  "opened_at": 1792753971.8488,
+  "restored_at": 1792754289.373125,
+  "window_minutes": 5.292,
+  "resources": {
+    "spark01": {
+      "samples": 29,
+      "min_memavailable_gib": 21.12,
+      "max_gpu_temperature_c": 51,
+      "max_swap_growth_mib": 0.0
+    },
+    "spark02": {
+      "samples": 29,
+      "min_memavailable_gib": 22.643,
+      "max_gpu_temperature_c": 53,
+      "max_swap_growth_mib": 0.0
+    },
+    "spark03": {
+      "samples": 29,
+      "min_memavailable_gib": 22.797,
+      "max_gpu_temperature_c": 49,
+      "max_swap_growth_mib": 0.0
+    },
+    "spark04": {
+      "samples": 29,
+      "min_memavailable_gib": 22.299,
+      "max_gpu_temperature_c": 49,
+      "max_swap_growth_mib": 0.0
+    }
+  },
+  "recovery": {
+    "nodes": [
+      {
+        "node": 1,
+        "identity_matches_before": true,
+        "running": true,
+        "restart_count": 0
+      },
+      {
+        "node": 2,
+        "identity_matches_before": true,
+        "running": true,
+        "restart_count": 0
+      },
+      {
+        "node": 3,
+        "identity_matches_before": true,
+        "running": true,
+        "restart_count": 0
+      },
+      {
+        "node": 4,
+        "identity_matches_before": true,
+        "running": true,
+        "restart_count": 0
+      }
+    ],
+    "deepseek_gateway_unchanged": true,
+    "hold_absent": true,
+    "owned_ingress_rules_absent": true,
+    "watchdog_stopped": true,
+    "temporary_gateway_keys_removed": true
+  },
+  "candidate_promoted": false,
+  "pr_merged": false,
+  "notes": [
+    "The 12 successes cover arithmetic, stream/nonempty and return-to-zero checks; they are not broad quality acceptance.",
+    "No U/E/r6x comparison or further GPU attempt after the failed request.",
+    "CPU parser replay is synthetic evidence; no runtime patch was changed.",
+    "The controller service exits 1 for the failed test although recovery reached closed."
+  ]
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "node": 1,
+    "pinned_identity_and_command_unchanged": true,
+    "container": "7f023f6b35333f097d8c45d778b986b182729e5677953d846141645add457817",
+    "started_at": "2026-10-23T10:18:58.996152416Z",
+    "restart_count": 0
+  },
+  {
+    "node": 2,
+    "pinned_identity_and_command_unchanged": true,
+    "container": "70922da8ca47b9ad2589cc50c1d9d39000f4b7f2759622b1af86b48034b46279",
+    "started_at": "2026-10-23T10:18:58.13223718Z",
+    "restart_count": 0
+  },
+  {
+    "node": 3,
+    "pinned_identity_and_command_unchanged": true,
+    "container": "e35b6a74ea493278808ff84411df932ee3272da02d0b1336d4c33ee94cd6a30c",
+    "started_at": "2026-10-23T10:18:58.39552015Z",
+    "restart_count": 0
+  },
+  {
+    "node": 4,
+    "pinned_identity_and_command_unchanged": true,
+    "container": "7531f8e66a4acacf6313b70c7b3a99b18deb5bd55b06c47444372668381d448c",
+    "started_at": "2026-10-23T10:18:58.703850982Z",
+    "restart_count": 0
+  }
+]

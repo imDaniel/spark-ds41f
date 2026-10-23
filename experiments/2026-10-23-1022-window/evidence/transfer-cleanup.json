@@ -1,0 +1,69 @@
+[
+  {
+    "host": "fusionxparkgb10-e4d3",
+    "before_free_bytes": 1097649512448,
+    "after_free_bytes": 1149742604288,
+    "removed_transport_files": [
+      {
+        "file": "/srv/ai-cluster/operations/1022-screen-20261023/artifacts/1022-u-e-s.assembled.tar",
+        "bytes": 25126328320,
+        "allocated_bytes": 25126338560
+      },
+      {
+        "file": "/srv/ai-cluster/operations/1022-screen-20261023/artifacts/retained-base.docker.tar",
+        "bytes": 24991338496,
+        "allocated_bytes": 24991342592
+      },
+      {
+        "file": "/srv/ai-cluster/operations/1022-screen-20261023/artifacts/1022-u-e-s.docker.tar.part",
+        "bytes": 1840634880,
+        "allocated_bytes": 1840640000
+      },
+      {
+        "file": "/srv/ai-cluster/operations/1022-screen-20261023/artifacts/delta.tar.gz",
+        "bytes": 134762452,
+        "allocated_bytes": 134766592
+      }
+    ],
+    "images_and_runtime_retained": true
+  },
+  {
+    "host": "fusionxparkgb10-e70f",
+    "before_free_bytes": 1149070602240,
+    "after_free_bytes": 1174196936704,
+    "removed_transport_files": [
+      {
+        "file": "/srv/ai-cluster/operations/1022-screen-20261023/artifacts/1022-u-e-s.assembled.tar",
+        "bytes": 25126328320,
+        "allocated_bytes": 25126334464
+      }
+    ],
+    "images_and_runtime_retained": true
+  },
+  {
+    "host": "fusionxparkgb10-e620",
+    "before_free_bytes": 1150386044928,
+    "after_free_bytes": 1175512383488,
+    "removed_transport_files": [
+      {
+        "file": "/srv/ai-cluster/operations/1022-screen-20261023/artifacts/1022-u-e-s.assembled.tar",
+        "bytes": 25126328320,
+        "allocated_bytes": 25126338560
+      }
+    ],
+    "images_and_runtime_retained": true
+  },
+  {
+    "host": "fusionxparkgb10-e5b9",
+    "before_free_bytes": 1149025935360,
+    "after_free_bytes": 1174152269824,
+    "removed_transport_files": [
+      {
+        "file": "/srv/ai-cluster/operations/1022-screen-20261023/artifacts/1022-u-e-s.assembled.tar",
+        "bytes": 25126328320,
+        "allocated_bytes": 25126334464
+      }
+    ],
+    "images_and_runtime_retained": true
+  }
+]

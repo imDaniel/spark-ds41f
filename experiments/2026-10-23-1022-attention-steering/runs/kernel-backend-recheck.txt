@@ -1,0 +1,47 @@
+test_absent_backend_means_b12x (test_kernel_backend.KernelBackendTest.test_absent_backend_means_b12x) ... ok
+test_b12x_profile_requires_no_tilelang_sources (test_kernel_backend.KernelBackendTest.test_b12x_profile_requires_no_tilelang_sources) ... ok
+test_build_inputs_include_tilelang_only_when_listed (test_kernel_backend.KernelBackendTest.test_build_inputs_include_tilelang_only_when_listed) ... ok
+test_candidate_build_inputs_record_every_source (test_kernel_backend.KernelBackendTest.test_candidate_build_inputs_record_every_source) ... ok
+test_candidates_match_their_b12x_configuration_except_the_policy (test_kernel_backend.KernelBackendTest.test_candidates_match_their_b12x_configuration_except_the_policy) ... ok
+test_environment_must_match_the_backend (test_kernel_backend.KernelBackendTest.test_environment_must_match_the_backend) ... ok
+test_every_recipe_shape_runs_tilelang (test_kernel_backend.KernelBackendTest.test_every_recipe_shape_runs_tilelang) ... ok
+test_existing_profiles_and_locks_are_unaffected (test_kernel_backend.KernelBackendTest.test_existing_profiles_and_locks_are_unaffected) ... ok
+test_image_plan_selects_the_tilelang_stage_only_for_its_sources (test_kernel_backend.KernelBackendTest.test_image_plan_selects_the_tilelang_stage_only_for_its_sources) ... ok
+test_lock_without_tilelang_sources_fails (test_kernel_backend.KernelBackendTest.test_lock_without_tilelang_sources_fails) ... ok
+test_missing_capability_fails (test_kernel_backend.KernelBackendTest.test_missing_capability_fails) ... ok
+test_missing_or_mismatched_labels_fail (test_kernel_backend.KernelBackendTest.test_missing_or_mismatched_labels_fail) ... ok
+test_missing_patch_is_reported_without_crashing (test_kernel_backend.KernelBackendTest.test_missing_patch_is_reported_without_crashing) ... ok
+test_promoted_tp4_profile_runs_tilelang (test_kernel_backend.KernelBackendTest.test_promoted_tp4_profile_runs_tilelang) ... ok
+test_serve_arguments_must_match_the_backend (test_kernel_backend.KernelBackendTest.test_serve_arguments_must_match_the_backend) ... ok
+test_smoke_imports_tilelang_and_the_capability_module (test_kernel_backend.KernelBackendTest.test_smoke_imports_tilelang_and_the_capability_module) ... ok
+test_sparknet_builds_on_the_tilelang_runtime (test_kernel_backend.KernelBackendTest.test_sparknet_builds_on_the_tilelang_runtime) ... ok
+test_speculative_attention_backend_must_match (test_kernel_backend.KernelBackendTest.test_speculative_attention_backend_must_match) ... ok
+test_tilelang_candidate_passes_doctor (test_kernel_backend.KernelBackendTest.test_tilelang_candidate_passes_doctor) ... ok
+test_tuning_catalog_mirrors_the_b12x_profiles (test_kernel_backend.KernelBackendTest.test_tuning_catalog_mirrors_the_b12x_profiles) ... ok
+test_tilelang_profiles_expect_their_manifest_trees (test_kernel_backend.TileLangProfileLabelTest.test_tilelang_profiles_expect_their_manifest_trees)
+The launch preflight refuses a TileLang profile whose expected image trees ... 
+  test_tilelang_profiles_expect_their_manifest_trees (test_kernel_backend.TileLangProfileLabelTest.test_tilelang_profiles_expect_their_manifest_trees) (profile='experiments/2026-10-19-r6x-steering-gpu/official.json')
+The launch preflight refuses a TileLang profile whose expected image trees ... FAIL
+
+======================================================================
+FAIL: test_tilelang_profiles_expect_their_manifest_trees (test_kernel_backend.TileLangProfileLabelTest.test_tilelang_profiles_expect_their_manifest_trees) (profile='experiments/2026-10-19-r6x-steering-gpu/official.json')
+The launch preflight refuses a TileLang profile whose expected image trees
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/tests/test_kernel_backend.py", line 499, in test_tilelang_profiles_expect_their_manifest_trees
+    self.assertEqual(kernel_backend.source_problems(data, lock, manifest), [])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['kernel_backend tilelang requires contain[72 chars]ree'] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+'kernel_backend tilelang requires container.expected_labels local.spark3.vllm.tree to match its source manifest tree'
+
++ []
+- ['kernel_backend tilelang requires container.expected_labels '
+-  'local.spark3.vllm.tree to match its source manifest tree']
+
+----------------------------------------------------------------------
+Ran 21 tests in 56.691s
+
+FAILED (failures=1)

@@ -216,9 +216,8 @@ class UnqualifiedShapeTest(unittest.TestCase):
         return "started"
 
     def test_an_unqualified_shape_is_refused_unless_overridden(self) -> None:
-        # The 4 KiB-page triangle was never benched with the recipe's image, and r6x's path
-        # change on the triangle awaits its release run.
-        for shape in ("tp3-triangle-4k", "tp3-triangle"):
+        # Neither triangle shape was qualified on the site steering image.
+        for shape in ("tp3-triangle", "tp3-triangle-4k"):
             unqualified = spark.cluster_recipe.resolve(spark.read_json("config/cluster.json"), shape)
             self.assertNotIn("benchmark_reference", unqualified)
             self.assertIn(f"no release benchmark qualifies this recipe's image on {shape}", self.start(unqualified))

@@ -1,0 +1,6 @@
+Using CPython 3.12.3 interpreter at: /usr/bin/python3
+Creating virtual environment at: /tmp/replay-env
+ImportError while loading conftest '/opt/spark3/candidate/vllm/tests/conftest.py'.
+tests/conftest.py:7: in <module>
+    from tblib import pickling_support
+E   ModuleNotFoundError: No module named 'tblib'

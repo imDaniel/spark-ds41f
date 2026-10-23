@@ -1,0 +1,33 @@
+{
+  "nodes": [
+    {
+      "node": 1,
+      "identity_matches_before": true,
+      "running": true,
+      "restart_count": 0
+    },
+    {
+      "node": 2,
+      "identity_matches_before": true,
+      "running": true,
+      "restart_count": 0
+    },
+    {
+      "node": 3,
+      "identity_matches_before": true,
+      "running": true,
+      "restart_count": 0
+    },
+    {
+      "node": 4,
+      "identity_matches_before": true,
+      "running": true,
+      "restart_count": 0
+    }
+  ],
+  "deepseek_gateway_unchanged": true,
+  "hold_absent": true,
+  "owned_ingress_rules_absent": true,
+  "watchdog_stopped": true,
+  "temporary_gateway_keys_removed": true
+}

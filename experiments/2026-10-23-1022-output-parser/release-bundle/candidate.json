@@ -1,0 +1,36 @@
+{
+  "description": "Release tests (output-parser-rc1): the manifest's vLLM test files in the image, chunked with timeouts; per-test outcomes under /c/release-tests.",
+  "image": "sha256:f17320f38b419efa296a9862f634afb0ef4272e24818f1a6b20943bcca779239",
+  "env": {
+    "HF_HUB_OFFLINE": "1",
+    "PYTHONPATH": "/b",
+    "TILELANG_CACHE_DIR": "/c/tilelang-release-tests",
+    "ENGRAM_ROWS_TEST_DIR": "/c/engram-rows-test"
+  },
+  "workdir": "/opt/spark3/candidate/vllm",
+  "io_uring": true,
+  "argv": [
+    "/b/release_test_runner.py",
+    "/b/manifest.json",
+    "/c/release-tests/output-parser-rc1"
+  ],
+  "verdict": "exit",
+  "mounts": [
+    [
+      "manifest.json",
+      "/b/manifest.json"
+    ],
+    [
+      "release_test_runner.py",
+      "/b/release_test_runner.py"
+    ],
+    [
+      "tblib_stub.py",
+      "/b/tblib_stub.py"
+    ],
+    [
+      "offline_skip.py",
+      "/b/offline_skip.py"
+    ]
+  ]
+}

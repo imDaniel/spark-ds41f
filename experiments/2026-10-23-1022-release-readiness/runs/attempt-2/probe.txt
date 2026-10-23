@@ -1,0 +1,1 @@
+{"passed": true, "sum": 16777216.0, "device": "NVIDIA GB10"}

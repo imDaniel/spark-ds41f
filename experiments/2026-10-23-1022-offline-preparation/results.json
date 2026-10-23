@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "completed_at": "2026-10-23T06:57:43.121455+00:00",
+  "offline_artifacts_complete": true,
+  "recovery_review_complete": true,
+  "automatic_recovery_execution_ready": false,
+  "automatic_recovery_note": "Reviewed contracts only; actual execution wrapper/watchdog wiring, installation and injected-failure tests remain a pre-window gate",
+  "candidate_source_commit": "7252899c6498aae4a9149a6429e9f79d0dfdb538",
+  "local_preparation_published": false,
+  "images_built": 3,
+  "image_archive": {
+    "path": ".work/1022-offline-preparation/images/1022-u-e-s.docker.tar",
+    "bytes": 25126323200,
+    "sha256": "428dcba72f6f9198447faa5a3bc1d055fc3830923ca5647ee3e3d58b8e3506dd",
+    "portable_config_ids_verified": {
+      "ds41f-1022-screen:u-8fc15c18f890-offline1": "sha256:7a95695066ca8c007f55e885a5b3a316ff2a8337eefc0ae4837eb55647937c45",
+      "ds41f-1022-screen:e-a13d993616f6-offline1": "sha256:79ef9b6571299ca41faa59949644db40706b4376c2589d9d3c3f8301687cdc50",
+      "ds41f-1022-screen:s-dea96d04ea9e-offline1": "sha256:bae44d0a14175bdc6c7a3fdbc5a8422e7493c2a0872857a83a88b304ab6b82cc"
+    },
+    "node_distribution": false
+  },
+  "tests": {
+    "arm64-steering-cpu": {
+      "tests": 126,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "encoder-u-reference": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "encoder-e": {
+      "tests": 66,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "encoder-s": {
+      "tests": 66,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "profile": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "recovery-contract": {
+      "tests": 35,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "actual_openai_request_cpu_check": "passed; no GPU",
+  "native_libraries_identical_to_retained_parent": 32,
+  "doctor_profiles_passed": [
+    "u",
+    "e",
+    "s-unloaded",
+    "s-loaded"
+  ],
+  "full_build_input_checks_passed": [
+    "u",
+    "e",
+    "s"
+  ],
+  "gpu_tests_run": false,
+  "tp4_tests_run": false,
+  "service_lifecycle_applied": false,
+  "node_sync_or_image_distribution": false,
+  "pr_merged": false,
+  "service_unchanged_receipt": "runs/service-unchanged.json",
+  "maintenance_window": {
+    "reservation_minutes": 90,
+    "expected_range_minutes": [
+      70,
+      90
+    ],
+    "restore_reserve_minutes": 15,
+    "no_new_jobs_after_minute": 75,
+    "full_release_or_1m_validation_included": false
+  },
+  "pre_window_gates": [
+    "Explicit runtime authorization",
+    "Publish frozen preparation/configuration revision to own fork; PR may remain draft and unmerged",
+    "Stage and verify candidate image/profile/source on all ranks",
+    "Implement and review actual independent recovery wrapper/watchdog wiring, then install and fault-test it without serving changes",
+    "Refresh all identities and hold/idle/gateway ingress checks"
+  ]
+}

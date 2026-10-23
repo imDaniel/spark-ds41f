@@ -1,0 +1,821 @@
+{
+  "arm": "s-unloaded",
+  "rows": [
+    {
+      "kind": "functional",
+      "scale": null,
+      "cycle": 0,
+      "prompt": 0,
+      "text": "Hi! 👋 How can I help you today?",
+      "text_sha256": "417d9dca790e041dc2b255a8dbddf51d890bb6e5daa2a97879ee98739c079e57",
+      "ttft": 0.14296665799702168,
+      "duration": 0.24216664000050514,
+      "usage": {
+        "prompt_tokens": 7,
+        "total_tokens": 19,
+        "completion_tokens": 12,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 110.825162039964
+    },
+    {
+      "kind": "functional",
+      "scale": null,
+      "cycle": 0,
+      "prompt": 1,
+      "text": "4",
+      "text_sha256": "4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a",
+      "ttft": 0.13204960500297602,
+      "duration": 0.1321515100025863,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 18,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 1000.0
+    },
+    {
+      "kind": "functional",
+      "scale": null,
+      "cycle": 0,
+      "prompt": 2,
+      "text": "# Median Function\n\n```python\ndef median(numbers):\n    \"\"\"\n    Return the median of a nonempty list of numbers.\n    \n    The median is the middle value when the numbers are sorted.\n    For an even-length list, it's the average of the two middle values.\n    \n    Args:\n        numbers: A nonempty list of numbers (int or float).\n    \n    Returns:\n        The median as a float.\n    \n    Raises:\n        ValueError: If the list is empty.\n    \"\"\"\n    if not numbers:\n        raise ValueError(\"Cannot compute median of an empty list\")\n    \n    sorted_nums = sorted(numbers)\n   ",
+      "text_sha256": "d15cf4ea64dd634b672e9de72d01a38e633cfa4b6a059850e9b3d458320fbb3e",
+      "ttft": 0.12558857099793386,
+      "duration": 1.1613255739976012,
+      "usage": {
+        "prompt_tokens": 20,
+        "total_tokens": 148,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 122.61645830493265
+    },
+    {
+      "kind": "functional",
+      "scale": null,
+      "cycle": 0,
+      "prompt": 3,
+      "text": "1. **触发层次不同**：TCP 重传由传输层在丢包或超时（RTO）时自动触发，对应用透明；应用层重试由应用代码在请求失败、超时或收到错误响应时主动发起，需业务逻辑显式实现。  \n2. **重试粒度不同**：TCP 重传以报文段为单位，只保证字节流可靠到达，不感知请求边界；应用层重试以完整请求/事务为单位，可结合幂等性、业务状态决定是否重试。  \n3. **风险与语义不同**：TCP ",
+      "text_sha256": "6b8ab3415578d8cc0a4f2f65c9fc1061aa45958dd4a070dc79e09360ad00dbb5",
+      "ttft": 0.13870521599892527,
+      "duration": 1.6467665589989338,
+      "usage": {
+        "prompt_tokens": 18,
+        "total_tokens": 146,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 84.21309633321499
+    },
+    {
+      "kind": "functional",
+      "scale": null,
+      "cycle": 0,
+      "prompt": 4,
+      "text": "<｜end▁of▁sentence｜>",
+      "text_sha256": "8d7e65dd2fb76bd687ad8e41e6a68f69bcec565e2f0bc96189e4d7cf38e29290",
+      "ttft": 0.46897860600074637,
+      "duration": 0.4691431040009775,
+      "usage": {
+        "prompt_tokens": 24,
+        "total_tokens": 37,
+        "completion_tokens": 13,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 12000.0
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "missing",
+        "steering_scale": 0
+      },
+      "transport": "http",
+      "status": 400,
+      "stream": false
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "missing",
+        "steering_scale": 0
+      },
+      "transport": "sse",
+      "status": 400,
+      "stream": true,
+      "error": {
+        "message": "steering is not enabled on this server (parameter=steering_profile)",
+        "type": "BadRequestError",
+        "param": "steering_profile",
+        "code": 400
+      }
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": -1
+      },
+      "transport": "http",
+      "status": 400,
+      "stream": false
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": -1
+      },
+      "transport": "sse",
+      "status": 400,
+      "stream": true,
+      "error": {
+        "message": "steering_scale must be finite and in [0, 4] (parameter=steering_scale)",
+        "type": "BadRequestError",
+        "param": "steering_scale",
+        "code": 400
+      }
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": true
+      },
+      "transport": "http",
+      "status": 400,
+      "stream": false
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": true
+      },
+      "transport": "http",
+      "status": 400,
+      "stream": true
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": 5
+      },
+      "transport": "http",
+      "status": 400,
+      "stream": false
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": 5
+      },
+      "transport": "sse",
+      "status": 400,
+      "stream": true,
+      "error": {
+        "message": "steering_scale must be finite and in [0, 4] (parameter=steering_scale)",
+        "type": "BadRequestError",
+        "param": "steering_scale",
+        "code": 400
+      }
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": "nan"
+      },
+      "transport": "http",
+      "status": 400,
+      "stream": false
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": "nan"
+      },
+      "transport": "sse",
+      "status": 400,
+      "stream": true,
+      "error": {
+        "message": "steering_scale must be finite and in [0, 4] (parameter=steering_scale)",
+        "type": "BadRequestError",
+        "param": "steering_scale",
+        "code": 400
+      }
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": "inf"
+      },
+      "transport": "http",
+      "status": 400,
+      "stream": false
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": "inf"
+      },
+      "transport": "sse",
+      "status": 400,
+      "stream": true,
+      "error": {
+        "message": "steering_scale must be finite and in [0, 4] (parameter=steering_scale)",
+        "type": "BadRequestError",
+        "param": "steering_scale",
+        "code": 400
+      }
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": "-inf"
+      },
+      "transport": "http",
+      "status": 400,
+      "stream": false
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": "-inf"
+      },
+      "transport": "sse",
+      "status": 400,
+      "stream": true,
+      "error": {
+        "message": "steering_scale must be finite and in [0, 4] (parameter=steering_scale)",
+        "type": "BadRequestError",
+        "param": "steering_scale",
+        "code": 400
+      }
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": 1
+      },
+      "transport": "http",
+      "status": 400,
+      "stream": false
+    },
+    {
+      "kind": "invalid",
+      "input": {
+        "steering_profile": "heretic-1017-attn-v1",
+        "steering_scale": 1
+      },
+      "transport": "sse",
+      "status": 400,
+      "stream": true,
+      "error": {
+        "message": "steering is not enabled on this server (parameter=steering_profile)",
+        "type": "BadRequestError",
+        "param": "steering_profile",
+        "code": 400
+      }
+    },
+    {
+      "kind": "cancel",
+      "cancelled": true,
+      "ttft": 0.09796523099794285
+    },
+    {
+      "kind": "after-cancel",
+      "text": "OK",
+      "text_sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3",
+      "ttft": 0.10035578599854489,
+      "duration": 0.1004802360002941,
+      "usage": {
+        "prompt_tokens": 8,
+        "total_tokens": 10,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 1000.0
+    },
+    {
+      "kind": "interleaved-c4",
+      "scale": null,
+      "text": "12",
+      "text_sha256": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+      "ttft": 0.1556813789975422,
+      "duration": 0.15575579500000458,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 18,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 1000.0
+    },
+    {
+      "kind": "interleaved-c4",
+      "scale": null,
+      "text": "12",
+      "text_sha256": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+      "ttft": 0.1547053029971721,
+      "duration": 0.15482280799915316,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 18,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 1000.0
+    },
+    {
+      "kind": "interleaved-c4",
+      "scale": null,
+      "text": "12",
+      "text_sha256": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+      "ttft": 0.15424065799743403,
+      "duration": 0.154518276998715,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 18,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 1000.0
+    },
+    {
+      "kind": "interleaved-c4",
+      "scale": null,
+      "text": "12",
+      "text_sha256": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+      "ttft": 0.15370834699933766,
+      "duration": 0.15383785299854935,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 18,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 1000.0
+    },
+    {
+      "kind": "performance",
+      "prefill": 1024,
+      "concurrency": 1,
+      "batch_seconds": 1.0379834079976717,
+      "text": " This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence.",
+      "text_sha256": "08debfb7d35f3db3aa5ed98e13bd4f088175c93e98f3cb7098e9f1d8e44ca38f",
+      "ttft": 0.2856747989972064,
+      "duration": 1.037356392997026,
+      "usage": {
+        "prompt_tokens": 1024,
+        "total_tokens": 1152,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 168.95132627439364
+    },
+    {
+      "kind": "performance",
+      "prefill": 1024,
+      "concurrency": 4,
+      "batch_seconds": 1.3935065400000894,
+      "text": " This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence.",
+      "text_sha256": "08debfb7d35f3db3aa5ed98e13bd4f088175c93e98f3cb7098e9f1d8e44ca38f",
+      "ttft": 0.35516952900070464,
+      "duration": 1.3570548909992795,
+      "usage": {
+        "prompt_tokens": 1024,
+        "total_tokens": 1152,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 768
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 126.75882321209745
+    },
+    {
+      "kind": "performance",
+      "prefill": 1024,
+      "concurrency": 4,
+      "batch_seconds": 1.3935092120009358,
+      "text": " This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence.",
+      "text_sha256": "08debfb7d35f3db3aa5ed98e13bd4f088175c93e98f3cb7098e9f1d8e44ca38f",
+      "ttft": 0.40246896499957074,
+      "duration": 1.3921354199992493,
+      "usage": {
+        "prompt_tokens": 1024,
+        "total_tokens": 1152,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 768
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 128.32440759453564
+    },
+    {
+      "kind": "performance",
+      "prefill": 1024,
+      "concurrency": 4,
+      "batch_seconds": 1.3935100600028818,
+      "text": " This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence.",
+      "text_sha256": "08debfb7d35f3db3aa5ed98e13bd4f088175c93e98f3cb7098e9f1d8e44ca38f",
+      "ttft": 0.35452190499927383,
+      "duration": 1.3564194120008324,
+      "usage": {
+        "prompt_tokens": 1024,
+        "total_tokens": 1152,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 768
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 126.75800932662229
+    },
+    {
+      "kind": "performance",
+      "prefill": 1024,
+      "concurrency": 4,
+      "batch_seconds": 1.393510812002205,
+      "text": " This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence.",
+      "text_sha256": "08debfb7d35f3db3aa5ed98e13bd4f088175c93e98f3cb7098e9f1d8e44ca38f",
+      "ttft": 0.3535060540016275,
+      "duration": 1.3555749869992724,
+      "usage": {
+        "prompt_tokens": 1024,
+        "total_tokens": 1152,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 768
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 126.73585345893278
+    },
+    {
+      "kind": "performance",
+      "prefill": 32768,
+      "concurrency": 1,
+      "batch_seconds": 5.409844542999053,
+      "text": " This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence.",
+      "text_sha256": "08debfb7d35f3db3aa5ed98e13bd4f088175c93e98f3cb7098e9f1d8e44ca38f",
+      "ttft": 4.643389279997791,
+      "duration": 5.409595723998791,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32896,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 768
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 165.74851646344828
+    },
+    {
+      "kind": "performance",
+      "prefill": 32768,
+      "concurrency": 4,
+      "batch_seconds": 1.534984658999747,
+      "text": " This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence.",
+      "text_sha256": "08debfb7d35f3db3aa5ed98e13bd4f088175c93e98f3cb7098e9f1d8e44ca38f",
+      "ttft": 0.44936420199883287,
+      "duration": 1.4947936089993163,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32896,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 121.47497044012886
+    },
+    {
+      "kind": "performance",
+      "prefill": 32768,
+      "concurrency": 4,
+      "batch_seconds": 1.5349886919975688,
+      "text": " This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence.",
+      "text_sha256": "08debfb7d35f3db3aa5ed98e13bd4f088175c93e98f3cb7098e9f1d8e44ca38f",
+      "ttft": 0.4471531369999866,
+      "duration": 1.492740577999939,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32896,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 121.4608729639233
+    },
+    {
+      "kind": "performance",
+      "prefill": 32768,
+      "concurrency": 4,
+      "batch_seconds": 1.5349901000008686,
+      "text": " This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence.",
+      "text_sha256": "08debfb7d35f3db3aa5ed98e13bd4f088175c93e98f3cb7098e9f1d8e44ca38f",
+      "ttft": 0.49621939300050144,
+      "duration": 1.5291097609988356,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32896,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 122.95440656965006
+    },
+    {
+      "kind": "performance",
+      "prefill": 32768,
+      "concurrency": 4,
+      "batch_seconds": 1.534991603999515,
+      "text": " This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence. This is a neutral performance measurement sentence.",
+      "text_sha256": "08debfb7d35f3db3aa5ed98e13bd4f088175c93e98f3cb7098e9f1d8e44ca38f",
+      "ttft": 0.49357581100048264,
+      "duration": 1.5264624829978857,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32896,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 122.95524841011924
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "nodes": [
+    {
+      "node": 1,
+      "checks": {
+        "head": true,
+        "file_hashes": true,
+        "profile_sha256": true,
+        "weights_present": true,
+        "image": true,
+        "command_sha256": true,
+        "mounts": true,
+        "source_tree": true,
+        "running": true,
+        "hold_removed": true,
+        "clean": true
+      }
+    },
+    {
+      "node": 2,
+      "checks": {
+        "head": true,
+        "file_hashes": true,
+        "profile_sha256": true,
+        "weights_present": true,
+        "image": true,
+        "command_sha256": true,
+        "mounts": true,
+        "source_tree": true,
+        "running": true,
+        "hold_removed": true,
+        "clean": true
+      }
+    },
+    {
+      "node": 3,
+      "checks": {
+        "head": true,
+        "file_hashes": true,
+        "profile_sha256": true,
+        "weights_present": true,
+        "image": true,
+        "command_sha256": true,
+        "mounts": true,
+        "source_tree": true,
+        "running": true,
+        "hold_removed": true,
+        "clean": true
+      }
+    },
+    {
+      "node": 4,
+      "checks": {
+        "head": true,
+        "file_hashes": true,
+        "profile_sha256": true,
+        "weights_present": true,
+        "image": true,
+        "command_sha256": true,
+        "mounts": true,
+        "source_tree": true,
+        "running": true,
+        "hold_removed": true,
+        "clean": true
+      }
+    }
+  ],
+  "gateway_identity_unchanged": true
+}

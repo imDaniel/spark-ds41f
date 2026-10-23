@@ -1,0 +1,471 @@
+{
+  "status": "failed",
+  "rows": [
+    {
+      "kind": "functional",
+      "cycle": 0,
+      "scale": 0,
+      "prompt": 0,
+      "text": "42",
+      "text_sha256": "73475cb40a568e8da8a045ced110137e159f890ac4da883b6b17dc651b3a8049",
+      "ttft": 0.15907932900154265,
+      "duration": 0.15924619200086454,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 18,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 1000.0
+    },
+    {
+      "kind": "functional",
+      "cycle": 0,
+      "scale": 0,
+      "prompt": 1,
+      "text": "```python\ndef add(a, b):\n    return a + b\n```",
+      "text_sha256": "52ef41715ccdb6865f41ee553803832e5b74566ac31c4587f31ca0995f504f35",
+      "ttft": 0.1404904740047641,
+      "duration": 0.21569583900418365,
+      "usage": {
+        "prompt_tokens": 19,
+        "total_tokens": 36,
+        "completion_tokens": 17,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 212.71407729472367
+    },
+    {
+      "kind": "functional",
+      "cycle": 0,
+      "scale": 0,
+      "prompt": 2,
+      "text": "1. **触发层次不同**：TCP 重传由传输层在检测到丢包或超时后自动触发，对应用透明；应用层重试由应用代码在请求失败（如超时、错误码）时主动发起，需业务逻辑显式实现。  \n2. **重试粒度不同**：TCP 重传针对单个 TCP 报文段，保证字节流可靠到达；应用层重试针对整个业务请求（可能跨多个 TCP 连接或包含多次交互），重试的是完整操作。  \n3. **副作用与幂等性不同**：TCP 重",
+      "text_sha256": "f7417e4756abf62d18ad01f13894a83852a430d28b0b1c256da45558e807f363",
+      "ttft": 0.13193288200272946,
+      "duration": 1.741848541998479,
+      "usage": {
+        "prompt_tokens": 18,
+        "total_tokens": 146,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 78.8853698002621
+    },
+    {
+      "kind": "functional",
+      "cycle": 1,
+      "scale": 1,
+      "prompt": 0,
+      "text": "42",
+      "text_sha256": "73475cb40a568e8da8a045ced110137e159f890ac4da883b6b17dc651b3a8049",
+      "ttft": 0.1303914719974273,
+      "duration": 0.13046403200132772,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 18,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 1000.0
+    },
+    {
+      "kind": "functional",
+      "cycle": 1,
+      "scale": 1,
+      "prompt": 1,
+      "text": "Here's a simple Python function that adds two numbers:\n\n```python\ndef add(a, b):\n    return a + b\n```\n\nThis function takes two arguments `a` and `b` and returns their sum using the `+` operator. It works with integers, floats, and even other types that support addition (like strings or lists).\n\nExample usage:\n```python\nprint(add(2, 3))        # 5\nprint(add(1.5, 2.5))   # 4.0\nprint(add(\"Hello, \", \"World!\"))  # Hello, World!\n```",
+      "text_sha256": "c2285a32a893c50d86c5dd5e0dd063a6104292b16bd6b0df1650f29c999bde24",
+      "ttft": 0.13773166500322986,
+      "duration": 1.1769415470043896,
+      "usage": {
+        "prompt_tokens": 19,
+        "total_tokens": 145,
+        "completion_tokens": 126,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 120.28213693689821
+    },
+    {
+      "kind": "functional",
+      "cycle": 1,
+      "scale": 1,
+      "prompt": 2,
+      "text": "1. **触发层次不同**：TCP 重传由传输层在丢包或超时（RTO）时自动触发，对应用透明；应用层重试由业务代码在请求失败、超时或返回错误时主动发起，需应用自行实现。\n2. **重试粒度不同**：TCP 重传以报文段为单位，只保证字节流可靠到达，不感知业务语义；应用层重试以完整请求/事务为单位，可结合幂等性、业务状态做判断。\n3. **副作用与风险不同**：TCP 重传可能造成重复报文但",
+      "text_sha256": "63e249d29f2d55f7a269e304b621ce0bc2ab0191b83e703d795b55004bdfbd3b",
+      "ttft": 0.1308229440037394,
+      "duration": 1.6273308390009333,
+      "usage": {
+        "prompt_tokens": 18,
+        "total_tokens": 146,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 84.8634580672606
+    },
+    {
+      "kind": "functional",
+      "cycle": 2,
+      "scale": 4,
+      "prompt": 0,
+      "text": "42",
+      "text_sha256": "73475cb40a568e8da8a045ced110137e159f890ac4da883b6b17dc651b3a8049",
+      "ttft": 0.10717345199373085,
+      "duration": 0.10725485999864759,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 18,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 1000.0
+    },
+    {
+      "kind": "functional",
+      "cycle": 2,
+      "scale": 4,
+      "prompt": 1,
+      "text": "# Python Function: `add(a, b)`\n\n```python\ndef add(a, b):\n    \"\"\"\n    Returns the sum of two numbers.\n    \n    Args:\n        a: First number (int or float)\n        b: Second number (int or float)\n    \n    Returns:\n        The sum of a and b\n    \"\"\"\n    return a + b\n```\n\n## Usage Example\n\n```python\n# Basic usage\nresult = add(3, 5)\nprint(result)  # Output: 8\n\n# Works with floats too\nprint(add(2.5, 1.5))  # Output: ",
+      "text_sha256": "9e3e05c750680ca1958fb758402dd9f4426e6ef682d77788a9c5b5087c7997a6",
+      "ttft": 0.1269947479959228,
+      "duration": 1.1529219649964944,
+      "usage": {
+        "prompt_tokens": 19,
+        "total_tokens": 147,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 123.7888015083433
+    },
+    {
+      "kind": "functional",
+      "cycle": 2,
+      "scale": 4,
+      "prompt": 2,
+      "text": "1. **触发层次不同**：TCP 重传由传输层在检测到丢包（超时或重复 ACK）时自动触发，对应用层透明；应用层重试由应用代码在业务逻辑判定失败（如超时、错误码、无响应）后主动发起，需开发者显式实现。\n\n2. **重传粒度与语义不同**：TCP 重传以字节流/报文段为单位，保证的是\"数据最终到达\"，但可能造成重复数据且不感知业务语义；应用层重试以请求/事务为单位，可结合幂等性、业务",
+      "text_sha256": "99ed80ccac8e40f3c7538072e6f95f79035f40bcd764a66118150359b1948c58",
+      "ttft": 0.1396908769966103,
+      "duration": 1.6388359919947106,
+      "usage": {
+        "prompt_tokens": 18,
+        "total_tokens": 146,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 84.71414301381886
+    },
+    {
+      "kind": "functional",
+      "cycle": 3,
+      "scale": 0,
+      "prompt": 0,
+      "text": "42",
+      "text_sha256": "73475cb40a568e8da8a045ced110137e159f890ac4da883b6b17dc651b3a8049",
+      "ttft": 0.12686051600030623,
+      "duration": 0.12692235600115964,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 18,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 1000.0
+    },
+    {
+      "kind": "functional",
+      "cycle": 3,
+      "scale": 0,
+      "prompt": 1,
+      "text": "```python\ndef add(a, b):\n    return a + b\n```",
+      "text_sha256": "52ef41715ccdb6865f41ee553803832e5b74566ac31c4587f31ca0995f504f35",
+      "ttft": 0.13814732399623608,
+      "duration": 0.21446141100022942,
+      "usage": {
+        "prompt_tokens": 19,
+        "total_tokens": 36,
+        "completion_tokens": 17,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 209.6075974180533
+    },
+    {
+      "kind": "functional",
+      "cycle": 3,
+      "scale": 0,
+      "prompt": 2,
+      "text": "1. **触发层次不同**：TCP 重传由传输层在检测到丢包或超时后自动触发，对应用透明；应用层重试由应用代码在请求失败（如超时、错误码）时主动发起，需业务逻辑显式实现。  \n2. **重试粒度不同**：TCP 重传针对单个 TCP 报文段，保证字节流可靠到达；应用层重试针对整个业务请求（可能跨多个 TCP 连接或包含多次交互），重试的是完整操作。  \n3. **副作用与幂等性不同**：TCP 重",
+      "text_sha256": "f7417e4756abf62d18ad01f13894a83852a430d28b0b1c256da45558e807f363",
+      "ttft": 0.13070277900260407,
+      "duration": 1.6231488949997583,
+      "usage": {
+        "prompt_tokens": 18,
+        "total_tokens": 146,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 85.09435748797209
+    },
+    {
+      "kind": "tool-call",
+      "scale": 1,
+      "answer": {
+        "id": "chatcmpl-8013738693ee4639",
+        "object": "chat.completion",
+        "created": 1792754162,
+        "model": "deepseek-v4.1-flash",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [
+                {
+                  "id": "chatcmpl-tool-95ca4a622ae873cd",
+                  "type": "function",
+                  "function": {
+                    "name": "record_value",
+                    "arguments": "{\"role\": \"literal user value\", \"type\": \"literal string value\", \"nested\": {\"quote\\\"key\": \"\"}}"
+                  }
+                }
+              ],
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": null,
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.29.1rc1.dev187+gaf1c01499-tp4-662e621b",
+        "usage": {
+          "prompt_tokens": 373,
+          "total_tokens": 464,
+          "completion_tokens": 91,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 0,
+            "multimodal_tokens": null
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "sink_rejection": {
+            "flagged_rows": 0,
+            "flagged_draft_zero": 0,
+            "flagged_drafter": 0,
+            "flagged_prompt": 0,
+            "draft_zero_rejections": 0,
+            "draft_cuts": 0,
+            "fallthroughs": 0
+          }
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": null,
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": null
+      }
+    }
+  ],
+  "error": "ValueError: Tool argument spelling or value changed"
+}

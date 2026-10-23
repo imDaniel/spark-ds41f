@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "runtime_enabled": true,
+  "preparation_published": true,
+  "window_id": "1c967117-c1dc-4d91-b5b9-8adba045cbe7",
+  "holder": "1022-comparison",
+  "controller_host": "fusionxparkgb10-e4d3",
+  "state_dir": "/srv/ai-cluster/operations/1022-screen-20261023/windows/1c967117-c1dc-4d91-b5b9-8adba045cbe7",
+  "hold_path": "/home/admin/spark-hold.json",
+  "nodes": [
+    "spark01",
+    "spark02",
+    "spark03",
+    "spark04"
+  ],
+  "heartbeat_seconds": 900,
+  "poll_seconds": 30,
+  "window_seconds": 2700,
+  "restore_reserve_seconds": 900,
+  "command_seconds": 1200,
+  "observe_max_age_seconds": 30,
+  "drain_seconds": 30,
+  "drain_timeout_seconds": 600,
+  "implementation_files": {
+    "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/window_executor.py": "673dea16f9501f336be3f0fd8d825ed02d7bec149e23f52601239854fc18bff0",
+    "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-recovery-executor/command_worker.py": "9d36a77037e8614488eb32b43c120d95b977c610ba17ae7d542b1a635de4c22e",
+    "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py": "2c4adf0554f25993213666d69d538ceb3e292d516a2268394b3c2094c293ada5",
+    "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/run_window.py": "9bf9ef22ff1635a59d15876d407158b0bf4c4f976db36ca0e9c51f4e0d283055",
+    "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/request_screen.py": "fbf2159deeb5d486a34fbc39132c35073eb612714fe84c2d7920006cbc387bc8",
+    "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/cache_screen.py": "6381a08029dd23656dc7d0de159366e5bd5c5532a6ab0753729b130d2c7f019f",
+    "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/run_remaining.py": "7341abeec3cef1a0022b72828ccbb31b27429a0b35c20232cf05f5b3cced289a"
+  },
+  "services": {
+    "retained": {
+      "repository": "/srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f",
+      "config": "config/cluster-steering-r6x-cache-details-tp4.local.json",
+      "container": "steering-ds41f-r6x-test",
+      "identity": {
+        "head": "223a3bb3498d12f470e876db3b9e1f5bdc8772b6",
+        "image_id": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+        "profile_sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093",
+        "config_sha256": "c26d9fcb996da19b26b243dcc024664a9e004bfa1d91377274607c04dd8ff707",
+        "nodes_sha256": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+        "mounts_sha256": "e243fb40810a104056032d24c0fdb8c874aa08ac66b079b8ff775c75a66ce5c8",
+        "model_identity": "b35c43fda128481f17b7ee878df2c2f93fd6db416df451b080cc8d00e166f7d0",
+        "vllm_tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4"
+      },
+      "files": {
+        "/srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f/config/cluster-steering-r6x-cache-details-tp4.local.json": "c26d9fcb996da19b26b243dcc024664a9e004bfa1d91377274607c04dd8ff707",
+        "/srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f/config/nodes-steering-r6x-acceptance.local.json": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+        "/srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f/bin/spark": "d7744fd381e6a61c4a571ba27beec6a57ea682799abefb4dbfbdea27fb63a73f"
+      },
+      "profile_path": "/srv/ai-cluster/profiles/deepseek-1017-heretic-test/releases/5982288eb290/steering/heretic-1017-attn-v1.safetensors"
+    },
+    "u": {
+      "repository": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+      "config": "experiments/2026-10-23-1022-window/arms/u.json",
+      "container": "ds41f-1022-screen-u",
+      "identity": {
+        "head": "0c186e221c16069e493aa8f53ef51511d699d430",
+        "image_id": "sha256:7a95695066ca8c007f55e885a5b3a316ff2a8337eefc0ae4837eb55647937c45",
+        "profile_sha256": null,
+        "config_sha256": "0caeecfcbdf6bf33248bcffba86957b7c1ef9ef8d932ab809e47a95553b8313c",
+        "nodes_sha256": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+        "mounts_sha256": "52829255d56b1d0b150f36f3f1d970aa15a743124445a3361bf7093d2fb45cca",
+        "model_identity": "b35c43fda128481f17b7ee878df2c2f93fd6db416df451b080cc8d00e166f7d0",
+        "vllm_tree": "e68aa19c8027c34a3dcfeb3ed203f6d285fc4d67"
+      },
+      "files": {
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/bin/spark": "d7744fd381e6a61c4a571ba27beec6a57ea682799abefb4dbfbdea27fb63a73f",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/arms/u.json": "0caeecfcbdf6bf33248bcffba86957b7c1ef9ef8d932ab809e47a95553b8313c",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/config/nodes-1022-attention.local.json": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e"
+      }
+    },
+    "e": {
+      "repository": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+      "config": "experiments/2026-10-23-1022-window/arms/e.json",
+      "container": "ds41f-1022-screen-e",
+      "identity": {
+        "head": "0c186e221c16069e493aa8f53ef51511d699d430",
+        "image_id": "sha256:79ef9b6571299ca41faa59949644db40706b4376c2589d9d3c3f8301687cdc50",
+        "profile_sha256": null,
+        "config_sha256": "c15054e95ea44b3513d7a2e61860abd50400791a722bbb7bf55e12d0c2000068",
+        "nodes_sha256": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+        "mounts_sha256": "d4857a8044c57d22cdb02bb4dc81f09aabad34dfcc62067f47e13af8edf9cf96",
+        "model_identity": "b35c43fda128481f17b7ee878df2c2f93fd6db416df451b080cc8d00e166f7d0",
+        "vllm_tree": "9d8c8336026722c1746d8a7582d6a603331b0348"
+      },
+      "files": {
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/bin/spark": "d7744fd381e6a61c4a571ba27beec6a57ea682799abefb4dbfbdea27fb63a73f",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/arms/e.json": "c15054e95ea44b3513d7a2e61860abd50400791a722bbb7bf55e12d0c2000068",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/config/nodes-1022-attention.local.json": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e"
+      }
+    },
+    "s-unloaded": {
+      "repository": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+      "config": "experiments/2026-10-23-1022-window/arms/s-unloaded.json",
+      "container": "ds41f-1022-screen-s-unloaded",
+      "identity": {
+        "head": "0c186e221c16069e493aa8f53ef51511d699d430",
+        "image_id": "sha256:bae44d0a14175bdc6c7a3fdbc5a8422e7493c2a0872857a83a88b304ab6b82cc",
+        "profile_sha256": null,
+        "config_sha256": "960c85faafb0a941ff1f5b039bd103272942eeace11a00935b97b8c3ecfb2fe8",
+        "nodes_sha256": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+        "mounts_sha256": "c8aed53c560f3b04d80de42dc8801ecfb4d0ede3dffebb7903ee10894e301e6e",
+        "model_identity": "b35c43fda128481f17b7ee878df2c2f93fd6db416df451b080cc8d00e166f7d0",
+        "vllm_tree": "ab7b6505447360a926fee000df5dc59b2ff770ff"
+      },
+      "files": {
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/bin/spark": "d7744fd381e6a61c4a571ba27beec6a57ea682799abefb4dbfbdea27fb63a73f",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/arms/s-unloaded.json": "960c85faafb0a941ff1f5b039bd103272942eeace11a00935b97b8c3ecfb2fe8",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/config/nodes-1022-attention.local.json": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e"
+      }
+    },
+    "s-loaded": {
+      "repository": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+      "config": "experiments/2026-10-23-1022-window/arms/s-loaded.json",
+      "container": "ds41f-1022-screen-s-loaded",
+      "identity": {
+        "head": "0c186e221c16069e493aa8f53ef51511d699d430",
+        "image_id": "sha256:bae44d0a14175bdc6c7a3fdbc5a8422e7493c2a0872857a83a88b304ab6b82cc",
+        "profile_sha256": "e06b8cb60f3f382157ef6632a93efdd90185beafa2251a8c29575f09c45cd45b",
+        "config_sha256": "ad976735ee8ff41ae208861fd9dc5c4d0b4935eb87eab1b8e118d1191e652c98",
+        "nodes_sha256": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+        "mounts_sha256": "220a7e5e69099c68f7b4b3ad12aa59b84a22875566b07878a524f8e0385a7673",
+        "model_identity": "b35c43fda128481f17b7ee878df2c2f93fd6db416df451b080cc8d00e166f7d0",
+        "vllm_tree": "ab7b6505447360a926fee000df5dc59b2ff770ff"
+      },
+      "files": {
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/bin/spark": "d7744fd381e6a61c4a571ba27beec6a57ea682799abefb4dbfbdea27fb63a73f",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/arms/s-loaded.json": "ad976735ee8ff41ae208861fd9dc5c4d0b4935eb87eab1b8e118d1191e652c98",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/config/nodes-1022-attention.local.json": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e"
+      },
+      "profile_path": "/srv/ai-cluster/profiles/deepseek-1017-attention-1022/releases/e06b8cb60f3f/steering/heretic-1017-attn-v1.safetensors"
+    }
+  },
+  "hooks": {
+    "observe": {
+      "argv": [
+        "/usr/bin/python3",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py",
+        "observe"
+      ],
+      "cwd": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+      "files": {
+        "/usr/bin/python3": "c86f21d0da9290ece2d7d49a3f7ed52aed59cb029abdf0ea25c79634f6cbe960",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py": "2c4adf0554f25993213666d69d538ceb3e292d516a2268394b3c2094c293ada5"
+      },
+      "timeout_seconds": 300
+    },
+    "block_ingress": {
+      "argv": [
+        "/usr/bin/python3",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py",
+        "block_ingress"
+      ],
+      "cwd": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+      "files": {
+        "/usr/bin/python3": "c86f21d0da9290ece2d7d49a3f7ed52aed59cb029abdf0ea25c79634f6cbe960",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py": "2c4adf0554f25993213666d69d538ceb3e292d516a2268394b3c2094c293ada5"
+      },
+      "timeout_seconds": 600
+    },
+    "restore_ingress": {
+      "argv": [
+        "/usr/bin/python3",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py",
+        "restore_ingress"
+      ],
+      "cwd": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+      "files": {
+        "/usr/bin/python3": "c86f21d0da9290ece2d7d49a3f7ed52aed59cb029abdf0ea25c79634f6cbe960",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py": "2c4adf0554f25993213666d69d538ceb3e292d516a2268394b3c2094c293ada5"
+      },
+      "timeout_seconds": 300
+    },
+    "verify_retained": {
+      "argv": [
+        "/usr/bin/python3",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py",
+        "verify_retained"
+      ],
+      "cwd": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+      "files": {
+        "/usr/bin/python3": "c86f21d0da9290ece2d7d49a3f7ed52aed59cb029abdf0ea25c79634f6cbe960",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py": "2c4adf0554f25993213666d69d538ceb3e292d516a2268394b3c2094c293ada5"
+      },
+      "timeout_seconds": 300
+    },
+    "stop_owned_jobs": {
+      "argv": [
+        "/usr/bin/python3",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py",
+        "stop_owned_jobs"
+      ],
+      "cwd": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+      "files": {
+        "/usr/bin/python3": "c86f21d0da9290ece2d7d49a3f7ed52aed59cb029abdf0ea25c79634f6cbe960",
+        "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py": "2c4adf0554f25993213666d69d538ceb3e292d516a2268394b3c2094c293ada5"
+      },
+      "timeout_seconds": 300
+    }
+  },
+  "manifest_path": "/srv/ai-cluster/operations/1022-screen-20261023/window.json",
+  "adapter_path": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-window/site_adapter.py",
+  "site_nodes": {
+    "spark01": "10.42.0.1",
+    "spark02": "10.42.0.2",
+    "spark03": "10.42.0.3",
+    "spark04": "10.42.0.4"
+  },
+  "faults_since": "2026-10-23 09:17:00 UTC",
+  "gateway_key_file": "/srv/ai-cluster/operations/1022-screen-20261023/gateway-api.key",
+  "gateway_base": "https://myapi.dlp.life",
+  "gateway_alias_prefix": "DeepSeek-V4.1-Flash",
+  "gateway_model_ids": [
+    "DeepSeek-V4.1-Flash",
+    "DeepSeek-V4.1-Flash-heretic-0.0",
+    "DeepSeek-V4.1-Flash-heretic-0.25",
+    "DeepSeek-V4.1-Flash-heretic-0.5",
+    "DeepSeek-V4.1-Flash-heretic-0.75",
+    "DeepSeek-V4.1-Flash-heretic-1",
+    "DeepSeek-V4.1-Flash-heretic-2",
+    "DeepSeek-V4.1-Flash-heretic-4"
+  ],
+  "model_metadata": {
+    "config.json": "8be45ce0476004a3f529fd896115a4a2e800a129ad2d3ec05b16050f52e21879",
+    "tokenizer.json": "c90dfa01249db1be4245780a052ede752e1361c612ac6d08e2bdada7d599476b",
+    "tokenizer_config.json": "6ac8c8dc065ed118161d02dd532749ae3f52c243deac27872134fae2f50d8547",
+    "model.safetensors.index.json": "74b0686a3d2891980d5e303251b075a3bccae2c2ff650747db2620a649b98fa8"
+  },
+  "original_reservation_end": 1792753975.0329032,
+  "reference_e": "/srv/ai-cluster/operations/1022-screen-20261023/windows/1632764e-15e0-415b-bc91-87414a06583c/e-requests.json",
+  "reference_files": {
+    "/srv/ai-cluster/operations/1022-screen-20261023/windows/1632764e-15e0-415b-bc91-87414a06583c/u-requests.json": "55a6e594073901ff7b782aa21cc3a89d6ec207373b64574a9dbae10a762132bb",
+    "/srv/ai-cluster/operations/1022-screen-20261023/windows/1632764e-15e0-415b-bc91-87414a06583c/e-requests.json": "593cbef03894b1169cf0a6a6e8b5d209d1f2b2fadce4dee46df342b5b36f1091",
+    "/srv/ai-cluster/operations/1022-screen-20261023/windows/1632764e-15e0-415b-bc91-87414a06583c/components.xml": "a0b06a917bebdc6050cbcdedbfa0dab87dfc26abb2adf658fc1d10b97e053a74"
+  }
+}

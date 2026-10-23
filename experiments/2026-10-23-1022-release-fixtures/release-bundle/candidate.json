@@ -1,0 +1,36 @@
+{
+  "description": "Release tests (release-fixtures-rc2): the manifest's vLLM test files in the image, chunked with timeouts; per-test outcomes under /c/release-tests.",
+  "image": "sha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241",
+  "env": {
+    "HF_HUB_OFFLINE": "1",
+    "PYTHONPATH": "/b",
+    "TILELANG_CACHE_DIR": "/compile-cache",
+    "ENGRAM_ROWS_TEST_DIR": "/c/engram-rows-test"
+  },
+  "workdir": "/opt/spark3/candidate/vllm",
+  "io_uring": true,
+  "argv": [
+    "/b/release_test_runner.py",
+    "/b/manifest.json",
+    "/c/release-tests/release-fixtures-rc2"
+  ],
+  "verdict": "exit",
+  "mounts": [
+    [
+      "manifest.json",
+      "/b/manifest.json"
+    ],
+    [
+      "release_test_runner.py",
+      "/b/release_test_runner.py"
+    ],
+    [
+      "tblib_stub.py",
+      "/b/tblib_stub.py"
+    ],
+    [
+      "offline_skip.py",
+      "/b/offline_skip.py"
+    ]
+  ]
+}

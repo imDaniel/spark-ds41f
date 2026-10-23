@@ -1,0 +1,49 @@
+test_authorization_mismatch_or_expiry (test_executor.Admission.test_authorization_mismatch_or_expiry) ... ok
+test_bad_initial_inventory (test_executor.Admission.test_bad_initial_inventory) ... ok
+test_busy_queue_never_kills_request (test_executor.Admission.test_busy_queue_never_kills_request) ... ok
+test_disabled_manifest_cannot_even_probe (test_executor.Admission.test_disabled_manifest_cannot_even_probe) ... ok
+test_drifted_recipe_refused (test_executor.Admission.test_drifted_recipe_refused) ... ok
+test_executor_hash_is_part_of_authorization (test_executor.Admission.test_executor_hash_is_part_of_authorization) ... ok
+test_foreign_hold_is_preserved (test_executor.Admission.test_foreign_hold_is_preserved) ... ok
+test_missing_queue_metrics_restores_without_stopping_user_service (test_executor.Admission.test_missing_queue_metrics_restores_without_stopping_user_service) ... ok
+test_missing_watchdog (test_executor.Admission.test_missing_watchdog) ... ok
+test_pinned_executable_drift (test_executor.Admission.test_pinned_executable_drift) ... ok
+test_same_process_is_not_independent_watchdog (test_executor.Admission.test_same_process_is_not_independent_watchdog) ... ok
+test_stale_or_missing_rank (test_executor.Admission.test_stale_or_missing_rank) ... ok
+test_unverified_source_assets_are_rejected (test_executor.Admission.test_unverified_source_assets_are_rejected) ... ok
+test_expired_open_authorization_still_allows_owned_restore (test_executor.Recovery.test_expired_open_authorization_still_allows_owned_restore) ... ok
+test_failed_candidate_stop_never_starts_retained (test_executor.Recovery.test_failed_candidate_stop_never_starts_retained) ... ok
+test_final_api_failure_preserves_hold (test_executor.Recovery.test_final_api_failure_preserves_hold) ... ok
+test_foreign_component_job_blocks_restore (test_executor.Recovery.test_foreign_component_job_blocks_restore) ... ok
+test_full_four_arm_sequence_and_pinned_restore (test_executor.Recovery.test_full_four_arm_sequence_and_pinned_restore) ... ok
+test_gateway_acceptance_failure_reblocks_ingress (test_executor.Recovery.test_gateway_acceptance_failure_reblocks_ingress) ... ok
+test_gateway_alias_drift_blocks_mutation (test_executor.Recovery.test_gateway_alias_drift_blocks_mutation) ... ok
+test_gpu_fault_does_not_attempt_restart (test_executor.Recovery.test_gpu_fault_does_not_attempt_restart) ... ok
+test_guard_or_gpu_process_survives_stop (test_executor.Recovery.test_guard_or_gpu_process_survives_stop) ... ok
+test_healthy_service_is_noop (test_executor.Recovery.test_healthy_service_is_noop) ... ok
+test_lost_node_does_not_attempt_restart (test_executor.Recovery.test_lost_node_does_not_attempt_restart) ... ok
+test_owned_job_stop_and_identity (test_executor.Recovery.test_owned_job_stop_and_identity) ... ok
+test_partial_candidate_launch_restores_all_ranks (test_executor.Recovery.test_partial_candidate_launch_restores_all_ranks) ... ok
+test_partial_retained_requires_coordinated_stop (test_executor.Recovery.test_partial_retained_requires_coordinated_stop) ... ok
+test_retained_doctor_failure_never_reopens_ingress (test_executor.Recovery.test_retained_doctor_failure_never_reopens_ingress) ... ok
+test_retained_start_failure_preserves_hold (test_executor.Recovery.test_retained_start_failure_preserves_hold) ... ok
+test_shape_change_is_never_applied (test_executor.Recovery.test_shape_change_is_never_applied) ... ok
+test_site_plan_refusal_is_not_overridden (test_executor.Recovery.test_site_plan_refusal_is_not_overridden) ... ok
+test_surviving_gpu_process_blocks_retained_start (test_executor.Recovery.test_surviving_gpu_process_blocks_retained_start) ... ok
+test_changed_hold_is_not_stolen (test_executor.Watchdog.test_changed_hold_is_not_stolen) ... ok
+test_command_timeout_stops_worker_and_restores (test_executor.Watchdog.test_command_timeout_stops_worker_and_restores) ... ok
+test_concurrent_controller_and_watchdog_share_lock (test_executor.Watchdog.test_concurrent_controller_and_watchdog_share_lock) ... ok
+test_deadline_restores_even_with_fresh_heartbeat (test_executor.Watchdog.test_deadline_restores_even_with_fresh_heartbeat) ... ok
+test_fresh_window_does_nothing (test_executor.Watchdog.test_fresh_window_does_nothing) ... ok
+test_heartbeat_loss_restores (test_executor.Watchdog.test_heartbeat_loss_restores) ... ok
+test_independent_process_recovers_killed_controller_during_launch (test_executor.Watchdog.test_independent_process_recovers_killed_controller_during_launch) ... ok
+test_pending_pid_reuse_preserves_hold (test_executor.Watchdog.test_pending_pid_reuse_preserves_hold) ... ok
+test_pid_reuse_is_not_signalled (test_executor.Watchdog.test_pid_reuse_is_not_signalled) ... ok
+test_reboot_invalidates_old_window (test_executor.Watchdog.test_reboot_invalidates_old_window) ... ok
+test_wall_clock_rollback_cannot_extend_window (test_executor.Watchdog.test_wall_clock_rollback_cannot_extend_window) ... ok
+test_worker_eof_before_go_cannot_execute (test_executor.Watchdog.test_worker_eof_before_go_cannot_execute) ... ok
+
+----------------------------------------------------------------------
+Ran 44 tests in 73.474s
+
+OK

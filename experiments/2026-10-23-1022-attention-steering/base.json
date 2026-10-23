@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "status": "offline candidate; no image build, GPU validation or service update",
+  "deployment_base": "3ff57762036fc72c2221c3845a39e70850fd2d7e",
+  "integration_merge": "9ff1335567fe930d43a9b9b498114a0c9101b27e",
+  "upstream_deployment_revision": "26aebf209534a2d43799bf4be7b7e344efe97c7c",
+  "runtime_reference": {
+    "deployment_commit": "223a3bb3498d12f470e876db3b9e1f5bdc8772b6",
+    "branch": "archive/r6x-attention-steering-20261023",
+    "image_id": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+    "profile_sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093",
+    "baseline": "2026-10-19-homelab-r6x-steering-acceptance"
+  },
+  "upstream_patch_count": 184,
+  "retained_downstream_patch_count": 12,
+  "new_test_only_patch_count": 1,
+  "total_patch_count": 197,
+  "image_built": false,
+  "gpu_tests_run": false,
+  "four_node_operations_run": false,
+  "weights_modified": false,
+  "directions_reextracted": false,
+  "intended_variable": "Retain the attention steering operator on the fixed 1022 upstream release; rebind the identical directions to its encoder identity.",
+  "validation_results": {
+    "deployment_cpu_tests": 485,
+    "steering_cpu_tests": 126,
+    "encoder_cpu_tests": 36,
+    "real_profile_cpu_tests": 9,
+    "skipped": 0,
+    "fresh_replay": true,
+    "build_inputs_check": true,
+    "release_classification_problems": 0
+  }
+}

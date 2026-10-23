@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-parser-byte-alignment/qualification_requests.py", line 272, in <module>
+    run(args.output)
+  File "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f/experiments/2026-10-23-1022-parser-byte-alignment/qualification_requests.py", line 219, in run
+    assert max(running) >= len(scales), "Requested concurrency was not observed"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Requested concurrency was not observed

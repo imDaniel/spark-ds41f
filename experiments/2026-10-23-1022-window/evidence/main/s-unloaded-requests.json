@@ -1,0 +1,170 @@
+{
+  "arm": "s-unloaded",
+  "rows": [
+    {
+      "kind": "functional",
+      "scale": null,
+      "cycle": 0,
+      "prompt": 0,
+      "text": "Hi! 👋 How can I help you today?",
+      "text_sha256": "417d9dca790e041dc2b255a8dbddf51d890bb6e5daa2a97879ee98739c079e57",
+      "ttft": 0.14346451699748286,
+      "duration": 0.21384344599937322,
+      "usage": {
+        "prompt_tokens": 7,
+        "total_tokens": 19,
+        "completion_tokens": 12,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 156.25287425360838
+    },
+    {
+      "kind": "functional",
+      "scale": null,
+      "cycle": 0,
+      "prompt": 1,
+      "text": "4",
+      "text_sha256": "4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a",
+      "ttft": 0.1281663119989389,
+      "duration": 0.12822269699972821,
+      "usage": {
+        "prompt_tokens": 16,
+        "total_tokens": 18,
+        "completion_tokens": 2,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 1000.0
+    },
+    {
+      "kind": "functional",
+      "scale": null,
+      "cycle": 0,
+      "prompt": 2,
+      "text": "# Median Function\n\n```python\ndef median(numbers):\n    \"\"\"\n    Return the median of a nonempty list of numbers.\n    \n    The median is the middle value when the numbers are sorted.\n    For an even-length list, it's the average of the two middle values.\n    \n    Args:\n        numbers: A nonempty list of numbers (int or float).\n    \n    Returns:\n        The median as a float.\n    \n    Raises:\n        ValueError: If the list is empty.\n    \"\"\"\n    if not numbers:\n        raise ValueError(\"Cannot compute median of an empty list\")\n    \n    sorted_nums = sorted(numbers)\n   ",
+      "text_sha256": "d15cf4ea64dd634b672e9de72d01a38e633cfa4b6a059850e9b3d458320fbb3e",
+      "ttft": 0.1242630319975433,
+      "duration": 1.1652460730001621,
+      "usage": {
+        "prompt_tokens": 20,
+        "total_tokens": 148,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 121.99488170756999
+    },
+    {
+      "kind": "functional",
+      "scale": null,
+      "cycle": 0,
+      "prompt": 3,
+      "text": "1. **触发层次不同**：TCP 重传由传输层在丢包或超时（RTO）时自动触发，对应用透明；应用层重试由应用代码在请求失败、超时或收到错误响应时主动发起，需业务逻辑显式实现。  \n2. **重试粒度不同**：TCP 重传以报文段为单位，只保证字节流可靠到达，不感知请求边界；应用层重试以完整请求/事务为单位，可结合幂等性、业务状态决定是否重试。  \n3. **风险与语义不同**：TCP ",
+      "text_sha256": "6b8ab3415578d8cc0a4f2f65c9fc1061aa45958dd4a070dc79e09360ad00dbb5",
+      "ttft": 0.14109179799925187,
+      "duration": 1.6592630369996186,
+      "usage": {
+        "prompt_tokens": 18,
+        "total_tokens": 146,
+        "completion_tokens": 128,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "decode_tps": 83.65243118567601
+    },
+    {
+      "kind": "functional",
+      "scale": null,
+      "cycle": 0,
+      "prompt": 4,
+      "text": "<｜end▁of▁sentence｜>",
+      "text_sha256": "8d7e65dd2fb76bd687ad8e41e6a68f69bcec565e2f0bc96189e4d7cf38e29290",
+      "ttft": 0.45500947999971686,
+      "duration": 0.45507367299796897,
+      "usage": {
+        "prompt_tokens": 24,
+        "total_tokens": 37,
+        "completion_tokens": 13,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "created_cache_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "stop",
+      "decode_tps": 12000.0
+    }
+  ]
+}

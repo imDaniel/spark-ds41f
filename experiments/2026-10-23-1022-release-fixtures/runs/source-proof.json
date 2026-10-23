@@ -1,0 +1,15 @@
+{
+  "parent_head": "9dd408b8ee85eec4491ce7176dc50dd7c87afe22",
+  "head": "4f6461ca14a0e0771d70924fb5f1312205804226",
+  "tree": "d0ad0209a27395199385cf8cb69de6f9c72edf75",
+  "changed_files": [
+    "tests/models/test_deepseek_v4_1_ced_model.py",
+    "tests/models/test_deepseek_v4_1_engram.py",
+    "tests/models/test_deepseek_v4_1_sp_prefill.py",
+    "tests/models/test_deepseek_v4_1_steering_consume.py",
+    "tests/v1/attention/test_b12x_v41_ced_metadata.py"
+  ],
+  "runtime_source_changes": [],
+  "native_input_changes": [],
+  "source_archive_sha256": "f5167cc801cc49789f2416183f78f0e586c37bb957d184ed028b5cec0a4151a5"
+}

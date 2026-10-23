@@ -1,0 +1,26 @@
+[
+  {
+    "node": 1,
+    "image_id": "sha256:f17320f38b419efa296a9862f634afb0ef4272e24818f1a6b20943bcca779239",
+    "tag": "ds41f-1022-parser:s-9dd408b8ee85-rc1",
+    "load_output": "Loaded image: ds41f-1022-parser:s-9dd408b8ee85-rc1"
+  },
+  {
+    "node": 2,
+    "image_id": "sha256:f17320f38b419efa296a9862f634afb0ef4272e24818f1a6b20943bcca779239",
+    "tag": "ds41f-1022-parser:s-9dd408b8ee85-rc1",
+    "load_output": "Loaded image: ds41f-1022-parser:s-9dd408b8ee85-rc1"
+  },
+  {
+    "node": 3,
+    "image_id": "sha256:f17320f38b419efa296a9862f634afb0ef4272e24818f1a6b20943bcca779239",
+    "tag": "ds41f-1022-parser:s-9dd408b8ee85-rc1",
+    "load_output": "Loaded image: ds41f-1022-parser:s-9dd408b8ee85-rc1"
+  },
+  {
+    "node": 4,
+    "image_id": "sha256:f17320f38b419efa296a9862f634afb0ef4272e24818f1a6b20943bcca779239",
+    "tag": "ds41f-1022-parser:s-9dd408b8ee85-rc1",
+    "load_output": "Loaded image: ds41f-1022-parser:s-9dd408b8ee85-rc1"
+  }
+]

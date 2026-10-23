@@ -1,0 +1,26 @@
+profile: experiments/2026-10-23-1022-window/arms/s-loaded.json on spark01, spark02, spark03, spark04
+live:    stopped: 4 nodes, TP4, context 1,048,576, KV 10.5 GiB, image ds41f-1022-screen:s-dea96d04ea9e-offline1, started from experiments/2026-10-23-1022-window/arms/s-loaded.json
+plan:    4 nodes, TP4, context 1,048,576, KV 10.5 GiB, image ds41f-1022-screen:s-dea96d04ea9e-offline1
+shape:   unchanged
+start plan (fail-closed startup memory guards):
+  spark02: pre-arm startup memguard, launch rank 1
+  spark03: pre-arm startup memguard, launch rank 2
+  spark04: pre-arm startup memguard, launch rank 3
+  spark01: pre-arm startup memguard, launch rank 0
+  wait for API/JIT readiness, then switch every node to steady memguard
+spark02: startup memguard active for ds41f-1022-screen-s-loaded (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark02: launched c069ea3bd715e64cfd8bb792d93026d284b9e04372d76c30d698b216c097df02 (+0.5s)
+spark03: startup memguard active for ds41f-1022-screen-s-loaded (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark03: launched c3de82ab01a88876d0989d0c2ae6a6b9d4f50906f2e3f67601af60bb71ba6e98 (+0.8s)
+spark04: startup memguard active for ds41f-1022-screen-s-loaded (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark04: launched 66320fc0054e8301eb8bfc4705f73010934f19af7b8c60e86d56cff3d08c2bb3 (+1.1s)
+spark01: startup memguard active for ds41f-1022-screen-s-loaded (threshold 5 GiB, interval 0.25s, mode prelaunch)
+spark01: launched df7f110de0e2555212ba0ab58df953e8d1bb4ef2f7fff982b26012a231eaeec2 (+1.3s)
+waiting up to 900s for spark01 API readiness
+API ready; JIT/autotuning startup has completed
+API ready at +96.3s
+spark01: steady memguard active for ds41f-1022-screen-s-loaded (threshold 3 GiB, interval 2s, mode running)
+spark02: steady memguard active for ds41f-1022-screen-s-loaded (threshold 3 GiB, interval 2s, mode running)
+spark03: steady memguard active for ds41f-1022-screen-s-loaded (threshold 3 GiB, interval 2s, mode running)
+spark04: steady memguard active for ds41f-1022-screen-s-loaded (threshold 3 GiB, interval 2s, mode running)
+cluster ready; memory guards are active on all nodes (+97.0s)

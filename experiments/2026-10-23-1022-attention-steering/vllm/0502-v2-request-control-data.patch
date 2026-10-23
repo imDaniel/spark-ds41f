@@ -1,0 +1,451 @@
+From 3a0186d6670b0db5b2dec37f7c3ec9416ad5bece Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 15:43:50 +0900
+Subject: [PATCH] Track fixed-capacity request steering controls in V2 state
+
+Replay baseline: r6x author head 7316c7f9fae1bc4a0b7ab1848de0db4143eec5d2 and preceding
+0500-series downstream patches. The original base and validation entries
+below are historical provenance; r6x qualification is recorded separately.
+
+Base: r6v plus request steering contracts. Rationale: lifecycle-owned slots and GPU expansion from final verification offsets, without per-step host copies or scale banks. Quality: dummy/padding rows are stock and cancellation clears reused slots. Validation: CPU ragged rows, CED/SP reference layout and lifecycle tests; GPU row checks are in the next patch. Upstream status: independent downstream experiment; no upstream submission.
+---
+ .../test_deepseek_v4_1_steering_rows.py       | 42 ++++++++
+ .../test_deepseek_v4_1_steering_state.py      | 65 +++++++++++++
+ .../deepseek_v4_1/nvidia/model_state.py       | 31 ++++++
+ .../deepseek_v4_1/steering/row_kernel.py      | 84 ++++++++++++++++
+ vllm/models/deepseek_v4_1/steering/rows.py    | 35 +++++++
+ vllm/models/deepseek_v4_1/steering/runtime.py | 95 +++++++++++++++++++
+ 6 files changed, 352 insertions(+)
+ create mode 100644 tests/models/test_deepseek_v4_1_steering_rows.py
+ create mode 100644 tests/models/test_deepseek_v4_1_steering_state.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/row_kernel.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/rows.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/runtime.py
+
+diff --git a/tests/models/test_deepseek_v4_1_steering_rows.py b/tests/models/test_deepseek_v4_1_steering_rows.py
+new file mode 100644
+index 000000000..fa65903f3
+--- /dev/null
++++ b/tests/models/test_deepseek_v4_1_steering_rows.py
+@@ -0,0 +1,42 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import pytest
++
++from tests.models import steering_test_support  # noqa: F401
++
++# The helper installs this isolated package before its contracts are imported.
++# isort: off
++from ds41_steering_test.rows import expand_rows, gather_ced_rows, local_sp_rows
++# isort: on
++
++def test_decode_first_ragged_padding_and_ced():
++    # Slots follow runner state, not scheduler dictionary order. Offsets are the
++    # actual post-verification lengths, including a zero-length request.
++    rows = expand_rows(
++        [0.25, 1, 0.75, 0.5],
++        [3, 0, 2, 1],
++        [0, 3, 3, 5, 8],
++        10,
++        [False] * 7 + [True, True, True],
++    )
++    assert rows == [0.5, 0.5, 0.5, 0.75, 0.75, 1, 1, 0, 0, 0]
++    assert gather_ced_rows(rows, [0, 4, 6, -1]) == [0.5, 0.75, 1, 0]
++
++
++@pytest.mark.parametrize("n", [0, 1, 2, 3, 205, 8191, 8192])
++@pytest.mark.parametrize("world", [1, 3, 4])
++def test_sp_scales_cover_each_real_row_once(n, world):
++    rows = [(i % 5) / 4 for i in range(n)]
++    joined = sum((local_sp_rows(rows, world, r) for r in range(world)), [])
++    assert joined[:n] == rows
++    assert not any(joined[n:])
++
++
++def test_invalid_row_layouts():
++    for offsets in [[1, 2], [0, -1], [0, 5], [0, 1, 2]]:
++        with pytest.raises(ValueError):
++            expand_rows([1], [0], offsets, 2, [False] * 2)
++    with pytest.raises(ValueError):
++        gather_ced_rows([1], [-2])
++    with pytest.raises(ValueError):
++        gather_ced_rows([1], [1])
+diff --git a/tests/models/test_deepseek_v4_1_steering_state.py b/tests/models/test_deepseek_v4_1_steering_state.py
+new file mode 100644
+index 000000000..8844f99d1
+--- /dev/null
++++ b/tests/models/test_deepseek_v4_1_steering_state.py
+@@ -0,0 +1,65 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++from types import SimpleNamespace
++
++import numpy as np
++import pytest
++import torch
++
++from tests.models.steering_test_support import valid_profile
++
++# The helper installs this isolated package before its contracts are imported.
++# isort: off
++from ds41_steering_test.runtime import SteeringRuntime
++# isort: on
++
++def test_fixed_buffers_cancel_reuse_and_many_scales(tmp_path):
++    p = valid_profile(tmp_path)
++    state = SteeringRuntime(p, 4, 16, "cpu")
++    pointers = (
++        state.row_scales.data_ptr(),
++        state.request_scales.data_ptr(),
++        state.scratch.data_ptr(),
++    )
++    for i in range(101):
++        state.add_request(
++            2, "request", {"steering_profile": p.profile_id, "steering_scale": i / 100}
++        )
++        batch = SimpleNamespace(
++            num_tokens_after_padding=5,
++            num_reqs=1,
++            req_ids=["request"],
++            idx_mapping_np=np.array([2]),
++            query_start_loc=torch.tensor([0, 3]),
++            is_padding=torch.tensor([False, False, True, True, True]),
++        )
++        rows = state.prepare(batch)
++        assert rows[:2].tolist() == [state.requests["request"][1].scale] * 2
++        assert rows[2:].tolist() == [0, 0, 0]
++        state.remove_request("request")
++        assert state.request_scales[2] == 0
++        assert pointers == (
++            state.row_scales.data_ptr(),
++            state.request_scales.data_ptr(),
++            state.scratch.data_ptr(),
++        )
++    assert not state.requests and not state.slots
++
++
++def test_stream_update_same_identity_and_reject_change(tmp_path):
++    p = valid_profile(tmp_path)
++    state = SteeringRuntime(p, 4, 16, "cpu")
++    args = {"steering_profile": p.profile_id, "steering_scale": 0.5}
++    state.add_request(1, "r", args)
++    state.prepare_streaming_update("r")
++    state.remove_request("r")
++    state.add_request(3, "r", args)
++    with pytest.raises(ValueError):
++        state.add_request(3, "duplicate", args)
++    state.prepare_streaming_update("r")
++    state.remove_request("r")
++    with pytest.raises(ValueError):
++        state.add_request(1, "r", {**args, "steering_scale": 1})
++    assert not state.dummy(8).any()
++    with pytest.raises(ValueError):
++        state.dummy(17)
+diff --git a/vllm/models/deepseek_v4_1/nvidia/model_state.py b/vllm/models/deepseek_v4_1/nvidia/model_state.py
+index 155b13ef0..aea3836f6 100644
+--- a/vllm/models/deepseek_v4_1/nvidia/model_state.py
++++ b/vllm/models/deepseek_v4_1/nvidia/model_state.py
+@@ -111,6 +111,20 @@ class DeepseekV41ModelState(DefaultModelState):
+         device: torch.device,
+     ):
+         super().__init__(vllm_config, model, encoder_cache, device)
++        from ..steering.runtime import SteeringRuntime
++
++        profiles = [
++            m.steering_profile
++            for m in model.modules()
++            if getattr(m, "steering_profile", None) is not None
++        ]
++        if len(profiles) > 1:
++            raise ValueError("Multiple target steering profiles in one model")
++        self.steering = (
++            SteeringRuntime(profiles[0], self.max_num_reqs, self.max_num_tokens, device)
++            if profiles
++            else None
++        )
+         self.ced_state: CEDState | None = None
+         self._ced_prompt_logprobs: set[str] = set()
+         self._ced_prefix_start: dict[str, int] = {}
+@@ -178,12 +192,21 @@ class DeepseekV41ModelState(DefaultModelState):
+ 
+     def prepare_streaming_update(self, req_id: str) -> None:
+         """Keep decoder history when the runner refreshes a live request."""
++        if self.steering is not None:
++            self.steering.prepare_streaming_update(req_id)
+         self._ced_streaming_prefix_start = (
+             req_id,
+             self._ced_prefix_start.get(req_id, 0),
+         )
+ 
+     def add_request(self, req_index: int, new_req_data: NewRequestData) -> None:
++        if self.steering is not None:
++            sampling = new_req_data.sampling_params
++            self.steering.add_request(
++                req_index,
++                new_req_data.req_id,
++                sampling.extra_args if sampling is not None else None,
++            )
+         super().add_request(req_index, new_req_data)
+         if self.disk_engram_models and new_req_data.prefill_token_ids is not None:
+             self._prefill_tokens[new_req_data.req_id] = np.asarray(
+@@ -206,6 +229,8 @@ class DeepseekV41ModelState(DefaultModelState):
+         self._ced_prefix_start[new_req_data.req_id] = prefix_start
+ 
+     def remove_request(self, req_id: str) -> None:
++        if self.steering is not None:
++            self.steering.remove_request(req_id)
+         super().remove_request(req_id)
+         self._prefill_tokens.pop(req_id, None)
+         self._ced_prompt_logprobs.discard(req_id)
+@@ -301,6 +326,9 @@ class DeepseekV41ModelState(DefaultModelState):
+         self, input_batch: InputBatch, req_states: RequestState
+     ) -> dict[str, torch.Tensor | None]:
+         model_inputs = super().prepare_inputs(input_batch, req_states)
++        if self.steering is not None:
++            model_inputs["steering_scales"] = self.steering.prepare(input_batch)
++            model_inputs["steering_scratch"] = self.steering.scratch
+         if self.ced_state is not None:
+             if self._ced_batch is not input_batch:
+                 self._stage_ced(input_batch)
+@@ -375,6 +403,9 @@ class DeepseekV41ModelState(DefaultModelState):
+ 
+     def prepare_dummy_inputs(self, num_reqs: int, num_tokens: int) -> dict[str, Any]:
+         model_inputs = super().prepare_dummy_inputs(num_reqs, num_tokens)
++        if self.steering is not None:
++            model_inputs["steering_scales"] = self.steering.dummy(num_tokens)
++            model_inputs["steering_scratch"] = self.steering.scratch
+         if self.ced_state is not None:
+             # FULL descriptors may pad a short request far beyond128 rows.
+             # Capture their noncompact branch, regardless of dummy split;
+diff --git a/vllm/models/deepseek_v4_1/steering/row_kernel.py b/vllm/models/deepseek_v4_1/steering/row_kernel.py
+new file mode 100644
+index 000000000..6fd99156d
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/row_kernel.py
+@@ -0,0 +1,84 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Expand scales using the runner's actual GPU offsets after adaptive verification."""
++
++import torch
++
++from vllm.model_executor.warmup.jit_warmup_triton_helper import (
++    TritonWarmupTensor,
++    triton_kernel_dispatcher_with_warmup,
++    triton_warmup_inputs,
++)
++from vllm.triton_utils import tl, triton
++
++
++@triton.jit(do_not_specialize=["num_reqs", "num_rows"])
++def _row_scales_kernel(
++    request_scales,
++    slots,
++    offsets,
++    padding,
++    out,
++    num_reqs,
++    num_rows,
++    BLOCK: tl.constexpr,
++):
++    row = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
++    valid = row < num_rows
++    lo = tl.full((BLOCK,), 0, tl.int32)
++    hi = tl.full((BLOCK,), num_reqs, tl.int32)
++    while tl.sum((lo < hi).to(tl.int32), 0) > 0:
++        mid = (lo + hi) // 2
++        boundary = tl.load(
++            offsets + mid + 1, mask=(mid < num_reqs) & valid, other=0x7FFFFFFF
++        )
++        right = row >= boundary
++        searching = lo < hi
++        lo = tl.where(searching & right, mid + 1, lo)
++        hi = tl.where(searching & ~right, mid, hi)
++    end = tl.load(offsets + num_reqs)
++    live = valid & (row < end) & (lo < num_reqs)
++    dead = tl.load(padding + row, mask=valid, other=1)
++    slot = tl.load(slots + lo, mask=live & ~dead, other=0)
++    scale = tl.load(request_scales + slot, mask=live & ~dead, other=0.0)
++    tl.store(out + row, scale, mask=valid)
++
++
++def _warmup_inputs():
++    return triton_warmup_inputs(
++        _row_scales_kernel,
++        TritonWarmupTensor(torch.float32),
++        TritonWarmupTensor(torch.int64),
++        TritonWarmupTensor(torch.int32),
++        TritonWarmupTensor(torch.bool),
++        TritonWarmupTensor(torch.float32),
++        1,
++        128,
++        grid=(1,),
++        BLOCK=128,
++        num_warps=4,
++    )
++
++
++_launcher = triton_kernel_dispatcher_with_warmup(warmup_inputs=_warmup_inputs)(
++    _row_scales_kernel
++)
++
++
++def register_row_warmup():
++    _launcher.register_warmup()
++
++
++def fill_row_scales(request_scales, slots, offsets, padding, out, num_reqs, num_rows):
++    if num_rows:
++        _launcher[(triton.cdiv(num_rows, 128),)](
++            request_scales,
++            slots,
++            offsets,
++            padding,
++            out,
++            num_reqs,
++            num_rows,
++            BLOCK=128,
++            num_warps=4,
++        )
+diff --git a/vllm/models/deepseek_v4_1/steering/rows.py b/vllm/models/deepseek_v4_1/steering/rows.py
+new file mode 100644
+index 000000000..2b8e613cc
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/rows.py
+@@ -0,0 +1,35 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Row-layout reference, including CED gather and sequence-parallel padding."""
++
++
++def expand_rows(request_scales, idx_mapping, query_start_loc, num_rows, is_padding):
++    if len(query_start_loc) != len(idx_mapping) + 1 or query_start_loc[0] != 0:
++        raise ValueError("Invalid steering query offsets")
++    if any(a > b or a < 0 for a, b in zip(query_start_loc, query_start_loc[1:])):
++        raise ValueError("Steering query offsets must be monotone")
++    if query_start_loc[-1] > num_rows or len(is_padding) != num_rows:
++        raise ValueError("Steering query offsets exceed the batch")
++    result = [0.0] * num_rows
++    for batch_idx, slot in enumerate(idx_mapping):
++        if not 0 <= slot < len(request_scales):
++            raise ValueError("Invalid steering request slot")
++        for row in range(query_start_loc[batch_idx], query_start_loc[batch_idx + 1]):
++            if not is_padding[row]:
++                result[row] = request_scales[slot]
++    return result
++
++
++def gather_ced_rows(scales, indices):
++    if any(index < -1 or index >= len(scales) for index in indices):
++        raise ValueError("Invalid CED steering index")
++    return [0.0 if index == -1 else scales[index] for index in indices]
++
++
++def local_sp_rows(scales, world_size, rank):
++    if world_size < 1 or not 0 <= rank < world_size:
++        raise ValueError("Invalid steering SP layout")
++    local = -(-len(scales) // world_size)
++    start = rank * local
++    real = scales[start : start + local]
++    return [*real, *([0.0] * (local - len(real)))]
+diff --git a/vllm/models/deepseek_v4_1/steering/runtime.py b/vllm/models/deepseek_v4_1/steering/runtime.py
+new file mode 100644
+index 000000000..52b80debb
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/runtime.py
+@@ -0,0 +1,95 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Worker-local lifecycle and fixed-capacity control tensors."""
++
++import torch
++
++from .request import parse_selection
++from .rows import expand_rows
++
++
++class SteeringRuntime:
++    def __init__(self, profile, max_reqs, max_tokens, device):
++        self.profile = profile
++        self.device = torch.device(device)
++        self.request_scales = torch.zeros(max_reqs, dtype=torch.float32, device=device)
++        self.row_scales = torch.zeros(max_tokens, dtype=torch.float32, device=device)
++        self.scratch = torch.empty(
++            (max_tokens, profile.hidden_size), dtype=torch.bfloat16, device=device
++        )
++        self.requests = {}
++        self.slots = {}
++        self.pending_update = None
++        if self.device.type == "cuda":
++            from .row_kernel import register_row_warmup
++
++            register_row_warmup()
++
++    def prepare_streaming_update(self, req_id):
++        self.pending_update = (req_id, self.requests[req_id][1])
++
++    def add_request(self, slot, req_id, extra_args):
++        selection = parse_selection(extra_args, self.profile)
++        if self.pending_update is not None:
++            old_id, old = self.pending_update
++            self.pending_update = None
++            if old_id != req_id or old != selection:
++                raise ValueError("A live request cannot change its steering identity")
++        if (
++            not 0 <= slot < self.request_scales.numel()
++            or slot in self.slots
++            or req_id in self.requests
++        ):
++            raise ValueError("Steering request/slot is already owned or out of range")
++        self.requests[req_id] = (slot, selection)
++        self.slots[slot] = req_id
++        # Lifecycle-only update, queued on the runner's current stream. There is
++        # no per-step CPU->GPU copy, pinned-host reuse race, or scale bank growth.
++        self.request_scales[slot].fill_(selection.scale)
++
++    def remove_request(self, req_id):
++        old = self.requests.pop(req_id, None)
++        if old is not None:
++            slot, _ = old
++            self.slots.pop(slot)
++            self.request_scales[slot].zero_()
++
++    def prepare(self, batch):
++        n = batch.num_tokens_after_padding
++        if n > self.row_scales.numel() or batch.num_reqs > self.request_scales.numel():
++            raise ValueError("Steering batch exceeds preallocated controls")
++        if any(req not in self.requests for req in batch.req_ids):
++            raise ValueError("Steering batch contains an unregistered request")
++        for req, slot in zip(batch.req_ids, batch.idx_mapping_np):
++            if self.requests[req][0] != int(slot):
++                raise ValueError(
++                    "Steering request layout and runner slot mapping differ"
++                )
++        if self.device.type == "cuda":
++            from .row_kernel import fill_row_scales
++
++            fill_row_scales(
++                self.request_scales,
++                batch.idx_mapping,
++                batch.query_start_loc,
++                batch.is_padding,
++                self.row_scales,
++                batch.num_reqs,
++                n,
++            )
++        else:
++            values = expand_rows(
++                self.request_scales.tolist(),
++                batch.idx_mapping_np.tolist(),
++                batch.query_start_loc.tolist(),
++                n,
++                batch.is_padding.tolist(),
++            )
++            self.row_scales[:n].copy_(torch.tensor(values, dtype=torch.float32))
++        return self.row_scales[:n]
++
++    def dummy(self, num_tokens):
++        if not 0 <= num_tokens <= self.row_scales.numel():
++            raise ValueError("Steering dummy batch exceeds controls")
++        self.row_scales.zero_()
++        return self.row_scales[:num_tokens]

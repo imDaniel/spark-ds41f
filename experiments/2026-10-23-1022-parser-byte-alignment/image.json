@@ -1,0 +1,17 @@
+{
+  "parent_image_id": "sha256:a15b2d0c6aca33304d95e2364366ff92ea2fc596edc545332d7ed217ac9b6241",
+  "tag": "ds41f-1022-parser:s-b70fe11a88b3-rc3",
+  "changed_source_files": [
+    "tests/parser/engine/test_token_id_scanner.py",
+    "vllm/parser/engine/token_id_scanner.py"
+  ],
+  "source_archive_sha256": "1f24d76b722b2174fc04fd48c2d0d9e52d3cda9f373676f5ccf9f87038dec5fc",
+  "source_tree": "dc13e8dd17ff4415f0330084c02bb684ad021420",
+  "source_head": "b70fe11a88b34e0987e0e8c1b6796869be7e9f71",
+  "native_inputs_changed": false,
+  "runtime_source_changed": true,
+  "image_id": "sha256:14d5bb2c49aad6ad5b09c93beb70379c4088c128162e24bb418d593e5e7853f5",
+  "local_store_id": "sha256:8781b8bd72f7950e0f06d2f3484ad53bbf24d7f4694e9785bbc0e8e862d82204",
+  "parser_cpu_sha256": "34579dc985a577513f82d9accc552cf417c1a04df978fce8d67d035e96b23859",
+  "parser_cpu_note": "4,379 tests plus the captured API response replay passed in this exact image, without network or GPU devices."
+}
