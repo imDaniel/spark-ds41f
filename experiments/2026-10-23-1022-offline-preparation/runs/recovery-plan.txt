@@ -1,0 +1,5 @@
+Retained source, image, configuration, mounts and profile match on all four ranks.
+Plans only; no subprocess or remote execution exists in this tool.
+stop: /srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f/bin/spark --shape tp4-ring --cluster-config config/cluster-steering-r6x-cache-details-tp4.local.json cluster stop
+start: /srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f/bin/spark --shape tp4-ring --cluster-config config/cluster-steering-r6x-cache-details-tp4.local.json cluster start --replace --unqualified-shape
+doctor: /srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f/bin/spark --shape tp4-ring --cluster-config config/cluster-steering-r6x-cache-details-tp4.local.json doctor --live

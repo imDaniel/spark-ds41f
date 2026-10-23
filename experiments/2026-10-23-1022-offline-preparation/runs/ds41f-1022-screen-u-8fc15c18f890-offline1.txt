@@ -1,0 +1,54 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 DONE 0.0s
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.25kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/ds41f-1022-screen:native-ed6af327-offline1
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/6] FROM docker.io/library/ds41f-1022-screen:native-ed6af327-offline1@sha256:9735df00c0c5146532a24d9a8ffb39691fe1f383c14903cda240a452216f3b36
+#4 resolve docker.io/library/ds41f-1022-screen:native-ed6af327-offline1@sha256:9735df00c0c5146532a24d9a8ffb39691fe1f383c14903cda240a452216f3b36 0.0s done
+#4 DONE 0.3s
+
+#5 [internal] load build context
+#5 transferring context: 130.86MB 1.6s done
+#5 DONE 1.6s
+
+#6 [2/6] COPY verify_image.py source-hashes.json deletions.json /opt/spark3/1022-offline/
+#6 DONE 0.1s
+
+#7 [3/6] RUN python3 /opt/spark3/1022-offline/verify_image.py before
+#7 DONE 1.1s
+
+#8 [4/6] ADD source.tar /opt/spark3/candidate/vllm/
+#8 DONE 1.4s
+
+#9 [5/6] RUN find /opt/spark3/candidate/vllm -type d -name __pycache__ -prune -exec rm -rf '{}' + && python3 /opt/spark3/1022-offline/verify_image.py after
+#9 0.849 {"source_files_verified": 7686, "native_libraries_unchanged": 32, "sparknet_version": "0.5.0", "gpu_verified": false}
+#9 DONE 0.9s
+
+#10 [6/6] WORKDIR /opt/spark3/candidate/vllm
+#10 DONE 0.0s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 3.3s done
+#11 exporting manifest sha256:83e11030b3cfbd4c8437ed8dd7a500e02a8a11fbfd01b5aa7967c96634627c24 done
+#11 exporting config sha256:7a95695066ca8c007f55e885a5b3a316ff2a8337eefc0ae4837eb55647937c45 done
+#11 naming to docker.io/library/ds41f-1022-screen:u-8fc15c18f890-offline1 done
+#11 unpacking to docker.io/library/ds41f-1022-screen:u-8fc15c18f890-offline1
+#11 unpacking to docker.io/library/ds41f-1022-screen:u-8fc15c18f890-offline1 1.6s done
+#11 DONE 5.0s
+
+#12 resolving provenance for metadata file
+#12 DONE 0.0s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/eiiiqo1rvtjsewh61fsgg8xpr

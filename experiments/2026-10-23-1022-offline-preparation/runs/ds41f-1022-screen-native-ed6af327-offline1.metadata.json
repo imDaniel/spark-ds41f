@@ -1,0 +1,66 @@
+{
+  "buildx.build.provenance": {
+    "builder": {
+      "id": ""
+    },
+    "buildType": "https://mobyproject.org/buildkit@v1",
+    "materials": [
+      {
+        "uri": "pkg:docker/ds41f-1022-native-parent@8ad0da0366af?platform=linux%2Farm64",
+        "digest": {
+          "sha256": "6b5c2a1f5b574141d8c9d6ff3aa0940fe6a566c28dff624fa4f41229ca0a2d55"
+        }
+      }
+    ],
+    "invocation": {
+      "configSource": {
+        "entryPoint": "Dockerfile"
+      },
+      "parameters": {
+        "frontend": "dockerfile.v0",
+        "args": {
+          "force-network-mode": "none"
+        },
+        "locals": [
+          {
+            "name": "context"
+          },
+          {
+            "name": "dockerfile"
+          }
+        ],
+        "root": {
+          "configSource": {
+            "path": "Dockerfile"
+          },
+          "request": {
+            "args": {
+              "force-network-mode": "none",
+              "vcs:localdir:context": ".work/1022-offline-preparation/context-native",
+              "vcs:localdir:dockerfile": ".work/1022-offline-preparation/context-native",
+              "vcs:revision": "7252899c6498aae4a9149a6429e9f79d0dfdb538",
+              "vcs:source": "https://github.com/imDaniel/spark-ds41f.git"
+            }
+          }
+        },
+        "compatibilityVersion": 30
+      },
+      "environment": {
+        "dockerfileVersion": "1.27.0",
+        "platform": "linux/arm64"
+      }
+    }
+  },
+  "buildx.build.ref": "desktop-linux/desktop-linux/ut3yf2o2i8c7dsu1d2xtdha2d",
+  "containerimage.descriptor": {
+    "mediaType": "application/vnd.oci.image.manifest.v1+json",
+    "digest": "sha256:9735df00c0c5146532a24d9a8ffb39691fe1f383c14903cda240a452216f3b36",
+    "size": 15576,
+    "platform": {
+      "architecture": "arm64",
+      "os": "linux"
+    }
+  },
+  "containerimage.digest": "sha256:9735df00c0c5146532a24d9a8ffb39691fe1f383c14903cda240a452216f3b36",
+  "image.name": "docker.io/library/ds41f-1022-screen:native-ed6af327-offline1"
+}

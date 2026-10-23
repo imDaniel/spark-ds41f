@@ -1,0 +1,26 @@
+..........F                                                              [100%]
+=================================== FAILURES ===================================
+________ test_unfixed_1022_profile_is_rejected_on_the_reviewed_encoder _________
+
+release = (namespace(input=PosixPath('.work/1022-offline-preparation/recovery/heretic-1017-attn-v1.safetensors'), model_identity...private/var/folders/68/4pqqy9kd4gx12y_pbz09p84h0000gn/T/pytest-of-daniel/pytest-232/profile-10220/model-with-profile'))
+
+    def test_unfixed_1022_profile_is_rejected_on_the_reviewed_encoder(release):
+        _, _, profile, _, _ = release
+        previous = HERE.parent.parent / "2026-10-23-1022-attention-steering/profile-rebind.json"
+        receipt = json.loads(previous.read_text())
+>       artifact = Path(os.environ["STEERING_PREVIOUS_RELEASE"]) / receipt["artifact_file"]
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/2026-10-23-1022-attention-review/tools/test_profile_offline.py:138: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = [environment mapping omitted from public receipt; raw local log retained]
+key = 'STEERING_PREVIOUS_RELEASE'
+
+>   ???
+E   KeyError: 'STEERING_PREVIOUS_RELEASE'
+
+<frozen os>:714: KeyError
+=========================== short test summary info ============================
+FAILED experiments/2026-10-23-1022-attention-review/tools/test_profile_offline.py::test_unfixed_1022_profile_is_rejected_on_the_reviewed_encoder
+1 failed, 10 passed in 1.67s

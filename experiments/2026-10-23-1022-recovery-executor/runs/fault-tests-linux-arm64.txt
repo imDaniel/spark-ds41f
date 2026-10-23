@@ -1,0 +1,368 @@
+test_authorization_mismatch_or_expiry (test_executor.Admission.test_authorization_mismatch_or_expiry) ... ok
+test_bad_initial_inventory (test_executor.Admission.test_bad_initial_inventory) ... ok
+test_busy_queue_never_kills_request (test_executor.Admission.test_busy_queue_never_kills_request) ... FAIL
+test_disabled_manifest_cannot_even_probe (test_executor.Admission.test_disabled_manifest_cannot_even_probe) ... ok
+test_drifted_recipe_refused (test_executor.Admission.test_drifted_recipe_refused) ... ok
+test_executor_hash_is_part_of_authorization (test_executor.Admission.test_executor_hash_is_part_of_authorization) ... ok
+test_foreign_hold_is_preserved (test_executor.Admission.test_foreign_hold_is_preserved) ... ok
+test_missing_queue_metrics_restores_without_stopping_user_service (test_executor.Admission.test_missing_queue_metrics_restores_without_stopping_user_service) ... FAIL
+test_missing_watchdog (test_executor.Admission.test_missing_watchdog) ... ok
+test_pinned_executable_drift (test_executor.Admission.test_pinned_executable_drift) ... ok
+test_same_process_is_not_independent_watchdog (test_executor.Admission.test_same_process_is_not_independent_watchdog) ... ok
+test_stale_or_missing_rank (test_executor.Admission.test_stale_or_missing_rank) ... ok
+test_unverified_source_assets_are_rejected (test_executor.Admission.test_unverified_source_assets_are_rejected) ... ok
+test_expired_open_authorization_still_allows_owned_restore (test_executor.Recovery.test_expired_open_authorization_still_allows_owned_restore) ... ERROR
+test_failed_candidate_stop_never_starts_retained (test_executor.Recovery.test_failed_candidate_stop_never_starts_retained) ... ERROR
+test_final_api_failure_preserves_hold (test_executor.Recovery.test_final_api_failure_preserves_hold) ... ERROR
+test_foreign_component_job_blocks_restore (test_executor.Recovery.test_foreign_component_job_blocks_restore) ... ok
+test_full_four_arm_sequence_and_pinned_restore (test_executor.Recovery.test_full_four_arm_sequence_and_pinned_restore) ... ERROR
+test_gateway_acceptance_failure_reblocks_ingress (test_executor.Recovery.test_gateway_acceptance_failure_reblocks_ingress) ... ok
+test_gateway_alias_drift_blocks_mutation (test_executor.Recovery.test_gateway_alias_drift_blocks_mutation) ... ok
+test_gpu_fault_does_not_attempt_restart (test_executor.Recovery.test_gpu_fault_does_not_attempt_restart) ... ERROR
+test_guard_or_gpu_process_survives_stop (test_executor.Recovery.test_guard_or_gpu_process_survives_stop) ... ERROR
+test_healthy_service_is_noop (test_executor.Recovery.test_healthy_service_is_noop) ... ERROR
+test_lost_node_does_not_attempt_restart (test_executor.Recovery.test_lost_node_does_not_attempt_restart) ... ERROR
+test_owned_job_stop_and_identity (test_executor.Recovery.test_owned_job_stop_and_identity) ... ERROR
+test_partial_candidate_launch_restores_all_ranks (test_executor.Recovery.test_partial_candidate_launch_restores_all_ranks) ... FAIL
+test_partial_retained_requires_coordinated_stop (test_executor.Recovery.test_partial_retained_requires_coordinated_stop) ... ERROR
+test_retained_doctor_failure_never_reopens_ingress (test_executor.Recovery.test_retained_doctor_failure_never_reopens_ingress) ... ok
+test_retained_start_failure_preserves_hold (test_executor.Recovery.test_retained_start_failure_preserves_hold) ... ERROR
+test_shape_change_is_never_applied (test_executor.Recovery.test_shape_change_is_never_applied) ... FAIL
+test_site_plan_refusal_is_not_overridden (test_executor.Recovery.test_site_plan_refusal_is_not_overridden) ... FAIL
+test_surviving_gpu_process_blocks_retained_start (test_executor.Recovery.test_surviving_gpu_process_blocks_retained_start) ... ERROR
+test_changed_hold_is_not_stolen (test_executor.Watchdog.test_changed_hold_is_not_stolen) ... ok
+test_command_timeout_stops_worker_and_restores (test_executor.Watchdog.test_command_timeout_stops_worker_and_restores) ... FAIL
+test_concurrent_controller_and_watchdog_share_lock (test_executor.Watchdog.test_concurrent_controller_and_watchdog_share_lock) ... ok
+test_deadline_restores_even_with_fresh_heartbeat (test_executor.Watchdog.test_deadline_restores_even_with_fresh_heartbeat) ... ERROR
+test_fresh_window_does_nothing (test_executor.Watchdog.test_fresh_window_does_nothing) ... ok
+test_heartbeat_loss_restores (test_executor.Watchdog.test_heartbeat_loss_restores) ... ERROR
+test_independent_process_recovers_killed_controller_during_launch (test_executor.Watchdog.test_independent_process_recovers_killed_controller_during_launch) ... FAIL
+test_pending_pid_reuse_preserves_hold (test_executor.Watchdog.test_pending_pid_reuse_preserves_hold) ... ok
+test_pid_reuse_is_not_signalled (test_executor.Watchdog.test_pid_reuse_is_not_signalled) ... ok
+test_reboot_invalidates_old_window (test_executor.Watchdog.test_reboot_invalidates_old_window) ... ok
+test_wall_clock_rollback_cannot_extend_window (test_executor.Watchdog.test_wall_clock_rollback_cannot_extend_window) ... FAIL
+test_worker_eof_before_go_cannot_execute (test_executor.Watchdog.test_worker_eof_before_go_cannot_execute) ... ok
+
+======================================================================
+ERROR: test_expired_open_authorization_still_allows_owned_restore (test_executor.Recovery.test_expired_open_authorization_still_allows_owned_restore)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 353, in test_expired_open_authorization_still_allows_owned_restore
+    self.x.recover(); self.assert_closed()
+    ^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 546, in recover
+    self._recover()
+  File "/suite/window_executor.py", line 519, in _recover
+    self.run([service["repository"] + "/bin/spark", "--shape", "tp4-ring", "--cluster-config",
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:doctor; /tmp/spark-window-fixture-vygcib66/state/4909d77b200c4b3cb1d187c2f51de4e9.log
+
+======================================================================
+ERROR: test_failed_candidate_stop_never_starts_retained (test_executor.Recovery.test_failed_candidate_stop_never_starts_retained)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 295, in test_failed_candidate_stop_never_starts_retained
+    self.x.open(); self.x.switch("u"); self.fault(**{"u:stop:fail": True})
+                   ^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 447, in switch
+    self.cluster(name, "stop")
+  File "/suite/window_executor.py", line 416, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-uv11h0ph/state/a1bdef50dad344ad95655da66fd7506f.log
+
+======================================================================
+ERROR: test_final_api_failure_preserves_hold (test_executor.Recovery.test_final_api_failure_preserves_hold)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 334, in test_final_api_failure_preserves_hold
+    self.x.open(); self.x.switch("u"); self.fault(steered_request=True)
+                   ^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 447, in switch
+    self.cluster(name, "stop")
+  File "/suite/window_executor.py", line 416, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-z_rjk8_k/state/408d1b413d8d4ea9940321b39e2c05d1.log
+
+======================================================================
+ERROR: test_full_four_arm_sequence_and_pinned_restore (test_executor.Recovery.test_full_four_arm_sequence_and_pinned_restore)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 266, in test_full_four_arm_sequence_and_pinned_restore
+    for arm in ARMS: self.x.switch(arm)
+                     ^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 447, in switch
+    self.cluster(name, "stop")
+  File "/suite/window_executor.py", line 416, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-vgy993ih/state/bd10914d8eec41a79d907cf69cc522ba.log
+
+======================================================================
+ERROR: test_gpu_fault_does_not_attempt_restart (test_executor.Recovery.test_gpu_fault_does_not_attempt_restart)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 320, in test_gpu_fault_does_not_attempt_restart
+    self.x.open(); self.x.switch("u"); self.load_world()
+                   ^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 447, in switch
+    self.cluster(name, "stop")
+  File "/suite/window_executor.py", line 416, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-qstw48ya/state/4a676d807e8142a0ad7ccb3f4a44475d.log
+
+======================================================================
+ERROR: test_guard_or_gpu_process_survives_stop (test_executor.Recovery.test_guard_or_gpu_process_survives_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 305, in test_guard_or_gpu_process_survives_stop
+    self.x.open(); self.x.switch("u"); self.fault(**{"u:stop:guard": True})
+                   ^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 447, in switch
+    self.cluster(name, "stop")
+  File "/suite/window_executor.py", line 416, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-4m_07uuu/state/5444e6fd8368412db54b38131a15b352.log
+
+======================================================================
+ERROR: test_healthy_service_is_noop (test_executor.Recovery.test_healthy_service_is_noop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 277, in test_healthy_service_is_noop
+    self.x.open(); self.x.recover()
+                   ^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 546, in recover
+    self._recover()
+  File "/suite/window_executor.py", line 519, in _recover
+    self.run([service["repository"] + "/bin/spark", "--shape", "tp4-ring", "--cluster-config",
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:doctor; /tmp/spark-window-fixture-uc2lfjrq/state/faff5d3c3c4441918b03306871965ae9.log
+
+======================================================================
+ERROR: test_lost_node_does_not_attempt_restart (test_executor.Recovery.test_lost_node_does_not_attempt_restart)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 312, in test_lost_node_does_not_attempt_restart
+    self.x.open(); self.x.switch("u"); self.load_world()
+                   ^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 447, in switch
+    self.cluster(name, "stop")
+  File "/suite/window_executor.py", line 416, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-17zsk8ck/state/f6e720e49e6844769ac2e8adfcce0603.log
+
+======================================================================
+ERROR: test_owned_job_stop_and_identity (test_executor.Recovery.test_owned_job_stop_and_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 341, in test_owned_job_stop_and_identity
+    self.write_world(); self.x.recover(); self.assert_closed()
+                        ^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 546, in recover
+    self._recover()
+  File "/suite/window_executor.py", line 519, in _recover
+    self.run([service["repository"] + "/bin/spark", "--shape", "tp4-ring", "--cluster-config",
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:doctor; /tmp/spark-window-fixture-26dfnheg/state/61ecfc241cdd41c899674810c8e0f201.log
+
+======================================================================
+ERROR: test_partial_retained_requires_coordinated_stop (test_executor.Recovery.test_partial_retained_requires_coordinated_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 291, in test_partial_retained_requires_coordinated_stop
+    self.x.recover(); self.assert_closed()
+    ^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 546, in recover
+    self._recover()
+  File "/suite/window_executor.py", line 511, in _recover
+    self.cluster("retained", "stop", recovering=True)
+  File "/suite/window_executor.py", line 416, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-a9icscgp/state/48fcbf2ef72444a49cba7bbe1355df32.log
+
+======================================================================
+ERROR: test_retained_start_failure_preserves_hold (test_executor.Recovery.test_retained_start_failure_preserves_hold)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 328, in test_retained_start_failure_preserves_hold
+    self.x.open(); self.x.switch("u"); self.fault(**{"retained:start:fail": True})
+                   ^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 447, in switch
+    self.cluster(name, "stop")
+  File "/suite/window_executor.py", line 416, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-keewp25i/state/2f88aa3312b347f7876f50d06d85c4da.log
+
+======================================================================
+ERROR: test_surviving_gpu_process_blocks_retained_start (test_executor.Recovery.test_surviving_gpu_process_blocks_retained_start)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 248, in test_surviving_gpu_process_blocks_retained_start
+    self.x.open(); self.x.switch("u"); self.fault(**{"u:stop:process": True})
+                   ^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 447, in switch
+    self.cluster(name, "stop")
+  File "/suite/window_executor.py", line 416, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-519k29_8/state/ec545c7ba52a42609377b1f2b65a25ed.log
+
+======================================================================
+ERROR: test_deadline_restores_even_with_fresh_heartbeat (test_executor.Watchdog.test_deadline_restores_even_with_fresh_heartbeat)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 403, in test_deadline_restores_even_with_fresh_heartbeat
+    self.x.open(); self.x.switch("u"); self.expire(deadline=True)
+                   ^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 447, in switch
+    self.cluster(name, "stop")
+  File "/suite/window_executor.py", line 416, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-vsvq2eue/state/14a9047af5f4426b85a6867d7b015760.log
+
+======================================================================
+ERROR: test_heartbeat_loss_restores (test_executor.Watchdog.test_heartbeat_loss_restores)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 399, in test_heartbeat_loss_restores
+    self.x.open(); self.x.switch("u"); self.expire()
+                   ^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 447, in switch
+    self.cluster(name, "stop")
+  File "/suite/window_executor.py", line 416, in cluster
+    output = self.run(argv, service["repository"], service["files"], f"{name}:{action}:plan",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/suite/window_executor.py", line 286, in run
+    raise CommandFailed(f"Command failed ({process.returncode}): {label}; {output}")
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-58bwdvqy/state/4d1581dac5c849ac820a3b413b35bc5d.log
+
+======================================================================
+FAIL: test_busy_queue_never_kills_request (test_executor.Admission.test_busy_queue_never_kills_request)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 225, in test_busy_queue_never_kills_request
+    self.assert_closed()
+  File "/suite/tests/test_executor.py", line 122, in assert_closed
+    self.assertEqual(read(self.x.state_path)["phase"], "closed")
+AssertionError: 'manual' != 'closed'
+- manual
++ closed
+
+
+======================================================================
+FAIL: test_missing_queue_metrics_restores_without_stopping_user_service (test_executor.Admission.test_missing_queue_metrics_restores_without_stopping_user_service)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 219, in test_missing_queue_metrics_restores_without_stopping_user_service
+    self.assert_closed()
+  File "/suite/tests/test_executor.py", line 122, in assert_closed
+    self.assertEqual(read(self.x.state_path)["phase"], "closed")
+AssertionError: 'manual' != 'closed'
+- manual
++ closed
+
+
+======================================================================
+FAIL: test_partial_candidate_launch_restores_all_ranks (test_executor.Recovery.test_partial_candidate_launch_restores_all_ranks)
+----------------------------------------------------------------------
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-1aowqn6u/state/6dea68041b9b4002a5e056a246ad3cd6.log
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 282, in test_partial_candidate_launch_restores_all_ranks
+    with self.assertRaisesRegex(Refused, "Partial candidate"): self.x.switch("u")
+AssertionError: "Partial candidate" does not match "Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-1aowqn6u/state/6dea68041b9b4002a5e056a246ad3cd6.log"
+
+======================================================================
+FAIL: test_shape_change_is_never_applied (test_executor.Recovery.test_shape_change_is_never_applied)
+----------------------------------------------------------------------
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-7md9nkd7/state/d73002c8705c4885b322f9418ecb652b.log
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 357, in test_shape_change_is_never_applied
+    with self.assertRaisesRegex(Refused, "shape change"): self.x.switch("u")
+AssertionError: "shape change" does not match "Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-7md9nkd7/state/d73002c8705c4885b322f9418ecb652b.log"
+
+======================================================================
+FAIL: test_site_plan_refusal_is_not_overridden (test_executor.Recovery.test_site_plan_refusal_is_not_overridden)
+----------------------------------------------------------------------
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-3eegy24f/state/8c69ee2eb27844af98b7a91c1b85a27a.log
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 255, in test_site_plan_refusal_is_not_overridden
+    with self.assertRaisesRegex(Refused, "Unsafe cluster plan"): self.x.switch("u")
+AssertionError: "Unsafe cluster plan" does not match "Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-3eegy24f/state/8c69ee2eb27844af98b7a91c1b85a27a.log"
+
+======================================================================
+FAIL: test_command_timeout_stops_worker_and_restores (test_executor.Watchdog.test_command_timeout_stops_worker_and_restores)
+----------------------------------------------------------------------
+window_executor.CommandFailed: Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-ysfahz0s/state/335ea21c2a2b42559d72cd441485306a.log
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 423, in test_command_timeout_stops_worker_and_restores
+    with self.assertRaisesRegex(Refused, "timeout"): self.x.switch("u")
+AssertionError: "timeout" does not match "Command failed (1): retained:stop:plan; /tmp/spark-window-fixture-ysfahz0s/state/335ea21c2a2b42559d72cd441485306a.log"
+
+======================================================================
+FAIL: test_independent_process_recovers_killed_controller_during_launch (test_executor.Watchdog.test_independent_process_recovers_killed_controller_during_launch)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 435, in test_independent_process_recovers_killed_controller_during_launch
+    self.wait_for(launching)
+  File "/suite/tests/test_executor.py", line 146, in wait_for
+    self.fail("Timed out waiting for fixture state")
+AssertionError: Timed out waiting for fixture state
+
+======================================================================
+FAIL: test_wall_clock_rollback_cannot_extend_window (test_executor.Watchdog.test_wall_clock_rollback_cannot_extend_window)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/suite/tests/test_executor.py", line 374, in test_wall_clock_rollback_cannot_extend_window
+    self.assertEqual(self.x.watch_once(), "restored"); self.assert_closed()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'manual' != 'restored'
+- manual
++ restored
+
+
+----------------------------------------------------------------------
+Ran 44 tests in 26.006s
+
+FAILED (failures=8, errors=14)

@@ -1,0 +1,54 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.25kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/ds41f-1022-screen:native-ed6af327-offline1
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/6] FROM docker.io/library/ds41f-1022-screen:native-ed6af327-offline1@sha256:9735df00c0c5146532a24d9a8ffb39691fe1f383c14903cda240a452216f3b36
+#4 resolve docker.io/library/ds41f-1022-screen:native-ed6af327-offline1@sha256:9735df00c0c5146532a24d9a8ffb39691fe1f383c14903cda240a452216f3b36 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 130.86MB 1.3s done
+#5 DONE 1.3s
+
+#4 [1/6] FROM docker.io/library/ds41f-1022-screen:native-ed6af327-offline1@sha256:9735df00c0c5146532a24d9a8ffb39691fe1f383c14903cda240a452216f3b36
+#4 CACHED
+
+#6 [2/6] COPY verify_image.py source-hashes.json deletions.json /opt/spark3/1022-offline/
+#6 DONE 0.1s
+
+#7 [3/6] RUN python3 /opt/spark3/1022-offline/verify_image.py before
+#7 DONE 0.7s
+
+#8 [4/6] ADD source.tar /opt/spark3/candidate/vllm/
+#8 DONE 1.7s
+
+#9 [5/6] RUN find /opt/spark3/candidate/vllm -type d -name __pycache__ -prune -exec rm -rf '{}' + && python3 /opt/spark3/1022-offline/verify_image.py after
+#9 0.888 {"source_files_verified": 7686, "native_libraries_unchanged": 32, "sparknet_version": "0.5.0", "gpu_verified": false}
+#9 DONE 0.9s
+
+#10 [6/6] WORKDIR /opt/spark3/candidate/vllm
+#10 DONE 0.0s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 3.5s done
+#11 exporting manifest sha256:b7ec71830b9fc5664b79e4a25c2aad13a848942bded74124ba36d55857409af9 done
+#11 exporting config sha256:79ef9b6571299ca41faa59949644db40706b4376c2589d9d3c3f8301687cdc50 done
+#11 naming to docker.io/library/ds41f-1022-screen:e-a13d993616f6-offline1 done
+#11 unpacking to docker.io/library/ds41f-1022-screen:e-a13d993616f6-offline1
+#11 unpacking to docker.io/library/ds41f-1022-screen:e-a13d993616f6-offline1 1.5s done
+#11 DONE 5.1s
+
+#12 resolving provenance for metadata file
+#12 DONE 0.0s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/sufp6wy3ze6igiuppug3q4rol

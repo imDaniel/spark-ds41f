@@ -1,0 +1,17 @@
+CommandFailed Command failed (1): retained:doctor; /tmp/spark-window-fixture-fr4acbpb/state/f11b0543cfa54bd9bff58eb6629d085e.log
+Traceback (most recent call last):
+  File "/suite/command_worker.py", line 25, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/suite/command_worker.py", line 21, in main
+    return subprocess.call(job["argv"], cwd=job["cwd"], env=env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 389, in call
+    with Popen(*popenargs, **kwargs) as p:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+PermissionError: [Errno 13] Permission denied: '/tmp/spark-window-fixture-fr4acbpb/retained/bin/spark'
+

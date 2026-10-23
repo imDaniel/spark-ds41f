@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "completed_at": "2026-10-23T08:20:49.995381+00:00",
+  "scope": "local executor/watchdog implementation and simulated process/fleet faults",
+  "tests": {
+    "macos-arm64": {
+      "tests": 44,
+      "seconds": 73.474,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "log": "runs/fault-tests-macos.txt",
+      "log_sha256": "f49d2a746f2452cf6ab15b17c3fa9e3b38ca18ca11fd893414e12aa8d46da723"
+    },
+    "linux-arm64": {
+      "tests": 44,
+      "seconds": 30.762,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "log": "runs/fault-tests-linux-arm64-final.txt",
+      "log_sha256": "26a8d47601875eeffb9babd35221205023b6a74bc7b5246ddf31c13cca529867"
+    }
+  },
+  "unique_fault_scenarios": 44,
+  "local_implementation_complete": true,
+  "production_site_adapters_bound": false,
+  "installed_on_nodes": false,
+  "automatic_recovery_deployed": false,
+  "runtime_enabled": false,
+  "real_authorization_created": false,
+  "node_operations_run": false,
+  "gpu_tests_run": false,
+  "tp4_tests_run": false,
+  "model_requests_sent": false,
+  "service_changed": false,
+  "pr_merged": false,
+  "git_push_run": false,
+  "repository_head": "83a37491b3ec523d29ae967265c0f2471779e137",
+  "linux_cpu_fixture": {
+    "docker_context": "desktop-linux",
+    "image": "ds41f-1022-screen:s-dea96d04ea9e-offline1",
+    "local_store_id": "sha256:0e8e7d4271e725d02813a5381e5b737208a04413585f34bbab6950a6749024fc",
+    "network": "none",
+    "gpus": false,
+    "memory_bytes": 536870912,
+    "cpus": 1,
+    "pids_limit": 128,
+    "read_only_root": true
+  },
+  "checks": {
+    "doctor": true,
+    "default_build_inputs": true,
+    "reviewed_s_build_inputs": true,
+    "prior_preparation_manifest_files_unchanged": 74,
+    "syntax_and_whitespace": true
+  },
+  "remaining_before_runtime": [
+    "Bind and review real four-node observation, ingress and API adapters",
+    "Publish frozen preparation and controller/config revision to the owner fork",
+    "Stage verified images/profile/clean checkout on all four nodes",
+    "Install independent watchdog on 01 and verify host-level management/permissions without service changes",
+    "Refresh identities/hold/idle evidence and obtain explicit runtime window authorization"
+  ]
+}

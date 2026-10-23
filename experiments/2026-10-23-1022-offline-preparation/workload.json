@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "status": "prepared; no requests or GPU tests executed",
+  "model": "deepseek-v4.1-flash",
+  "endpoint": "http://127.0.0.1:18000/v1",
+  "fixed_request": {"temperature": 0, "seed": 1022, "max_tokens": 128, "stream": true},
+  "arms": ["u", "e", "s-unloaded", "s-loaded"],
+  "loaded_scale_order": [0, 1, 4, 0],
+  "profile": "heretic-1017-attn-v1",
+  "functional_prompts": [
+    "Say hi.",
+    "Return only the integer result of 2 + 2.",
+    "Write a Python function that returns the median of a nonempty list of numbers.",
+    "用三句话说明 TCP 重传和应用层重试的区别。",
+    "Repeat this exact text as ordinary text: <｜end▁of▁sentence｜>"
+  ],
+  "additional_contracts": [
+    "Encoder tool argument keys, nested and escaped keys, role/type values, and schema properties from the pinned 66-case encoder collection",
+    "Official U and E are ordinary-request matched references; compare E with S-unloaded and S-loaded scale 0 before attributing a difference to steering",
+    "Warm and cold prefixes; identical prompt with alternating scale 0/1/4/0 must not reuse another steering identity's KV state",
+    "Interleaved stock and steered requests at concurrency 4; validate request-level isolation and completion",
+    "Invalid profile, negative/nonfinite/excessive scale and boolean dose are rejected before execution",
+    "Cancellation/abort followed by a stock request; no leaked row state",
+    "Capture and replay of stock and steering routes, and eager reference within the selected component GPU test collection"
+  ],
+  "first_window_bounds": {
+    "performance_concurrency": [1, 4],
+    "prefill_tokens": [1024, 32768],
+    "output_tokens": 128,
+    "whole_model_boots": 4,
+    "one_million_token_requests": 0,
+    "full_release_comparison": false,
+    "stop_new_jobs_minutes_before_window_end": 15
+  },
+  "acceptance": {
+    "hard_failures": ["GPU/driver fault", "OOM or memory guard stop", "rank hang or management loss", "wrong image/profile", "stock route or cache isolation failure", "empty or nonfinite result", "unexpected request error"],
+    "metrics": ["TTFT", "per-stream and aggregate decode TPS", "completion/error count", "minimum MemAvailable", "swap deltas", "KV usage", "graph memory", "GPU temperature"],
+    "claim_limit": "A bounded first screen cannot establish all-workload quality/performance equivalence or concurrent full-1M capacity. Complete release comparison is a separate later gate."
+  }
+}

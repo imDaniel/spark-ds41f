@@ -1,0 +1,37 @@
+{
+  "before": "2026-10-23T06:27:03.564272+00:00",
+  "after": "2026-10-23T06:54:19.666064+00:00",
+  "gpu_requests_sent": false,
+  "lifecycle_actions_applied": false,
+  "node_distribution": false,
+  "nodes": [
+    {
+      "node": 1,
+      "container_id": "47a012f1a44c6ebe501ed791ec84b74f806da7e260588cccd065aef4c170a25d",
+      "started_at": "2026-10-23T01:33:55.888766376Z",
+      "restart_count": 0,
+      "identity_unchanged": true
+    },
+    {
+      "node": 2,
+      "container_id": "cd35aef4e2c7e06d0e5fec2fa8e16355edc8f0ec64fdcb74d817b1043a8e9775",
+      "started_at": "2026-10-23T01:33:54.943556022Z",
+      "restart_count": 0,
+      "identity_unchanged": true
+    },
+    {
+      "node": 3,
+      "container_id": "b28a1902467d25281dcc935654549ace364de7637be7878c4f343ce891605df3",
+      "started_at": "2026-10-23T01:33:55.354469011Z",
+      "restart_count": 0,
+      "identity_unchanged": true
+    },
+    {
+      "node": 4,
+      "container_id": "fc6a75654e8aa5c5217483b2c6780bd697437e65ad368f80d763530184a800c5",
+      "started_at": "2026-10-23T01:33:55.588648419Z",
+      "restart_count": 0,
+      "identity_unchanged": true
+    }
+  ]
+}

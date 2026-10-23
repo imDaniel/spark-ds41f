@@ -1,0 +1,54 @@
+{
+  "repository": "/srv/ai-cluster/runtimes/deepseek-1017-heretic-r6x/source/spark-ds41f",
+  "head": "223a3bb3498d12f470e876db3b9e1f5bdc8772b6",
+  "config": "config/cluster-steering-r6x-cache-details-tp4.local.json",
+  "file_hashes": {
+    "config/cluster-steering-r6x-cache-details-tp4.local.json": "c26d9fcb996da19b26b243dcc024664a9e004bfa1d91377274607c04dd8ff707",
+    "config/nodes-steering-r6x-acceptance.local.json": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e",
+    "bin/spark": "d7744fd381e6a61c4a571ba27beec6a57ea682799abefb4dbfbdea27fb63a73f"
+  },
+  "profile_path": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1/steering/heretic-1017-attn-v1.safetensors",
+  "profile_sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093",
+  "schema_version": 1,
+  "image_id": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+  "vllm_tree": "ac79557915e3ee2778f8f6353a3d35f848f564e4",
+  "mounts": [
+    {
+      "Source": "/srv/ai-cluster/cache/steering-r6x-20261019/candidate",
+      "Destination": "/cache",
+      "RW": true
+    },
+    {
+      "Source": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1",
+      "Destination": "/models",
+      "RW": false
+    },
+    {
+      "Source": "/srv/ai-cluster/profiles/deepseek-1017-heretic-test/releases/5982288eb290",
+      "Destination": "/steering",
+      "RW": false
+    },
+    {
+      "Source": "/dev/dri/by-path/pci-000f:01:00.0-card",
+      "Destination": "/dev/dri/card0",
+      "RW": true
+    }
+  ],
+  "archive_branch": "archive/r6x-attention-steering-20261023",
+  "control_ingress": "192.168.88.125",
+  "internal_ranks": [
+    "10.42.0.1",
+    "10.42.0.2",
+    "10.42.0.3",
+    "10.42.0.4"
+  ],
+  "production_api": "http://127.0.0.1:8000",
+  "hold_path": "/home/admin/spark-hold.json",
+  "watchdog": {
+    "deployment_status": "not installed; offline review only",
+    "heartbeat_timeout_seconds": 900,
+    "poll_seconds": 30,
+    "required_before_window": true
+  },
+  "restore_budget_minutes": 15
+}

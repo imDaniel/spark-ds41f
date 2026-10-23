@@ -1,0 +1,11 @@
+{
+  "path": ".work/1022-offline-preparation/images/1022-u-e-s.docker.tar",
+  "bytes": 25126323200,
+  "sha256": "428dcba72f6f9198447faa5a3bc1d055fc3830923ca5647ee3e3d58b8e3506dd",
+  "portable_config_ids_verified": {
+    "ds41f-1022-screen:u-8fc15c18f890-offline1": "sha256:7a95695066ca8c007f55e885a5b3a316ff2a8337eefc0ae4837eb55647937c45",
+    "ds41f-1022-screen:e-a13d993616f6-offline1": "sha256:79ef9b6571299ca41faa59949644db40706b4376c2589d9d3c3f8301687cdc50",
+    "ds41f-1022-screen:s-dea96d04ea9e-offline1": "sha256:bae44d0a14175bdc6c7a3fdbc5a8422e7493c2a0872857a83a88b304ab6b82cc"
+  },
+  "node_distribution": false
+}

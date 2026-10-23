@@ -1,0 +1,47 @@
+[
+  {
+    "path": ".work/1022-offline-preparation/profile-release/materialized/heretic-1017-attn-v1/directions.f32",
+    "bytes": 778240,
+    "sha256": "f11e3762252448f547183d4b2daaf5b58c2d9023cd5b23365bc026a402c1a8e6"
+  },
+  {
+    "path": ".work/1022-offline-preparation/profile-release/materialized/heretic-1017-attn-v1/manifest.json",
+    "bytes": 1595,
+    "sha256": "5b2eb7c535862611c7e3f6e5431f7f349e61195676200456233de105878e0d9d"
+  },
+  {
+    "path": ".work/1022-offline-preparation/profile-release/receipt.json",
+    "bytes": 2515,
+    "sha256": "2fe3350e729a8fdb280d677eddfa2b7551e06bea732773f8c3bb6511bb2c365f"
+  },
+  {
+    "path": ".work/1022-offline-preparation/profile-release/steering/heretic-1017-attn-v1.safetensors",
+    "bytes": 780216,
+    "sha256": "e06b8cb60f3f382157ef6632a93efdd90185beafa2251a8c29575f09c45cd45b"
+  },
+  {
+    "path": ".work/1022-offline-preparation/profile-release/steering/index.json",
+    "bytes": 254,
+    "sha256": "4359a4d5c7987be6fb24d2b38180414d224ec7dd508aa695340b88ed2afaeeec"
+  },
+  {
+    "path": ".work/1022-offline-preparation/recovery/cluster-steering-r6x-cache-details-tp4.local.json",
+    "bytes": 9294,
+    "sha256": "c26d9fcb996da19b26b243dcc024664a9e004bfa1d91377274607c04dd8ff707"
+  },
+  {
+    "path": ".work/1022-offline-preparation/recovery/heretic-1017-attn-v1.safetensors",
+    "bytes": 780208,
+    "sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093"
+  },
+  {
+    "path": ".work/1022-offline-preparation/recovery/nodes-steering-r6x-acceptance.local.json",
+    "bytes": 2337,
+    "sha256": "df32ac7f6c88987a9c69442482612dce4def7808f3f731295aa874dd13f18c9e"
+  },
+  {
+    "path": ".work/1022-offline-preparation/recovery/r6x-223a3bb3.bundle",
+    "bytes": 171364217,
+    "sha256": "99a4800a06ce905652fc96647664dbba93d38f3d0bae8698be919dd2be07d842"
+  }
+]

@@ -1,0 +1,39 @@
+# Bounded 1022 GPU / TP4 window
+
+The owner authorized GPU/TP4 execution on 2026-10-23 after finishing use of the
+Spark service. This experiment temporarily uses the four nodes and restores
+r6x revision `223a3bb3498d12f470e876db3b9e1f5bdc8772b6` afterwards. PR #56 remains
+unmerged. These enabled recipes are separate from the immutable disabled
+preparation recipes.
+
+The three built images and four arms are U, E, S-unloaded and S-loaded, in that
+order. All use the same 1017 weights, TP4 topology, 1M capacity declaration,
+16 sequences, 8192 batch and 10.5 GiB KV/rank. The loaded arm uses the rebound
+`e06b8cb6` profile. The retained r6x service keeps its original `d7f0b997` profile.
+Image/config/source identities are frozen into a node-local manifest after
+this preparation commit is published. No credential is stored in Git.
+
+`site_adapter.py` binds the previously fault-tested recovery executor to actual
+SSH, Docker, memguard, image/source/profile checks and API telemetry. A dedicated
+UUID-tagged INPUT rule gates only external port 8000. It first blocks new TCP
+connections, waits for existing streams to close and zero running/waiting
+requests, then blocks external requests completely. Loopback stays available
+for private recovery checks. The original CPA provider configuration is not
+modified; the public model list and stock/steered aliases are verified before
+release. A private API key is stored only in the protected operations folder.
+
+`run_window.py` runs the 29 synthetic steering GPU contracts after coordinated
+retained shutdown, then the four TP4 arms. `request_screen.py` records functional
+requests, stock return after scale 0/1/4/0, invalid admission, cancellation,
+interleaved C4, and 1024/32768-token C1/C4 bounded throughput checks. Graph/eager
+numerical contracts belong to the component suite. Identical performance
+prefixes intentionally include cache reuse; these numbers are not a full
+cold-prefix release benchmark. No full 1M request is scheduled.
+
+The independent controller watchdog runs on 01 and owns the same operation
+lock. Restoration starts by minute 75 of a 90-minute reservation, or earlier on
+failure. No automatic retry is allowed after a GPU/driver or management fault;
+a manual state retains the hold. A failed 01 requires local console recovery.
+Every runtime start/stop uses the named `bin/spark` configuration and all four
+ranks. Passing local fixture tests is not hardware acceptance; actual results
+are recorded separately after the window.

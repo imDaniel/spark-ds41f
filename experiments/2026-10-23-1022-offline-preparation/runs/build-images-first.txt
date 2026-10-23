@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-offline-preparation/tools/build_images.py", line 140, in <module>
+    main()
+    ~~~~^^
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-offline-preparation/tools/build_images.py", line 91, in main
+    common_image = build(COMMON_TAG, common)
+  File "/Users/daniel/Workspace/spark-ds41f/experiments/2026-10-23-1022-offline-preparation/tools/build_images.py", line 45, in build
+    image['portable_config_id'] = json.loads(metadata.read_text())['containerimage.config.digest']
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'containerimage.config.digest'

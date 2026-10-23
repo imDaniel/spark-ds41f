@@ -1,0 +1,123 @@
+From dea96d04ea9eae7f7e19f1dcadd56b8e27f29875 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 17:00:00 +0900
+Subject: [PATCH] Protect control spellings in rendered JSON keys and values
+
+Upstream base: vLLM 19f2c20ed4d64ae22bd009ceacadd85e2a81e354 plus the unchanged 184-patch 1022 series through 8fc15c18f8903b97c36f5268ebd648b53d9f9689. This comparison arm omits attention steering; the code diff is identical to the reviewed 198-patch candidate.
+
+Rationale: tool argument names and schema property names are rendered request text. Walk mapping keys when detecting spellings and reserving sentinels, and protect keys as well as values. Do not exempt every field named role or type: inside tool arguments and schema properties those fields are ordinary user data. Valid protocol identifiers remain unchanged and invalid roles remain rejected.
+
+Quality: prompts without control spellings keep the original encoding path. Typed controls in these additional JSON locations become literal text; no weights, projection math, sampling policy or service configuration changes.
+
+Tests: 66 offline encoder cases passed with byte fixtures and the actual checkpoint tokenizer; the expanded collection failed 28 cases before this fix. Covers direct/nested/escaped/double-escaped argument keys, protocol-named argument values, schema properties, private-use keys and role validation. GPU and online multimedia tests are not claimed.
+
+Upstream status: downstream fix only; no upstream submission authorized.
+---
+ tests/tokenizers_/test_deepseek_v41.py | 42 ++++++++++++++++++++++++++
+ vllm/tokenizers/deepseek_v41.py        | 11 ++++---
+ 2 files changed, 48 insertions(+), 5 deletions(-)
+
+diff --git a/tests/tokenizers_/test_deepseek_v41.py b/tests/tokenizers_/test_deepseek_v41.py
+index 8adc539ff..c08211c15 100644
+--- a/tests/tokenizers_/test_deepseek_v41.py
++++ b/tests/tokenizers_/test_deepseek_v41.py
+@@ -481,6 +481,25 @@ def _request(location, text):
+             _lookup_call(json.dumps({"q": text}, ensure_ascii=True)),
+             {"role": "tool", "tool_call_id": "c1", "content": "v"},
+         ], [LOOKUP]
++    if location in ("argument_key", "argument_nested_key", "argument_protocol_values",
++                    "arguments_escaped_key", "arguments_double_escaped_key"):
++        arguments = {text: "value"}
++        if location == "argument_nested_key":
++            arguments = {"q": {text: "value"}}
++        elif location == "argument_protocol_values":
++            arguments = {"type": text, "role": text}
++        elif location == "arguments_escaped_key":
++            arguments = json.dumps(arguments, ensure_ascii=True)
++        elif location == "arguments_double_escaped_key":
++            arguments = json.dumps(json.dumps(arguments, ensure_ascii=True))
++        return [user, _lookup_call(arguments)], [LOOKUP]
++    if location in ("tool_schema_key", "tool_schema_protocol_values"):
++        tool = copy.deepcopy(LOOKUP)
++        properties = ({text: {"type": "string"}} if location == "tool_schema_key"
++                      else {"type": {"type": "string", "description": text},
++                            "role": {"type": "string", "description": text}})
++        tool["function"]["parameters"]["properties"] = properties
++        return [user], [tool]
+     if location == "tool_description":
+         tool = copy.deepcopy(LOOKUP)
+         tool["function"]["description"] = text
+@@ -496,6 +515,13 @@ LOCATIONS = [
+     "tool_result",
+     "arguments_escaped",
+     "tool_description",
++    "argument_key",
++    "argument_nested_key",
++    "argument_protocol_values",
++    "arguments_escaped_key",
++    "arguments_double_escaped_key",
++    "tool_schema_key",
++    "tool_schema_protocol_values",
+ ]
+ 
+ 
+@@ -567,3 +593,19 @@ def test_renderer_tokenizes_so_control_spellings_stay_text():
+     messages = [{"role": "user", "content": INJECTED}]
+     ids = renderer._apply_chat_template(messages=messages, tokenize=False)
+     assert ids == renderer.tokenizer.apply_chat_template(messages)
++
++
++def test_sentinels_avoid_private_use_characters_in_mapping_keys():
++    tokenizer = byte_level_tokenizer()
++    key = "\U000f00000\U000f0001" + INJECTED
++    messages = [{"role": "user", "content": "question"}, _lookup_call({key: "value"})]
++    ids = tokenizer.apply_chat_template(messages)
++    text = tokenizer.apply_chat_template(messages, tokenize=False)
++    assert key in text
++    assert tokenizer.decode(ids) == text
++
++
++def test_protocol_identifiers_remain_validated_when_controls_are_present():
++    tokenizer = byte_level_tokenizer()
++    with pytest.raises(ValueError, match="Invalid role"):
++        tokenizer.apply_chat_template([{"role": INJECTED, "content": "question"}])
+diff --git a/vllm/tokenizers/deepseek_v41.py b/vllm/tokenizers/deepseek_v41.py
+index 0ea06adf5..ac91981b6 100644
+--- a/vllm/tokenizers/deepseek_v41.py
++++ b/vllm/tokenizers/deepseek_v41.py
+@@ -19,10 +19,6 @@ from .deepseek_v41_encoding import (
+ from .hf import HfTokenizer, get_cached_tokenizer
+ from .protocol import TokenizerLike
+ 
+-# Keys whose values are protocol identifiers, never rendered request text.
+-_PROTOCOL_KEYS = frozenset({"role", "type"})
+-
+-
+ class _ControlSpellings:
+     """Keeps control-token spellings written in request text out of the vocabulary.
+ 
+@@ -79,8 +75,12 @@ class _ControlSpellings:
+                     return self._protect(decoded)
+             return self.pattern.sub(self._sentinel, value)
+         if isinstance(value, Mapping):
++            # Keys are rendered in tool schemas and DSML parameter names too.
++            # "role" and "type" are ordinary user data inside arguments or
++            # schema properties; valid protocol identifiers contain no controls
++            # and remain unchanged without a global key-name exemption.
+             return {
+-                k: item if k in _PROTOCOL_KEYS else self._protect(item, k)
++                self._protect(k): self._protect(item, k)
+                 for k, item in value.items()
+             }
+         if isinstance(value, (list, tuple)):
+@@ -119,6 +119,7 @@ def _strings(value: Any, key: str | None = None):
+                 yield from _strings(decoded)
+     elif isinstance(value, Mapping):
+         for k, item in value.items():
++            yield from _strings(k)
+             yield from _strings(item, k)
+     elif isinstance(value, (list, tuple)):
+         for item in value:
+-- 
+2.54.0 (Apple Git-157)
+

@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "scope": "local recovery executor; no deployed runtime authority",
+  "files": {
+    "README.md": {
+      "sha256": "ff565acd7235f58c4655f8ef1321bc3c87803542ea6c2374adcc5884c96da1bf",
+      "bytes": 7080
+    },
+    "VALIDATION.md": {
+      "sha256": "400c35b51efce4e6b42d6b6167430e187f89df4eb6394b7ffed83fcf8b93adf2",
+      "bytes": 4122
+    },
+    "base.json": {
+      "sha256": "d0adfd987cd2434086a7ff675a24c4dcb0fbfd70a24733c7f269cffbc03fa416",
+      "bytes": 943
+    },
+    "command_worker.py": {
+      "sha256": "9d36a77037e8614488eb32b43c120d95b977c610ba17ae7d542b1a635de4c22e",
+      "bytes": 740
+    },
+    "results.json": {
+      "sha256": "1b94f0fa210cc793e7a1b91a06726547e5781467cb042e313c462e3d5535418a",
+      "bytes": 2261
+    },
+    "runs/fault-tests-first.txt": {
+      "sha256": "d2f47c9c32e16c0df459982e441b6ea91f8edf3c513397ee48326797f992b82b",
+      "bytes": 30175
+    },
+    "runs/fault-tests-linux-arm64-final.txt": {
+      "sha256": "26a8d47601875eeffb9babd35221205023b6a74bc7b5246ddf31c13cca529867",
+      "bytes": 5117
+    },
+    "runs/fault-tests-linux-arm64.txt": {
+      "sha256": "fc683f9825f97ee85c0c2f78d0fcc5c089a5d944b921f27222df913725284011",
+      "bytes": 26390
+    },
+    "runs/fault-tests-macos.txt": {
+      "sha256": "f49d2a746f2452cf6ab15b17c3fa9e3b38ca18ca11fd893414e12aa8d46da723",
+      "bytes": 5117
+    },
+    "runs/fault-tests-second.txt": {
+      "sha256": "60625f1090df8e400858745a774f3290462c1e38d9a2afbbc0a137156aacd215",
+      "bytes": 6217
+    },
+    "runs/fault-tests-third.txt": {
+      "sha256": "4229931bd6b2c140668acf1d08b13e1bb887b22d2d59815df09c7d9c3b5c5ad9",
+      "bytes": 3796
+    },
+    "runs/linux-fixture-diagnosis.txt": {
+      "sha256": "9eb0df0528a2f6517d8329252ce55b91ab699d348569bf5ec54be7dc468f2c86",
+      "bytes": 959
+    },
+    "tests/fake_site.py": {
+      "sha256": "6af9ff0c2fe53370cb1ee8d01f8420edd9c12272c062491e8a93e04b236344a2",
+      "bytes": 4247
+    },
+    "tests/test_executor.py": {
+      "sha256": "8a5c95bca9b0368c5fba622ca7e02cbb218ef9ed2d737486f81a8c61fcec6a09",
+      "bytes": 22929
+    },
+    "window.disabled.json": {
+      "sha256": "1e0ae686912e384eb3933226f029a158cb9a08725ed46bedcb602a4be45a0837",
+      "bytes": 8772
+    },
+    "window_executor.py": {
+      "sha256": "673dea16f9501f336be3f0fd8d825ed02d7bec149e23f52601239854fc18bff0",
+      "bytes": 30931
+    }
+  }
+}

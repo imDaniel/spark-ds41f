@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "repository_head": "83a37491b3ec523d29ae967265c0f2471779e137",
+  "intended_variable": "local maintenance executor and independent recovery watchdog; no inference runtime change",
+  "prior_preparation": "experiments/2026-10-23-1022-offline-preparation",
+  "prior_recovery_policy_sha256": "59d7f51cebdb31467dea3bb5b62b888fd781e435214ba885dccd7120db3ebcce",
+  "prior_artifact_manifest_sha256": "af4a2ca0b61a34683d0f75ead1276f7c408762bf894e8038d675c318bf3f66d8",
+  "retained_head": "223a3bb3498d12f470e876db3b9e1f5bdc8772b6",
+  "retained_image": "sha256:8ad0da0366af0560678e09dbccefedc6688a58d79758b4f11fc63ef69ede4a0a",
+  "retained_profile_sha256": "d7f0b997ea2748b03a353188583d494b2bfe7c40838aff98945941032da6a093",
+  "candidate_runtime_source_commit": "7252899c6498aae4a9149a6429e9f79d0dfdb538",
+  "existing_worktree_changes_preserved": [
+    "README.md",
+    "experiments/2026-10-23-1022-offline-preparation/"
+  ]
+}
