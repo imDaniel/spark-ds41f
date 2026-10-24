@@ -11,7 +11,9 @@ profile `e06b8cb6…`，保留 1M 上下文、16 路、原网关与模型别名�
 [同口径性能对比](experiments/2026-10-24-1022-matched-performance/RESULTS.md)分别保留：
 输出 TPS 接近持平至小幅提高，单路首 token 增加约 33–34 ms，部分尾延迟回退；
 不宣称全面提速或统计等价。所有者已亲自确认 steering 正常，并取消重复性能测量。
-r6x 的 `archive/r6x-attention-steering-20261023` 分支、原镜像、配置、profile 与权重均保留。
+r6x 的 `archive/r6x-attention-steering-20261023` 分支与历史验证记录保留。
+所有者已授权退役物理机上的旧 r6x 部署与本地配置；以后回退按仓库重建。
+正式启停、面板和关机入口见[本站服务控制](docs/site-service.md)。
 下文的上游发布史是来源背景，本站生产权威为上述主配置和 baseline。
 
 Reproducible Docker/vLLM deployment, tuning, and benchmarks for DeepSeek V4.1
