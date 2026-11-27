@@ -1,0 +1,17 @@
+chunk 000: exit 0, 367 s
+chunk 001: exit 0, 203 s
+chunk 002: exit 1, 201 s
+chunk 003: exit 0, 25 s
+chunk 004: exit 0, 7 s
+chunk 005: exit 0, 117 s
+chunk 006: exit 0, 135 s
+chunk 007: exit 0, 146 s
+chunk 008: exit 0, 101 s
+
+88 files, 1221 s of tests; 2 files not ok: fail: 2
+FAILED tests/models/test_deepseek_v4_1_engram.py::test_disk_engram_model_allocates_hash_buffer_from_declared_caps - AttributeError: 'types.SimpleNamespace' object has no attribute 'additional_config'
+FAILED tests/models/test_deepseek_v4_1_steering_gpu.py::test_fused_consumer_graph_matches_independent_projection[3] - AssertionError: Current vLLM config is not set. This typically means get_current_vllm_config() was called outside of a set_current_vllm_config() context, or a CustomOp was instantiated at module impor
+FAILED tests/models/test_deepseek_v4_1_steering_gpu.py::test_fused_consumer_graph_matches_independent_projection[16] - AssertionError: Current vLLM config is not set. This typically means get_current_vllm_config() was called outside of a set_current_vllm_config() context, or a CustomOp was instantiated at module impor
+FAILED tests/models/test_deepseek_v4_1_steering_gpu.py::test_fused_consumer_graph_matches_independent_projection[96] - AssertionError: Current vLLM config is not set. This typically means get_current_vllm_config() was called outside of a set_current_vllm_config() context, or a CustomOp was instantiated at module impor
+FAILED tests/models/test_deepseek_v4_1_steering_gpu.py::test_fused_consumer_graph_matches_independent_projection[129] - AssertionError: Current vLLM config is not set. This typically means get_current_vllm_config() was called outside of a set_current_vllm_config() context, or a CustomOp was instantiated at module impor
+5 failed, 7304 passed, 146 skipped

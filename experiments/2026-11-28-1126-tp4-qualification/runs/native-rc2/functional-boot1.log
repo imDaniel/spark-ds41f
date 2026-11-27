@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f/experiments/2026-11-28-1126-tp4-qualification/qualify.py", line 102, in <module>
+    qualify(a.stage, a.window, a.image_id, a.output.resolve())
+  File "/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f/experiments/2026-11-28-1126-tp4-qualification/qualify.py", line 54, in qualify
+    run(output)
+  File "/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f/experiments/2026-11-28-1126-tp4-qualification/functional.py", line 103, in run
+    raise ValueError(f"Invalid {field} was admitted: {response.status}")
+ValueError: Invalid steering_scale was admitted: 200
+Traceback (most recent call last):
+  File "/srv/ai-cluster/operations/1126-attention-20261128/watch-command.py", line 27, in <module>
+    if child.returncode: raise RuntimeError("Qualification command failed")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Qualification command failed

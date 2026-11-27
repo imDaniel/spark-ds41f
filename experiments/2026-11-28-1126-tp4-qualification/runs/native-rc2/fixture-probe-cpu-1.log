@@ -1,0 +1,36 @@
+ERROR: found no collectors for /probe/tests/models/test_deepseek_v4_1_engram.py::test_disk_engram_model_allocates_hash_buffer_from_declared_caps
+
+
+==================================== ERRORS ====================================
+________________________ ERROR collecting test session _________________________
+/probe/tests/models/test_deepseek_v4_1_engram.py:31: in <module>
+    from vllm.models.deepseek_v4_1.nvidia.dspark import DSparkDeepseekV4ForCausalLM
+vllm/models/deepseek_v4_1/nvidia/dspark.py:50: in <module>
+    from vllm.v1.worker.gpu.cudagraph_utils import (
+vllm/v1/worker/gpu/cudagraph_utils.py:47: in <module>
+    from vllm.v1.worker.gpu.attn_utils import build_slot_mappings_by_layer
+vllm/v1/worker/gpu/attn_utils.py:36: in <module>
+    from vllm.v1.worker.gpu.model_states.interface import ModelSpecificAttnMetadata
+vllm/v1/worker/gpu/model_states/__init__.py:10: in <module>
+    from vllm.v1.worker.gpu.model_states.interface import ModelState
+vllm/v1/worker/gpu/model_states/interface.py:23: in <module>
+    from vllm.v1.worker.gpu.states import RequestState
+vllm/v1/worker/gpu/states.py:7: in <module>
+    from vllm.v1.worker.gpu import tilelang_inputs
+vllm/v1/worker/gpu/tilelang_inputs.py:59: in <module>
+    tilelang.PassConfigKey.TL_DISABLE_WARP_SPECIALIZED: True,
+    ^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'PassConfigKey'
+------------------------------- Captured stdout --------------------------------
+WARNING 11-27 18:00:52 [interface.py:369] Failed to import from vllm._C: ModuleNotFoundError("No module named 'vllm._C'")
+------------------------------- Captured stderr --------------------------------
+W1127 18:00:51.581000 1 torch/utils/cpp_extension.py:178] No CUDA runtime is found, using CUDA_HOME='/usr/local/cuda'
+=============================== warnings summary ===============================
+../../../../usr/local/lib/python3.12/dist-packages/torch/jit/_script.py:365: 14 warnings
+  /usr/local/lib/python3.12/dist-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR ../../../../dev - AttributeError: 'NoneType' object has no attribute 'P...
+14 warnings, 1 error in 4.86s
