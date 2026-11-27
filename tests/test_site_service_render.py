@@ -30,6 +30,7 @@ class SiteServiceRenderTests(unittest.TestCase):
         resources = [f"spark{n:02}/gpu0" for n in range(1, 5)]
         steering = dict(profile_path="/steering/profile", profile_sha256="profile-sha", operator_version="operator")
         cluster = dict(nodes_config="config/nodes.local.json", promoted_baseline="test-promoted",
+                       upstreams_config="releases/test-promoted/upstreams.lock.json",
                        deployment={"path": "/fixed/deployment"},
                        host={"home": "/home/admin", "kernel_policy": "config/kernel.json"},
                        serve_args=["--additional-config", json.dumps({"ds41_steering": steering})],
@@ -38,7 +39,8 @@ class SiteServiceRenderTests(unittest.TestCase):
         put(source, "config/cluster.json", cluster)
         put(source, "config/nodes.local.json", {"nodes": [{"rank": n} for n in range(4)]})
         put(source, "manifests/baselines/test-promoted.json", {"image_id": "sha256:qualified"})
-        for name in ["config/kernel.json", "upstreams.lock.json", "scripts/helper.py", "bin/spark",
+        for name in ["config/kernel.json", "upstreams.lock.json", "releases/test-promoted/upstreams.lock.json",
+                     "scripts/helper.py", "bin/spark",
                      "spark_ds41f/cluster.py", "spark_ds41f/nested/module.py",
                      "host/site/deepseek-model-control.py", "host/site/cluster-shutdown.py"]:
             put(source, name, "# fixed input\n")
@@ -83,7 +85,8 @@ class SiteServiceRenderTests(unittest.TestCase):
         policy = read(RENDERER["POLICY"])
         self.assertEqual(policy["image_id"], "sha256:qualified")
         self.assertEqual(policy["container"], "ds41f-1126-attention")
-        for name in ["spark_ds41f/cluster.py", "spark_ds41f/nested/module.py"]:
+        for name in ["spark_ds41f/cluster.py", "spark_ds41f/nested/module.py",
+                     "releases/test-promoted/upstreams.lock.json"]:
             self.assertEqual(policy["repository_files"][name], hashlib.sha256((source / name).read_bytes()).hexdigest())
         launchers = read("/srv/ai-cluster/config/sparkdash/state/llm-launchers.json")["launchers"]["spark01"]
         self.assertEqual(launchers[1], unrelated_launcher)

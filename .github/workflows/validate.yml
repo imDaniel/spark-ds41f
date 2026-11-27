@@ -50,6 +50,7 @@ jobs:
           .venv/bin/python -m unittest discover -s experiments/2026-10-23-1022-capacity-validation -p 'test_*.py'
           .venv/bin/python -m unittest discover -s experiments/2026-10-24-1022-matched-performance -p 'test_*.py'
           .venv/bin/python -m unittest discover -s experiments/2026-11-28-1126-tp4-qualification -p 'test_window.py'
+          .venv/bin/python -m unittest discover -s experiments/2026-11-28-1126-tp4-qualification -p 'test_install_controls.py'
       - name: Validate helpers
         run: |
           # scripts/ holds shell and Python helpers and JSON lab specs; check each by

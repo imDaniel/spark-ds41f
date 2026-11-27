@@ -31,7 +31,9 @@ def render(existing, output):
     repository = cluster["deployment"]["path"]
     files = {str(p.relative_to(ROOT)) for p in (ROOT / "scripts").glob("*.py")}
     files.update(str(p.relative_to(ROOT)) for p in (ROOT / "spark_ds41f").rglob("*.py"))
-    files.update(["bin/spark", "config/cluster.json", "upstreams.lock.json", cluster["nodes_config"], cluster["host"]["kernel_policy"]])
+    files.update(["bin/spark", "config/cluster.json", "upstreams.lock.json",
+                  cluster.get("upstreams_config", "upstreams.lock.json"),
+                  cluster["nodes_config"], cluster["host"]["kernel_policy"]])
     hashes = {f: digest((ROOT / f).read_bytes()) for f in sorted(files)}
     additional = json.loads(cluster["serve_args"][cluster["serve_args"].index("--additional-config") + 1])["ds41_steering"]
     mounts = {dst: {"source": src.format(home=cluster["host"]["home"]), "rw": mode == "rw"} for src, dst, mode in cluster["container"]["mounts"]}

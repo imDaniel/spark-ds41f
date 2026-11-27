@@ -4,6 +4,7 @@ import concurrent.futures
 import contextlib
 import datetime as dt
 import fcntl
+import hashlib
 import json
 import os
 import shlex
@@ -186,7 +187,20 @@ def restore_service(h):
         spark(OLD, "config/cluster.json", "cluster", "start", "--replace")
         spark(OLD, "config/cluster.json", "cluster", "start", "--replace", "--apply")
     spark(OLD, "config/cluster.json", "doctor", "--live")
+    rollback_controls(h)
     site.restore_ingress(h)
+
+
+def rollback_controls(h):
+    receipt = OP / "control-adoption.json"
+    if not receipt.exists():
+        return
+    record = json.loads(receipt.read_text())
+    helper = HERE / "install_controls.py"
+    if (record.get("window_id") != h["window_id"] or
+            record.get("installer_sha256") != hashlib.sha256(helper.read_bytes()).hexdigest()):
+        raise RuntimeError("The control rollback belongs to another window or installer")
+    cmd(["sudo", "-n", "/usr/bin/python3", "-I", str(helper), "rollback", h["window_id"]], timeout=180)
 
 
 def stop_owned_component(h):

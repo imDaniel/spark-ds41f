@@ -45,6 +45,7 @@ def pooled(runs, report, stats):
     records = [r for run in runs for r in run["requests"] if 15 <= r["sent"] < 105]
     latency = report._latency(records, None, None, 90 * len(runs))
     metrics = {"output_tps": statistics.mean(r["summary"]["output_tps"]["mean"] for r in runs)}
+    metrics["per_user_decode_tps"] = latency["per_user_tps"]["mean"]
     for name, unit in (("ttft_s", 1000), ("tpot_ms", 1), ("e2e_s", 1)):
         prefix = {"ttft_s": "ttft_ms", "tpot_ms": "tpot_ms", "e2e_s": "e2e_s"}[name]
         for percentile in ("mean", "p50", "p90", "p99"):

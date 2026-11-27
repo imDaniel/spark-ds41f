@@ -217,6 +217,40 @@ class LeaseTest(unittest.TestCase):
                     window.stop_owned_component({"window_id": "mine"})
                 stop.assert_not_called()
 
+    def test_control_rollback_without_journal_is_a_noop(self):
+        with patch.object(window, "cmd") as rollback:
+            window.rollback_controls({"window_id": "mine"})
+        rollback.assert_not_called()
+
+    def test_control_rollback_checks_both_window_and_installer(self):
+        helper = self.root / "install_controls.py"
+        helper.write_text("# fixed installer\n")
+        record = {"window_id": "mine", "installer_sha256": window.hashlib.sha256(helper.read_bytes()).hexdigest()}
+        window.atomic_json(self.root / "control-adoption.json", record)
+        with patch.object(window, "HERE", self.root), patch.object(window, "cmd") as rollback:
+            window.rollback_controls({"window_id": "mine"})
+            self.assertEqual(rollback.call_args.args[0],
+                             ["sudo", "-n", "/usr/bin/python3", "-I", str(helper), "rollback", "mine"])
+        for fault in ({"window_id": "other"}, {"installer_sha256": "changed"}):
+            window.atomic_json(self.root / "control-adoption.json", {**record, **fault})
+            with patch.object(window, "HERE", self.root), patch.object(window, "cmd") as rollback:
+                with self.assertRaisesRegex(RuntimeError, "another window or installer"):
+                    window.rollback_controls({"window_id": "mine"})
+                rollback.assert_not_called()
+
+    def test_failed_control_rollback_preserves_hold_and_ingress(self):
+        with contextlib.ExitStack() as ctx:
+            ctx.enter_context(patch.object(window.subprocess, "run", return_value=type("State", (), {"stdout":"inactive"})()))
+            ctx.enter_context(patch.object(window, "stop_owned_component"))
+            ctx.enter_context(patch.object(window, "four_inspect", return_value=["ds41f-1022-parser-rc3"]))
+            ctx.enter_context(patch.object(window, "spark"))
+            ctx.enter_context(patch.object(window, "rollback_controls", side_effect=RuntimeError("control rollback fault")))
+            ingress = ctx.enter_context(patch.object(window.site, "restore_ingress"))
+            with self.assertRaisesRegex(RuntimeError, "control rollback fault"):
+                window.restore("mine")
+            ingress.assert_not_called()
+        self.assertEqual(window.stored()["phase"], "recovery_failed")
+
 
 if __name__ == "__main__":
     unittest.main()
