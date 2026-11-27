@@ -8,7 +8,7 @@
   "acceptance": "Owner preauthorized autonomous site promotion after functional, capacity, performance and release validation.",
   "shape": "tp4-ring",
   "configuration": "config/cluster.json",
-  "configuration_sha256": "02a7a2d16ce358bd1d2793f9428ebeaa3cc2285e2d8e49697558aa69d69aa643",
+  "configuration_sha256": "b384f40da4756c4df3fd22440833f9a4c599327796d754fa78719740ca4286a5",
   "recipe": "releases/homelab-1126-attention/cluster.json",
   "source_manifest": "manifests/sources/2026-11-28-homelab-1126-attention-source.json",
   "source_lock": "releases/homelab-1126-attention/upstreams.lock.json",

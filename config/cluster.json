@@ -305,7 +305,6 @@
         "NCCL_IB_ADDR_FAMILY": "AF_INET",
         "NCCL_IB_DISABLE": "0",
         "NCCL_IB_GID_INDEX": "3",
-        "NCCL_IB_HCA": "rocep1s0f0,roceP2p1s0f0,rocep1s0f1,roceP2p1s0f1",
         "NCCL_IB_MERGE_NICS": "1",
         "NCCL_IB_ROCE_VERSION_NUM": "2",
         "NCCL_IB_SUBNET_AWARE_ROUTING": "1",
