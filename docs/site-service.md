@@ -25,6 +25,8 @@ transaction, writes atomically and verifies the backend. Partial writes or a
 failed probe restore the original files. Unknown later edits and changed backups
 are refused. The independent window watchdog restores the accepted 1022 engine
 and matching saved controls before reopening ingress if the window expires.
+File installation runs as root; its readiness probe explicitly runs as admin,
+the same identity required by the fixed service coordinator and cluster SSH key.
 
 After the selected source is merged, synchronize every node cleanly to that
 exact commit with the named canonical profile. Compare all running commands,

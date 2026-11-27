@@ -174,7 +174,11 @@ def install(window):
                for raw, entry in manifest["files"].items()):
             raise RuntimeError("Installed control identity differs")
         subprocess.run(["/usr/sbin/visudo", "-c"], check=True)
-        probe = json.loads(subprocess.check_output([BACKEND, "probe"], text=True, timeout=90))
+        # Installation needs root; the fixed service coordinator and its SSH
+        # identity deliberately require admin, just as normal registry calls do.
+        probe = json.loads(subprocess.check_output(
+            ["/usr/bin/sudo", "-n", "-H", "-u", "admin", "--", BACKEND, "probe"],
+            text=True, timeout=90))
         if not probe.get("ready") or probe.get("failed"):
             raise RuntimeError("The installed fixed service is not ready")
         record.update(status="installed", probe=probe); journal(record)

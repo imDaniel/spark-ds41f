@@ -1,6 +1,7 @@
 """Control adoption failures touch only temporary files and mocked host commands."""
 import json
 from pathlib import Path
+import subprocess
 import tempfile
 import time
 import unittest
@@ -30,7 +31,7 @@ class ControlAdoptionTest(unittest.TestCase):
         def output(args, **kwargs):
             if args[0] == "git":
                 return "published\n" if "rev-parse" in args else b""
-            self.assertEqual(args, [controls.BACKEND, "probe"])
+            self.assertEqual(args, ["/usr/bin/sudo", "-n", "-H", "-u", "admin", "--", controls.BACKEND, "probe"])
             return json.dumps({"ready": self.ready, "failed": not self.ready})
         self.command = self.enterContext(patch.object(controls.subprocess, "check_output", side_effect=output))
         self.enterContext(patch.object(controls.subprocess, "run"))
@@ -68,6 +69,22 @@ class ControlAdoptionTest(unittest.TestCase):
     def test_failed_readiness_rolls_back_every_file(self):
         controls.prepare("mine"); self.ready = False
         with self.assertRaisesRegex(RuntimeError, "not ready"):
+            controls.install("mine")
+        self.assert_original()
+        self.assertEqual(controls.record_for("mine")["status"], "rolled_back")
+
+    def test_admin_probe_execution_failure_rolls_back_every_file(self):
+        controls.prepare("mine")
+        output = self.command.side_effect
+
+        def fail_probe(args, **kwargs):
+            if args[0] == "/usr/bin/sudo":
+                self.assertEqual(args[1:6], ["-n", "-H", "-u", "admin", "--"])
+                raise subprocess.CalledProcessError(1, args)
+            return output(args, **kwargs)
+
+        self.command.side_effect = fail_probe
+        with self.assertRaises(subprocess.CalledProcessError):
             controls.install("mine")
         self.assert_original()
         self.assertEqual(controls.record_for("mine")["status"], "rolled_back")
