@@ -52,10 +52,19 @@ def qualify(stage, window, image_id, output):
     if stage == "functional":
         from functional import run
         run(output)
-    elif stage in ("capacity", "capacity-overlap"):
+    elif stage in ("capacity", "capacity-overlap", "capacity-sustained"):
         capacity_requests.client.BASE = benchmark.BASE
         original_cases = capacity_requests.CASES
-        if stage == "capacity-overlap":
+        if stage == "capacity-sustained":
+            # Long prefills also outlast short early responses. Preserve those
+            # attempts and prove four resident requests with longer generations.
+            capacity_requests.CASES = [
+                (length, scales, output_tokens)
+                for (length, scales, _), output_tokens in zip(
+                    original_cases[1:], (4096, 16384), strict=True
+                )
+            ]
+        elif stage == "capacity-overlap":
             # Keep the original C16/256 receipt, whose early completions only
             # overlapped ten admitted requests. Sustain the same mixed scales
             # for longer without relaxing the sixteen-running admission gate.
@@ -102,7 +111,7 @@ def qualify(stage, window, image_id, output):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("stage", choices=["functional", "capacity", "capacity-overlap", "performance"])
+    p.add_argument("stage", choices=["functional", "capacity", "capacity-overlap", "capacity-sustained", "performance"])
     p.add_argument("window")
     p.add_argument("image_id")
     p.add_argument("output", type=Path)
