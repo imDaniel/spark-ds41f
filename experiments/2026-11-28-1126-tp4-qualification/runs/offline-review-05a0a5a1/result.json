@@ -1,0 +1,68 @@
+{
+  "date": "2026-11-28",
+  "tested_commit": "05a0a5a11a7f241569542f7b092f7f0db4e15a7e",
+  "host": "Spark01, Ubuntu 24.04 aarch64, unprivileged host-side Python",
+  "source": "clean detached Git worktree with generated example site maps",
+  "commands": [
+    "python3 -m venv <operation>/review-venv",
+    "<operation>/review-venv/bin/python -m pip install --quiet --require-hashes -r requirements/bench-client.txt",
+    "scripts/example_site.py",
+    "<operation>/review-venv/bin/python -m unittest discover -s tests",
+    "<operation>/review-venv/bin/python -m unittest discover -v -s experiments/2026-11-28-1126-tp4-qualification -p test_window.py",
+    "<operation>/review-venv/bin/python scripts/check-recovery-fixtures.py",
+    "bin/spark --shape <tp4-ring|tp3-triangle|tp3-triangle-4k> doctor",
+    "python3 scripts/render_docs.py --check",
+    "git diff --check"
+  ],
+  "results": {
+    "repository": {
+      "tests": 1048,
+      "passed": 1048
+    },
+    "window": {
+      "tests": 13,
+      "passed": 13
+    },
+    "recovery": {
+      "tests": 45,
+      "passed": 45
+    },
+    "shape_doctors": 3,
+    "generated_docs": "passed",
+    "working_tree_whitespace": "passed"
+  },
+  "log_sha256": {
+    "diff.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "install.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "recovery.log": "01617e807bbd1fae69fc56c73786e6198415908918441b77b477c395673eef90",
+    "repository.log": "7c9bb27354a6694b2f7be0d871806d63977616e701d7cfd3ee6e37ac73b8a41a",
+    "shapes.log": "2c0b998d5e560ddabe5539fb2449525e8dd6453512537604fbe0f8a04cdae90e",
+    "window.log": "9d8c78c4a81742ce2fa6feb4ebfbecdeb19d5f4364c91dd5f0d3388fbeea3c7f"
+  },
+  "github": {
+    "pr": "https://github.com/imDaniel/spark-ds41f/pull/58",
+    "state": "draft",
+    "checks": 0,
+    "dispatch_error": "HTTP 422: Actions has been disabled for this repository.",
+    "workflow_state": "active",
+    "repository_actions_permission_enabled": true,
+    "workflow_enable_retry": "dispatch returned the same HTTP 422",
+    "reviews": 0,
+    "review_comments": 0
+  },
+  "live_observation": {
+    "all_four_image": "sha256:14d5bb2c49aad6ad5b09c93beb70379c4088c128162e24bb418d593e5e7853f5",
+    "all_four_production_commit": "3e5eb7693f4b83c6232448270615e61e8e5520b2",
+    "all_four_container_state": "running",
+    "all_four_hold_and_request_files": "absent",
+    "restart_performed": false
+  },
+  "scope_limits": [
+    "Repository tests use local fake services and fixtures. Their timing output is test data, not model performance.",
+    "These results do not verify the final native image, GPU execution, TP4 inference or real multimodal requests.",
+    "The historical performance harness still requires Sonar integration and two candidate boots under the current guide.",
+    "Cold C1 capacity cases and per-node reservation admission are incomplete.",
+    "No new model-quality, TPS or latency claim is supported."
+  ]
+}
