@@ -30,7 +30,10 @@ def render(existing, output):
     assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True).strip(), "Publish a clean commit first"
     repository = cluster["deployment"]["path"]
     files = {str(p.relative_to(ROOT)) for p in (ROOT / "scripts").glob("*.py")}
-    files.update(["bin/spark", "config/cluster.json", "upstreams.lock.json", cluster["nodes_config"], cluster["host"]["kernel_policy"]])
+    files.update(str(p.relative_to(ROOT)) for p in (ROOT / "spark_ds41f").rglob("*.py"))
+    files.update(["bin/spark", "config/cluster.json", "upstreams.lock.json",
+                  cluster.get("upstreams_config", "upstreams.lock.json"),
+                  cluster["nodes_config"], cluster["host"]["kernel_policy"]])
     hashes = {f: digest((ROOT / f).read_bytes()) for f in sorted(files)}
     additional = json.loads(cluster["serve_args"][cluster["serve_args"].index("--additional-config") + 1])["ds41_steering"]
     mounts = {dst: {"source": src.format(home=cluster["host"]["home"]), "rw": mode == "rw"} for src, dst, mode in cluster["container"]["mounts"]}
@@ -77,13 +80,15 @@ def render(existing, output):
     power["purpose"] = "Stop registered TP4 services and verify every rank before worker-then-head poweroff"
     put("/etc/ai-cluster/cluster-power.json", power)
     registry = read("/etc/ai-cluster/engine-control.json")
-    old = registry["services"].pop(OLD_SERVICE)
-    old["name"] = "DeepSeek 1017 Attention · 1022"
+    previous_service = SERVICE if SERVICE in registry["services"] else OLD_SERVICE
+    old = registry["services"].pop(previous_service)
+    old["name"] = "DeepSeek v4.1 Flash 1017"
     old["launcher"]["dir"] = "~/sparkdash-launchers/" + SERVICE
     old["backend"].update({action: [BACKEND, action] for action in ["start", "stop", "probe"]})
     old["backend"]["pinned_files"] = {p: rendered[p]["sha256"] for p in [BACKEND, POLICY]}
     registry["services"][SERVICE] = old
-    registry["modes"] = {k: v for k, v in registry["modes"].items() if OLD_SERVICE not in v["services"]}
+    if previous_service == OLD_SERVICE:
+        registry["modes"] = {k: v for k, v in registry["modes"].items() if OLD_SERVICE not in v["services"]}
     registry["modes"]["deepseek-1022"] = {"name": old["name"], "services": [SERVICE], "resources": old["resources"]}
     registry["pinned_files"][power_path] = rendered[power_path]["sha256"]
     put("/etc/ai-cluster/engine-control.json", registry)
@@ -93,12 +98,14 @@ def render(existing, output):
     launcher_path = "/srv/ai-cluster/config/sparkdash/state/llm-launchers.json"
     launchers = read(launcher_path)
     rows = launchers["launchers"]["spark01"]
-    matches = [l for l in rows if l["dir"] == "~/sparkdash-launchers/" + OLD_SERVICE]
+    matches = [l for l in rows if l["dir"] == "~/sparkdash-launchers/" + previous_service]
     assert len(matches) == 1
-    matches[0].update(id=SERVICE, name=old["name"], dir=old["launcher"]["dir"], notes="正式 1022 + attention steering · TP4 · 1M context · C16 · alpha 2.5 · 请求 scale 0–4 · 原网关别名")
+    if previous_service == OLD_SERVICE:
+        matches[0]["id"] = SERVICE
+    matches[0].update(name=old["name"], dir=old["launcher"]["dir"], notes="DeepSeek v4.1 Flash 1017 · TP4 · 1M context · C16 · Attention steering · 请求 scale 0–4 · 原网关别名")
     put(launcher_path, launchers)
     manifest = {"revision": revision, "baseline": cluster["promoted_baseline"], "files": rendered,
-                "retire_after_verification": [f"/etc/ai-cluster/services/{OLD_SERVICE}.json", "/usr/local/libexec/ai-cluster/services/steering-r6x-model-control.py", "/etc/sudoers.d/93-sparkdash-steering-r6x", f"/var/lib/spark-monitor/sparkdash-launchers/{OLD_SERVICE}"]}
+                "retire_after_verification": ([f"/etc/ai-cluster/services/{OLD_SERVICE}.json", "/usr/local/libexec/ai-cluster/services/steering-r6x-model-control.py", "/etc/sudoers.d/93-sparkdash-steering-r6x", f"/var/lib/spark-monitor/sparkdash-launchers/{OLD_SERVICE}"] if previous_service == OLD_SERVICE else [])}
     (output / "install-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     return manifest
 

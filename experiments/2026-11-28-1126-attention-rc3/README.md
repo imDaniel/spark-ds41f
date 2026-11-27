@@ -1,0 +1,9 @@
+# 1126 Attention graph-profiling qualification
+
+This arm retains RC2's 749 patches and adds one test-only patch. The canonical replay head is `9a71ded060b015e40f721a9caf506e43bd1f3fa0`, tree `7c445f265a7bf21b4860735cd972b326968150c3`. The [patch map](patch-map.json) records the series identity and the unchanged profile binding.
+
+RC2's first 97-file bundle passed 7,891 checks with 153 skips. Its 98-file supplement passed 8,297 checks with 204 skips and seven failures, all in the CUDA graph profiling file. Our optional-input variant extended the real batch descriptor; the old profiling stand-in supplied only `num_tokens`. The new patch uses the real descriptor and adds a numerical example that estimates two input variants separately. The complete updated profiling file passed 37 checks on the native RC2 image, with this test file mounted read-only; its [receipt](runs/fixture-proof/rc3-source-proof.json) and logs are retained here. This is a downstream test adaptation.
+
+Production Python, C++, CMake and requirements paths have identical Git contents to RC2. The model, template, projection operator, directions and schedule are unchanged, so the validated profile with SHA-256 `81ca5d96cf78a1c0193ab80071efab43d666b5a57e8633ced71b227031bde1f2` is reused. No GLP profile is enabled or downloaded.
+
+The [final component manifest](component-tests.json) covers all 179 canonical gate files relevant to this Attention profile, plus 16 retained historical files. Three GLP files remain outside this window at the owner's request. Qualification requires the final native image's complete 195-file gate, real-tokenizer checks, four matching ranks, functional and capacity acceptance, and matched measurements through pinned Sonar on two engine starts. Earlier attempts remain separate evidence. A successful fixture probe alone does not authorize production adoption.

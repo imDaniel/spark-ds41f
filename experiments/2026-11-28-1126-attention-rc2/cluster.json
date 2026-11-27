@@ -1,0 +1,14 @@
+{
+  "extends": {
+    "config": "experiments/2026-11-28-1126-attention/cluster.json"
+  },
+  "set": {
+    "container": {
+      "image": "ds41f-1126-attention:vllm-b87c425f0ec0",
+      "expected_labels": {
+        "local.spark-ds41f.vllm.tree": "b87c425f0ec0301a8a1b509f4a5158c5e817a4a0"
+      }
+    },
+    "upstreams_config": "experiments/2026-11-28-1126-attention-rc2/upstreams.lock.json"
+  }
+}

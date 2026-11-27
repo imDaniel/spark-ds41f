@@ -1,0 +1,107 @@
+[
+ [
+  "sampling tests",
+  [
+   "-m",
+   "pytest",
+   "-q",
+   "-rfEs",
+   "-p",
+   "no:cacheprovider",
+   "--noconftest",
+   "-p",
+   "prepare_fixtures",
+   "--basetemp",
+   "/c/pytest-integration-sampling",
+   "tests/v1/worker/test_gpu_tilelang_sampling.py",
+   "tests/v1/worker/test_gpu_gumbel_sample.py",
+   "tests/v1/worker/test_gpu_sink.py",
+   "tests/v1/worker/test_dspark_greedy_markov.py",
+   "tests/v1/worker/gpu/test_greedy_verification.py",
+   "tests/v1/worker/test_gpu_sampler_flags.py",
+   "tests/v1/worker/test_prepare_kernels.py"
+  ],
+  5400
+ ],
+ [
+  "sampling benchmark",
+  [
+   "benchmarks/kernels/benchmark_tilelang_sampling.py",
+   "--gate"
+  ],
+  3600
+ ],
+ [
+  "sampling-controls tests",
+  [
+   "-m",
+   "pytest",
+   "-q",
+   "-rfEs",
+   "-p",
+   "no:cacheprovider",
+   "--noconftest",
+   "-p",
+   "prepare_fixtures",
+   "--basetemp",
+   "/c/pytest-integration-controls",
+   "tests/v1/worker/test_gpu_sampling_controls.py",
+   "tests/v1/worker/test_gpu_thinking_budget.py",
+   "tests/v1/worker/test_gpu_logit_bias.py",
+   "tests/v1/worker/test_gpu_bad_words.py",
+   "tests/v1/worker/test_gpu_rejection_sampler_chunking.py",
+   "tests/v1/worker/test_gpu_rejection_sampler_i64.py"
+  ],
+  3600
+ ],
+ [
+  "sampling-controls benchmark",
+  [
+   "benchmarks/kernels/benchmark_sampling_controls.py",
+   "--gate"
+  ],
+  1800
+ ],
+ [
+  "sampling-controls auxiliary benchmark",
+  [
+   "benchmarks/kernels/benchmark_sampling_auxiliary.py",
+   "--gate"
+  ],
+  1800
+ ],
+ [
+  "sink glue and grammar bitmask benchmark",
+  [
+   "benchmarks/kernels/benchmark_sink_glue.py",
+   "--gate"
+  ],
+  1800
+ ],
+ [
+  "top-k/top-p tests",
+  [
+   "-m",
+   "pytest",
+   "-q",
+   "-rfEs",
+   "-p",
+   "no:cacheprovider",
+   "--noconftest",
+   "-p",
+   "prepare_fixtures",
+   "--basetemp",
+   "/c/pytest-integration-topk-topp",
+   "tests/v1/worker/test_gpu_tilelang_topk_topp.py"
+  ],
+  5400
+ ],
+ [
+  "top-k/top-p benchmark",
+  [
+   "benchmarks/kernels/benchmark_tilelang_topk_topp.py",
+   "--gate"
+  ],
+  3600
+ ]
+]

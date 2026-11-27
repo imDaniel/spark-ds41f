@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "old_sha256": "e06b8cb60f3f382157ef6632a93efdd90185beafa2251a8c29575f09c45cd45b",
+  "new_sha256": "81ca5d96cf78a1c0193ab80071efab43d666b5a57e8633ced71b227031bde1f2",
+  "direction_payload_sha256": "f11e3762252448f547183d4b2daaf5b58c2d9023cd5b23365bc026a402c1a8e6",
+  "payload_bytes": 778240,
+  "tensor_layout_identical": true,
+  "metadata_changed_keys": [
+    "gr8_manifest",
+    "manifest_sha256"
+  ],
+  "manifest_changes": [
+    {
+      "path": ".provenance.conversion.sha256",
+      "old": "ad9f1e10ba4d6c9922ef4d15e9ab51fddd2d37457aca35f210b57c0ad1091b7d",
+      "new": "ebbee51ce35d25b17ca2b6b22deed16e13cf90b4716e3dd0d6f279c261ca7e62"
+    },
+    {
+      "path": ".provenance.conversion.tool",
+      "old": "experiments/2026-10-23-1022-attention-review/tools/rebind_profile.py",
+      "new": "experiments/2026-11-28-1126-attention/tools/rebind_profile.py"
+    },
+    {
+      "path": ".model.chat_template_sha256",
+      "old": "e27cffc1791e4da15a669f16223dd4b7b7745e0fed48de8d61f958dea939c8cb",
+      "new": "5fe6b13ceba4073b63efaf7a3369695ea0ce3e3994ddc35c18d8bf0dc5eaf12a"
+    }
+  ]
+}

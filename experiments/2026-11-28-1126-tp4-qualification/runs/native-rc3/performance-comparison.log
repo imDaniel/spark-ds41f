@@ -1,0 +1,1 @@
+[{"scale": 1, "concurrency": 1, "tps_change_pct": 15.87114051669818}, {"scale": 1, "concurrency": 4, "tps_change_pct": 10.239428768614122}, {"scale": 4, "concurrency": 1, "tps_change_pct": 16.674554346111357}, {"scale": 4, "concurrency": 4, "tps_change_pct": 10.59837319803496}]

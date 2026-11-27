@@ -1,0 +1,28 @@
+{
+  "parent_head": "320e4b04cbf1351b5aa65711f3cf67467d291ca2",
+  "head": "46f15c3ba4dabeebfb6cc4aaa510d3ec96e5c758",
+  "tree": "b87c425f0ec0301a8a1b509f4a5158c5e817a4a0",
+  "changed_files": [
+    "tests/models/test_deepseek_v4_1_engram.py",
+    "tests/models/test_deepseek_v4_1_steering_gpu.py"
+  ],
+  "production_source_identical": true,
+  "fixture_probe": {
+    "passed": 5,
+    "log": "fixture-probe-gpu-2.log",
+    "xml": "fixture-probe-gpu-2.xml"
+  },
+  "parent_series": "experiments/2026-11-28-1126-attention/vllm/series",
+  "new_series": "experiments/2026-11-28-1126-attention-rc2/vllm/series",
+  "patch_count": 749,
+  "patchset_sha256": "e327947422c8144011ae2bb1ba48734f4087096a894adfa095caf9720492d22d",
+  "retained_patches": 748,
+  "added_patches": [
+    "vllm/0500-config-fixtures-and-live-mxfp8-rows.patch"
+  ],
+  "profile_reuse": {
+    "sha256": "81ca5d96cf78a1c0193ab80071efab43d666b5a57e8633ced71b227031bde1f2",
+    "receipt": "experiments/2026-11-28-1126-attention/profile-rebind.json",
+    "reason": "Production source and template bytes match the parent. Model, operator, direction payload and schedule keep the existing binding."
+  }
+}

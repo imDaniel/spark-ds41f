@@ -1,0 +1,6 @@
+spark01: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8f254013d510e35bcd30f712ba62915c6661c59c
+spark02: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8f254013d510e35bcd30f712ba62915c6661c59c
+spark03: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8f254013d510e35bcd30f712ba62915c6661c59c
+spark04: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8f254013d510e35bcd30f712ba62915c6661c59c
+image: then copy the one experiments/2026-11-28-1126-tp4-qualification/cluster.json names at 8f254013d510e35bcd30f712ba62915c6661c59c from this host to every node whose copy differs
+plan only; pass --apply to synchronize

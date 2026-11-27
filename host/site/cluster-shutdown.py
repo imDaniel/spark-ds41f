@@ -1,5 +1,5 @@
 #!/usr/bin/python3 -I
-"""Fixed four-node 1022 power coordinator. No power action without --execute.
+"""Fixed four-node 1126 power coordinator. No power action without --execute.
 
 Installed root-owned; sudo permits spark-monitor to run only fixed modes AS admin.
 No command-line host, command, profile, unit or executable override is accepted.
@@ -24,7 +24,7 @@ import uuid
 POLICY = Path('/etc/ai-cluster/cluster-power.json')
 STATE = Path('/var/lib/ai-cluster/cluster-power')
 HOME = Path('/home/admin')
-REPO = Path('/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f')
+REPO = Path('/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f')
 PROFILE = 'config/cluster.json'
 NODES = (1, 2, 3, 4)
 WORKERS = (2, 3, 4)
@@ -37,11 +37,11 @@ ENV = {'HOME': str(HOME), 'USER': 'admin', 'LOGNAME': 'admin',
 
 SNAPSHOT = r'''import json,os,subprocess
 r={'hostname':os.uname().nodename}
-p=subprocess.run(['/usr/bin/docker','inspect','ds41f-1022-parser-rc3'],text=True,capture_output=True)
-if p.returncode:raise SystemExit('Expected deepseek-1022 container is missing')
+p=subprocess.run(['/usr/bin/docker','inspect','ds41f-1126-attention'],text=True,capture_output=True)
+if p.returncode:raise SystemExit('Expected deepseek-1126 container is missing')
 d=json.loads(p.stdout)[0]
 r.update(state=d['State'],id=d['Id'],command=d['Config']['Cmd'],restart_count=d['RestartCount'])
-p=subprocess.run(['/usr/bin/systemctl','is-active','ds41f-1022-parser-rc3-memguard.service'],text=True,capture_output=True)
+p=subprocess.run(['/usr/bin/systemctl','is-active','ds41f-1126-attention-memguard.service'],text=True,capture_output=True)
 r['memguard']=p.stdout.strip()
 p=subprocess.run(['/usr/bin/sudo','-n','-l','/usr/bin/systemctl','poweroff'],text=True,capture_output=True)
 r['admin_poweroff_authorized']=p.returncode==0
@@ -111,11 +111,11 @@ def validate_snapshot(node, row, stopped=False):
     cmd = row['command']
     for flag in ('--nnodes', '--tensor-parallel-size'):
         if flag not in cmd or cmd[cmd.index(flag) + 1] != '4':
-            raise RuntimeError('Expected four-node TP4 1022 shape on Spark0' + str(node))
+            raise RuntimeError('Expected four-node TP4 1126 shape on Spark0' + str(node))
     if row['state'].get('Paused') or row['state'].get('Restarting'):
         raise RuntimeError('Engine has ambiguous state on Spark0' + str(node))
     if stopped and (row['state']['Running'] or row['memguard'] == 'active'):
-        raise RuntimeError('1022/guard did not stop on Spark0' + str(node))
+        raise RuntimeError('1126/guard did not stop on Spark0' + str(node))
 
 
 def inspect_fleet(executor, stopped=False):
@@ -135,9 +135,9 @@ def plan(executor):
     rows = inspect_fleet(executor)
     text = executor.run(1, stop_args(), timeout=40)
     if '--apply would refuse:' in text:
-        raise RuntimeError('Original 1022 coordinator refused this stop plan')
+        raise RuntimeError('Original 1126 coordinator refused this stop plan')
     for n in NODES:
-        if f'spark0{n}: stop exact container ds41f-1022-parser-rc3' not in text:
+        if f'spark0{n}: stop exact container ds41f-1126-attention' not in text:
             raise RuntimeError('Stop plan does not cover all four configured nodes')
     return {'passed': True, 'phase': 'checked', 'nodes': rows, 'stop_plan': text,
             'shutdown_order': ['spark02', 'spark03', 'spark04', 'spark01'],
@@ -147,7 +147,7 @@ def plan(executor):
 def execute(executor, report):
     """Stop and verify EVERY rank before queuing ANY poweroff; head queued LAST."""
     unit = 'ai-cluster-poweroff-' + uuid.uuid4().hex
-    report.update(unit=unit, phase='stopping-1022', started_utc=utc(), queued=[], rollback_errors=[])
+    report.update(unit=unit, phase='stopping-1126', started_utc=utc(), queued=[], rollback_errors=[])
     try:
         report['stop_output'] = executor.run(1, stop_args(apply=True), timeout=160)
         report['stopped_fleet'] = inspect_fleet(executor, stopped=True)
@@ -187,7 +187,7 @@ def execute(executor, report):
         if not executor.timer_active(1, unit):
             raise RuntimeError('Head timer did not arm')
         report.update(passed=True, phase='scheduled', scheduled_utc=utc(),
-                      message='1022 stopped and verified; Spark02-04 shutdown scheduled before Spark01.')
+                      message='1126 stopped and verified; Spark02-04 shutdown scheduled before Spark01.')
         return report
     except BaseException as e:
         def cancel(n):
@@ -267,7 +267,7 @@ def main(argv=None):
         report = plan(executor)
         report['job_id'] = uuid.uuid4().hex
         owned = {'holder': 'sparkdash-cluster-shutdown', 'since': utc(), 'heartbeat': utc(),
-                 'expected_end': None, 'rule': 'Coordinated four-rank 1022 stop and shutdown scheduling'}
+                 'expected_end': None, 'rule': 'Coordinated four-rank 1126 stop and shutdown scheduling'}
         with hold.open('x') as f:
             json.dump(owned, f)
         try:

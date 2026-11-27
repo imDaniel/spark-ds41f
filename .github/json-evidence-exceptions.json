@@ -1,0 +1,234 @@
+{
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/evals/vision-eval/score.json": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reason": "Immutable upstream receipt, empty captured output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/acceptance_sweep.json": {
+    "sha256": "5120216859494f43d5e9eed2588f3dee13e2a5a0a73eab3d3fd856d50de2f0cd",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/ced_cross_shape.json": {
+    "sha256": "3b806e8063ceb7b02c67bcceca1e46685f6c1b3926ac9c24c674b7447a8445eb",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/controls_digest.json": {
+    "sha256": "1c39574b29727e7a6e0a3cfad1a65d60f4f950111b59b029ec3e645606048702",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/controls_digest_prompt_logprobs.json": {
+    "sha256": "250b1c49f6eb3dbe215ad5654827dc3512b5b251bcb636b0aa6d00f0268bb225",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/copy_probe.json": {
+    "sha256": "63a322679ee2112537c8de8397d86a36bf29ae619774f6a938cd210f3c23e5eb",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/determinism.json": {
+    "sha256": "7b65f9f14ba21bc598980f7320857cc8ed1e653699f6106414d7ed00c64479b8",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/determinism_concurrent.json": {
+    "sha256": "8b0f6ec168e7ba587a1721a5463b3a7e215374444ed23a7da3fb5d6d54c094a0",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/distinct_streams_c4.json": {
+    "sha256": "80095dfbe5687c9b3eca27e8fdd50e8b211e574190d7a19a80e45d8ebca61db4",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/distinct_streams_c8.json": {
+    "sha256": "b6dd8d0e8243c8d0609f50e608eba34c7abf3145060084d05fe00a6f45bcb839",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/image_digest.json": {
+    "sha256": "500bfa51047cf0f3e10b57231c8366097960e5766d1b8b8e92b7d67bf55879f4",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/loader_report.json": {
+    "sha256": "b92cb0536359aa7fe2d4d3b08b52163ba298ede09057ed743df9b18b28021f7f",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/logprob_ids_check.json": {
+    "sha256": "4186acf981e245afd9f10aee0924125285e4960524e41327292bbf76c4a60d2e",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/long_context_960k.json": {
+    "sha256": "9fb3e821ddd4ae9d95fe4764748aa562d4994c9efe22ffd3c03c16a5d1599098",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/prefix_extension.json": {
+    "sha256": "35eaaf056ea93baccc6a82388fe8e70749440f2025fb119c5907665c5a097fb0",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/prompt_logprobs_check.json": {
+    "sha256": "e211362e67affd1671a4ab8574045174f76f87acc0bb162dcec0f532eab465d5",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/sampled_digest.json": {
+    "sha256": "05197b9f3734161478071506900ba2c3b148c3d0e7e7787809db99d713df1a34",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/sink_rejection_batch.json": {
+    "sha256": "989feadb236a31a698938196700e7294e37f629ebc9f10646700d0a63d8ad522",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/sink_rejection_longctx.json": {
+    "sha256": "28ced71c36e58bd6ccbca4f01f72dc3a50523f99b51083312e25aefaab81e688",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/sink_rejection_probes.json": {
+    "sha256": "a612d0c45b03174579ebf742764b47d4098529c663420ba0c2c11d2942fc169d",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/token_determinism_1100.json": {
+    "sha256": "4b6853142d1152d44f05cedb07f659b15a5c4822546ff97518ac3a167ae37a58",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/token_determinism_1100_logprobs.json": {
+    "sha256": "c75d27a60d5daaa50d27c21da7ae3b8fa0f7c212dbe3f9fa801fb56da41505b8",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/token_determinism_wide.json": {
+    "sha256": "eaf246ea3cd1f0dbbe4b8f233660384f36fa508ef0d28fa2622b848d6ab0c854",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/token_determinism_wide_logprobs.json": {
+    "sha256": "06b84e0b341c11aa3c4bdab06f1a5f295ded10789a6ef13d17e077609ebd209a",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp3-triangle/gate/vision_check.json": {
+    "sha256": "87049b115cee80cc8be5f463051b4ef714656e4834ba3c2417f1e8ad493b5948",
+    "reason": "Immutable upstream receipt, captured diagnostic output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/acceptance_sweep.json": {
+    "sha256": "d76dd3ae2ffe8edf05924c44c01ec81b0d1c2fba0e6e12e8f4d30d77c052a65e",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/ced_cross_shape.json": {
+    "sha256": "fa25d4ab26a5c81b0f31589a9e2ca1af4fa281b4ee575ba236cf54d4a498052e",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/controls_digest.json": {
+    "sha256": "854aa9d483c45d30c93d2f55088c6efb41f347cbac53be54dd5f2b2ceec61b76",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/controls_digest_prompt_logprobs.json": {
+    "sha256": "82326075a4dce838442b416f5a32782a09d98c3d209bcf35b1d01eb297f0ae96",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/copy_probe.json": {
+    "sha256": "6369d3b58381154e35d1f958df0cfc61f83a580ae290fedae3319a608789967c",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/determinism.json": {
+    "sha256": "7b65f9f14ba21bc598980f7320857cc8ed1e653699f6106414d7ed00c64479b8",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/determinism_concurrent.json": {
+    "sha256": "7dac1739395ddc467acabd1dd320cd5474ef26eb02f660ab0ae5e46efdf31a4e",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/distinct_streams_c4.json": {
+    "sha256": "043efd2bf028a23077f1b1cbf308983cc80280c08648796557c90388cc21c1ad",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/distinct_streams_c8.json": {
+    "sha256": "b7ac4b0bc5fa2a270d9753f9d315ff64cd7de2c99be2572cd53347dd476b2605",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/image_digest.json": {
+    "sha256": "3a2517ddf3f7c3deb4cc5a07e718d9f893d8298629af76fb3bc6adc885428196",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/loader_report.json": {
+    "sha256": "6758812b541aac419dda6691c99da4fe37985097b0bd63d820b64ac5fbb6e6eb",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/logprob_ids_check.json": {
+    "sha256": "a5398621cbcec054e35e3020000372130b9566a719cfadedd11f7083769e71a1",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/long_context_960k.json": {
+    "sha256": "95696a3b2348f14300e9f85df6190675fc956e7b58dfae398e49b9ada40dc0b4",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/prefix_extension.json": {
+    "sha256": "224503cea0e61fc65bab545c266e799d44d5e9740a77099258ea4aa648e64ac6",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/prompt_logprobs_check.json": {
+    "sha256": "52f3afa88e13183054c97da952ac30bd95b5b0a421e6171b2dad70d49e3b438f",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/sampled_digest.json": {
+    "sha256": "67e69c033d9f0aadb54d8791548a224578d89c2cd820e6148b9d8f9a6a252b8c",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/sink_rejection_batch.json": {
+    "sha256": "6c2427754ad9eac8f907d32bbbd5fe8b84018b7967c5e6ee0e0b5e29b76bef01",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/sink_rejection_longctx.json": {
+    "sha256": "910dabbdbd8ab3944678377e6dda24bb3f3d019639600d25b29d8488e6958e0e",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/sink_rejection_probes.json": {
+    "sha256": "aa35e2e19bf32ba9b2fea4f91e25a872800f699ab8ae1b0eb8fd8f211e7baded",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/token_determinism_1100.json": {
+    "sha256": "e51823fd2ae635c54c608ccb2c666bed54200b624045f2a51bc0fbac2d56f2d5",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/token_determinism_1100_logprobs.json": {
+    "sha256": "47db942129c65450bac1e79a6a2bc7feab321bfa543a347364d055920304899b",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/token_determinism_wide.json": {
+    "sha256": "4660f3355a8c91a5342ea3633391f404d9f8b5b7a3db122e88a25e1c909bdf8e",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/token_determinism_wide_logprobs.json": {
+    "sha256": "f1fec857312200b014d1dd3ee666622e40baf9a2968e9ba233adc9a5abbdb756",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/1107/receipts/tp4-ring/gate/vision_check.json": {
+    "sha256": "b369b484b61a661e3da53a2a7dd3cd8b19f816b330e1894f7807284b4a63e7be",
+    "reason": "Immutable upstream receipt, captured diagnostic output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/candidate-72/receipts/tp4-ring/c16-distinct.json": {
+    "sha256": "9ee64f8938f30af20b5a28fcd535d9a69904a7b0ff1591c30e9e209a5271ff88",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/candidate-72/receipts/tp4-ring/c4-distinct.json": {
+    "sha256": "f2975efab5487fbe1010ffd87a8c1223ff23009d6eb620d72ea60173a461d2f0",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-10-26-spark-ds41f-candidate/candidate-72/receipts/tp4-ring/c8-distinct.json": {
+    "sha256": "9300659a2d4f2fc51190c0f610420675cd28f2c53612cd831898b8f8ca485d36",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-11-17-c1-floor-now/receipts/trace/decode.json": {
+    "sha256": "4802091c8c9cc50fb30c64fb5fc518af80d0a97526e411db3f46e5929675df09",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-11-17-dspark-turn-learning/receipts/comm-profile/comm/decode.json": {
+    "sha256": "e4827ef6d13819b5f62e7d7c7f6f1bbc3c551605949a4bbb32a2bd67ccee898e",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-11-17-dspark-turn-learning/receipts/comm-profile/off/decode.json": {
+    "sha256": "77fdcd32e28930db1df4b54cd0d171ea9ccfd41dd215c5120e573524b00efa81",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-11-17-indexer-decode-share/receipts/tp4-switched/profile-again/decode.json": {
+    "sha256": "f6888cb79d96644147dd45333aff87f1e3d70c85b5b5b47905f007151fb1516c",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-11-17-indexer-decode-share/receipts/tp4-switched/profile-real-rows/decode.json": {
+    "sha256": "cedb14c1e7fc44c0ffea3fc16967620c83356803270cef661b99e89886465727",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  },
+  "experiments/2026-11-17-indexer-decode-share/receipts/tp4-switched/profile/decode.json": {
+    "sha256": "fcc942d38a3af795b9b3f962e82a6989a4f82d251edfdbd9b1ab5ccbf766b012",
+    "reason": "Immutable upstream receipt, line-delimited JSON output."
+  }
+}

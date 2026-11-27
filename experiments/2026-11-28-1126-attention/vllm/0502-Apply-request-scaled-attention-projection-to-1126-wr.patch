@@ -1,0 +1,837 @@
+From 1026d4a583a0eda9e092219dc432e3cce0ec1930 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 00:27:37 +0900
+Subject: [PATCH 502/505] Apply request-scaled attention projection to 1126
+ writer rows
+
+Upstream base: spark-ds41f-1126 vLLM d8784b841c360f523ec20e44bf8fb0898f36d3e4.
+
+Keep the compensated FP32 projection and BF16 boundary inside the current TileLang mHC consumer. Follow SP shards and CED replay index selection, and keep rank-ordered partials. The stock kernel has its original argument ABI. CPU tests cover formula/row semantics; native TP4 execution is a separate qualification.
+
+Upstream status: downstream integration.
+---
+ vllm/models/deepseek_v4_1/nvidia/model.py     |  81 +++++
+ vllm/models/deepseek_v4_1/nvidia/vl_model.py  |   8 +
+ vllm/models/deepseek_v4_1/steering/consume.py |  45 +++
+ vllm/models/deepseek_v4_1/steering/ops.py     | 309 ++++++++++++++++++
+ vllm/models/deepseek_v4_1/tilelang/mhc.py     | 101 +++++-
+ 5 files changed, 537 insertions(+), 7 deletions(-)
+ create mode 100644 vllm/models/deepseek_v4_1/steering/consume.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/ops.py
+
+diff --git a/vllm/models/deepseek_v4_1/nvidia/model.py b/vllm/models/deepseek_v4_1/nvidia/model.py
+index 219ae43417..7adaf2045c 100644
+--- a/vllm/models/deepseek_v4_1/nvidia/model.py
++++ b/vllm/models/deepseek_v4_1/nvidia/model.py
+@@ -94,6 +94,8 @@ class DeepseekV4DecoderLayer(nn.Module):
+ 
+         config = vllm_config.model_config.hf_config
+         self.hidden_size = config.hidden_size
++        self.steering_direction = None
++        self.steering_alpha = 0.0
+ 
+         self.engram: Engram | None = None
+         if engram_layout is not None:
+@@ -346,6 +348,10 @@ class DeepseekV4DecoderLayer(nn.Module):
+         layer_idx: int = 0,
+         steer_rows: torch.Tensor | None = None,
+         encoder_only: bool = False,
++        steering_active: bool = False,
++        steering_scales: torch.Tensor | None = None,
++        steering_dots: torch.Tensor | None = None,
++        steering_scratch: torch.Tensor | None = None,
+     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+         if isinstance(x, list):
+             # Pop the caller's carry list in place so nn.Module.__call__'s *args
+@@ -461,6 +467,14 @@ class DeepseekV4DecoderLayer(nn.Module):
+         del x_q
+         if glp is not None:
+             glp.steer_attn(layer_idx, x, steer_rows)
++        steering = {}
++        if steering_active and self.steering_direction is not None:
++            from ..steering.ops import prepare_consumer
++
++            x, steering = prepare_consumer(
++                x, self.steering_direction, steering_scales, steering_dots,
++                steering_scratch, self.steering_alpha,
++            )
+         residual, post_mix, res_mix, x, ffn_pre, x_q = self.mhc.post_pre(
+             x,
+             residual,
+@@ -471,6 +485,7 @@ class DeepseekV4DecoderLayer(nn.Module):
+             self.hc_ffn_base,
+             self.ffn_norm.weight,
+             attn_pre,
++            **steering,
+         )
+         del attn_pre
+         if sp_rows is None:
+@@ -588,6 +603,7 @@ def _load_checkpoint_router_biases(
+ 
+ 
+ class DeepseekV4Model(nn.Module, EagleModelMixin):
++    steering_profile = None
+     supports_aux_hidden_states_over_pp: typing.ClassVar[bool] = True
+ 
+     def __init__(self, *, vllm_config: VllmConfig, prefix: str = ""):
+@@ -655,6 +671,27 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+             ),
+             prefix=f"{prefix}.layers",
+         )
++        from ..steering.config import load_configured_profile
++
++        self.steering_profile = load_configured_profile(vllm_config)
++        if self.steering_profile is not None:
++            profile = self.steering_profile
++            # Bound once before kernel preparation/capture; not model parameters.
++            device = next(self.parameters()).device
++            self.register_buffer(
++                "steering_directions",
++                torch.from_numpy(profile.directions.copy()).to(device=device),
++                persistent=False,
++            )
++            for row, (layer_id, alpha) in enumerate(
++                zip(profile.layers, profile.alphas)
++            ):
++                layer = self.layers[layer_id]
++                if alpha == 0:
++                    continue
++                layer.steering_direction = self.steering_directions[row]
++                layer.steering_alpha = alpha
++                layer.mhc.steering_enabled = True
+         # SP results stay unreduced for mHC to add (see sp_prefill).
+         self.prefill_sp_unreduced = (
+             bool(self.prefill_sp_min_rows) and sp_prefill.unreduced_enabled()
+@@ -937,6 +974,15 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+                 if first_param is not None and first_param.is_cuda:
+                     sp_prefill._side_stream(first_param.device)
+ 
++        if self.steering_profile is not None:
++            from ..steering.ops import register_dot_warmups
++
++            register_dot_warmups(self.config.hidden_size)
++            if self.prefill_sp_unreduced:
++                from ..steering.ops import register_projection_warmups
++
++                register_projection_warmups(self.config.hidden_size, worlds=(4,))
++
+         prepare.declare(
+             lambda: [
+                 *collectives.rank_order_sum_calls(),
+@@ -961,7 +1007,21 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+         inputs_embeds: torch.Tensor | None = None,
+         lookback_token_ids: torch.Tensor | None = None,
+         ced_indices: torch.Tensor | None = None,
++        steering_active: bool = False,
++        steering_scales: torch.Tensor | None = None,
++        steering_dots: torch.Tensor | None = None,
++        steering_scratch: torch.Tensor | None = None,
+     ) -> torch.Tensor | IntermediateTensors:
++        from ..steering.runtime import validate_model_inputs
++
++        validate_model_inputs(
++            self.steering_profile if steering_active else None,
++            steering_active,
++            steering_scales,
++            steering_dots,
++            positions.shape[0],
++            scratch=steering_scratch,
++        )
+         sp = None
+         # With CED the encoder layers (before ced_decoder_start) still run on
+         # every row; the boundary gathers global KV latents and compact carries.
+@@ -1039,6 +1099,9 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+                     engram.prepare_embeddings(engram_hashes[:, engram.layer_hash_index])
+ 
+         full_num_tokens = positions.shape[0]
++        full_steering_scales = steering_scales
++        if sp is not None and steering_scales is not None:
++            steering_scales = sp.local_slice(steering_scales)
+         # GLP steering's row marks for the rows the layers hold: this rank's under
+         # sequence parallelism, the decoder's once CED compacts the step.
+         steer_rows: torch.Tensor | None = None
+@@ -1067,6 +1130,8 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+             positions = gather_rows(positions, ced_indices)
+             if input_ids is not None:
+                 input_ids = gather_rows(input_ids, ced_indices)
++            if full_steering_scales is not None:
++                steering_scales = gather_rows(full_steering_scales, ced_indices)
+             if steer_rows is not None:
+                 steer_rows = gather_rows(
+                     self.glp.step_rows(full_num_tokens), ced_indices
+@@ -1127,6 +1192,8 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+                     and input_ids is not None
+                     else None
+                 )
++                if boundary_indices is not None and full_steering_scales is not None:
++                    steering_scales = gather_rows(full_steering_scales, boundary_indices)
+                 if boundary_indices is not None and steer_rows is not None:
+                     steer_rows = gather_rows(
+                         self.glp.step_rows(full_num_tokens), boundary_indices
+@@ -1152,6 +1219,12 @@ class DeepseekV4Model(nn.Module, EagleModelMixin):
+                     layer_idx=idx,
+                     steer_rows=steer_rows,
+                     encoder_only=boundary_encoder_only,
++                    **({
++                        "steering_active": True,
++                        "steering_scales": steering_scales,
++                        "steering_dots": steering_dots,
++                        "steering_scratch": steering_scratch,
++                    } if steering_active else {}),
+                 )
+                 if getattr(layer, "engram", None) is not None:
+                     if self._pending_engram_stage is not None:
+@@ -1843,6 +1916,10 @@ class DeepseekV41LLMForCausalLM(UpstreamDeepseekV41LLMForCausalLM):
+         inputs_embeds: torch.Tensor | None = None,
+         lookback_token_ids: torch.Tensor | None = None,
+         ced_indices: torch.Tensor | None = None,
++        steering_active: bool = False,
++        steering_scales: torch.Tensor | None = None,
++        steering_dots: torch.Tensor | None = None,
++        steering_scratch: torch.Tensor | None = None,
+     ) -> torch.Tensor | IntermediateTensors:
+         hidden_states = self.model(
+             input_ids,
+@@ -1851,6 +1928,10 @@ class DeepseekV41LLMForCausalLM(UpstreamDeepseekV41LLMForCausalLM):
+             inputs_embeds,
+             lookback_token_ids=lookback_token_ids,
+             ced_indices=ced_indices,
++            steering_active=steering_active,
++            steering_scales=steering_scales,
++            steering_dots=steering_dots,
++            steering_scratch=steering_scratch,
+         )
+         return hidden_states
+ 
+diff --git a/vllm/models/deepseek_v4_1/nvidia/vl_model.py b/vllm/models/deepseek_v4_1/nvidia/vl_model.py
+index 2ebb7c0b28..a49f9dd283 100644
+--- a/vllm/models/deepseek_v4_1/nvidia/vl_model.py
++++ b/vllm/models/deepseek_v4_1/nvidia/vl_model.py
+@@ -311,6 +311,10 @@ class DeepseekV41ForCausalLM(UpstreamDeepseekV41ForCausalLM):
+         inputs_embeds: torch.Tensor | None = None,
+         lookback_token_ids: torch.Tensor | None = None,
+         ced_indices: torch.Tensor | None = None,
++        steering_active: bool = False,
++        steering_scales: torch.Tensor | None = None,
++        steering_dots: torch.Tensor | None = None,
++        steering_scratch: torch.Tensor | None = None,
+         **kwargs,
+     ) -> torch.Tensor:
+         return self.language_model(
+@@ -320,6 +324,10 @@ class DeepseekV41ForCausalLM(UpstreamDeepseekV41ForCausalLM):
+             inputs_embeds,
+             lookback_token_ids=lookback_token_ids,
+             ced_indices=ced_indices,
++            steering_active=steering_active,
++            steering_scales=steering_scales,
++            steering_dots=steering_dots,
++            steering_scratch=steering_scratch,
+         )
+ 
+     def checkpoint_file_weight_filter(self, name: str) -> bool:
+diff --git a/vllm/models/deepseek_v4_1/steering/consume.py b/vllm/models/deepseek_v4_1/steering/consume.py
+new file mode 100644
+index 0000000000..5d2cbdc261
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/consume.py
+@@ -0,0 +1,45 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Projection update inside the existing mHC register fold.
++
++The dot producer and consumer use the same rank-order FP32 sum -> BF16 writer
++boundary. Explicit IEEE FP32 operations preserve the compensated writer math
++without changing the enclosing mHC kernel's compiler settings.
++"""
++
++from vllm.tilelang_utils import T
++
++
++@T.macro
++def project_columns(xv, direction, scales, dots, alpha, src, col, columns):
++    # This branch precedes every direction/dot load. Zero rows keep xv's bits,
++    # including signed zero and nonfinite stock values.
++    if scales[src] != 0.0 and alpha != 0.0:
++        dose = scales[src]
++        hi = dots[src, 0]
++        lo = dots[src, 1]
++        factor = T.ieee_mul(dose, alpha)
++        factor_lo = T.ieee_fmaf(dose, alpha, -factor)
++        for v in T.unroll(columns):
++            value = T.Cast(T.float32, xv[v])
++            d = direction[col + v]
++            if T.abs(hi) < T.float32(float("inf")):
++                coefficient = T.ieee_mul(factor, d)
++                coefficient_lo = T.ieee_add(
++                    T.ieee_fmaf(factor, d, -coefficient), T.ieee_mul(factor_lo, d)
++                )
++                correction = T.ieee_add(
++                    T.ieee_add(
++                        T.ieee_mul(coefficient, lo), T.ieee_mul(coefficient_lo, hi)
++                    ),
++                    T.ieee_mul(coefficient_lo, lo),
++                )
++                xv[v] = T.Cast(
++                    T.bfloat16,
++                    T.ieee_sub(T.ieee_fmaf(-coefficient, hi, value), correction),
++                )
++            else:
++                xv[v] = T.Cast(
++                    T.bfloat16,
++                    T.ieee_sub(value, T.ieee_mul(T.ieee_mul(factor, d), hi)),
++                )
+diff --git a/vllm/models/deepseek_v4_1/steering/ops.py b/vllm/models/deepseek_v4_1/steering/ops.py
+new file mode 100644
+index 0000000000..b1cc08ab95
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/ops.py
+@@ -0,0 +1,309 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Opaque graph-safe projection at the attention writer -> mHC boundary."""
++
++import torch
++
++from vllm.model_executor.warmup.jit_warmup_triton_helper import (
++    TritonWarmupTensor,
++    triton_kernel_dispatcher_with_warmup,
++    triton_warmup_inputs,
++)
++from vllm.triton_utils import tl, triton
++
++
++@triton.jit
++def _sum_pair(ah, al, bh, bl):
++    total = ah + bh
++    part = total - ah
++    residual = (ah - (total - part)) + (bh - part)
++    low = (al + bl) + residual
++    low = tl.where(tl.abs(total) < float("inf"), low, 0.0)
++    high = total + low
++    part = high - total
++    residual = (total - (high - part)) + (low - part)
++    return high, tl.where(tl.abs(high) < float("inf"), residual, 0.0)
++
++
++@triton.jit(do_not_specialize=["num_rows", "part_stride", "alpha"])
++def _project_kernel(
++    source,
++    direction,
++    scales,
++    output,
++    num_rows,
++    part_stride,
++    alpha,
++    HIDDEN: tl.constexpr,
++    WORLD: tl.constexpr,
++    BLOCK: tl.constexpr,
++):
++    row = tl.program_id(0)
++    scale = tl.load(scales + row).to(tl.float32)
++    # A single writer can be left byte-for-byte intact. Rank parts must be
++    # materialized even at zero dose, with the existing BF16 sum boundary.
++    if (WORLD != 1) | ((scale != 0.0) & (alpha != 0.0)):
++        h = tl.arange(0, BLOCK)
++        value = tl.load(source + row * HIDDEN + h, h < HIDDEN, other=0).to(tl.float32)
++        for rank in tl.static_range(1, WORLD):
++            value = value + tl.load(
++                source + rank * part_stride + row * HIDDEN + h, h < HIDDEN, other=0
++            ).to(tl.float32)
++        value = value.to(tl.bfloat16).to(tl.float32)
++        if (scale != 0.0) & (alpha != 0.0):
++            d = tl.load(direction + h, h < HIDDEN, other=0).to(tl.float32)
++            product = value * d
++            residual = tl.fma(value, d, -product)
++            residual = tl.where(tl.abs(product) < float("inf"), residual, 0.0)
++            dot_hi, dot_lo = tl.reduce(
++                (product, residual), axis=0, combine_fn=_sum_pair
++            )
++            if tl.abs(dot_hi) < float("inf"):
++                factor = scale * alpha
++                factor_lo = tl.fma(scale, alpha, -factor)
++                coefficient = factor * d
++                coefficient_lo = tl.fma(factor, d, -coefficient) + factor_lo * d
++                correction = (
++                    coefficient * dot_lo + coefficient_lo * dot_hi
++                ) + coefficient_lo * dot_lo
++                value = tl.fma(-coefficient, dot_hi, value) - correction
++            else:
++                value = value - ((scale * alpha) * d) * dot_hi
++        tl.store(output + row * HIDDEN + h, value.to(tl.bfloat16), h < HIDDEN)
++
++
++def _warmup_inputs(*, hidden, world, scales_aligned):
++    return triton_warmup_inputs(
++        _project_kernel,
++        TritonWarmupTensor(torch.bfloat16),
++        TritonWarmupTensor(torch.float32),
++        TritonWarmupTensor(torch.float32, aligned=scales_aligned),
++        TritonWarmupTensor(torch.bfloat16),
++        128,
++        128 * hidden,
++        2.5,
++        HIDDEN=hidden,
++        WORLD=world,
++        BLOCK=triton.next_power_of_2(hidden),
++        grid=(128,),
++        num_warps=8,
++        enable_fp_fusion=False,
++    )
++
++
++_launcher = triton_kernel_dispatcher_with_warmup(warmup_inputs=_warmup_inputs)(
++    _project_kernel
++)
++
++
++def register_projection_warmups(hidden, worlds=(1, 4)):
++    for world in worlds:
++        for scales_aligned in (True, False):
++            _launcher.register_warmup(
++                hidden=hidden, world=world, scales_aligned=scales_aligned
++            )
++
++
++def _launch(source, direction, scales, output, alpha, world):
++    rows, hidden = output.shape
++    if (
++        output.dtype != torch.bfloat16
++        or source.dtype != torch.bfloat16
++        or direction.dtype != torch.float32
++        or scales.dtype != torch.float32
++        or scales.numel() != rows
++        or direction.numel() != hidden
++        or not source.is_contiguous()
++        or not output.is_contiguous()
++        or not direction.is_contiguous()
++        or not scales.is_contiguous()
++    ):
++        raise ValueError("Invalid steering projection tensor geometry/dtype/layout")
++    if rows:
++        _launcher[(rows,)](
++            source,
++            direction,
++            scales,
++            output,
++            rows,
++            source.stride(0) if world != 1 else 0,
++            alpha,
++            HIDDEN=hidden,
++            WORLD=world,
++            BLOCK=triton.next_power_of_2(hidden),
++            num_warps=8,
++            enable_fp_fusion=False,
++        )
++
++
++@torch.library.custom_op("ds41_steering::project_writer", mutates_args=("writer",))
++def project_writer(
++    writer: torch.Tensor, direction: torch.Tensor, scales: torch.Tensor, alpha: float
++) -> None:
++    _launch(writer, direction, scales, writer, alpha, 1)
++
++
++@project_writer.register_fake
++def _project_writer_fake(writer, direction, scales, alpha):
++    return None
++
++
++@torch.library.custom_op("ds41_steering::project_parts", mutates_args=("output",))
++def project_parts(
++    parts: torch.Tensor,
++    direction: torch.Tensor,
++    scales: torch.Tensor,
++    output: torch.Tensor,
++    alpha: float,
++) -> None:
++    if parts.ndim != 3 or parts.shape[0] != 4 or parts.shape[1:] != output.shape:
++        raise ValueError("Steering expects four rank-order parts of the output rows")
++    _launch(parts, direction, scales, output, alpha, 4)
++
++
++@project_parts.register_fake
++def _project_parts_fake(parts, direction, scales, output, alpha):
++    return None
++
++
++def apply_projection(writer, direction, scales, scratch, alpha):
++    if scales is None or scratch is None:
++        raise ValueError("Loaded steering profile requires explicit row controls")
++    from vllm.models.deepseek_v4_1.tilelang.collectives import RankOrderParts
++
++    if isinstance(writer, RankOrderParts):
++        output = scratch[: writer.shape[0]]
++        project_parts(writer.packed, direction, scales, output, alpha)
++        return output
++    project_writer(writer, direction, scales, alpha)
++    return writer
++
++
++@triton.jit(do_not_specialize=["part_stride"])
++def _dot_kernel(
++    source,
++    direction,
++    scales,
++    dots,
++    part_stride,
++    HIDDEN: tl.constexpr,
++    WORLD: tl.constexpr,
++    BLOCK: tl.constexpr,
++):
++    row = tl.program_id(0)
++    # Inactive rows do not read the writer, direction or dot workspace. The
++    # consumer takes the same branch before reading either component.
++    if tl.load(scales + row) != 0.0:
++        h = tl.arange(0, BLOCK)
++        value = tl.load(source + row * HIDDEN + h, h < HIDDEN, other=0).to(tl.float32)
++        for rank in tl.static_range(1, WORLD):
++            value = value + tl.load(
++                source + rank * part_stride + row * HIDDEN + h, h < HIDDEN, other=0
++            ).to(tl.float32)
++        value = value.to(tl.bfloat16).to(tl.float32)
++        d = tl.load(direction + h, h < HIDDEN, other=0).to(tl.float32)
++        product = value * d
++        residual = tl.fma(value, d, -product)
++        residual = tl.where(tl.abs(product) < float("inf"), residual, 0.0)
++        hi, lo = tl.reduce((product, residual), axis=0, combine_fn=_sum_pair)
++        tl.store(dots + row * 2, hi)
++        tl.store(dots + row * 2 + 1, lo)
++
++
++def _dot_warmup_inputs(*, hidden, world, scales_aligned):
++    return triton_warmup_inputs(
++        _dot_kernel,
++        TritonWarmupTensor(torch.bfloat16),
++        TritonWarmupTensor(torch.float32),
++        TritonWarmupTensor(torch.float32, aligned=scales_aligned),
++        TritonWarmupTensor(torch.float32),
++        128 * hidden if world != 1 else 0,
++        HIDDEN=hidden,
++        WORLD=world,
++        BLOCK=triton.next_power_of_2(hidden),
++        grid=(128,),
++        num_warps=8,
++        enable_fp_fusion=False,
++    )
++
++
++_dot_launcher = triton_kernel_dispatcher_with_warmup(warmup_inputs=_dot_warmup_inputs)(
++    _dot_kernel
++)
++
++
++def register_dot_warmups(hidden):
++    for world in (1,):
++        for aligned in (True, False):
++            _dot_launcher.register_warmup(
++                hidden=hidden, world=world, scales_aligned=aligned
++            )
++
++
++@torch.library.custom_op("ds41_steering::projection_dot", mutates_args=("dots",))
++def projection_dot(
++    source: torch.Tensor,
++    direction: torch.Tensor,
++    scales: torch.Tensor,
++    dots: torch.Tensor,
++) -> None:
++    world, rows, hidden = source.shape
++    if (
++        world not in (1, 4)
++        or source.dtype != torch.bfloat16
++        or direction.dtype != torch.float32
++        or scales.dtype != torch.float32
++        or dots.dtype != torch.float32
++        or direction.shape != (hidden,)
++        or scales.shape != (rows,)
++        or dots.shape != (rows, 2)
++        or any(not t.is_contiguous() for t in (source, direction, scales, dots))
++        or any(t.device != source.device for t in (direction, scales, dots))
++    ):
++        raise ValueError("Invalid steering dot tensor geometry/dtype/layout/device")
++    if rows:
++        _dot_launcher[(rows,)](
++            source,
++            direction,
++            scales,
++            dots,
++            source.stride(0) if world != 1 else 0,
++            HIDDEN=hidden,
++            WORLD=world,
++            BLOCK=triton.next_power_of_2(hidden),
++            num_warps=8,
++            enable_fp_fusion=False,
++        )
++
++
++@projection_dot.register_fake
++def _projection_dot_fake(source, direction, scales, dots):
++    return None
++
++
++def projection_dots(writer, direction, scales, dots):
++    if scales is None or dots is None:
++        raise ValueError("Active steering requires explicit row controls")
++    from vllm.models.deepseek_v4_1.tilelang.collectives import RankOrderParts
++
++    source = (
++        writer.packed if isinstance(writer, RankOrderParts) else writer.unsqueeze(0)
++    )
++    output = dots[: source.shape[1]]
++    projection_dot(source, direction, scales, output)
++    return output
++
++
++def prepare_consumer(writer, direction, scales, dots, scratch, alpha):
++    from vllm.models.deepseek_v4_1.tilelang.collectives import RankOrderParts
++
++    if isinstance(writer, RankOrderParts):
++        # 4H parts read + H write/read beats two reads of 4H for large SP
++        # batches. Keep that path until an SP fusion avoids the second read.
++        return apply_projection(writer, direction, scales, scratch, alpha), {}
++    return writer, {
++        "steering_direction": direction,
++        "steering_scales": scales,
++        "steering_dots": projection_dots(writer, direction, scales, dots),
++        "steering_alpha": alpha,
++    }
+diff --git a/vllm/models/deepseek_v4_1/tilelang/mhc.py b/vllm/models/deepseek_v4_1/tilelang/mhc.py
+index 9f658547cd..94e84eba56 100644
+--- a/vllm/models/deepseek_v4_1/tilelang/mhc.py
++++ b/vllm/models/deepseek_v4_1/tilelang/mhc.py
+@@ -56,6 +56,7 @@ from vllm.config import get_current_vllm_config
+ from vllm.logger import init_logger
+ from vllm.distributed import get_tensor_model_parallel_world_size
+ from vllm.models.deepseek_v4_1 import sp_prefill
++from vllm.models.deepseek_v4_1.steering.consume import project_columns
+ from vllm.models.deepseek_v4_1.tilelang import pdl, prepare
+ from vllm.models.deepseek_v4_1.tilelang.collectives import (
+     MAX_RANK_ORDER_WORLD,
+@@ -93,6 +94,7 @@ def project_streams(
+     block_H: int = BLOCK_H,
+     world: int = 1,
+     with_aux: bool = False,
++    steering: bool = False,
+ ):
+     """The streams' projection partials and their collapse, for one hidden block.
+ 
+@@ -123,6 +125,7 @@ def project_streams(
+     assert hidden_size % block_H == 0 and mode in ("pre", "post_pre", "broadcast")
+     assert 1 <= world <= MAX_RANK_ORDER_WORLD and (world == 1 or mode == "post_pre")
+     assert not with_aux or mode == "post_pre"
++    assert not steering or (mode == "post_pre" and not with_aux)
+     splits = hidden_size // block_H
+     streams = 1 if mode == "broadcast" else MULT
+     K = streams * hidden_size
+@@ -152,7 +155,7 @@ def project_streams(
+ 
+     @T.macro
+     def _project_body(
+-        X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, Aux, sp, by
++        X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, Aux, sp, by, direction, doses, dots, alpha
+     ):
+         pdl.chain()
+         h0 = sp * block_H
+@@ -210,6 +213,8 @@ def project_streams(
+                         av[v] = av[v] + T.Cast(T.float32, xp[r * COLS + v])
+             for v in T.unroll(COLS):
+                 xv[v] = T.Cast(T.bfloat16, av[v])
++        if steering:
++            project_columns(xv, direction, doses, dots, alpha, src, h0 + c0, COLS)
+         for v in T.unroll(COLS):
+             sq[v] = 0.0
+             col[v] = 0.0
+@@ -303,6 +308,33 @@ def project_streams(
+             if by * block_M + i < M:
+                 P[sp, by * block_M + i, 0, j] = C_local[i, j]
+ 
++    if steering:
++
++        @T.prim_func
++        def mhc_project_streams(
++            X: T.Tensor((world, M, H), T.bfloat16),
++            R: T.Tensor((M, MULT * H), T.bfloat16),
++            post: T.Tensor((M, MULT), T.float32),
++            comb: T.Tensor((M, MULT, MULT), T.float32),
++            pre_in: T.Tensor((M, MULT), T.float32),
++            Fn: T.Tensor((MIXES, K), T.float32),
++            R_out: T.Tensor((M, MULT * H), T.bfloat16),
++            P: T.Tensor((splits, M, 1, MIXES), T.float32),
++            S: T.Tensor((splits, M, 1), T.float32),
++            C: T.Tensor((M, H), T.bfloat16),
++            Q: T.Tensor((splits, M), T.float32),
++            direction: T.Tensor((H,), T.float32),
++            doses: T.Tensor((M,), T.float32),
++            dots: T.Tensor((M, 2), T.float32),
++            alpha: T.float32,
++        ):
++            with T.Kernel(splits, T.ceildiv(M, block_M), threads=threads) as (sp, by):
++                _project_body(
++                    X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, C, sp, by, direction, doses, dots, alpha
++                )
++
++        return mhc_project_streams
++
+     if not with_aux:
+ 
+         @T.prim_func
+@@ -321,7 +353,7 @@ def project_streams(
+         ):
+             with T.Kernel(splits, T.ceildiv(M, block_M), threads=threads) as (sp, by):
+                 _project_body(
+-                    X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, C, sp, by
++                    X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, C, sp, by, Fn, Fn, Fn, 0.0
+                 )
+ 
+         return mhc_project_streams
+@@ -343,7 +375,7 @@ def project_streams(
+     ):
+         with T.Kernel(splits, T.ceildiv(M, block_M), threads=threads) as (sp, by):
+             _project_body(
+-                X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, Aux, sp, by
++                X, R, post, comb, pre_in, Fn, R_out, P, S, C, Q, Aux, sp, by, Fn, Fn, Fn, 0.0
+             )
+ 
+     return mhc_project_streams
+@@ -1217,9 +1249,12 @@ def collapse_streams(hidden_size: int, threads: int = 128, column: int = -1):
+ 
+ 
+ def _project_call(
+-    hidden: int, mode: str, world: int, with_aux: bool = False
++    hidden: int, mode: str, world: int, with_aux: bool = False, steering: bool = False
+ ) -> prepare.TileLangCall:
+     """The ``project_streams`` call of a sublayer entry."""
++    if steering:
++        assert not with_aux
++        return prepare.call(project_streams, hidden, mode, block_M=BLOCK_M, world=world, steering=True)
+     if not with_aux:
+         return prepare.call(project_streams, hidden, mode, block_M=BLOCK_M, world=world)
+     return prepare.call(
+@@ -1275,8 +1310,8 @@ def _make(call: prepare.TileLangCall):
+ 
+ 
+ @cache
+-def _project(hidden: int, mode: str, world: int, with_aux: bool = False):
+-    return _make(_project_call(hidden, mode, world, with_aux))
++def _project(hidden: int, mode: str, world: int, with_aux: bool = False, steering: bool = False):
++    return _make(_project_call(hidden, mode, world, with_aux, steering))
+ 
+ 
+ def _finalize_norm_call(hidden: int, rms_eps: float) -> prepare.TileLangCall:
+@@ -1458,6 +1493,10 @@ def _mhc_pre(
+     previous_post: torch.Tensor | None = None,
+     previous_comb: torch.Tensor | None = None,
+     aux_out: torch.Tensor | None = None,
++    steering_direction: torch.Tensor | None = None,
++    steering_scales: torch.Tensor | None = None,
++    steering_dots: torch.Tensor | None = None,
++    steering_alpha: float = 0.0,
+ ) -> None:
+     tokens, hidden = int(residual.shape[0]), int(residual.shape[-1])
+     if tokens == 0:
+@@ -1507,7 +1546,34 @@ def _mhc_pre(
+         retain_cuda_graph_capture_resource(scratch)
+         P, S, C, Q = scratch
+     aux_args = (aux_out.view(tokens, hidden),) if with_aux else ()
+-    _project(hidden, mode, world, with_aux)(
++    steering_args: tuple[torch.Tensor | float, ...] = ()
++    if steering_direction is not None:
++        if (
++            mode != "post_pre"
++            or steering_scales is None
++            or steering_dots is None
++            or steering_direction.shape != (hidden,)
++            or steering_scales.shape != (tokens,)
++            or steering_dots.shape != (tokens, 2)
++            or any(
++                t.dtype != torch.float32
++                or not t.is_contiguous()
++                or t.device != residual.device
++                for t in (steering_direction, steering_scales, steering_dots)
++            )
++        ):
++            raise ValueError("Invalid steering mHC consumer controls")
++        steering_args = (
++            steering_direction,
++            steering_scales,
++            steering_dots,
++            steering_alpha,
++        )
++    elif (
++        steering_scales is not None or steering_dots is not None or steering_alpha != 0
++    ):
++        raise ValueError("Steering mHC controls require a direction")
++    _project(hidden, mode, world, with_aux, bool(steering_args))(
+         x if x.ndim == 3 else x.unsqueeze(0),
+         source,
+         mix_post,
+@@ -1520,6 +1586,7 @@ def _mhc_pre(
+         C,
+         Q,
+         *aux_args,
++        *steering_args,
+     )
+     if use_async:
+         if not torch.cuda.is_current_stream_capturing():
+@@ -1739,6 +1806,11 @@ class TileKernelsMHC(nn.Module):
+         def calls() -> list[prepare.TileLangCall]:
+             return [
+                 *(_project_call(hidden, mode, world) for mode, world in entries),
++                *(
++                    _project_call(hidden, mode, world, steering=True)
++                    for mode, world in entries
++                    if mode == "post_pre" and getattr(self, "steering_enabled", False)
++                ),
+                 *(
+                     _project_call(hidden, mode, world, with_aux=True)
+                     for mode, world in entries
+@@ -1759,6 +1831,8 @@ class TileKernelsMHC(nn.Module):
+         def bind() -> None:
+             # The forward's cached kernels, as its lookups name them.
+             for mode, world in entries:
++                if mode == "post_pre" and getattr(self, "steering_enabled", False):
++                    _project(hidden, mode, world, steering=True)
+                 _project(hidden, mode, world)
+                 if mode == "post_pre":
+                     _project(hidden, mode, world, True)
+@@ -1796,6 +1870,10 @@ class TileKernelsMHC(nn.Module):
+         previous_post=None,
+         previous_comb=None,
+         aux_out: torch.Tensor | None = None,
++        steering_direction: torch.Tensor | None = None,
++        steering_scales: torch.Tensor | None = None,
++        steering_dots: torch.Tensor | None = None,
++        steering_alpha: float = 0.0,
+     ):
+         """A sublayer entry: ``(streams, post-mix, combination, y, new pre-mix,
+         y_mxfp8)``. ``y`` is the sublayer's normalized input and ``y_mxfp8`` its MXFP8
+@@ -1840,6 +1918,7 @@ class TileKernelsMHC(nn.Module):
+             previous_post,
+             previous_comb,
+             aux_out,
++            steering_direction, steering_scales, steering_dots, steering_alpha,
+         )
+         return residual if unchanged else residual_out, post, comb, y, pre_out, y_mxfp8
+ 
+@@ -1856,6 +1935,10 @@ class TileKernelsMHC(nn.Module):
+         pre,
+         *,
+         aux_out: torch.Tensor | None = None,
++        steering_direction: torch.Tensor | None = None,
++        steering_scales: torch.Tensor | None = None,
++        steering_dots: torch.Tensor | None = None,
++        steering_alpha: float = 0.0,
+     ):
+         return self.pre(
+             residual,
+@@ -1868,6 +1951,10 @@ class TileKernelsMHC(nn.Module):
+             previous_post=post,
+             previous_comb=comb,
+             aux_out=aux_out,
++            steering_direction=steering_direction,
++            steering_scales=steering_scales,
++            steering_dots=steering_dots,
++            steering_alpha=steering_alpha,
+         )
+ 
+     def post(self, x, residual, post, comb):

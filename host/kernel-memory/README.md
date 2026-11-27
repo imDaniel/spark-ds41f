@@ -13,10 +13,16 @@ changing the base page size alone determines every memory or timing difference.
 The 4 KiB THP policy remains unchanged.
 
 Installation and the initial swap formatting are performed by the published
-`experiments/2026-10-02-kernel-64k/install-boot-support.sh`. It does not reboot,
+`scripts/configure-swap`. It does not reboot,
 activate the service, or swap off a live file. The service runs at boot before
 swap.target and Docker, with no GPU operations or serving control.
 
 To remove this policy after returning to 4 KiB, disable the service, restore
-the saved `/var/lib/spark3/kernel-64k-boot/fstab.before`, reload systemd and
+the saved `/var/lib/spark-ds41f/kernel-64k-boot/fstab.before`, reload systemd and
 verify the original swap is active. Never remove an active swap file.
+
+The service is `spark-ds41f-kernel-memory.service`, running
+`/usr/local/sbin/spark-ds41f-kernel-memory`. Until the release after spark-ds41f-1022 it was
+`spark3-kernel-memory.service` with its backup under `/var/lib/spark3`; the installer
+replaces that service and moves the backup. `doctor --live` treats an active
+`spark3-kernel-memory.service` as the same policy and warns to rename it.

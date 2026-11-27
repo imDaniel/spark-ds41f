@@ -1,0 +1,30 @@
+{
+ "experiment": "experiments/2026-10-24-tilelang-completion/profile",
+ "run": "tilelang-ports-profile-2",
+ "jobs": [
+  {
+   "kind": "sync"
+  },
+  {
+   "kind": "profile",
+   "workloads": [
+    "c8",
+    "decode"
+   ],
+   "arms": [
+    {
+     "config": "prof-ports.json",
+     "label": "ports"
+    },
+    {
+     "config": "prof-candidate4.json",
+     "label": "candidate4"
+    },
+    {
+     "config": "prof-ports.json",
+     "label": "ports-again"
+    }
+   ]
+  }
+ ]
+}

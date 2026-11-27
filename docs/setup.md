@@ -1,8 +1,9 @@
 # Setting up DeepSeek V4.1 Flash on DGX Spark
 
-This guide takes three or four DGX Sparks from a fresh DGX OS install to the
+This guide takes one to four DGX Sparks from a fresh DGX OS install to the
 promoted deployment: DeepSeek V4.1 Flash on the TileLang kernel family, with
-tensor parallelism across the Sparks over direct-cabled ConnectX-7 links.
+tensor parallelism across the Sparks over direct-cabled ConnectX-7 links (a
+single Spark serves alone, with no fabric).
 
 Every stage says what it changes on your machines, which profiles need it,
 how to check it, and how to undo it. Read the [summary of host
@@ -15,18 +16,35 @@ shape on one image; a shape changes only its cabling and its memory sizing.
 
 | Sparks | Cabling | Shape | Context | Sequences | KV per rank | Kernel | Memory saver |
 | --- | --- | --- | ---: | ---: | ---: | --- | --- |
+| 1 | none | `tp1` | 262,144 | 4 | 8 GiB | 64 KiB | required |
+| 2 | one cable | `tp2-direct` | 262,144 | 4 | 8 GiB | 64 KiB | required |
 | 3 | triangle | `tp3-triangle-4k` | 262,144 | 8 | 2.2 GiB | stock 4 KiB | not needed |
 | 3 | triangle | `tp3-triangle` | 1,048,576 | 8 | 4.91 GiB | 64 KiB | required |
-| 4 | ring | `tp4-ring` | 1,048,576 | 16 | 10.5 GiB | 64 KiB | required |
-| 2 | — | — | — | — | — | — | — |
+| 4 | ring | `tp4-ring` | 1,048,576 | 32 | 16.5 GiB | 64 KiB | required |
 
 A shape is qualified for the recipe's image when the recipe names its release
 benchmark (`benchmark_reference`); `cluster start` refuses an unqualified one
-unless given `--unqualified-shape`. Two Sparks are not supported.
+unless given `--unqualified-shape`. Two to eight Sparks cabled into a switch
+are in [switched-fabric.md](switched-fabric.md).
 
-**Two Sparks** cannot hold this model with useful context. At three Sparks,
-the head node already runs within about 3 GiB of its memory guard during a
-1M prefill, and two would each hold half as much again of the weights.
+**Externally reported, not qualified here.** Another site ran `tp4-ring` at
+the recipe's sizing of the time (1,048,576 context, 16 sequences, KV 10.5 GiB) on the
+stock 4 KiB kernel of DGX OS 7.5.0 (`6.17.0-1032-nvidia`), with no memory saver
+and Secure Boot on. MemAvailable stayed at 18-21 GiB per node, including
+through a 993K-token prefill. That run used the r6u image plus r6v's vLLM 0180
+and was started with `--unqualified-shape`
+([receipt](../experiments/2026-10-17-site-tp4-4k-1017/README.md)). The
+qualified recipe is unchanged: `tp4-ring` requires the 64 KiB kernel and the
+memory saver.
+
+**One or two Sparks** (`tp1`, `tp2-direct`, `tp2-switched`) load routed experts
+from NVMe into GPU-accessible slots on demand, through an `io_uring` cache under
+the checkout's `cache/ds41_expert_slots`. That is what lets the model fit, and it
+is why these shapes are slow: one stream decodes at about 4 tok/s on one Spark
+and 18 tok/s on two, and four streams together reach about 11 and 53 tok/s
+(prose, each shape's release benchmark in
+[manifests/benchmarks](../manifests/benchmarks/)). They serve 262,144 tokens of
+context and four sequences.
 
 **The 4 KiB profile is the shortest path to a running service**: it needs no
 kernel change and no out-of-tree module. The 64 KiB profiles recover about
@@ -36,12 +54,18 @@ which pays for their larger context.
 Each node needs:
 
 - a DGX Spark (GB10, 128 GB unified memory) on DGX OS 26.09.2 or later;
-- Docker with the NVIDIA container runtime and `buildx`, and `/dev/infiniband`;
+- Docker with the NVIDIA container runtime and `buildx`, `/dev/infiniband`,
+  and the SSH user in the `docker` group (`sudo usermod -aG docker "$USER"`,
+  then reconnect);
 - about 480 GiB of free disk (the model, including Engram tables read from
   disk, plus caches); the build host also needs 64 GiB of free memory;
-- a management network for SSH, the API and Gloo, with passwordless SSH from
-  the head node to every node as one user, who also has passwordless `sudo`
-  (the memory guards and several checks use `sudo -n`);
+- a wired management network for SSH, the API and per-step control traffic
+  (Ray, Gloo and ZMQ; Wi-Fi tail spikes stall decode steps, see
+  [#712](https://github.com/christopherowen/spark-ds41f/issues/712), or set
+  `control_ip` / `*_SOCKET_IFNAME` to route control traffic over the
+  ConnectX-7 links when no RJ45 management network is cabled), with
+  passwordless SSH from the head node to every node as one user, who also has
+  passwordless `sudo` (the memory guards and several checks use `sudo -n`);
 - the ConnectX-7 cabling for its topology ([stage 3](#3-fabric-cabling-and-addressing)).
 
 ## What changes on your machines
@@ -50,12 +74,12 @@ Each node needs:
 | --- | --- | --- | --- | --- |
 | [Host recovery policy](#host-recovery-policy) (watchdog, SSH/Tailscale protection, text console) | recommended | recommended | `scripts/host-recovery check`, `doctor --live` | [remove the drop-ins](#revert-the-host-baseline) |
 | [Headless boot](#headless-boot-the-trade-off) (no desktop, idle services off) | required by `doctor --live` | same | `doctor --live` | `sudo systemctl set-default graphical.target`, re-enable the services |
-| [Kernel mode setting](#kernel-mode-setting) (`nvidia-drm modeset=Y`) | required | required | `doctor --live` | reinstall `nvidia-drm-options-modeset0` |
+| [Kernel mode setting](#kernel-mode-setting) (`nvidia-drm modeset=Y`) | required (TP3); recommended (TP4) | required (TP3); recommended (TP4) | `doctor --live` | reinstall `nvidia-drm-options-modeset0` |
 | [`vm.watermark_boost_factor=0`](#memory-accounting) | recommended | recommended | — | delete the sysctl file |
 | [NVMe interrupt coalescing off](#nvme-interrupt-coalescing) | optional | optional | `doctor --live` (warn) | unmask the service |
 | [NVMe sleeps only when idle](#nvme-power-states-apst) (APST timeouts 2 s / 60 s) | recommended | recommended | `doctor --live` (warn) | delete the modprobe file |
 | [UEFI boot order](#boot-order) | optional | optional | `doctor --live` (warn) | `efibootmgr --bootorder` |
-| [Fan-floor control](#fan-floor-control) | recommended | recommended | `doctor --live` (error until installed) | its [uninstall guide](https://github.com/christopherowen/dgx-spark-fan-control/blob/main/docs/maintenance.md#uninstall) |
+| [Fan-floor control](#fan-floor-control) | recommended | recommended | `doctor --live` (warn until installed) | its [uninstall guide](https://github.com/christopherowen/dgx-spark-fan-control/blob/v0.1.4/docs/maintenance.md#uninstall) |
 | [64 KiB kernel, swap and memory policy](#2-kernel-64-kib-profiles) | — | required | `doctor --live`, launch | [boot the 4 KiB kernel](#revert-the-64-kib-kernel) |
 | [Memory saver](#2-kernel-64-kib-profiles) (signed DKMS UVM module) | — | required | `doctor --live`, launch | its [removal guide](https://github.com/christopherowen/dgx-spark-memory-saver/blob/main/docs/dkms.md#remove-and-restore-stock-uvm) |
 | [ConnectX-7 addressing](#3-fabric-cabling-and-addressing) (netplan) | required | required | `doctor --live`, launch | remove `40-cx7.yaml` |
@@ -76,10 +100,10 @@ Do the stages in order on every node, and keep the nodes identical:
 | --- | --- | --- |
 | 1 | [Host baseline](#1-host-baseline) | `scripts/host-recovery check` on each node |
 | 2 | [64 KiB kernel and memory saver](#2-kernel-64-kib-profiles) (skip for the 4 KiB profile) | `getconf PAGESIZE` is 65536; packing is `Y` |
-| 3 | [Fabric](#3-fabric-cabling-and-addressing) | 9000-byte pings on every path; GID index 3 is IPv4 |
+| 3 | [Fabric](#3-fabric-cabling-and-addressing) | 9000-byte pings on every path; one IPv4 RoCE v2 GID per port |
 | 4 | [Site configuration](#4-site-configuration) | `bin/spark doctor` |
 | 5 | [Model](#5-model) | the pinned revision on every node |
-| 6 | [Image](#6-image) | the same image ID on every node |
+| 6 | [Image](#6-image) | the same image content (ordered layers and runtime configuration) on every node |
 | 7 | [First start](#7-first-start) | `bin/spark doctor --live` |
 | 8 | [Verify](#8-verify) | `bin/spark bench` |
 
@@ -101,8 +125,9 @@ It installs a narrow management-plane policy ([host/recovery](../host/recovery/R
 
 - systemd feeds the SBSA hardware watchdog, which reboots only after a real
   system stall;
-- SSH and Tailscale get a little reclaim protection and strongly negative OOM
-  scores, and a once-a-minute timer restarts either if it stops answering;
+- SSH (and Tailscale, when installed) get a little reclaim protection and
+  strongly negative OOM scores, and a once-a-minute timer restarts either if it
+  stops answering;
 - Plymouth's boot gate is bounded, and `splash` is removed from the kernel
   command line, so an attached display shows a text console;
 - the display manager (`gdm3`) and unused desktop services are disabled
@@ -147,9 +172,10 @@ services as warnings; serving still starts, with less memory margin.
 ### Kernel mode setting
 
 DGX OS ships `nvidia-drm-options-modeset0`, which turns `nvidia-drm` mode
-setting off. The promoted profiles load the embedding and output head into
-the GB10 display carve-out (`SPARK3_DISPLAY_CARVEOUT_WEIGHTS=1`), which needs
-mode setting, and a display attached after boot stays dark without it:
+setting off. Without mode setting, a display attached after boot stays dark (and
+legacy pre-1120 rollback profiles that mount `/dev/dri/card0` for the display
+carve-out refuse to start; `spark-ds41f-1120` allocates the carve-out directly
+through NVIDIA RM on `/dev/nvidiactl`):
 
 ```sh
 sudo apt-get purge nvidia-drm-options-modeset0
@@ -157,8 +183,9 @@ sudo update-initramfs -u -k all
 sudo reboot   # with the service stopped
 ```
 
-Revert: `sudo apt-get install nvidia-drm-options-modeset0` and reboot; the
-carve-out profiles will then refuse to start.
+Revert: `sudo apt-get install nvidia-drm-options-modeset0` and reboot; an
+attached display after boot will stay dark, and legacy pre-1120 DRM carve-out
+profiles will refuse to start.
 
 ### Memory accounting
 
@@ -222,23 +249,26 @@ the `sudo efibootmgr --bootorder …` that puts Ubuntu first.
 ### Fan-floor control
 
 [dgx-spark-fan-control](https://github.com/christopherowen/dgx-spark-fan-control)
-adds a fan floor the EC enforces on top of NVIDIA's curve
-([installation](https://github.com/christopherowen/dgx-spark-fan-control/blob/main/docs/installation.md)). Serving does not use
-it, but `doctor --live` reports it as an error until it is installed.
+(version 0.1.4, which `doctor --live` checks) adds a fan floor the EC enforces on top of NVIDIA's curve
+([installation](https://github.com/christopherowen/dgx-spark-fan-control/blob/v0.1.4/docs/installation.md)). Serving does not use
+it; `doctor --live` warns until it is installed and does not fail the command.
 `bin/spark bench` and kernel-lab jobs use it to cool every node below 55 °C
 before measuring; without it they wait for the nodes to cool on NVIDIA's
 curve. With Secure Boot, its installation creates and enrolls a MOK signing
 key, and the memory saver's install script in [stage 2](#2-kernel-64-kib-profiles)
 signs with the same key.
 
-Install its `dgx-fan-control.service` as well; `doctor --live` reports an
-error until it is installed. `bin/spark bench` requires it: it starts the
+Install its `dgx-fan-control.service` as well; `doctor --live` warns until it
+is installed. `bin/spark bench` starts the
 service's performance curve on every node while it measures, so every
 benchmark runs under the same fan policy, and stops it again where it started
-it. Whether it also runs while serving is your choice. The curve raises the fan floor from 50 °C, well before
+it. Without fan control the bench still runs: it waits for the nodes to cool
+by themselves (up to `--cool-timeout`, then measures from where they are, with
+a warning) and measures on NVIDIA's curve, so its numbers are not comparable
+with a reference that ran the performance curve. Whether it also runs while serving is your choice. The curve raises the fan floor from 50 °C, well before
 NVIDIA's curve, so nodes run cooler and louder under load; serving does not
 need it. Pick either
-[startup mode](https://github.com/christopherowen/dgx-spark-fan-control/blob/main/docs/installation.md#5-choose-your-startup-mode),
+[startup mode](https://github.com/christopherowen/dgx-spark-fan-control/blob/v0.1.4/docs/installation.md#5-choose-your-startup-mode),
 the same on every node.
 
 ### Check
@@ -287,14 +317,16 @@ yours to run, as root, with the service stopped:
    its module is built for the new kernel. The memory saver's [kernel guide](https://github.com/christopherowen/dgx-spark-memory-saver/blob/main/docs/kernel.md)
    lists the same steps.
 2. **Swap and memory policy.** Run
-   `sudo experiments/2026-10-02-kernel-64k/install-boot-support.sh`. It adds a
+   `sudo scripts/configure-swap`. It adds a
    16 GiB `/swap-64k.img` with a 64 KiB header, marks the original
-   `/swap.img` `noauto`, and enables `spark3-kernel-memory.service`, which at
+   `/swap.img` `noauto`, and enables `spark-ds41f-kernel-memory.service`, which at
    boot activates the swap file that matches the running page size and, on
-   64 KiB only, sets THP to `never` and `vm.min_free_kbytes=45166`
+   64 KiB only, sets THP to `never` and `vm.min_free_kbytes=45166`. Sites that
+   still run `spark3-kernel-memory.service` have the same policy; `doctor --live`
+   accepts that unit and warns to run this installer so the name matches.
    ([host/kernel-memory](../host/kernel-memory/README.md)). It does not
    reboot or touch the running system.
-3. **Memory saver.** Run `bash experiments/2026-10-02-memory-saver-capacity/install-dkms.sh`
+3. **Memory saver.** Run `scripts/install-memory-saver`
    from a clean checkout. It clones the memory saver at the revision pinned
    in `config/kernel-trial.json`, then builds and installs DKMS 0.4.1 for the
    64 KiB kernel. It signs with the key that dgx-spark-fan-control created
@@ -344,8 +376,8 @@ run `sudo update-grub` and reboot. The memory service activates the original swa
 and the memory saver is not built for the 4 KiB kernel, so stock UVM loads.
 Serve the `tp3-triangle-4k` shape (`bin/spark site shape tp3-triangle-4k --apply`). To remove everything,
 follow the memory saver's [removal guide](https://github.com/christopherowen/dgx-spark-memory-saver/blob/main/docs/maintenance.md),
-disable `spark3-kernel-memory.service`, restore
-`/var/lib/spark3/kernel-64k-boot/fstab.before`, and delete `/swap-64k.img`
+disable `spark-ds41f-kernel-memory.service`, restore
+`/var/lib/spark-ds41f/kernel-64k-boot/fstab.before`, and delete `/swap-64k.img`
 once it is inactive ([host/kernel-memory](../host/kernel-memory/README.md)).
 Never remove an active swap file.
 
@@ -357,6 +389,8 @@ between two Sparks gives two RDMA paths.
 
 | Topology | Cables | Cabling | Transport |
 | --- | ---: | --- | --- |
+| 1 Spark | 0 | none | `local` |
+| 2 Sparks, direct | 1 | one cable between the two nodes | `oneshot-direct` |
 | 3 Sparks, triangle | 3 | every pair cabled directly: port 0 to the next node, port 1 to the previous | `oneshot-direct` |
 | 4 Sparks, ring | 4 | each node to the next and the previous, `1-2-3-4-1` | `oneshot-ring4` |
 
@@ -373,7 +407,12 @@ both the node map and each node's netplan from the actual cabling. Install
 its CPU tooling on the head node (`pip install` from a clone; see its
 [integration guide](https://github.com/christopherowen/dgx-spark-networking/blob/main/docs/integration.md#21-install)).
 Discovery reads each node's LLDP neighbours over SSH with `sudo -n lldpctl`,
-so every node needs `lldpd` running. It changes nothing on a host:
+so every node needs `lldpd` running (`sudo apt install lldpd`); without it
+discovery reports every port as unresolved and writes no node map. Nothing that
+serves uses LLDP: a site that addresses its cables another way (by hand, or with
+NVIDIA Sync) writes the node map itself in [stage 4](#4-site-configuration), and
+`bin/spark doctor --live` then only warns that lldpd is missing. Discovery changes
+nothing on a host:
 
 ```sh
 sparknet topology discover dgx1 dgx2 dgx3 --out site --management-ip dgx1=<ip> ...
@@ -392,9 +431,19 @@ From each node, a 9000-byte ping reaches both ends of every cable path:
 ping -c2 -M do -s 8972 10.12.1.2
 ```
 
-and each RoCE device's GID index 3 holds its IPv4 address
-(`cat /sys/class/infiniband/<device>/ports/1/gids/3` ends in the address in
-hex). `doctor --live` and the launch preflight check both.
+and each RoCE device's port carries exactly one IPv4 RoCE v2 GID, its cable
+address (`ibv_devinfo -v -d <device> | grep 'GID\['` lists one `::ffff:<address>,
+RoCE v2` line). With the netplan above it sits at index 3. `doctor --live` and the
+launch preflight check both.
+
+The index can move. The kernel files a re-added address in the next free slot,
+and a slot that running RDMA resources still reference is not free: when a node
+reboots under its neighbours' ranks, their ports facing it come back with the GID
+at index 4 and index 3 empty. NCCL with `NCCL_IB_GID_INDEX` unset and sparknet
+0.5.0 find the GID by address (sparknet in each HCA's cable subnet, which
+`roce_subnets` gives it), so a configuration that pins no slot starts again as
+it is. A configuration that pins one needs the slot back: stop the cluster, then
+`sudo nmcli connection up <connection>` for each moved port.
 
 Revert: remove (or restore) the netplan file and `sudo netplan apply`.
 Switching between a triangle and a ring is a recabling plus new addressing for
@@ -405,34 +454,55 @@ the cables that moved; re-run the discovery.
 Two files describe your site and stay out of git:
 
 - **Node map.** `config/nodes.json` for the three-node profiles (start from
-  [config/nodes.example.json](../config/nodes.example.json)), or
-  `config/nodes-ring4.local.json` for the TP4 profile (start from
-  [config/examples/nodes-ring4.json](../config/examples/nodes-ring4.json)).
-  It names each node, its rank (the head is rank 0), management IP,
-  `ssh_user`, and `roce_peer_hcas`: for each peer rank, the local RoCE
-  devices cabled to it (`rdma link` shows them). `sparknet topology discover`
-  writes it. Two optional fields per node change how the head reaches it:
-  `ssh_host` replaces the node name for every SSH call, and `transfer_host`
-  only for the lab's bulk copies (kernel bundles, their inputs, profiler
-  traces). Setting `transfer_host` to the node's name on a CX7 link cabled
-  to the head (the `dgxN-internal` names in `/etc/hosts`) keeps large copies
-  off a struggling LAN switch; the head's `known_hosts` must know that name.
-  A node the head is not cabled to keeps its LAN route.
+  [config/nodes.example.json](../config/nodes.example.json)),
+  `config/nodes-tp1.local.json` for one Spark (start from
+  [config/examples/nodes-tp1.json](../config/examples/nodes-tp1.json)),
+  `config/nodes-direct2.local.json` for two cabled directly (start from
+  [config/examples/nodes-direct2.json](../config/examples/nodes-direct2.json)),
+  `config/nodes-ring4.local.json` for the TP4 ring profile (start from
+  [config/examples/nodes-ring4.json](../config/examples/nodes-ring4.json)), or
+  `config/nodes-switched.local.json` for a switched four-node deployment (start from
+  [config/examples/nodes-switched.json](../config/examples/nodes-switched.json) and see
+  [switched-fabric.md](switched-fabric.md)). For offline checks on a fresh clone before writing host maps, `./scripts/example_site.py` initializes git-ignored example maps for every shape.
+  It names each node (`name`, which is used both as the SSH target and in status
+  messages and must resolve via `~/.ssh/config` or DNS/hosts; if an earlier node
+  map set `ssh_host`, either rename nodes to their SSH targets or add SSH
+  aliases, because `name` is now the SSH target),
+  its rank (the head is rank 0), management IP, `ssh_user`, and `roce_peer_hcas`:
+  for each peer rank, the local RoCE devices cabled to it (`rdma link` shows them).
+  `sparknet topology discover` writes it. An optional `transfer_host` field per
+  node overrides the host used only for bulk copies (image distribution and the
+  lab's kernel bundles, inputs and profiler traces). Setting `transfer_host` to
+  the node's name on a CX7 link cabled to the head (the `dgxN-internal` names in
+  `/etc/hosts`) keeps large copies off a struggling LAN switch; the head's
+  `known_hosts` must know that name. A node the head is not cabled to keeps its
+  LAN route.
 - **The shape.** Name your cabling once: `bin/spark site shape tp3-triangle
   --apply` (or `tp3-triangle-4k`, `tp4-ring`) writes the git-ignored
   `config/site.json`, which `cluster sync` copies to every node. Every command
   then resolves the recipe at that shape; `--shape NAME` overrides it. A site
   that names none gets the recipe's `default_shape`, `tp4-ring`.
-- **The recipe.** In `config/cluster.json`, set `distributed.master_addr` to the head's management IP, `host.home`,
-  `deployment.repository` if you use a fork (the launch checks every node's
+- **The recipe.** In `config/cluster.json`, set `distributed.master_addr` to the head's management IP,
+  `host.home` only if the nodes' home directory is not the node user's own (it is `$HOME`: on a node,
+  the shell's home directory; from a controller elsewhere, `/home/<ssh_user>` of the node map),
+  `deployment.path` if every node keeps this checkout somewhere other than
+  `{home}/projects/spark-ds41f`, `deployment.repository` if you use a fork (the launch checks every node's
   `origin` against it), and the interface names in `GLOO_SOCKET_IFNAME`, `NCCL_SOCKET_IFNAME`,
-  `TP_SOCKET_IFNAME` and `NCCL_IB_HCA`. Keep `distributed.master_port` below
+  `TP_SOCKET_IFNAME` (sparknet renders `NCCL_IB_HCA` from the node map). Keep `distributed.master_port` below
   the head's ephemeral port range (`sysctl net.ipv4.ip_local_port_range`);
   inside it, an outgoing connection can take the port and the head fails to
   start.
 
+Node paths in a profile take two placeholders: `{home}` is `host.home`, and
+`{checkout}` is `deployment.path`, which itself names only `{home}`. The JIT
+cache mount is `{checkout}/cache`, so it follows the checkout wherever you
+clone it. A start refuses a read-write mount whose source a node cannot write
+(`rw mount source is unavailable`); a mount you add that lives in the checkout
+should name `{checkout}` too.
+
 `bin/spark --cluster-config <profile> cluster sync --apply` moves every node's checkout to the head's
-commit and copies the head's node map to the others.
+commit, copies the head's node map to the others, and copies the profile's image from the head to
+every node whose ordered image layers or runtime configuration differ.
 
 Commands that change the nodes need the configuration named with
 `--cluster-config` before the subcommand, for example
@@ -446,19 +516,43 @@ list does not merge with the recipe's, it replaces it. Copying
 list, including the recipe's per-prompt image cap:
 
 ```
---limit-mm-per-prompt '{"image":4}'
+--limit-mm-per-prompt '{"image":67}'
 ```
 
-A site that serves more than four images in one prompt gets, on every such
-request:
+67 is the recipe's chosen per-request limit, not a limit of the model, and
+it counts the images a chat client resends with its history. A site that
+serves more than 67 images in one prompt gets, on every such request:
 
 ```
-400: At most 4 image(s) may be provided in one prompt (parameter=image)
+400: At most 67 image(s) may be provided in one prompt (parameter=image)
 ```
 
-Remove both list entries from the site profile to lift the cap; `bin/spark
-doctor` compares the running command against the profile, so the change is
-visible in its report before the next start.
+Write another count in that entry to raise the cap, or remove both list
+entries to lift it (vLLM's default is 999 per prompt);
+[current-state.md](current-state.md#images-per-request) describes the memory
+trade-off. `bin/spark doctor` compares the running command against the
+profile, so the change is visible in its report before the next start.
+
+### Carrying a site change of your own
+
+`build image --apply`, `cluster sync --apply` and `cluster start --apply` refuse a
+checkout with uncommitted files on any node, and `cluster sync` deploys only a
+commit published on `origin`: every node runs a commit anyone can name. A change
+you keep for your site therefore lives on a branch of your own fork, not in the
+working tree:
+
+1. Fork the repository, commit the change on a branch (for example `site`), and
+   push it to the fork.
+2. In `config/cluster.json`, set `deployment.repository` to the fork's URL and
+   `deployment.branch` to that branch. Point every node's `origin` at the fork
+   (`git remote set-url origin <fork>`); the launch checks each against
+   `deployment.repository`.
+3. Deploy the branch's commit: `bin/spark --cluster-config <profile> cluster sync --apply`
+   from the head's checkout on that branch.
+
+For each release, rebase the branch onto the new `main`, push, and sync again.
+A change that would help other sites belongs in a pull request here instead, so
+the branch can drop it.
 
 ### Check
 
@@ -483,6 +577,36 @@ both `hub/blobs` and the repository's folder. The original checkpoint
 `dba1be0a40aa45a94ad051997016db3960a90277`) still serves with `"model": "v41-flash"`;
 its config, tokenizer and tensor layout are the same, and every weight shard differs.
 
+### GLP steering file
+
+A profile with a `glp` block also serves a steered variant of the model under a second
+name, `deepseek-v4.1-flash-weightless` (the
+[GLP dual-serving candidate](../experiments/2026-10-28-glp-dual-serving/README.md)).
+The block names the GLP file it steers with: a Hugging Face `repo`, its pinned
+`revision`, the `file` and its `sha256`. The recipe renders the second served name, vLLM's
+`WEIGHTLESS_STEER_PATH` and `WEIGHTLESS_STEER_MODEL`, and a read-only mount of the file
+from the node's hub cache; a profile does not set those itself. The file is optional: when
+a node lacks it, `cluster start` warns, leaves the block out on every rank and serves
+`deepseek-v4.1-flash` alone. To serve the steered name too, every node needs the file
+(785 KiB). The repository is gated. With the Hugging Face account whose token is on the node, accept
+its agreement once on the
+[repository page](https://huggingface.co/msuiche/DeepSeek-V4.1-Flash-1017-abliterated-cyber-GLP-39-L1-39-a0.75),
+then download the pinned revision on every node:
+
+```sh
+hf download msuiche/DeepSeek-V4.1-Flash-1017-abliterated-cyber-GLP-39-L1-39-a0.75 \
+  glp.deepseek-v41-flash-1017-GLP-39-L1-39-a0.75.gguf \
+  --revision 2715ffd51f59899115853e1118db080536966c44
+```
+
+The file is 803,392 bytes, sha256
+`9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185f20f7f3f09fbf5cf`. A node without a
+token can take a copy from another node instead: the snapshot path and the
+`hub/blobs` file it links to. `bin/spark doctor --live` and the launch preflight
+warn about a node whose file is missing and refuse one whose file differs, with this command, and run the
+image's own GLP reader on the head's copy, so a vector the image cannot read is
+refused before a boot ([doctor](doctor.md#glp-steering-file)).
+
 ## 6. Image
 
 On one idle node (the build host), from a clean checkout of `main`:
@@ -492,43 +616,40 @@ bin/spark build prepare
 bin/spark --cluster-config config/cluster.json build image --apply
 ```
 
-`build prepare` fetches the pinned vLLM, B12X, NCCL, TileLang, TileKernels
-and sparknet sources, applies the patch series and checks every result
-against the recorded trees. `build image --apply` refuses to run next to a
+`build prepare` fetches the pinned vLLM, NCCL, CUTLASS, TileLang, TileKernels
+and sparknet sources plus the hash-locked CUDA `13.5.37` and wheel inputs,
+applies the patch series, and checks every result against the recorded trees.
+`build image --apply` refuses to run next to a
 live service, sizes its compile jobs to available memory, never overwrites
 an existing tag, and runs a GPU import smoke test. The first build takes
 longer because it builds TileLang and TileKernels. More detail is in
 [docker/README.md](../docker/README.md).
 
-Copy the image to the other nodes and confirm one image ID everywhere:
+`cluster sync` (step 7) copies the image to the other nodes in your node map and checks that
+every node has the same image content. To copy it without a sync, or to copy another tag:
 
 ```sh
-for host in dgx2 dgx3; do            # add dgx4 for TP4
-  docker save vllm-ds41f-kkref:04c30fa98e79-r6 | ssh "$host" docker load
-done
-for host in dgx1 dgx2 dgx3; do       # add dgx4 for TP4
-  ssh "$host" docker image inspect vllm-ds41f-kkref:04c30fa98e79-r6 --format '{{.Id}}'
-done
+bin/spark --cluster-config config/cluster.json build distribute --apply
 ```
 
-Your image ID differs from ours because the image records the deployment
+Compare ordered layers and runtime configuration: a node on Docker's containerd image store names an image
+by its manifest and an `overlay2` node by its config, so a faithful copy between the two shows
+a different ID (#488). A faithful copy preserves the ordered layers and runtime configuration
+on every node whatever its storage. Matching layers alone is insufficient: labels,
+environment or entrypoint can differ while the filesystem stays the same. A missing image
+can be copied; failed or malformed inspections stop distribution instead of authorizing it.
+Your image differs from ours because the image records the deployment
 commit. The source-tree labels must match the profile's `expected_labels`;
 `doctor --live` and the launch preflight check them.
 
-Revert: `docker image rm vllm-ds41f-kkref:04c30fa98e79-r6` on each node.
+Revert: `docker image rm "$image"` on each node.
 
 ## 7. First start
 
-The first start JIT-compiles kernels into `cache/kkref/jit/`, so it takes
-longer than later ones. Prebuild FlashInfer's sampling module on each node so
-that compile happens outside the memory-guarded startup:
+The first start JIT-compiles kernels into `cache/spark-ds41f/jit/`, so it takes
+longer than later ones.
 
-```sh
-experiments/2026-09-23-canonical-minimal/prebuild_flashinfer.sh \
-  vllm-ds41f-kkref:04c30fa98e79-r6 kkref/flashinfer
-```
-
-Then, from the head node, with a clean checkout of a published commit:
+From the head node, with a clean checkout of a published commit:
 
 ```sh
 bin/spark --cluster-config config/cluster.json cluster sync --apply
@@ -554,6 +675,20 @@ Stop: `bin/spark --cluster-config <profile> cluster stop --apply`, with the
 profile the engine was started from (the plan names it). It stops the exact
 containers and their memory guards and keeps the containers for inspection. It
 refuses a profile that covers only some of the running engine's nodes.
+
+The JIT caches outlive the image that filled them. Inspect them on every node,
+and empty them once the engine is stopped:
+
+```sh
+bin/spark --cluster-config <profile> cache status
+bin/spark --cluster-config <profile> cache clear --apply
+```
+
+`cache clear` acts on the directories the profile's environment names under the
+`/cache` mount and keeps the directories themselves. It refuses unless every
+node of the profile can be reached and none runs a serving container. Without
+`--apply` it prints the plan; `--only tilelang` (or `nv-compute`, `triton`,
+`vllm`) clears one cache. The next start compiles the kernels again.
 
 ## 8. Verify
 
@@ -581,3 +716,5 @@ section.
   more depth.
 - [switchless-topology.md](switchless-topology.md) covers three- and
   four-node fabrics and their transports.
+- [switched-fabric.md](switched-fabric.md) covers a fabric through a switch
+  (`fabric.topology=switched`) and what of it is qualified.

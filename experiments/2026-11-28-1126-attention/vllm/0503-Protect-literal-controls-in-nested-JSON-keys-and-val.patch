@@ -1,0 +1,101 @@
+From 9e62707da577ead8e4f1ed033d3f55e416c556fe Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 00:27:37 +0900
+Subject: [PATCH 503/505] Protect literal controls in nested JSON keys and
+ values
+
+Upstream base: spark-ds41f-1126 vLLM d8784b841c360f523ec20e44bf8fb0898f36d3e4.
+
+Protect ordinary user data and schema keys in arguments without changing structural protocol markers. Replay both thinking modes using the 1017 tokenizer.
+
+Upstream status: downstream integration.
+---
+ tests/tokenizers_/test_deepseek_v41.py | 42 ++++++++++++++++++++++++++
+ vllm/tokenizers/deepseek_v41.py        |  3 +-
+ 2 files changed, 44 insertions(+), 1 deletion(-)
+
+diff --git a/tests/tokenizers_/test_deepseek_v41.py b/tests/tokenizers_/test_deepseek_v41.py
+index 0be69361c4..46b4e20f09 100644
+--- a/tests/tokenizers_/test_deepseek_v41.py
++++ b/tests/tokenizers_/test_deepseek_v41.py
+@@ -653,6 +653,25 @@ def _request(location, text):
+             _lookup_call(json.dumps({"q": text}, ensure_ascii=True)),
+             {"role": "tool", "tool_call_id": "c1", "content": "v"},
+         ], [LOOKUP]
++    if location in ("argument_key", "argument_nested_key", "argument_protocol_values",
++                    "arguments_escaped_key", "arguments_double_escaped_key"):
++        arguments = {text: "value"}
++        if location == "argument_nested_key":
++            arguments = {"q": {text: "value"}}
++        elif location == "argument_protocol_values":
++            arguments = {"type": text, "role": text}
++        elif location == "arguments_escaped_key":
++            arguments = json.dumps(arguments, ensure_ascii=True)
++        elif location == "arguments_double_escaped_key":
++            arguments = json.dumps(json.dumps(arguments, ensure_ascii=True))
++        return [user, _lookup_call(arguments)], [LOOKUP]
++    if location in ("tool_schema_key", "tool_schema_protocol_values"):
++        tool = copy.deepcopy(LOOKUP)
++        properties = ({text: {"type": "string"}} if location == "tool_schema_key"
++                      else {"type": {"type": "string", "description": text},
++                            "role": {"type": "string", "description": text}})
++        tool["function"]["parameters"]["properties"] = properties
++        return [user], [tool]
+     if location == "tool_description":
+         tool = copy.deepcopy(LOOKUP)
+         tool["function"]["description"] = text
+@@ -668,6 +687,13 @@ LOCATIONS = [
+     "tool_result",
+     "arguments_escaped",
+     "tool_description",
++    "argument_key",
++    "argument_nested_key",
++    "argument_protocol_values",
++    "arguments_escaped_key",
++    "arguments_double_escaped_key",
++    "tool_schema_key",
++    "tool_schema_protocol_values",
+ ]
+ 
+ 
+@@ -1506,3 +1532,19 @@ def test_completed_tool_turns_without_reasoning_avoid_empty_think_blocks():
+     assert "<｜Assistant｜><think>Inspect src.</think>Listing src.\n\n<｜DSML｜ calls>" in prompt
+     assert "\n\n\n\n<｜DSML｜ calls>" not in prompt
+     assert prompt.endswith("<｜Assistant｜><think>")
++
++
++def test_sentinels_avoid_private_use_characters_in_mapping_keys():
++    tokenizer = byte_level_tokenizer()
++    key = "\U000f00000\U000f0001" + INJECTED
++    messages = [{"role": "user", "content": "question"}, _lookup_call({key: "value"})]
++    ids = tokenizer.apply_chat_template(messages)
++    text = tokenizer.apply_chat_template(messages, tokenize=False)
++    assert key in text
++    assert tokenizer.decode(ids) == text
++
++
++def test_protocol_identifiers_remain_validated_when_controls_are_present():
++    tokenizer = byte_level_tokenizer()
++    with pytest.raises(ValueError, match="Invalid role"):
++        tokenizer.apply_chat_template([{"role": INJECTED, "content": "question"}])
+diff --git a/vllm/tokenizers/deepseek_v41.py b/vllm/tokenizers/deepseek_v41.py
+index b56d340a81..3fe7e9bf26 100644
+--- a/vllm/tokenizers/deepseek_v41.py
++++ b/vllm/tokenizers/deepseek_v41.py
+@@ -281,7 +281,7 @@ class _ControlSpellings:
+             return self.pattern.sub(self._sentinel, value)
+         if isinstance(value, Mapping):
+             return {
+-                k: item if k in _PROTOCOL_KEYS else self._protect(item, k)
++                self._protect(k): self._protect(item, k)
+                 for k, item in value.items()
+             }
+         if isinstance(value, (list, tuple)):
+@@ -322,6 +322,7 @@ def _strings(value: Any, key: str | None = None):
+                 yield from _strings(decoded)
+     elif isinstance(value, Mapping):
+         for k, item in value.items():
++            yield from _strings(k)
+             yield from _strings(item, k)
+     elif isinstance(value, (list, tuple)):
+         for item in value:

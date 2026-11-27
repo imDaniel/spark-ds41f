@@ -1,0 +1,31 @@
+profile: experiments/2026-11-28-1126-tp4-qualification/cluster.json on spark01, spark02, spark03, spark04
+live:    stopped: 4 nodes, TP4, context 1,048,576, KV 10.5 GiB, image ds41f-1126-attention:vllm-7c445f265a7b, started from experiments/2026-11-28-1126-tp4-qualification/cluster.json
+plan:    4 nodes, TP4, context 1,048,576, KV 10.5 GiB, image ds41f-1126-attention:vllm-7c445f265a7b
+shape:   unchanged
+start plan (fail-closed startup memory guards):
+  no defragmentation before launch (host.defragment_before_start is false)
+  spark02: pre-arm startup memguard, launch rank 1
+  spark03: pre-arm startup memguard, launch rank 2
+  spark04: pre-arm startup memguard, launch rank 3
+  spark01: pre-arm startup memguard, launch rank 0
+  wait for API/JIT readiness, then switch every node to steady memguard
+spark01: MemAvailable 116.5 GiB after the old engine stopped
+spark02: MemAvailable 117.3 GiB after the old engine stopped
+spark03: MemAvailable 117.4 GiB after the old engine stopped
+spark04: MemAvailable 117.1 GiB after the old engine stopped
+spark04: startup memguard active for ds41f-1126-attention (threshold 5 GiB, interval 0.25s, no warn line, mode prelaunch)
+spark02: startup memguard active for ds41f-1126-attention (threshold 5 GiB, interval 0.25s, no warn line, mode prelaunch)
+spark03: startup memguard active for ds41f-1126-attention (threshold 5 GiB, interval 0.25s, no warn line, mode prelaunch)
+spark02: launched d71b60a4a4852b4125db7aeb0603cd8ab2889108ae40246080d38cc6f5087580 (+5.4s)
+spark03: launched b35dfdff7bf9ee5569787bf20a98c49cead9ec63ac648b898bc216a592348ca8 (+5.4s)
+spark04: launched a446322c333bbef1aae77f2f7aec9568abe98d3f9724702b2d65f95e7183a8f9 (+5.4s)
+spark01: startup memguard active for ds41f-1126-attention (threshold 5 GiB, interval 0.25s, no warn line, mode prelaunch)
+spark01: launched 66cb738724fccb693b7662bc8e9a776b506e35651f31cb171d39994418a7ed46 (+5.8s)
+waiting up to 3600s for spark01 API readiness
+API ready; JIT/autotuning startup has completed
+API ready at +93.2s
+spark04: steady memguard active for ds41f-1126-attention (threshold 3 GiB, interval 2s, no warn line, mode running)
+spark01: steady memguard active for ds41f-1126-attention (threshold 3 GiB, interval 2s, no warn line, mode running)
+spark02: steady memguard active for ds41f-1126-attention (threshold 3 GiB, interval 2s, no warn line, mode running)
+spark03: steady memguard active for ds41f-1126-attention (threshold 3 GiB, interval 2s, no warn line, mode running)
+cluster ready; memory guards are active on all nodes (+93.5s)

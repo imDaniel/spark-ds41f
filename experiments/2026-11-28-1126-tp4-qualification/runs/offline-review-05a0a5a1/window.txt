@@ -1,0 +1,18 @@
+test_abandoned_recovery_resumes_but_recorded_failure_requires_manual_retry (test_window.LeaseTest.test_abandoned_recovery_resumes_but_recorded_failure_requires_manual_retry) ... ok
+test_dead_watchdog_receipt_cannot_drain (test_window.LeaseTest.test_dead_watchdog_receipt_cannot_drain) ... ok
+test_expired_heartbeat_does_not_revive_lease (test_window.LeaseTest.test_expired_heartbeat_does_not_revive_lease) ... ok
+test_gpu_or_remote_failure_preserves_hold (test_window.LeaseTest.test_gpu_or_remote_failure_preserves_hold) ... ok
+test_partial_launch_stopped_before_retained_start (test_window.LeaseTest.test_partial_launch_stopped_before_retained_start) ... ok
+test_recovering_window_cannot_be_revived (test_window.LeaseTest.test_recovering_window_cannot_be_revived) ... ok
+test_recovery_actions_are_under_one_exclusive_lock (test_window.LeaseTest.test_recovery_actions_are_under_one_exclusive_lock) ... ok
+test_refresh_race_keeps_watchdog_polling (test_window.LeaseTest.test_refresh_race_keeps_watchdog_polling) ... ok
+test_reopen_and_finish_cannot_interrupt_failed_recovery (test_window.LeaseTest.test_reopen_and_finish_cannot_interrupt_failed_recovery) ... ok
+test_unrelated_hold_is_untouched (test_window.LeaseTest.test_unrelated_hold_is_untouched) ... ok
+test_watchdog_loss_during_drain_only_undoes_new_gate (test_window.LeaseTest.test_watchdog_loss_during_drain_only_undoes_new_gate) ... ok
+test_watchdog_rechecks_after_refresh (test_window.LeaseTest.test_watchdog_rechecks_after_refresh) ... ok
+test_watchdog_rejects_wrong_owner_or_expired_identity (test_window.LeaseTest.test_watchdog_rejects_wrong_owner_or_expired_identity) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.113s
+
+OK

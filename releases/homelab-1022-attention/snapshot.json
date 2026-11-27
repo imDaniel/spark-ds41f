@@ -1,0 +1,6 @@
+{
+  "source_revision": "3e5eb7693f4b83c6232448270615e61e8e5520b2",
+  "source_branch": "archive/1022-attention-20261128",
+  "original_config_sha256": "690888a24a4025b0d48cffd3ff7fc512768f4e12f549e1e60f99de9cd613d927",
+  "only_configuration_change": "Explicit frozen upstreams_config path; all runtime settings are unchanged."
+}

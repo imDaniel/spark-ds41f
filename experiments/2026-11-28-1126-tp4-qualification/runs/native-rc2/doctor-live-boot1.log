@@ -1,0 +1,6 @@
+WARN: recommend: install 64kb page kernel (spark01, spark02, spark03, spark04) -> run: sudo scripts/install-64k-kernel
+WARN: recommend: configure swap (spark01, spark02, spark03, spark04) -> run: sudo scripts/configure-swap
+WARN: recommend: configure nvme sleep settings (spark01, spark02, spark03, spark04) -> run: sudo scripts/configure-nvme-sleep
+WARN: recommend: management port off wireless (spark01, spark02, spark03, spark04) -> run: sudo nmcli radio wifi off
+WARN: recommend: defragment model weight shards (spark01) -> run: bin/spark doctor --fragmentation-commands
+configuration OK; live cluster matches with 5 warnings

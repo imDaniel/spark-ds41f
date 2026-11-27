@@ -15,7 +15,7 @@ def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 def load():
  trusted(__file__);trusted(POLICY);p=json.loads(POLICY.read_text())
- if p['schema_version']!=1 or p['container']!='ds41f-1022-parser-rc3' or p['api_port']!=8000:raise RuntimeError('Invalid fixed production policy')
+ if p['schema_version']!=1 or p['container']!='ds41f-1126-attention' or p['api_port']!=8000:raise RuntimeError('Invalid fixed production policy')
  spec=importlib.util.spec_from_file_location('deepseek_legacy','/usr/local/libexec/ai-cluster/model-control.py');ds=importlib.util.module_from_spec(spec);spec.loader.exec_module(ds);ds.validate()
  return p,ds,ds.Executor()
 

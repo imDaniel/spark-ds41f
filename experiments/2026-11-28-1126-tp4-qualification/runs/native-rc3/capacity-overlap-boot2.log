@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f/experiments/2026-11-28-1126-tp4-qualification/qualify.py", line 110, in <module>
+    qualify(a.stage, a.window, a.image_id, a.output.resolve())
+  File "/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f/experiments/2026-11-28-1126-tp4-qualification/qualify.py", line 70, in qualify
+    capacity_requests.run(output)
+  File "/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f/experiments/2026-10-23-1022-capacity-validation/capacity_requests.py", line 260, in run
+    check_capacity(report["rows"][-1])
+  File "/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f/experiments/2026-10-23-1022-capacity-validation/capacity_requests.py", line 166, in check_capacity
+    raise ValueError("Requested concurrency was not observed")
+ValueError: Requested concurrency was not observed
+Traceback (most recent call last):
+  File "/srv/ai-cluster/operations/1126-attention-20261128/watch-command-v2.py", line 41, in <module>
+    if child.returncode: raise RuntimeError("Qualification command failed")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Qualification command failed

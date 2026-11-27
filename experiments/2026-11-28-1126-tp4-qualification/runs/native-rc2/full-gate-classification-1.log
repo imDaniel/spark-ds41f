@@ -1,0 +1,9 @@
+242 selected test files: {'gate': 173, 'periodic': 0, 'excluded': 61}; 8 problems
+  unclassified: tests/models/test_deepseek_v4_1_steering_consume.py (stack; changed by the series)
+  unclassified: tests/models/test_deepseek_v4_1_steering_gpu.py (stack; changed by the series)
+  unclassified: tests/models/test_deepseek_v4_1_steering_identity.py (stack; changed by the series)
+  unclassified: tests/models/test_deepseek_v4_1_steering_profile.py (stack; changed by the series)
+  unclassified: tests/models/test_deepseek_v4_1_steering_request.py (stack; changed by the series)
+  unclassified: tests/models/test_deepseek_v4_1_steering_rows.py (stack; changed by the series)
+  unclassified: tests/models/test_deepseek_v4_1_steering_state.py (stack; changed by the series)
+  unclassified: tests/parser/engine/test_deepseek_v41_token_provenance.py (stack; changed by the series)

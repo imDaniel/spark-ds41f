@@ -1,0 +1,12 @@
+{
+  "tag": "ds41f-1126-attention:vllm-b87c425f0ec0",
+  "image_id": "sha256:38dab89e937a9ebd3f73e38555513cc607c1f3431e9c95cd286c594c2f5c3a6a",
+  "deployment_commit": "65f01ed59a50dab01f729c61d2093a5f63380992",
+  "compile_jobs": 8,
+  "max_compile_jobs": null,
+  "nccl_compile_jobs": 4,
+  "smoke_cpu_limit": null,
+  "elapsed_seconds": 437,
+  "min_available_gib": 80.4,
+  "built_utc": "2026-11-27T18:26:44Z"
+}

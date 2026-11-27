@@ -1,0 +1,233 @@
+"""Each release's frozen recipe is what it qualified; production follows the site's releases.
+
+A promotion adds ``releases/<name>/`` (the recipe and its lock, never edited afterwards) and a
+baseline manifest naming them, the arm each shape qualified on, and any change made to the
+recipe after the release. No test names a release: these checks read the manifests."""
+
+import json
+import re
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "tests"))
+
+import recipe  # noqa: E402
+import render_docs  # noqa: E402
+from test_recipe import RENDERED, REPORTING_ARGS, host_mounts, load_spark  # noqa: E402
+
+# What names a configuration rather than what it serves.
+NAMING = ("promoted_baseline", "upstreams_config", "benchmark_reference", "shape", "notes")
+
+
+def load(path: str) -> dict:
+    return json.loads((ROOT / path).read_text())
+
+
+def releases() -> dict[str, dict]:
+    """The baseline manifests that freeze their recipe, by manifest name."""
+    out = {}
+    for path in sorted((ROOT / "manifests/baselines").glob("*.json")):
+        manifest = json.loads(path.read_text())
+        if "recipe" in manifest:
+            out[path.stem] = manifest
+    return out
+
+
+def serving(cluster: dict) -> dict:
+    out = {k: v for k, v in host_mounts(cluster).items() if k not in NAMING}
+    out["environment"] = {k: v for k, v in out["environment"].items() if k not in RENDERED}
+    return out
+
+
+class ReleaseTest(unittest.TestCase):
+    def setUp(self):
+        self.releases = releases()
+        self.spark = load_spark()
+
+    def test_each_release_is_its_qualified_arms(self):
+        """At each shape it qualified, a release's recipe resolves to the arm it was measured
+        on, apart from the names, the fabric settings sparknet renders from the node map, the
+        release tag of the same image, and the changes its manifest records after release."""
+        self.assertTrue(self.releases)
+        for name, manifest in self.releases.items():
+            frozen = load(manifest["recipe"])
+            self.assertEqual(frozen["promoted_baseline"], name)
+            self.assertEqual(frozen["container"]["image"], manifest["image_tag"], name)
+            self.assertTrue(manifest["qualified_arms"], name)
+            for shape, arm_path in manifest["qualified_arms"].items():
+                with self.subTest(release=name, shape=shape):
+                    arm = self.spark.read_cluster(arm_path)
+                    if arm["container"]["image"] != manifest["image_tag"]:
+                        self.assertEqual(arm["container"]["image"], manifest["build"]["built_as"])
+                        arm["container"]["image"] = manifest["image_tag"]
+                    for change in manifest.get("changed_after_release", []):
+                        self.assertTrue(change["why"])
+                        if shape in change["shapes"]:
+                            arm = recipe.overlay({"extends": {}, **change["overlay"]}, arm)
+                    self.assertEqual(serving(recipe.resolve(frozen, shape)), serving(arm))
+
+    def test_each_release_is_frozen_with_its_lock(self):
+        for name, manifest in self.releases.items():
+            directory = Path(manifest["recipe"]).parent
+            frozen = load(manifest["recipe"])
+            self.assertEqual(frozen["upstreams_config"], f"{directory}/upstreams.lock.json", name)
+            self.assertEqual(load(frozen["upstreams_config"])["generated_from_baseline"], name)
+            references = {entry.get("benchmark_reference") for entry in frozen["shapes"].values()}
+            self.assertIn(manifest["benchmark_reference"], references, name)
+
+    def test_production_is_the_newest_release(self):
+        """Site production follows its own qualified release, independent of imported upstream releases."""
+        production = load("config/cluster.json")
+        manifest = self.releases[production["promoted_baseline"]]
+        site_releases = {name: release for name, release in self.releases.items()
+                         if release.get("site_release") is True}
+        self.assertIn(production["promoted_baseline"], site_releases)
+        self.assertEqual(max(site_releases, key=lambda n: site_releases[n]["captured_at"]),
+                         production["promoted_baseline"])
+        frozen = load(manifest["recipe"])
+        for path in sorted((ROOT / "manifests/runtime-defaults").glob("*.json")):
+            change = json.loads(path.read_text())
+            self.assertIn(change["baseline"], self.releases)
+            self.assertTrue(change["reason"])
+            self.assertTrue(change["qualification"])
+            self.assertTrue(change.get("serve_options") or change.get("serve_flags_added")
+                            or change.get("site_fields"))
+            if change["baseline"] != production["promoted_baseline"]:
+                continue
+            for flag, values in change.get("serve_options", {}).items():
+                # Defaults may change admission limits or reporting flags, never
+                # silently replace a released model, image, source lock or numerical setting.
+                self.assertEqual(flag, "--limit-mm-per-prompt")
+                self.assertEqual(set(json.loads(values["after"])), {"image"})
+                count = json.loads(values["after"])["image"]
+                self.assertIs(type(count), int)
+                self.assertGreaterEqual(count, 0)
+                index = frozen["serve_args"].index(flag) + 1
+                self.assertEqual(frozen["serve_args"][index], values["before"])
+                frozen["serve_args"][index] = values["after"]
+            for field, values in change.get("site_fields", {}).items():
+                # Where a site keeps its files, never what the release serves.
+                self.assertEqual(field, "host.home")
+                self.assertEqual(frozen["host"]["home"], values["before"])
+                frozen["host"]["home"] = values["after"]
+            for entry in change.get("serve_flags_added", []):
+                flag = entry["flag"]
+                self.assertIn(flag, REPORTING_ARGS)
+                self.assertNotIn(flag, frozen["serve_args"])
+                after_index = frozen["serve_args"].index(entry["after"])
+                frozen["serve_args"].insert(after_index + 1, flag)
+        self.assertEqual({k: v for k, v in production.items() if k != "upstreams_config"},
+                         {k: v for k, v in frozen.items() if k != "upstreams_config"})
+        self.assertEqual(production["upstreams_config"], frozen["upstreams_config"])
+        self.assertEqual(load("upstreams.lock.json"), load(frozen["upstreams_config"]))
+
+    def test_imported_release_date_does_not_choose_site_production(self):
+        for release in self.releases.values():
+            if release.get("site_release") is not True:
+                release["captured_at"] = "99991231T235959Z"
+        self.test_production_is_the_newest_release()
+
+    def test_imported_arms_keep_the_upstream_recipe(self):
+        from spark_ds41f.config import IMPORTED_RECIPE_PROFILES
+
+        for path in sorted(IMPORTED_RECIPE_PROFILES):
+            with self.subTest(profile=path):
+                arm = load(path)
+                base = self.spark.read_cluster("releases/spark-ds41f-1126/cluster.json",
+                                               arm["extends"]["shape"])
+                self.assertEqual(self.spark.read_cluster(path), recipe.overlay(arm, base))
+
+    def test_each_release_follows_the_one_it_names(self):
+        for name, manifest in self.releases.items():
+            previous = manifest.get("previous_baseline")
+            if previous in self.releases:
+                self.assertLess(self.releases[previous]["captured_at"], manifest["captured_at"], name)
+
+    def test_generated_docs_and_pages_match_manifests(self):
+        """The generated upstream reference sections retain the imported release's evidence."""
+        self.assertEqual(render_docs.main(["--check"]), 0)
+
+        data = render_docs.collect_manifest_data()
+        site_baselines = {name for name, manifest in self.releases.items()
+                          if manifest.get("site_release") is True}
+        self.assertTrue(site_baselines)
+        self.assertTrue(site_baselines.isdisjoint(row["stem"] for row in data["timeline"]))
+        for name in site_baselines:
+            reference = load(self.releases[name]["benchmark_reference"])
+            self.assertEqual(reference["baseline"], name)
+            self.assertEqual(reference["schema"], "accepted-matched-performance-reference/1")
+            self.assertNotIn(self.releases[name]["benchmark_reference"],
+                             {row["path"] for row in data["benchmarks"]})
+        production = load("releases/spark-ds41f-1126/cluster.json")
+        upstreams_lock = load("releases/spark-ds41f-1126/upstreams.lock.json")
+        self.assertEqual(data["promoted_baseline"], production["promoted_baseline"])
+        self.assertEqual(
+            [u["patch_count"] for u in data["upstreams"] if u["name"] == "vllm"],
+            [upstreams_lock["sources"]["vllm"]["patch_count"]],
+        )
+        self.assertEqual(
+            [s["name"] for s in data["shapes"]],
+            list(production["shapes"].keys()),
+        )
+        for s in data["shapes"]:
+            if s["benchmark_reference"]:
+                self.assertIsNotNone(s["memory"], s["name"])
+                self.assertGreater(s["memory"]["head_min_available_gib"], 5.0, s["name"])
+                self.assertGreater(s["memory"]["worker_min_available_gib"], 5.0, s["name"])
+                self.assertGreater(s["memory"]["headroom_above_startup_guard_gib"], 0.0, s["name"])
+                self.assertEqual(s["memory"]["max_swap_growth_gib"], 0.0, s["name"])
+            else:
+                self.assertIsNone(s["memory"], s["name"])
+        suite_dirs = sorted(
+            p.name
+            for p in (ROOT / "manifests/suites").iterdir()
+            if p.is_dir() and not p.name.endswith(("-single-stream", "-sampled"))
+        )
+        self.assertEqual([s["id"] for s in data["suites"]], suite_dirs)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            site_dir = Path(tmp) / "site"
+            self.assertEqual(render_docs.main(["--site-dir", str(site_dir)]), 0)
+            self.assertTrue((site_dir / "index.html").is_file())
+            self.assertTrue((site_dir / ".nojekyll").is_file())
+            self.assertTrue((site_dir / "data.json").is_file())
+            site_data = json.loads((site_dir / "data.json").read_text())
+            self.assertEqual(site_data["promoted_baseline"], production["promoted_baseline"])
+            html_text = (site_dir / "index.html").read_text()
+            self.assertNotIn("__SPARK_RANGE__", html_text)
+            self.assertIn("one to eight DGX Sparks", html_text)
+            match = re.search(
+                r'<script id="manifest-data" type="application/json">\s*(.*?)\s*</script>',
+                html_text,
+                re.S,
+            )
+            self.assertIsNotNone(match)
+            embedded = json.loads(match.group(1))
+            self.assertEqual(embedded["promoted_baseline"], production["promoted_baseline"])
+            self.assertEqual(len(embedded["suites"]), len(suite_dirs))
+            self.assertIn("benchmarks", embedded)
+            bench_by_path = {b["path"]: b for b in embedded["benchmarks"]}
+            suite_by_path = {s["path"]: s for s in embedded["suites"]}
+            suite_by_id = {s["id"]: s for s in embedded["suites"]}
+            for s in embedded["shapes"]:
+                ref = s.get("benchmark_reference")
+                if not ref:
+                    continue
+                if ref.endswith(".json"):
+                    self.assertIn(ref, bench_by_path, s["name"])
+                rec = (
+                    suite_by_path.get(ref)
+                    or suite_by_id.get(f"{embedded['promoted_baseline']}-{s['name']}")
+                    or bench_by_path.get(ref)
+                )
+                self.assertIsNotNone(rec, f"missing site benchmark/suite for {s['name']}")
+                self.assertIn("c1", rec["runs"], s["name"])
+                self.assertTrue(rec["prefill"], f"missing prefill points for {s['name']}")
+
+
+if __name__ == "__main__":
+    unittest.main()

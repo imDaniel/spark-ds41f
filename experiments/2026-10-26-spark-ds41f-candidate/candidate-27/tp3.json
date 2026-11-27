@@ -1,0 +1,16 @@
+{
+ "notes": "candidate-27 at tp3-triangle (6,144): candidate-26 + #794 (Skip adaptive verification warmup in CUDA graph memory-profiling pass) + #795 (Avoid unnecessary TCP socket notify when shm_broadcast readers are already busy-polling) + #796 (Weak-ref nested outputs of captured graphs); vLLM 0568..0633 (patch head 68ffa3c2, tree dc6c16fc).",
+ "extends": {
+  "config": "experiments/2026-10-26-spark-ds41f-candidate/rc14/rc-tp3.json"
+ },
+ "set": {
+  "promoted_baseline": "2026-10-30-spark-ds41f-1030",
+  "container": {
+   "image": "spark-ds41f:candidate-27",
+   "expected_labels": {
+    "local.spark-ds41f.vllm.tree": "dc6c16fc3a45d03ce7c9fc1921eff9c655561217"
+   }
+  },
+  "upstreams_config": "experiments/2026-10-26-spark-ds41f-candidate/candidate-27/upstreams.lock.json"
+ }
+}

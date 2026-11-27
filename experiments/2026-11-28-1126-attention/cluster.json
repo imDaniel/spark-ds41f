@@ -1,0 +1,30 @@
+{
+  "extends": {
+    "config": "experiments/2026-11-28-1126-attention/tp4-common.json"
+  },
+  "set": {
+    "container": {
+      "name": "ds41f-1126-attention",
+      "mounts": [
+        [
+          "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1",
+          "/models",
+          "ro"
+        ],
+        [
+          "/srv/ai-cluster/cache/1126-attention",
+          "/cache",
+          "rw"
+        ],
+        [
+          "/srv/ai-cluster/profiles/deepseek-1017-attention-1126/releases/81ca5d96cf78",
+          "/steering-1126",
+          "ro"
+        ]
+      ]
+    }
+  },
+  "add_serve_options": {
+    "--additional-config": "{\"ds41_steering\":{\"schema_version\":1,\"operator_version\":\"attn-writer-project-bf16-rank-order-v1\",\"profile_path\":\"/steering-1126/steering/heretic-1017-attn-v1.safetensors\",\"profile_sha256\":\"81ca5d96cf78a1c0193ab80071efab43d666b5a57e8633ced71b227031bde1f2\"}}"
+  }
+}

@@ -1,0 +1,1240 @@
+#!/usr/bin/env python3
+"""Render manifest-driven status tables and the interactive GitHub Pages dashboard.
+
+Usage:
+    scripts/render_docs.py [--check] [--site-dir DIR]
+
+Reads the authoritative machine-readable repository state:
+- ``config/cluster.json`` (resolved via ``scripts/recipe.py`` and ``scripts/kv_capacity.py``)
+- ``upstreams.lock.json``
+- ``state/config.json``
+- ``manifests/baselines/*.json``
+- ``manifests/sources/*.json``
+- ``manifests/suites/*/``
+
+and renders:
+1. Deterministic markdown status & benchmark tables between
+   ``<!-- BEGIN GENERATED: <id> -->`` and ``<!-- END GENERATED: <id> -->`` markers in
+   ``README.md``, ``docs/current-state.md``, and ``TODO.md``.
+2. The GitHub Pages site at ``docs/index.html``: the page in ``site/index.html``
+   with the manifest data embedded
+   (plus ``docs/.nojekyll``, and ``<site-dir>/index.html`` + ``<site-dir>/data.json``
+   + the ``docs/logo.png`` favicon and the ``docs/og.png`` link-preview image when
+   ``--site-dir`` is given; ``scripts/render-og`` renders that image from the page).
+"""
+
+from __future__ import annotations
+
+import argparse
+import difflib
+import hashlib
+import html
+import json
+import math
+import re
+import shutil
+import sys
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import kv_capacity  # noqa: E402
+import recipe  # noqa: E402
+from spark_ds41f import build as spark_build  # noqa: E402
+from spark_ds41f import sonar  # noqa: E402
+
+sb_prompts = sonar.module("prompts")
+sb_stats = sonar.module("stats")
+
+SITE_TEMPLATE = ROOT / "site/index.html"
+SITE_DATA_MARKER = "__MANIFEST_DATA__"
+SITE_VERSION_MARKER = "__SITE_VERSION__"
+SITE_RANGE_MARKER = "__SPARK_RANGE__"
+_NUMBER_WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight")
+
+MARKER_RE = re.compile(
+    r"(<!-- BEGIN GENERATED: ([a-z0-9_-]+) -->)\n.*?(<!-- END GENERATED: \2 -->)",
+    re.DOTALL,
+)
+
+
+def _short_release_name(baseline_stem: str) -> str:
+    """Extract the short release identifier from a baseline or suite stem."""
+    m = re.match(r"^\d{4}-\d{2}-\d{2}-(?:karmic-kraken-)?(.+)$", baseline_stem)
+    return m.group(1) if m else baseline_stem
+
+
+def _baseline_date(baseline_stem: str) -> str:
+    m = re.match(r"^(\d{4}-\d{2}-\d{2})-", baseline_stem)
+    return m.group(1) if m else ""
+
+
+def _format_gib(num_bytes: int) -> str:
+    gib = num_bytes / (1024**3)
+    if abs(gib - round(gib, 1)) < 1e-4:
+        return f"{gib:.1f} GiB"
+    if abs(gib - round(gib, 2)) < 1e-4:
+        return f"{gib:.2f} GiB"
+    return f"{gib:.5g} GiB"
+
+
+def _count_series_patches(series_rel_path: str | None) -> int | None:
+    if not series_rel_path:
+        return None
+    path = ROOT / series_rel_path
+    if not path.is_file():
+        return None
+    _, entries = spark_build.series_files_and_entries(path)
+    return len(entries)
+
+
+# Sonar's default prompt set crosses sixteen task styles with topics. Two styles ask for
+# code and one for a JSON object, which is neither prose nor code; the other thirteen ask for prose.
+_CODE_STYLES = ("Python function", "SQL schema")
+_STRUCTURED_STYLES = ("JSON object",)
+
+
+def _prompt_styles() -> tuple[str, dict[str, str]]:
+    """The default prompt set's digest, and each prompt id's style (prose, code or structured)."""
+    prompts = sb_prompts.default_prompts()
+    styles = {}
+    for prompt in prompts:
+        text = prompt["text"]
+        if any(marker in text for marker in _CODE_STYLES):
+            styles[prompt["id"]] = "code"
+        elif any(marker in text for marker in _STRUCTURED_STYLES):
+            styles[prompt["id"]] = "structured"
+        else:
+            styles[prompt["id"]] = "prose"
+    return sb_prompts.digest(prompts), styles
+
+
+def _tps_by_style(data: dict[str, Any]) -> dict[str, Any] | None:
+    """One stream's output tokens per second on prose and on code prompts, from a run's request table.
+
+    Each style's rate is its requests' output tokens over their time from send to end, for the
+    error-free requests that lie inside the measurement window: the same accounting as the run's
+    ``output_tps``, which is their mix. None unless the run used the default prompt set unchanged
+    and has at least five requests of each style."""
+    table = data.get("request_table") or {}
+    window = table.get("window")
+    digest, styles = _prompt_styles()
+    workload = data.get("workload", {})
+    if not table.get("rows") or not window or workload.get("prompts_sha256") != digest:
+        return None
+    at = {name: i for i, name in enumerate(table["columns"])}
+    totals: dict[str, list[float]] = {}
+    for row in table["rows"]:
+        sent, end, tokens = row[at["sent"]], row[at["end"]], row[at["completion_tokens"]]
+        style = styles.get(row[at["prompt"]])
+        if row[at["error"]] or style is None or sent is None or end is None or not tokens:
+            continue
+        if sent < window[0] or end > window[1] or end <= sent:
+            continue
+        total = totals.setdefault(style, [0.0, 0.0, 0])
+        total[0] += tokens
+        total[1] += end - sent
+        total[2] += 1
+    if any(totals.get(style, [0, 0, 0])[2] < 5 for style in ("prose", "code")):
+        return None
+    return {
+        style: {"tps": round(totals[style][0] / totals[style][1], 1), "requests": totals[style][2]}
+        for style in ("prose", "code")
+    }
+
+
+def _parse_run_step(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    data = json.loads(path.read_text())
+    summary = data.get("summary", {})
+    out_tps = summary.get("output_tps", {})
+    server = summary.get("server", {})
+    latency = summary.get("latency", {})
+    ttft = latency.get("ttft_s", {})
+    tpot = latency.get("tpot_ms", {})
+    user_tps = latency.get("per_user_tps", {})
+    slo = latency.get("slo", {})
+    return {
+        "concurrency": data.get("workload", {}).get("concurrency"),
+        "tps_by_style": _tps_by_style(data),
+        "mode": data.get("workload", {}).get("mode", "closed"),
+        "rate": data.get("workload", {}).get("rate"),
+        "output_tps": round(out_tps.get("mean", 0.0), 2) if out_tps else None,
+        "output_tps_ci95_pct": round(out_tps.get("ci95_pct", 0.0), 2) if out_tps.get("ci95_pct") is not None else None,
+        "steps_per_s": round(server.get("steps_per_s", {}).get("mean", 0.0), 2) if server.get("steps_per_s") else None,
+        "output_tokens_per_step": round(server.get("output_tokens_per_step", {}).get("mean", 0.0), 3)
+        if server.get("output_tokens_per_step")
+        else None,
+        "accepted_per_draft": round(server.get("accepted_per_draft", {}).get("mean", 0.0), 3)
+        if server.get("accepted_per_draft")
+        else None,
+        "scheduled_tokens_per_step": round(server.get("scheduled_tokens_per_step", {}).get("mean", 0.0), 2)
+        if server.get("scheduled_tokens_per_step")
+        else None,
+        "ttft_p50_s": round(ttft.get("p50", 0.0), 3) if ttft.get("p50") is not None else None,
+        "ttft_p99_s": round(ttft.get("p99", 0.0), 3) if ttft.get("p99") is not None else None,
+        "tpot_p50_ms": round(tpot.get("p50", 0.0), 2) if tpot.get("p50") is not None else None,
+        "tpot_p99_ms": round(tpot.get("p99", 0.0), 2) if tpot.get("p99") is not None else None,
+        "per_user_tps_p50": round(user_tps.get("p50", 0.0), 2) if user_tps.get("p50") is not None else None,
+        "goodput_rps": round(slo.get("goodput_rps", 0.0), 3) if slo.get("goodput_rps") is not None else None,
+        "slo_attainment_pct": round(slo.get("attainment_pct", 0.0), 1) if slo.get("attainment_pct") is not None else None,
+        "survival": [
+            round(server.get(f"survival_at_{k}", {}).get("mean", 0.0), 3)
+            for k in range(5)
+            if server.get(f"survival_at_{k}")
+        ],
+        "coverage": [
+            round(server.get(f"coverage_at_{k}", {}).get("mean", 0.0), 3)
+            for k in range(5)
+            if server.get(f"coverage_at_{k}")
+        ],
+    }
+
+
+def _parse_grid_step(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    data = json.loads(path.read_text())
+    shapes = []
+    decode_means = []
+    for row in data.get("engine", []):
+        samples = row.get("samples") or []
+        if samples:
+            kept, _ = sb_stats.trim_slow(samples)
+            trimmed_mean = sum(kept) / len(kept)
+        else:
+            trimmed_mean = row.get("step_ms", {}).get("mean", 0.0)
+        is_prefill = bool(row.get("shape", {}).get("prefill"))
+        if not is_prefill and trimmed_mean > 0:
+            decode_means.append(trimmed_mean)
+        shapes.append(
+            {
+                "label": row["label"],
+                "num_reqs": row.get("shape", {}).get("num_reqs"),
+                "num_tokens": row.get("shape", {}).get("num_tokens"),
+                "context_len": row.get("shape", {}).get("context_len"),
+                "step_ms": round(trimmed_mean, 3),
+                "ci95_pct": round(row.get("step_ms", {}).get("ci95_pct", 0.0), 2)
+                if row.get("step_ms", {}).get("ci95_pct") is not None
+                else None,
+            }
+        )
+    geomean = math.exp(sum(math.log(m) for m in decode_means) / len(decode_means)) if decode_means else None
+    return {
+        "shape_count": len(decode_means),
+        "geomean_ms": round(geomean, 3) if geomean is not None else None,
+        "shapes": shapes,
+    }
+
+
+def _parse_prefill_step(path: Path) -> list[dict[str, Any]]:
+    if not path.is_file():
+        return []
+    data = json.loads(path.read_text())
+    out = []
+    for row in data.get("prefill", []):
+        tps = row.get("tps", {})
+        out.append(
+            {
+                "size": row["size"],
+                "prompt_tokens": row.get("prompt_tokens"),
+                "tps": round(tps.get("mean", 0.0), 1),
+                "ci95_pct": round(tps.get("ci95_pct", 0.0), 2) if tps.get("ci95_pct") is not None else None,
+            }
+        )
+    return out
+
+
+def _parse_stall_step(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    data = json.loads(path.read_text())
+    rows = data.get("stall", [])
+    if not rows:
+        return None
+    first = rows[0]
+    return {
+        "streams": data.get("workload", {}).get("streams"),
+        "size": first.get("size"),
+        "prefill_tps": round(first.get("tps", {}).get("mean", 0.0), 1) if first.get("tps") else None,
+        "during_mean_s": round(first.get("during_mean_s", {}).get("mean", 0.0), 3)
+        if first.get("during_mean_s")
+        else None,
+        "during_p90_s": round(first.get("during_p90_s", {}).get("mean", 0.0), 3)
+        if first.get("during_p90_s")
+        else None,
+        "during_p99_s": round(first.get("during_p99_s", {}).get("mean", 0.0), 3)
+        if first.get("during_p99_s")
+        else None,
+        "probe_ttft_p50_s": round(first.get("probe_ttft_p50_s", {}).get("mean", 0.0), 3)
+        if first.get("probe_ttft_p50_s")
+        else None,
+        "probe_ttft_max_s": round(first.get("probe_ttft_max_s", {}).get("mean", 0.0), 3)
+        if first.get("probe_ttft_max_s")
+        else None,
+    }
+
+
+def _parse_verdicts_text(path: Path) -> list[dict[str, str]]:
+    if not path.is_file():
+        return []
+    lines = path.read_text().splitlines()
+    verdicts = []
+    in_verdicts = False
+    for line in lines:
+        if line.startswith("verdicts:"):
+            in_verdicts = True
+            continue
+        if in_verdicts:
+            if not line.strip() or line.startswith("paired rows:") or line.startswith("########"):
+                break
+            if line.lstrip().startswith("metric"):
+                continue
+            m = re.match(
+                r"^(.+?)\s+([+-]\d+\.\d+%)\s+(\d+\.\d+%)\s+([+-]\d+\.\d+%)\s+(?:(\S+)\s+(\d+\.\d+%)\s+)?((?:better|same|worse).*)$",
+                line.strip(),
+            )
+            if m:
+                verdicts.append(
+                    {
+                        "metric": m.group(1).strip(),
+                        "change": m.group(2),
+                        "ci95": m.group(3),
+                        "repeat": m.group(4),
+                        "verdict": m.group(7).strip(),
+                    }
+                )
+    return verdicts
+
+
+def load_suite_directory(suite_dir: Path) -> dict[str, Any]:
+    suite_meta = json.loads((suite_dir / "suite.json").read_text())
+    stem = suite_dir.name
+    m = re.match(r"^(\d{4}-\d{2}-\d{2})-(?:karmic-kraken-)?(.+)-(tp[348](?:-switched)?)$", stem)
+    date_str = m.group(1) if m else ""
+    release_name = m.group(2) if m else stem
+    topology = m.group(3) if m else ("tp4" if "tp4" in stem else "tp3")
+
+    runs: dict[str, Any] = {}
+    for step_id in ("c16", "c8", "c4", "c1", "poisson"):
+        parsed = _parse_run_step(suite_dir / f"{step_id}.json")
+        if parsed:
+            runs[step_id] = parsed
+
+    single_dir = suite_dir.parent / f"{stem}-single-stream"
+    if "c1" not in runs and (single_dir / "c1.json").is_file():
+        runs["c1"] = _parse_run_step(single_dir / "c1.json")
+
+    sampled: dict[str, Any] = {}
+    sampled_dir = suite_dir.parent / f"{stem}-sampled"
+    if sampled_dir.is_dir():
+        for step_id in ("c16", "c8", "c1"):
+            parsed = _parse_run_step(sampled_dir / f"{step_id}.json")
+            if parsed:
+                sampled[step_id] = parsed
+
+    stalls: dict[str, Any] = {}
+    for stall_id in ("stall-3", "stall-6", "stall-7", "stall-11", "stall-15"):
+        parsed_stall = _parse_stall_step(suite_dir / f"{stall_id}.json")
+        if parsed_stall:
+            stalls[stall_id] = parsed_stall
+
+    verdicts = _parse_verdicts_text(suite_dir / "release-table.txt")
+    if (single_dir / "release-table.txt").is_file():
+        verdicts.extend(_parse_verdicts_text(single_dir / "release-table.txt"))
+
+    return {
+        "id": stem,
+        "path": f"manifests/suites/{stem}",
+        "date": date_str,
+        "release": release_name,
+        "topology": topology.upper(),
+        "suite_version": suite_meta.get("suite", {}).get("version", 1),
+        "started_utc": suite_meta.get("started_utc"),
+        "image": suite_meta.get("metadata", {}).get("identity", {}).get("image"),
+        "transport": suite_meta.get("metadata", {}).get("identity", {}).get("transport"),
+        "runs": runs,
+        "sampled": sampled,
+        "grid": _parse_grid_step(suite_dir / "grid.json"),
+        "prefill": _parse_prefill_step(suite_dir / "prefill.json"),
+        "stalls": stalls,
+        "verdicts": verdicts,
+    }
+
+
+def _stat_mean(obj: Any) -> float | None:
+    if isinstance(obj, dict):
+        val = obj.get("mean")
+        return float(val) if val is not None else None
+    if isinstance(obj, (int, float)):
+        return float(obj)
+    return None
+
+
+def _benchmark_shape(stem: str, ident: dict[str, Any]) -> str | None:
+    nodes = len((ident.get("topology") or {}).get("nodes") or [])
+    transport = ident.get("transport") or ""
+    cfg = ident.get("cluster_config") or ""
+    if transport == "local" or nodes == 1 or stem.endswith("-tp1"):
+        return "tp1"
+    if nodes == 2 or stem.endswith(("-direct2", "-switched2")):
+        return "tp2-switched" if (transport == "oneshot-switched" or "switched" in stem) else "tp2-direct"
+    if nodes == 3 or stem.endswith(("-tp3", "-tp34k", "-switched3")):
+        if transport == "oneshot-switched" or "switched" in stem:
+            return "tp3-switched"
+        if "4k" in stem or "4k" in cfg:
+            return "tp3-triangle-4k"
+        return "tp3-triangle"
+    if nodes == 4 or stem.endswith(("-tp4", "-switched")):
+        return "tp4-switched" if (transport == "oneshot-switched" or "switched" in stem) else "tp4-ring"
+    if nodes in (5, 6, 7, 8):
+        return f"tp{nodes}-switched"
+    for n in (5, 6, 7, 8):
+        if stem.endswith(f"-switched{n}"):
+            return f"tp{n}-switched"
+    return None
+
+
+def load_benchmark_file(path: Path) -> dict[str, Any]:
+    data = json.loads(path.read_text())
+    stem = path.stem
+    m = re.match(
+        r"^(\d{4}-\d{2}-\d{2})-(?:karmic-kraken-)?(.+?)(?:-(tp1|direct2|switched[2-8]?|tp34k|tp3|tp4))?$",
+        stem,
+    )
+    date_str = m.group(1) if m else ""
+    release_name = m.group(2) if m else stem
+    ident = data.get("identity", {})
+    suites_data = data.get("suites", {})
+
+    decode_pts = (suites_data.get("decode") or {}).get("points") or {}
+    decode: dict[str, dict[str, Any]] = {}
+    for style in ("prose", "code"):
+        by_conc: dict[str, Any] = {}
+        for c in (1, 2, 4, 8, 16):
+            row = decode_pts.get(f"{style}-c{c}")
+            if not isinstance(row, dict):
+                continue
+            tps_obj = row.get("tps")
+            tps_mean = _stat_mean(tps_obj)
+            if tps_mean is None:
+                continue
+            entry: dict[str, Any] = {
+                "concurrency": c,
+                "tps": round(tps_mean, 2),
+                "ci95_pct": round(float(tps_obj["ci95_pct"]), 2)
+                if isinstance(tps_obj, dict) and tps_obj.get("ci95_pct") is not None
+                else None,
+                "n": int(tps_obj["n"]) if isinstance(tps_obj, dict) and tps_obj.get("n") is not None else None,
+                "ttft_s": round(_stat_mean(row.get("ttft_s")), 3) if _stat_mean(row.get("ttft_s")) is not None else None,
+                "step_ms": round(_stat_mean(row.get("step_ms")), 3) if _stat_mean(row.get("step_ms")) is not None else None,
+                "tokens_per_step": round(_stat_mean(row.get("tokens_per_step")), 3)
+                if _stat_mean(row.get("tokens_per_step")) is not None
+                else None,
+                "accepted_per_draft": round(_stat_mean(row.get("accepted_per_draft")), 3)
+                if _stat_mean(row.get("accepted_per_draft")) is not None
+                else None,
+            }
+            by_conc[f"c{c}"] = entry
+        if by_conc:
+            decode[style] = by_conc
+
+    prose_dec = decode.get("prose", {})
+    code_dec = decode.get("code", {})
+    runs: dict[str, Any] = {}
+    if "c1" in prose_dec:
+        p1 = prose_dec["c1"]
+        c1 = code_dec.get("c1")
+        tpot_ms = None
+        if p1.get("step_ms") and p1.get("tokens_per_step"):
+            tpot_ms = round(p1["step_ms"] / p1["tokens_per_step"], 2)
+        run1: dict[str, Any] = {
+            "concurrency": 1,
+            "output_tps": p1["tps"],
+            "code_tps": c1["tps"] if c1 else None,
+            "ttft_p50_s": p1.get("ttft_s"),
+            "step_ms": p1.get("step_ms"),
+            "tpot_p50_ms": tpot_ms,
+        }
+        if c1:
+            run1["tps_by_style"] = {
+                "prose": {"tps": round(p1["tps"], 1), "requests": p1.get("n")},
+                "code": {"tps": round(c1["tps"], 1), "requests": c1.get("n")},
+            }
+        runs["c1"] = run1
+    for c in (2, 4, 8, 16):
+        k = f"c{c}"
+        if k not in prose_dec:
+            continue
+        p = prose_dec[k]
+        code_entry = code_dec.get(k)
+        runs[k] = {
+            "concurrency": c,
+            "output_tps": p["tps"],
+            "prose_tps": p["tps"],
+            "code_tps": code_entry["tps"] if code_entry else None,
+            "ttft_p50_s": p.get("ttft_s"),
+            "step_ms": p.get("step_ms"),
+        }
+
+    prefill_pts = (suites_data.get("prefill") or {}).get("points") or {}
+    prefill: list[dict[str, Any]] = []
+    for size_key, row in sorted(prefill_pts.items(), key=lambda kv: int(kv[0])):
+        if not isinstance(row, dict):
+            continue
+        tps_obj = row.get("prefill_tps") or row.get("tps") or {}
+        mean_val = _stat_mean(tps_obj)
+        if mean_val is None or mean_val <= 0:
+            continue
+        prefill.append(
+            {
+                "size": int(size_key),
+                "prompt_tokens": row.get("prompt_tokens"),
+                "tps": round(mean_val, 1),
+                "ci95_pct": round(float(tps_obj["ci95_pct"]), 2)
+                if isinstance(tps_obj, dict) and tps_obj.get("ci95_pct") is not None
+                else None,
+            }
+        )
+
+    return {
+        "id": stem,
+        "path": f"manifests/benchmarks/{path.name}",
+        "kind": "bench",
+        "date": date_str,
+        "release": release_name,
+        "shape": _benchmark_shape(stem, ident),
+        "kernel_backend": ident.get("kernel_backend"),
+        "transport": ident.get("transport"),
+        "started_utc": data.get("started_utc"),
+        "image": ident.get("image"),
+        "decode": decode,
+        "runs": runs,
+        "prefill": prefill,
+    }
+
+
+def _load_shape_memory(bench_ref: str | None, override_raw: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    if not bench_ref:
+        return None
+    if isinstance(override_raw, dict) and override_raw:
+        mem_raw: Any = override_raw
+    else:
+        ref_path = ROOT / bench_ref
+        if ref_path.is_dir():
+            cond_path = ref_path / "conditions.json"
+            if not cond_path.is_file():
+                return None
+            mem_raw = json.loads(cond_path.read_text()).get("memory")
+        elif ref_path.is_file():
+            mem_raw = json.loads(ref_path.read_text()).get("memory")
+        else:
+            return None
+    if not isinstance(mem_raw, dict) or not mem_raw:
+        return None
+    per_node: dict[str, dict[str, float]] = {}
+    for node_name, vals in sorted(mem_raw.items()):
+        if isinstance(vals, dict) and vals.get("min_available_gib") is not None:
+            per_node[node_name] = {
+                "min_available_gib": round(float(vals["min_available_gib"]), 2),
+                "swap_growth_gib": round(float(vals.get("swap_growth_gib", 0.0)), 2),
+            }
+    if not per_node:
+        return None
+    head_key = "dgx1" if "dgx1" in per_node else next(iter(per_node))
+    head_min = per_node[head_key]["min_available_gib"]
+    worker_mins = [v["min_available_gib"] for k, v in per_node.items() if k != head_key]
+    worker_min = min(worker_mins) if worker_mins else head_min
+    worker_max = max(worker_mins) if worker_mins else head_min
+    cluster_min = min(v["min_available_gib"] for v in per_node.values())
+    max_swap = max(v["swap_growth_gib"] for v in per_node.values())
+    return {
+        "per_node": per_node,
+        "head_min_available_gib": head_min,
+        "worker_min_available_gib": worker_min,
+        "worker_max_available_gib": worker_max,
+        "cluster_min_available_gib": cluster_min,
+        "max_swap_growth_gib": max_swap,
+        "headroom_above_startup_guard_gib": round(cluster_min - 5.0, 2),
+        "headroom_above_steady_guard_gib": round(cluster_min - 3.0, 2),
+    }
+
+
+def collect_manifest_data() -> dict[str, Any]:
+    # The published comparison tables describe the imported upstream release.
+    cluster = json.loads((ROOT / "releases/spark-ds41f-1126/cluster.json").read_text())
+    upstreams = json.loads((ROOT / cluster["upstreams_config"]).read_text())
+    model_cfg = json.loads((ROOT / "state/config.json").read_text())
+    kv_rows = kv_capacity.report(cluster, model_cfg.get("text_config", model_cfg), [])
+
+    baselines_by_stem: dict[str, dict[str, Any]] = {}
+    site_baselines: set[str] = set()
+    for path in sorted((ROOT / "manifests/baselines").glob("*.json")):
+        baseline = json.loads(path.read_text())
+        if baseline.get("site_release") is True:
+            # Site Attention's matched workload has its own report, rather than
+            # empty or incomparable rows in the imported upstream bench page.
+            site_baselines.add(path.stem)
+            continue
+        baselines_by_stem[path.stem] = baseline
+
+    sources_by_stem: dict[str, dict[str, Any]] = {}
+    for path in sorted((ROOT / "manifests/sources").glob("*.json")):
+        sources_by_stem[path.stem] = json.loads(path.read_text())
+
+    suites: list[dict[str, Any]] = []
+    suites_by_path: dict[str, dict[str, Any]] = {}
+    for suite_dir in sorted((ROOT / "manifests/suites").iterdir()):
+        if not suite_dir.is_dir() or suite_dir.name.endswith(("-sampled", "-single-stream")):
+            continue
+        parsed = load_suite_directory(suite_dir)
+        suites.append(parsed)
+        suites_by_path[parsed["path"]] = parsed
+
+    benchmarks: list[dict[str, Any]] = []
+    benchmarks_by_path: dict[str, dict[str, Any]] = {}
+    for bench_path in sorted((ROOT / "manifests/benchmarks").glob("*.json")):
+        if json.loads(bench_path.read_text()).get("baseline") in site_baselines:
+            continue
+        parsed_bench = load_benchmark_file(bench_path)
+        benchmarks.append(parsed_bench)
+        benchmarks_by_path[parsed_bench["path"]] = parsed_bench
+
+    promoted_stem = cluster["promoted_baseline"]
+    promoted_manifest = baselines_by_stem[promoted_stem]
+    promoted_source = sources_by_stem.get(f"{promoted_stem}-source", {})
+
+    shapes_info: list[dict[str, Any]] = []
+    for shape_name in cluster["shapes"]:
+        entry = recipe.shape_entry(cluster, shape_name)
+        resolved = recipe.resolve(cluster, shape_name)
+        vals = recipe.values(cluster, entry)
+        kv = kv_rows[shape_name]
+        bench_ref = entry.get("benchmark_reference")
+        ref_suite = suites_by_path.get(bench_ref) if bench_ref else None
+        qualified_release = (
+            ref_suite["release"]
+            if ref_suite
+            else (_short_release_name(Path(bench_ref).stem.rsplit("-", 1)[0]) if bench_ref else None)
+        )
+        shapes_info.append(
+            {
+                "name": shape_name,
+                "default": shape_name == cluster.get("default_shape"),
+                "nodes": int(entry["nodes"]),
+                "transport": entry["fabric"]["transport"],
+                "kernel_release": resolved["host"]["kernel"]["release"],
+                "page_size_bytes": int(resolved["host"]["kernel"]["page_size"]),
+                "page_size_label": f"{int(resolved['host']['kernel']['page_size']) // 1024} KiB",
+                "memory_saver_required": bool(resolved["host"]["kernel"]["memory_saver_required"]),
+                "display_carveout": resolved["environment"].get("SPARK_DS41F_DISPLAY_CARVEOUT_WEIGHTS") == "1",
+                "max_model_len": int(entry["sizing"]["max_model_len"]),
+                "max_num_seqs": int(entry["sizing"]["max_num_seqs"]),
+                "max_num_batched_tokens": int(entry["sizing"]["max_num_batched_tokens"]),
+                "long_prefill_token_threshold": int(vals["long_prefill_token_threshold"]),
+                "max_cudagraph_capture_size": int(vals["max_cudagraph_capture_size"]),
+                "kv_cache_memory_bytes": int(entry["sizing"]["kv_cache_memory_bytes"]),
+                "kv_cache_gib": _format_gib(int(entry["sizing"]["kv_cache_memory_bytes"])),
+                "prefix_cache_retention_interval": int(entry["sizing"]["prefix_cache_retention_interval"]),
+                "kv_capacity": kv,
+                "memory": _load_shape_memory(
+                    bench_ref,
+                    (promoted_manifest.get("capacity", {}).get(shape_name) or {}).get("memory"),
+                ),
+                "benchmark_reference": bench_ref,
+                "qualified_release": qualified_release,
+            }
+        )
+
+    upstreams_summary: list[dict[str, Any]] = []
+    src_id = promoted_manifest.get("source_identity", {})
+    for key, item in upstreams.get("sources", {}).items():
+        series = item.get("patch_series")
+        patch_count = _count_series_patches(series)
+        tree_key = f"{key}_tree"
+        patch_head_key = f"{key}_patch_head"
+        upstreams_summary.append(
+            {
+                "name": key,
+                "kind": item.get("kind"),
+                "upstream": item.get("upstream"),
+                "version": item.get("version") or item.get("release_tag") or item.get("tag"),
+                "revision": item.get("revision") or item.get("source_revision"),
+                "patch_series": series,
+                "patch_count": patch_count,
+                "patch_head": src_id.get(patch_head_key),
+                "tree": src_id.get(tree_key),
+                "role": item.get("role"),
+            }
+        )
+
+    timeline: list[dict[str, Any]] = []
+    for stem, b in reversed(list(baselines_by_stem.items())):
+        timeline.append(
+            {
+                "stem": stem,
+                "short_name": _short_release_name(stem),
+                "date": _baseline_date(stem),
+                "captured_at": b.get("captured_at"),
+                "status": b.get("status"),
+                "shape": b.get("shape") or "tp3-triangle",
+                "image_tag": b.get("image_tag"),
+                "image_id": (b.get("image_id") or "")[:19],
+                "vllm_tree": (b.get("source_identity", {}).get("vllm_tree") or "")[:8],
+                "vllm_patch_head": (b.get("source_identity", {}).get("vllm_patch_head") or "")[:8],
+                "benchmark_reference": b.get("benchmark_reference"),
+                "previous_baseline": b.get("previous_baseline"),
+                "change_from_previous": b.get("change_from_previous"),
+                "evidence_summary": b.get("evidence", {}).get("summary")
+                if isinstance(b.get("evidence"), dict)
+                else None,
+                "experiments": b.get("evidence", {}).get("experiments", [])
+                if isinstance(b.get("evidence"), dict)
+                else [],
+                "is_promoted": stem == promoted_stem,
+            }
+        )
+
+    return {
+        "promoted_baseline": promoted_stem,
+        "promoted_short": _short_release_name(promoted_stem),
+        "promoted_date": _baseline_date(promoted_stem),
+        "default_shape": cluster["default_shape"],
+        "container_name": cluster["container"]["name"],
+        "image_tag": cluster["container"]["image"],
+        "image_id": promoted_manifest["image_id"],
+        "built_as": promoted_manifest.get("build", {}).get("built_as"),
+        "built_utc": promoted_manifest.get("build", {}).get("built_utc"),
+        "model_key": cluster["model"],
+        "model_repo": src_id.get("model_repository", "deepseek-ai/DeepSeek-V4.1-Flash-1017"),
+        "model_revision": src_id.get("model_revision", "")[:8],
+        "served_models": [
+            "deepseek-v4.1-flash",
+            cluster.get("glp", {}).get("served_model_name", "deepseek-v4.1-flash-weightless"),
+        ],
+        "glp": cluster.get("glp"),
+        "max_request_images": json.loads(
+            cluster["serve_args"][cluster["serve_args"].index("--limit-mm-per-prompt") + 1]
+        )["image"],
+        "drafts": int(cluster["drafts"]),
+        "kernel_backend": cluster["kernel_backend"],
+        "hosts": promoted_manifest.get("hosts", {}),
+        "runtime_choices": promoted_manifest.get("runtime_choices", {}),
+        "capabilities": promoted_source.get("vllm", {}).get("capabilities", []),
+        "shapes": shapes_info,
+        "upstreams": upstreams_summary,
+        "suites": suites,
+        "suites_by_path": suites_by_path,
+        "benchmarks": benchmarks,
+        "timeline": timeline,
+    }
+
+
+def render_readme_current_baseline(data: dict[str, Any]) -> str:
+    lines = [
+        f"| Shape | Ranks & transport | Context | Sequences | Batch budget | KV pool / rank | Min free RAM (head / workers) | Full contexts held (startup line) | Qualified reference |",
+        f"| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+    ]
+    for s in data["shapes"]:
+        kv = s["kv_capacity"]
+        ctx_label = f"{s['max_model_len']:,}"
+        seq_label = f"{s['max_num_seqs']} (up to {kv['every_sequence_tokens']:,} tok each)"
+        startup_tok = kv["vllm_capacity_tokens"] if s["qualified_release"] == data["promoted_short"] else kv["reported_tokens"]
+        startup_ctx = kv["vllm_capacity_contexts"] if s["qualified_release"] == data["promoted_short"] else kv["reported_contexts"]
+        held_label = (
+            f"{kv['full_contexts']} ({kv['contexts']:.2f}x; startup `{startup_tok:,}` / `{startup_ctx:.2f}x`)"
+        )
+        mem = s.get("memory")
+        if mem:
+            free_label = f"{mem['head_min_available_gib']:.2f} / {mem['worker_min_available_gib']:.2f} GiB"
+        else:
+            free_label = "—"
+        if s["benchmark_reference"]:
+            ref_target = (
+                s["benchmark_reference"]
+                if s["benchmark_reference"].endswith(".json")
+                else f"{s['benchmark_reference']}/"
+            )
+            ref_link = f"[`{s['qualified_release']}`]({ref_target})"
+        else:
+            ref_link = "unqualified (`--unqualified-shape`)"
+        default_badge = " **(default)**" if s["default"] else ""
+        lines.append(
+            f"| `{s['name']}`{default_badge} | TP{s['nodes']} `{s['transport']}` ({s['page_size_label']}) | "
+            f"{ctx_label} | {seq_label} | {s['max_num_batched_tokens']:,} | {s['kv_cache_gib']} | "
+            f"{free_label} | {held_label} | {ref_link} |"
+        )
+    return "\n".join(lines)
+
+
+def render_readme_performance_summary(data: dict[str, Any]) -> str:
+    shapes = {s["name"]: s for s in data["shapes"]}
+    tp4_ref = data["suites_by_path"][shapes["tp4-ring"]["benchmark_reference"]]
+    tp3_ref = data["suites_by_path"][shapes["tp3-triangle"]["benchmark_reference"]]
+
+    def _prefill_map(suite_entry: dict[str, Any]) -> dict[int, float]:
+        return {row["size"]: row["tps"] for row in suite_entry["prefill"]}
+
+    p4 = _prefill_map(tp4_ref)
+    p3 = _prefill_map(tp3_ref)
+
+    c16_4 = tp4_ref["runs"].get("c16", {}).get("output_tps")
+    c8_4 = tp4_ref["runs"].get("c8", {}).get("output_tps")
+    c1_4 = tp4_ref["runs"].get("c1", {}).get("output_tps")
+    pois_4 = tp4_ref["runs"].get("poisson", {}).get("output_tps")
+    samp16_4 = tp4_ref["sampled"].get("c16", {}).get("output_tps")
+    samp8_4 = tp4_ref["sampled"].get("c8", {}).get("output_tps")
+    samp1_4 = tp4_ref["sampled"].get("c1", {}).get("output_tps")
+    grid_4 = tp4_ref["grid"]["geomean_ms"]
+    stall3_ttft = tp4_ref["stalls"].get("stall-3", {}).get("probe_ttft_p50_s")
+    stall11_ttft = tp4_ref["stalls"].get("stall-11", {}).get("probe_ttft_p50_s")
+
+    c8_3 = tp3_ref["runs"].get("c8", {}).get("output_tps")
+    c4_3 = tp3_ref["runs"].get("c4", {}).get("output_tps")
+    c1_3 = tp3_ref["runs"].get("c1", {}).get("output_tps")
+    pois_3 = tp3_ref["runs"].get("poisson", {}).get("output_tps")
+    samp16_3 = tp3_ref["sampled"].get("c16", {}).get("output_tps")
+    samp8_3 = tp3_ref["sampled"].get("c8", {}).get("output_tps")
+    samp1_3 = tp3_ref["sampled"].get("c1", {}).get("output_tps")
+    grid_3 = tp3_ref["grid"]["geomean_ms"]
+    stall3_ttft_3 = tp3_ref["stalls"].get("stall-3", {}).get("probe_ttft_p50_s")
+    stall6_ttft_3 = tp3_ref["stalls"].get("stall-6", {}).get("probe_ttft_p50_s")
+    tp3_stall_cell = (
+        f"{stall3_ttft_3:.2f} s / {stall6_ttft_3:.2f} s"
+        if stall3_ttft_3 is not None and stall6_ttft_3 is not None
+        else "—"
+    )
+
+    lines = [
+        "Current qualified reference runs by shape (from `config/cluster.json` and `manifests/suites/`):",
+        "",
+        f"| Metric | `tp4-ring` ([`{tp4_ref['release']}`]({tp4_ref['path']}/)) | `tp3-triangle` ([`{tp3_ref['release']}`]({tp3_ref['path']}/)) |",
+        "| --- | ---: | ---: |",
+        f"| Decode step geometric mean ({tp4_ref['grid']['shape_count']} TP4 / {tp3_ref['grid']['shape_count']} TP3 shapes) | {grid_4:.2f} ms | {grid_3:.2f} ms |",
+        f"| Decode, 16 streams (`c16` output tok/s) | {c16_4:.1f} | — |",
+        f"| Decode, 8 streams (`c8` output tok/s) | {c8_4:.1f} | {c8_3:.1f} |",
+        f"| Decode, 4 streams (`c4` output tok/s) | — | {c4_3:.1f} |",
+        f"| One conversation at a time (`single-stream` `c1` output tok/s) | {c1_4:.1f} | {c1_3:.1f} |",
+        f"| Sampled decode (`temp=1.0, top_p=1.0`), c16 / c8 / c1 (tok/s) | {samp16_4:.1f} / {samp8_4:.1f} / {samp1_4:.1f} | {samp16_3:.1f} / {samp8_3:.1f} / {samp1_3:.1f} |",
+        f"| Poisson arrivals (0.7 TP4 / 0.42 TP3 req/s), output (tok/s) | {pois_4:.1f} | {pois_3:.1f} |",
+        f"| Source-text prefill, 32K (tok/s) | {p4[32768]:,.0f} | {p3[32768]:,.0f} |",
+        f"| Prefill, 131K (tok/s) | {p4[131072]:,.0f} | {p3[131072]:,.0f} |",
+        f"| Prefill, 262K (tok/s) | {p4[262144]:,.0f} | {p3[262144]:,.0f} |",
+        f"| Prefill, 524K (TP4) / 500K (TP3) (tok/s) | {p4[524288]:,.0f} | {p3.get(524288, p3.get(500000)):,.0f} |",
+        f"| Prefill, 1M (tok/s) | {p4[1000000]:,.0f} | {f'{p3[1000000]:,.0f}' if 1000000 in p3 else '3,952 (cold 1M)'} |",
+        f"| Short-request TTFT p50 during 131K prefill, 3 / 11 (TP4) or 3 / 6 (TP3) streams | {stall3_ttft:.2f} s / {stall11_ttft:.2f} s | {tp3_stall_cell} |",
+    ]
+    return "\n".join(lines)
+
+
+def render_current_state_active_settings(data: dict[str, Any]) -> str:
+    shapes = {s["name"]: s for s in data["shapes"]}
+    tp4 = shapes["tp4-ring"]
+    tp3 = shapes["tp3-triangle"]
+    tp3_4k = shapes["tp3-triangle-4k"]
+    kv4 = tp4["kv_capacity"]
+    kv3 = tp3["kv_capacity"]
+    kv3_4k = tp3_4k["kv_capacity"]
+
+    up_map = {u["name"]: u for u in data["upstreams"]}
+    vllm_u = up_map["vllm"]
+    tl_u = up_map["tilelang"]
+    tk_u = up_map["tile_kernels"]
+    sn_u = up_map["sparknet"]
+    nccl_u = up_map["nccl"]
+    cuda_u = up_map.get("cuda_toolkit")
+    cuda_note = f", CUDA {cuda_u['version']}" if cuda_u else ""
+    hosts = data["hosts"]
+    ms = hosts.get("memory_saver", {})
+
+    def _group_by(val_fn):
+        grouped: dict[Any, list[str]] = {}
+        for s in data["shapes"]:
+            grouped.setdefault(val_fn(s), []).append(s["name"])
+        return grouped
+
+    ranks_transport_text = "; ".join(
+        f"`{s['name']}` ({s['nodes']} {'rank' if s['nodes'] == 1 else 'ranks'}, `{s['transport']}`)"
+        for s in data["shapes"]
+    )
+    max_len_text = "; ".join(
+        f"{', '.join(f'`{n}`' for n in names)}: {val:,} tokens"
+        for val, names in _group_by(lambda s: s["max_model_len"]).items()
+    )
+    max_seqs_text = "; ".join(
+        f"{', '.join(f'`{n}`' for n in names)}: {val}"
+        for val, names in _group_by(lambda s: s["max_num_seqs"]).items()
+    )
+    batched_text = "; ".join(
+        f"{', '.join(f'`{n}`' for n in names)}: {val:,} (`{shapes[names[0]]['qualified_release']}`)"
+        if len(names) == 1
+        else f"{', '.join(f'`{n}`' for n in names)}: {val:,}"
+        for val, names in _group_by(lambda s: s["max_num_batched_tokens"]).items()
+    )
+    kv_mem_text = "; ".join(
+        f"{', '.join(f'`{n}`' for n in names)}: {shapes[names[0]]['kv_cache_gib']} ({val:,} B)"
+        for val, names in _group_by(lambda s: s["kv_cache_memory_bytes"]).items()
+    )
+
+    rows = [
+        (
+            "Promoted baseline",
+            f"`{data['promoted_baseline']}` (`{data['promoted_short']}`, frozen in `releases/{data['promoted_short']}/`); default shape `{data['default_shape']}`",
+        ),
+        (
+            "Served models",
+            f"`{data['served_models'][0]}` (`{data['model_repo']}`, revision `{data['model_revision']}`) and per-request GLP-steered `{data['served_models'][1]}` (`{data['glp']['repo']}`, revision `{data['glp']['revision'][:8]}`)",
+        ),
+        (
+            "Kernel backend",
+            f"TileLang only (`kernel_backend: {data['kernel_backend']}`, vLLM 0493-0496): TileLang {tl_u['version']} (`{tl_u['tree'][:8]}`), DeepSeek TileKernels {tk_u['version']} (`{tk_u['tree'][:8]}`), sparknet {sn_u['version']} (`{sn_u['tree'][:8]}`) one-shot RoCE collectives; every serving kernel is TileLang including the vision tower, CED row selection, RoPE, compressor, KV writers, Engram gate/hash/gather, sparse MLA, WO projection, drafter context-KV, sampling and block verification",
+        ),
+        (
+            "Sources",
+            f"Local Inference Lab `integration/karmic-kraken-beta` vLLM `{vllm_u['revision'][:8]}` + `{vllm_u['patch_series']}` ({vllm_u['patch_count']} patches, patch head `{vllm_u['patch_head'][:8]}`, tree `{vllm_u['tree'][:8]}`), TileLang {tl_u['version']} ({tl_u['patch_count']} patches), TileKernels {tk_u['version']} ({tk_u['patch_count']} patch), sparknet {sn_u['version']} ({sn_u['patch_count']} {'patch' if sn_u['patch_count'] == 1 else 'patches'}), NCCL 2.30.7 ({nccl_u['patch_count']} {'patch' if nccl_u['patch_count'] == 1 else 'patches'}, tree `{nccl_u['tree'][:8]}`){cuda_note}; direct checkpoint loader (`--load-format direct`, vLLM 0499, `VLLM_PLUGINS` empty)",
+        ),
+        (
+            "Image",
+            f"`{data['image_tag']}` (built as `{data['built_as']}`, `{data['image_id'][:19]}`), one digest on all ranks, built by `bin/spark build`",
+        ),
+        (
+            "Decode tiles & PDL",
+            "block-32 FP8 decode rows on 16-, 32- or 64-row tiles by row count and split-K tiles up to 128 rows for 16-stream steps, programmatic dependent launch (PDL) along the decode chain (vLLM 0520-0525), attention front in one launch (0543-0544), 64-row prefill MoE tiles and panel rasterization past L2 (0043)",
+        ),
+        (
+            "Batch invariance",
+            f"temperature-0 outputs do not depend on the batch: rank-order FP32 reductions with one rounding, compressor projection one TileLang arithmetic at every row count, aligned prefill chunks (`--long-prefill-token-threshold` {tp4['long_prefill_token_threshold']:,} on `tp4-ring`, {tp3['long_prefill_token_threshold']:,} on `tp3-triangle`, {tp3_4k['long_prefill_token_threshold']:,} on `tp3-triangle-4k`), CED replays a prompt's last 128 rows wherever its chunks end (0526-0527), and mixed steps run sparse MLA per request",
+        ),
+        (
+            "Hosts",
+            f"{hosts.get('os', 'DGX Spark 26.09.2')}, kernel `{hosts.get('kernel', '7.0.0-1019-nvidia-64k with kho=off')}`, driver {hosts.get('nvidia_driver', '580.178.04')}, `{hosts.get('boot_target', 'multi-user.target (no desktop)')}`, `--cpuset-cpus=5-9,15-19`, glibc malloc pinned (`MALLOC_ARENA_MAX=2`, `MALLOC_MMAP_THRESHOLD_=1048576`)",
+        ),
+        (
+            "Tensor parallel ranks & transport",
+            ranks_transport_text,
+        ),
+        (
+            "Maximum model length",
+            max_len_text,
+        ),
+        (
+            "Maximum sequences",
+            max_seqs_text,
+        ),
+        ("Maximum parallel prefills", "1 (`--max-parallel-prefills 1`)"),
+        (
+            "Batched-token budget",
+            batched_text,
+        ),
+        (
+            "Prefill yield & late admission",
+            "prefill yield enabled (`--prefill-yield short`, `--prefill-yield-limit-s 10`, vLLM 0545) so waiting short requests take the next step from a long prefill; late admission at decoder layer 30 (`VLLM_LATE_ADMISSION_LAYER=30`, vLLM 0222, 0226)",
+        ),
+        (
+            "Prefill sequence parallelism",
+            "from 205 tokens, where the reduce-scatter exceeds the one-shot RoCE all-reduce; CED encoder layers with non-final row skip (vLLM 0014-0018, 0229-0255)",
+        ),
+        (
+            "Indexer under sequence parallelism",
+            "each rank scores and selects its own rows and all-gathers the top-k positions (patch 0025), ties broken by lowest logical position in TileLang",
+        ),
+        (
+            "Explicit KV memory",
+            f"{kv_mem_text} per rank; no per-allocation KV zeroing (vLLM 0502-0503)",
+        ),
+        (
+            "KV capacity",
+            f"`tp4-ring`: {kv4['vllm_capacity_tokens']:,} startup tokens ({kv4['vllm_capacity_contexts']:.2f}x; holds {kv4['full_contexts']} full 1M contexts or {tp4['max_num_seqs']} x {kv4['every_sequence_tokens']:,}); `tp3-triangle`: {kv3['vllm_capacity_tokens']:,} startup tokens ({kv3['vllm_capacity_contexts']:.2f}x; holds {kv3['full_contexts']} full 1M contexts or {tp3['max_num_seqs']} x {kv3['every_sequence_tokens']:,}); `tp3-triangle-4k`: holds {kv3_4k['full_contexts']} full 256K contexts ([KV capacity](memory-profiles.md#kv-capacity))",
+        ),
+        (
+            "Expert scale codes",
+            "routed experts' UE8M0 weight scales as a per-row base exponent and 4-bit deltas (vLLM 0182-0183), with 2-bit deltas for narrow experts stored in the 4-bit codes' buffer (0563-0564, 0566)",
+        ),
+        (
+            "Memory-saver",
+            f"signed DKMS {ms.get('version', '0.4.1')} (`{ms.get('package', 'dgx-spark-memory-saver')}`) on all nodes; loaded UVM leaf-table packing enabled (`uvm_leaf_packing: {hosts.get('uvm_leaf_packing', 'Y')}`)",
+        ),
+        (
+            "Page-size profiles",
+            f"64 KiB selected (11 shapes); 4 KiB (`tp3-triangle-4k`) retains {tp3_4k['kv_cache_gib']} KV and a {tp3_4k['max_model_len']:,}-token limit",
+        ),
+        (
+            "Output head & display carve-out",
+            "exact 12-bit packed BF16 (`VLLM_DS41_PACKED_BF16_LM_HEAD=1`), bit-identical to the checkpoint, with FP32 logits (`VLLM_DS41_HEAD_DTYPE=float32`); kept in regular memory on `tp4-ring`, `tp4..8-switched`, and `tp1` (`SPARK_DS41F_DISPLAY_CARVEOUT_WEIGHTS=0`) and in the GB10 RM scanout display carve-out via `nvidiactl` on `tp3-*` and `tp2-*` (`=1`)",
+        ),
+        (
+            "Reference precision",
+            "DeepSeek's `inference/model.py` term for term: FP32 logits, exact FP32 mHC stream projection (three TF32 parts per weight), shared expert SwiGLU in FP32 with one rounding, MoE partials rounded once per rank, and WO-A's input through `act_quant` (E4M3, UE8M0 per 32, vLLM 0177, 0179)",
+        ),
+        (
+            "Image input",
+            f"TileLang vision tower loaded (`--limit-mm-per-prompt '{{\"image\":{data['max_request_images']}}}'`, `VLLM_MAX_IMAGE_PIXELS=16777216`, `--mm-processor-cache-gb 0`; [below](#images-per-request))",
+        ),
+        (
+            "DSpark speculative decoding",
+            f"{data['drafts']} draft tokens, draft TP = node count, fixed linear step cost budget (`adaptive_verification_row_cost: 0.035` on TP4..8; TP3 calibrated piecewise curve on `tp3-*`; adaptive verification off on `tp2-*`/`tp1`; vLLM 0184, nothing timed at boot), dead verification rows below survival 0.2 (`0504`), block rejection with fresh draws per round (`0228`), sink draft-zero rejection on by default (`0221, 0223`), vocabulary-parallel greedy drafts and shard argmax verification (`0112-0114`)",
+        ),
+        (
+            "Collectives",
+            f"sparknet {sn_u['version']} one-shot RoCE all-reduce (up to 2 MiB) and all-gather (`oneshot-ring4` on TP4 ring, `oneshot-direct` on TP3/TP2 direct, `oneshot-switched` on TP2..TP8 switched; `tp1` runs local `uni` without RDMA), TP broadcast on one-shot all-gather (`0185`), GPU-clock timeout 10 s (`SPARKNET_ROCE_TIMEOUT_MS=10000`), no fallback (`0142`)",
+        ),
+        (
+            "CUDA graphs & warmup",
+            f"`FULL_AND_PIECEWISE` capture sizes 1-{tp4['max_cudagraph_capture_size']} on `tp4-ring`/`tp4..8-switched` (1-{tp3['max_cudagraph_capture_size']} on `tp3-*`) and `PIECEWISE` 1-24 on `tp2-*`/`tp1`; all declared TileLang calls prepared and cache frozen before memory profiling (`--jit-monitor-mode off`)",
+        ),
+        (
+            "Engram projection & rows",
+            "sharded across ranks (`projection_tp`); one native reader thread reads both tables in layer order from interleaved whole hash columns (`table_memory=disk` on TP1..TP5, `device` on `tp6..tp8-switched`); host hashes prefill tokens a step early except drafted-prefill requests, which the GPU hashes (vLLM 0145-0154, 0180, 0567)",
+        ),
+        (
+            "Memory guards",
+            "5 GiB startup (0.25 s), 3 GiB steady (2 s), each killing on its first sample below; hosts set `vm.watermark_boost_factor=0`",
+        ),
+        (
+            "Prefix caching & API semantics",
+            "256-token blocks (`--enable-prefix-caching`, `--enable-prompt-tokens-details`, `--enable-per-request-metrics`); thinking enabled by default, top-level `thinking` switch, effort aliases, `response_format`, `tool_choice: none`, assistant prefix, and generation defaults `temperature: 1.0, top_p: 1.0`",
+        ),
+    ]
+
+    lines = [
+        "| Setting | Active value |",
+        "| --- | --- |",
+    ]
+    for k, v in rows:
+        lines.append(f"| {k} | {v} |")
+    return "\n".join(lines)
+
+
+def render_todo_next_release_status(data: dict[str, Any]) -> str:
+    shapes = {s["name"]: s for s in data["shapes"]}
+    tp4 = shapes["tp4-ring"]
+    tp3 = shapes["tp3-triangle"]
+    if tp3["qualified_release"] == data["promoted_short"]:
+        return (
+            f"Production is **{data['promoted_short']}** (`manifests/baselines/{data['promoted_baseline']}.json`, "
+            f"image `{data['image_tag']}`), promoted {data['promoted_date']} across all {len(data['shapes'])} shapes: "
+            f"`tp4-ring` ([suite reference]({tp4['benchmark_reference']}/)), "
+            f"`tp3-triangle` ([suite reference]({tp3['benchmark_reference']}/)), "
+            f"`tp3-triangle-4k`, `tp2-direct`, `tp1`, and `tp2-switched`..`tp8-switched` "
+            f"([release record](experiments/2026-10-26-spark-ds41f-candidate/README.md))."
+        )
+    return (
+        f"Production is **{data['promoted_short']}** (`manifests/baselines/{data['promoted_baseline']}.json`, "
+        f"image `{data['image_tag']}`), promoted {data['promoted_date']} on `tp4-ring` "
+        f"([release record](experiments/2026-10-26-spark-ds41f-candidate/README.md), "
+        f"[suite reference]({tp4['benchmark_reference']}/)). "
+        f"`tp3-triangle`'s current qualified reference is **{tp3['qualified_release']}** "
+        f"([suite reference]({tp3['benchmark_reference']}/)); qualifying `{data['promoted_short']}`'s "
+        f"image on the triangle at its {tp3['max_num_batched_tokens']:,}-token prefill budget is queued "
+        f"once the three-node triangle is cabled (#668)."
+    )
+
+
+def render_todo_current_reference(data: dict[str, Any]) -> str:
+    shapes = {s["name"]: s for s in data["shapes"]}
+    tp4_ref = data["suites_by_path"][shapes["tp4-ring"]["benchmark_reference"]]
+    tp3_ref = data["suites_by_path"][shapes["tp3-triangle"]["benchmark_reference"]]
+    p4 = {row["size"]: row["tps"] for row in tp4_ref["prefill"]}
+    p3 = {row["size"]: row["tps"] for row in tp3_ref["prefill"]}
+    s3_3 = tp3_ref["stalls"].get("stall-3", {}).get("probe_ttft_p50_s")
+    s6_3 = tp3_ref["stalls"].get("stall-6", {}).get("probe_ttft_p50_s")
+    tp3_stall = f"{s3_3:.2f} s / {s6_3:.2f} s" if s3_3 is not None and s6_3 is not None else "—"
+
+    lines = [
+        f"Active baseline manifest: [`manifests/baselines/{data['promoted_baseline']}.json`](manifests/baselines/{data['promoted_baseline']}.json) (`{data['promoted_short']}`). "
+        "Releases are judged by the release, single-stream and sampled suites, measured with Sonar (`docs/release-benchmark.md`, `scripts/sonar_table.py`). "
+        f"Current benchmark references are [`{tp4_ref['path']}`]({tp4_ref['path']}/) for `tp4-ring` and [`{tp3_ref['path']}`]({tp3_ref['path']}/) for `tp3-triangle`:",
+        "",
+        f"| Measure | `tp4-ring` (`{tp4_ref['release']}`, 1M, {shapes['tp4-ring']['max_num_seqs']} seqs, 16K batch) | `tp3-triangle` (`{tp3_ref['release']}`, 1M, {shapes['tp3-triangle']['max_num_seqs']} seqs, 6K batch) |",
+        "| --- | ---: | ---: |",
+        f"| Decode grid geometric mean ({tp4_ref['grid']['shape_count']} TP4 / {tp3_ref['grid']['shape_count']} TP3 shapes) | {tp4_ref['grid']['geomean_ms']:.2f} ms | {tp3_ref['grid']['geomean_ms']:.2f} ms |",
+        f"| Decode `c16`, 16 streams (output tok/s) | {tp4_ref['runs']['c16']['output_tps']:.1f} | — |",
+        f"| Decode `c8`, 8 streams (output tok/s) | {tp4_ref['runs']['c8']['output_tps']:.1f} | {tp3_ref['runs']['c8']['output_tps']:.1f} |",
+        f"| Decode `c4`, 4 streams (output tok/s) | — | {tp3_ref['runs']['c4']['output_tps']:.1f} |",
+        f"| Single-stream `c1` (output tok/s) | {tp4_ref['runs']['c1']['output_tps']:.1f} | {tp3_ref['runs']['c1']['output_tps']:.1f} |",
+        f"| Sampled `c16` / `c8` / `c1` (`temp=1.0`, output tok/s) | {tp4_ref['sampled']['c16']['output_tps']:.1f} / {tp4_ref['sampled']['c8']['output_tps']:.1f} / {tp4_ref['sampled']['c1']['output_tps']:.1f} | {tp3_ref['sampled']['c16']['output_tps']:.1f} / {tp3_ref['sampled']['c8']['output_tps']:.1f} / {tp3_ref['sampled']['c1']['output_tps']:.1f} |",
+        f"| Poisson arrivals (0.7 TP4 / 0.42 TP3 req/s, output tok/s) | {tp4_ref['runs']['poisson']['output_tps']:.1f} | {tp3_ref['runs']['poisson']['output_tps']:.1f} |",
+        f"| Source-text prefill 32K (tok/s) | {p4[32768]:,.0f} | {p3[32768]:,.0f} |",
+        f"| Prefill 131K (tok/s) | {p4[131072]:,.0f} | {p3[131072]:,.0f} |",
+        f"| Prefill 262K (tok/s) | {p4[262144]:,.0f} | {p3[262144]:,.0f} |",
+        f"| Prefill 524K (TP4) / 500K (TP3) (tok/s) | {p4[524288]:,.0f} | {p3.get(524288, p3.get(500000)):,.0f} |",
+        f"| Prefill 1M (tok/s) | {p4[1000000]:,.0f} | {f'{p3[1000000]:,.0f}' if 1000000 in p3 else '3,952'} |",
+        f"| Short-request TTFT p50 during 131K prefill (3 / 11 TP4 or 3 / 6 TP3 streams) | {tp4_ref['stalls']['stall-3']['probe_ttft_p50_s']:.2f} s / {tp4_ref['stalls']['stall-11']['probe_ttft_p50_s']:.2f} s | {tp3_stall} |",
+    ]
+    return "\n".join(lines)
+
+
+def _replace_markers(text: str, blocks: dict[str, str], path_label: str) -> str:
+    seen: set[str] = set()
+
+    def _sub(match: re.Match[str]) -> str:
+        begin, key, end = match.group(1), match.group(2), match.group(3)
+        if key not in blocks:
+            raise KeyError(f"{path_label}: unknown generated block {key!r}")
+        seen.add(key)
+        return f"{begin}\n{blocks[key]}\n{end}"
+
+    updated = MARKER_RE.sub(_sub, text)
+    missing = set(blocks) - seen
+    if missing:
+        raise RuntimeError(f"{path_label}: missing markers for {', '.join(sorted(missing))}")
+    return updated
+
+
+def render_site_html(data: dict[str, Any]) -> str:
+    # Build a compact, deterministic JSON payload for the interactive page.
+    payload = {
+        "promoted_baseline": data["promoted_baseline"],
+        "promoted_short": data["promoted_short"],
+        "promoted_date": data["promoted_date"],
+        "default_shape": data["default_shape"],
+        "container_name": data["container_name"],
+        "image_tag": data["image_tag"],
+        "image_id": data["image_id"],
+        "built_as": data["built_as"],
+        "built_utc": data["built_utc"],
+        "model_repo": data["model_repo"],
+        "model_revision": data["model_revision"],
+        "served_models": data["served_models"],
+        "glp": data["glp"],
+        "drafts": data["drafts"],
+        "kernel_backend": data["kernel_backend"],
+        "hosts": data["hosts"],
+        "runtime_choices": data["runtime_choices"],
+        "capabilities": data["capabilities"],
+        "shapes": data["shapes"],
+        "upstreams": data["upstreams"],
+        "suites": data["suites"],
+        "benchmarks": data["benchmarks"],
+        "timeline": data["timeline"],
+    }
+    # "</" never appears inside the JSON, so no manifest string can end the <script> element early.
+    embedded_json = json.dumps(payload, indent=2, sort_keys=True).replace("</", "<\\/")
+    template = SITE_TEMPLATE.read_text()
+    if template.count(SITE_DATA_MARKER) != 1:
+        raise ValueError(f"{SITE_TEMPLATE.relative_to(ROOT)} must contain {SITE_DATA_MARKER} exactly once")
+    # The link-preview image's URL carries a digest of the page, so a crawler that cached the
+    # previous image fetches the new one whenever the page or its numbers change.
+    version = hashlib.sha256((template + embedded_json).encode()).hexdigest()[:10]
+    # The page description names the node counts the recipe's shapes cover; a crawler runs no script.
+    counts = [int(shape["nodes"]) for shape in data["shapes"]]
+    spark_range = " to ".join(
+        _NUMBER_WORDS[n] if n < len(_NUMBER_WORDS) else str(n) for n in sorted({min(counts), max(counts)})
+    )
+    return (
+        template.replace(SITE_VERSION_MARKER, version)
+        .replace(SITE_RANGE_MARKER, spark_range)
+        .replace(SITE_DATA_MARKER, embedded_json)
+    )
+
+
+def render_targets(data: dict[str, Any]) -> dict[Path, str]:
+    readme_path = ROOT / "README.md"
+    current_state_path = ROOT / "docs/current-state.md"
+    todo_path = ROOT / "TODO.md"
+    site_index_path = ROOT / "docs/index.html"
+    nojekyll_path = ROOT / "docs/.nojekyll"
+
+    readme_text = _replace_markers(
+        readme_path.read_text(),
+        {
+            "current-baseline-summary": render_readme_current_baseline(data),
+            "performance-summary": render_readme_performance_summary(data),
+        },
+        "README.md",
+    )
+    current_state_text = _replace_markers(
+        current_state_path.read_text(),
+        {
+            "active-settings": render_current_state_active_settings(data),
+        },
+        "docs/current-state.md",
+    )
+    todo_text = _replace_markers(
+        todo_path.read_text(),
+        {
+            "next-release-status": render_todo_next_release_status(data),
+            "current-reference": render_todo_current_reference(data),
+        },
+        "TODO.md",
+    )
+    site_html = render_site_html(data)
+
+    return {
+        readme_path: readme_text,
+        current_state_path: current_state_text,
+        todo_path: todo_text,
+        site_index_path: site_html,
+        nojekyll_path: "",
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="verify that generated blocks and docs/index.html match the manifests without writing",
+    )
+    parser.add_argument(
+        "--site-dir",
+        type=Path,
+        help="also write index.html, data.json, and .nojekyll into this directory for GitHub Pages deployment",
+    )
+    args = parser.parse_args(argv)
+
+    data = collect_manifest_data()
+    targets = render_targets(data)
+
+    if args.check:
+        drifted: list[str] = []
+        for path, expected in targets.items():
+            rel = path.relative_to(ROOT)
+            if not path.exists():
+                drifted.append(f"{rel}: file is missing (run python3 scripts/render_docs.py)")
+                continue
+            actual = path.read_text()
+            if actual != expected:
+                diff = "\n".join(
+                    difflib.unified_diff(
+                        actual.splitlines(),
+                        expected.splitlines(),
+                        fromfile=f"a/{rel}",
+                        tofile=f"b/{rel}",
+                        lineterm="",
+                        n=3,
+                    )
+                )
+                drifted.append(f"{rel} is out of date with manifests:\n{diff[:2000]}")
+        if drifted:
+            for msg in drifted:
+                print(msg, file=sys.stderr)
+            return 1
+        return 0
+
+    for path, content in targets.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+
+    if args.site_dir:
+        out_dir = args.site_dir.resolve()
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "index.html").write_text(targets[ROOT / "docs/index.html"])
+        (out_dir / ".nojekyll").write_text("")
+        shutil.copyfile(ROOT / "docs/logo.png", out_dir / "logo.png")
+        # The committed link-preview image; the Pages workflow replaces it with a fresh render.
+        shutil.copyfile(ROOT / "docs/og.png", out_dir / "og.png")
+        payload = {
+            k: v for k, v in data.items() if k != "suites_by_path"
+        }
+        (out_dir / "data.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -2,32 +2,32 @@
 
 import argparse
 import copy
-import importlib.machinery
-import importlib.util
 import json
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
-loader = importlib.machinery.SourceFileLoader("spark_topology_test", str(ROOT / "bin/spark"))
-spec = importlib.util.spec_from_loader(loader.name, loader)
-spark = importlib.util.module_from_spec(spec)
-loader.exec_module(spark)
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+import spark_ds41f as spark
 topology = spark.topology
 
 
-# The B12X TP3 configuration the topology tooling generates from: r5p's, kept
-# with r5p's lock when r6 promoted the TileLang family.
+# A configuration recorded before sparknet, without fabric.transport: r5p's B12X
+# TP3 configuration, which ran RoCEnante's direct-peer collectives.
 B12X_BASE = "experiments/2026-10-05-tilelang-r6/r5p/cluster-64k.json"
 
 
 class TopologyTest(unittest.TestCase):
     def setUp(self):
-        self.base = spark.read_json(B12X_BASE)
-        self.three = spark.read_json("config/nodes.json")
+        # The recipe's triangle (sparknet's oneshot-direct) is the base the tooling generates from.
+        self.base = spark.read_cluster("releases/spark-ds41f-1126/cluster.json", "tp3-triangle")
+        nodes_file = "config/nodes.json" if (ROOT / "config/nodes.json").is_file() else "config/nodes.example.json"
+        self.three = spark.read_json(nodes_file)
         # The site map (or CI's example map) names the API head.
         head = next(node for node in self.three["nodes"] if node.get("head"))
         self.base["distributed"]["master_addr"] = head["management_ip"]
@@ -38,9 +38,14 @@ class TopologyTest(unittest.TestCase):
         self.assertEqual(topology.problems(self.base, self.three), [])
         for node in self.three["nodes"]:
             expected = {k: str(v) for k, v in self.base["environment"].items()}
-            expected.update(VLLM_HOST_IP=node["management_ip"],
-                            B12X_ROCE_PEER_HCAS=json.dumps(node["roce_peer_hcas"], separators=(",", ":")))
-            self.assertEqual(spark.expected_environment(self.base, node), expected)
+            hcas = sorted({hca for route in node["roce_peer_hcas"].values() for hca in route})
+            expected.update(VLLM_HOST_IP=node["management_ip"], NCCL_IB_HCA="=" + ",".join(hcas),
+                            SPARKNET_ROCE_PEER_HCAS=json.dumps(node["roce_peer_hcas"], separators=(",", ":")),
+                            SPARKNET_ROCE_TOPOLOGY="direct")
+            if "roce_gid_index" in node:
+                expected.update(NCCL_IB_GID_INDEX=str(node["roce_gid_index"]),
+                                SPARKNET_ROCE_GID_INDEX=str(node["roce_gid_index"]))
+            self.assertEqual(topology.node_environment(self.base, node), expected)
             command = spark.expected_command(self.base, node)
             self.assertEqual(command[:len(self.base["serve_args"])], self.base["serve_args"])
 
@@ -55,14 +60,15 @@ class TopologyTest(unittest.TestCase):
         self.assertFalse(self.ring["deployment"]["launch_enabled"])
         self.assertNotIn("branch", self.ring["deployment"])
 
-    def test_fourth_node_is_rendered_headless_without_rocenante_peer_map(self):
+    def test_fourth_node_is_rendered_headless_without_sparknet_settings(self):
         node = self.four["nodes"][3]
         command = spark.rendered_docker_command(self.ring, node)
         self.assertIn("--headless", command)
         self.assertEqual(command[command.index("--node-rank") + 1], "3")
         env = spark.expected_environment(self.ring, node)
-        self.assertNotIn("B12X_ROCE_PEER_HCAS", env)
-        self.assertEqual(env["VLLM_ENABLE_ROCE_ALLREDUCE"], "0")
+        # The NCCL ring runs no one-shot collectives.
+        for key in ("SPARKNET_ROCE_PEER_HCAS", "SPARKNET_ROCE_HCA", "SPARKNET_ROCE_TOPOLOGY"):
+            self.assertNotIn(key, env)
         self.assertTrue(env["NCCL_IB_HCA"].startswith("="))
 
     def test_cli_accepts_a_fourth_node_and_validates_against_selected_map(self):
@@ -81,11 +87,23 @@ class TopologyTest(unittest.TestCase):
         self.assertEqual(candidate["serve_args"], self.base["serve_args"])
 
     def test_four_nodes_cannot_use_direct_peer_transport(self):
-        self.ring.pop("fabric")
-        self.assertTrue(any("requires nccl-ring" in p for p in topology.problems(self.ring, self.four)))
+        self.ring["fabric"]["transport"] = "oneshot-direct"
+        self.assertTrue(any("four nodes without a switch use nccl-ring, oneshot-ring4" in p for p in topology.problems(self.ring, self.four)))
+
+    def test_retired_and_missing_transports_are_refused(self):
+        # RoCEnante's transports are retired; a configuration recorded without a
+        # transport ran rocenante-direct.
+        for mode in ("rocenante-direct", "rocenante-ring4", "rocenante-mesh4"):
+            changed = copy.deepcopy(self.base)
+            changed["fabric"]["transport"] = mode
+            self.assertIn(f"unknown fabric transport {mode!r}", topology.problems(changed, self.three))
+        recorded = spark.read_json(B12X_BASE)
+        recorded["distributed"]["master_addr"] = self.base["distributed"]["master_addr"]
+        self.assertIsNone(topology.transport(recorded))
+        self.assertTrue(any("fabric.transport is required" in p for p in topology.problems(recorded, self.three)))
 
     def test_ring_policy_rejects_each_unsafe_override(self):
-        for key in topology.RING_ENV:
+        for key in {**topology.fabric(self.ring).render.RING_ENV, **topology.VLLM_RING_ENV}:
             with self.subTest(key=key):
                 candidate = copy.deepcopy(self.ring)
                 candidate["environment"][key] = "invalid"
@@ -143,21 +161,38 @@ class TopologyTest(unittest.TestCase):
         self.four["nodes"][3]["rank"] = 2
         self.assertTrue(any("contiguous" in p for p in topology.problems(self.ring, self.four)))
         self.three["nodes"][0]["head"] = False
-        self.assertTrue(any("API head" in p for p in topology.problems(self.base, self.three)))
+        self.assertTrue(any("exactly one head node" in p for p in topology.problems(self.base, self.three)))
 
-    def test_live_gid_matches_declared_cable_and_per_node_index(self):
+    def test_live_gids_by_address_and_a_pinned_slot(self):
         node = self.four["nodes"][0]
-        node["roce_gid_index"] = 4
-        index, _ = spark.roce_gid_setting(self.ring, node)
-        self.assertEqual(index, 4)
-        lines = []
-        for hca, subnet in node["roce_subnets"].items():
-            address = subnet.replace(".0/24", ".1")
-            lines.append(f"{hca} 4 RoCEv2 ::ffff:{address} en0")
+
+        def gid(address):  # as sysfs prints it, which roce_gid_query passes on
+            raw = "".join(f"{int(octet):02x}" for octet in address.split("."))
+            return f"0000:0000:0000:0000:0000:ffff:{raw[:4]}:{raw[4:]}"
+        lines = [f"{hca} 4 RoCEv2 {gid(subnet.replace('.0/24', '.1'))} en0" for hca, subnet in node["roce_subnets"].items()]
         output = "\n".join(lines)
-        self.assertEqual(topology.gid_subnet_problems(node, index, output), [])
-        self.assertTrue(topology.gid_subnet_problems(node, index, output.replace("10.40.0.1", "10.40.2.1")))
-        self.assertTrue(topology.gid_subnet_problems(node, 3, output))
+        # By address: one IPv4 RoCE v2 GID in each cable's subnet, at any index.
+        self.assertEqual(topology.gid_subnet_problems(node, output), [])
+        self.assertEqual(topology.gid_subnet_problems(node, output.replace(" 4 RoCEv2", " 5 RoCEv2")), [])
+        [wrong] = topology.gid_subnet_problems(node, output.replace(gid("10.40.0.1"), gid("10.40.2.1")))
+        self.assertIn("dgx1: rocep1s0f0 has no IPv4 RoCE v2 GID in its cable subnet 10.40.0.0/24 (it has 10.40.2.1 "
+                      "at index 4)", wrong)
+        [two] = topology.gid_subnet_problems(node, output + "\nrocep1s0f0 6 RoCEv2 ::ffff:10.40.0.9 en0")
+        self.assertIn("rocep1s0f0 has 2 IPv4 RoCE v2 GIDs in 10.40.0.0/24 (indices 4, 6)", two)
+        [extra] = topology.gid_subnet_problems(node, output + "\nrocep1s0f0 2 RoCEv2 ::ffff:192.0.2.1 en0")
+        self.assertIn("also has an IPv4 RoCE v2 GID outside 10.40.0.0/24 (192.0.2.1 at index 2); NCCL takes", extra)
+        self.assertEqual(topology.gid_subnet_problems(node, "rocep1s0f0 missing\n" + "\n".join(lines[1:])), [])
+        # A configuration that pins a slot (here NCCL's, moved per node) must also find the GID there.
+        node["roce_gid_index"] = 4
+        self.assertTrue(topology.gid_pinned(self.ring))
+        self.assertEqual(spark.roce_gid_pins(self.ring, node), {4: ["NCCL_IB_GID_INDEX"]})
+        self.assertEqual(spark.roce_gid_findings(self.ring, node, output), [])
+        moved = spark.roce_gid_findings(self.ring, node, output.replace(" 4 RoCEv2", " 5 RoCEv2"))
+        self.assertEqual(len(moved), len(node["roce_subnets"]))
+        self.assertIn("dgx1: rocep1s0f0 GID index 4 (fixed by NCCL_IB_GID_INDEX) is empty; its IPv4 RoCE v2 GID is "
+                      "at index 5; re-activate en0 with nmcli while nothing uses RDMA", moved)
+        missing = spark.roce_gid_findings(self.ring, node, "rocep1s0f0 missing\n" + "\n".join(lines[1:]))
+        self.assertEqual(missing, ["dgx1: RDMA device rocep1s0f0 is missing"])
 
     def test_probe_is_bounded_and_does_not_share_serving_ipc(self):
         command = spark.collective_probe_command(self.ring, self.four, self.four["nodes"][3], 29999)
@@ -183,57 +218,20 @@ class TopologyTest(unittest.TestCase):
                     with self.assertRaises(SystemExit):
                         spark.repository_config_path(path)
 
-    def test_rocenante_ring4_candidate_and_source_lock(self):
-        args = argparse.Namespace(cluster_config="experiments/2026-10-02-rocenante-ring4/cluster.json")
-        cluster, nodes, lock = spark.configuration(args)
-        self.assertEqual(topology.problems(cluster, nodes), [])
-        self.assertEqual(spark.local_doctor(cluster, nodes, lock), [])
-        self.assertIn("2026-10-02-rocenante-ring4", lock["source_manifest"])
-        self.assertFalse(cluster["deployment"]["launch_enabled"])
-        self.assertNotEqual(cluster["container"]["image"], self.base["container"]["image"])
-        for node in nodes["nodes"]:
-            env = spark.expected_environment(cluster, node)
-            self.assertEqual(env["VLLM_ENABLE_ROCE_ALLREDUCE"], "1")
-            self.assertEqual(env["B12X_ROCE_TOPOLOGY"], "ring4")
-            self.assertEqual(set(json.loads(env["B12X_ROCE_PEER_HCAS"])),
-                             {str((node["rank"]-1)%4), str((node["rank"]+1)%4)})
-            self.assertNotIn("--disable-custom-all-reduce", spark.expected_command(cluster, node))
-
-    def test_relay_stripe_order_must_match_the_remote_cable(self):
-        relay = spark.read_json("experiments/2026-10-02-rocenante-ring4/cluster.json")
+    def test_ring4_stripe_order_must_match_the_remote_cable(self):
+        cluster, _ = self.sparknet()
         self.four["nodes"][0]["roce_peer_hcas"]["1"].reverse()
-        self.assertTrue(any("same stripe position" in p for p in topology.problems(relay, self.four)))
+        self.assertTrue(any("same stripe position" in p for p in topology.problems(cluster, self.four)))
         # NCCL selects by subnet rather than route-list position.
         self.assertEqual(topology.problems(self.ring, self.four), [])
 
-    def test_relay_base_can_generate_nccl_control(self):
-        relay = spark.read_json("experiments/2026-10-02-rocenante-ring4/cluster.json")
-        control = topology.candidate(relay, self.four, "config/examples/nodes-ring4.json")
+    def test_ring4_base_can_generate_nccl_control(self):
+        cluster, _ = self.sparknet()
+        control = topology.candidate(cluster, self.four, "config/examples/nodes-ring4.json")
         self.assertEqual(topology.problems(control, self.four), [])
-        self.assertEqual(control["container"], relay["container"])
+        self.assertEqual(control["container"], cluster["container"])
         self.assertEqual(topology.transport(control), "nccl-ring")
-        self.assertNotIn("B12X_ROCE_TOPOLOGY", control["environment"])
-
-    def test_rocenante_ring4_rejects_old_image_or_lock(self):
-        args = argparse.Namespace(cluster_config="experiments/2026-10-02-rocenante-ring4/cluster.json")
-        cluster, nodes, lock = spark.configuration(args)
-        cluster["container"]["expected_labels"] = self.base["container"]["expected_labels"]
-        self.assertTrue(any("image tree" in p for p in spark.local_doctor(cluster, nodes, lock)))
-        # r5o's source manifest predates the ring transport patch.
-        old_lock = spark.read_json("upstreams.lock.json")
-        old_lock["source_manifest"] = "manifests/sources/2026-09-30-r5o-candidate-source.json"
-        self.assertTrue(any("transport patch" in p for p in spark.local_doctor(cluster, nodes, old_lock)))
-
-    def test_rocenante_ring4_requires_matching_mode_and_backend(self):
-        cluster = spark.read_json("experiments/2026-10-02-rocenante-ring4/cluster.json")
-        for key in ("VLLM_ENABLE_ROCE_ALLREDUCE", "B12X_ROCE_TOPOLOGY"):
-            changed = copy.deepcopy(cluster)
-            changed["environment"][key] = "invalid"
-            self.assertTrue(any(key in p for p in topology.problems(changed, self.four)))
-        cluster["serve_args"].append("--disable-custom-all-reduce")
-        self.assertTrue(any("custom all-reduce enabled" in p for p in topology.problems(cluster, self.four)))
-        self.base["environment"]["B12X_ROCE_TOPOLOGY"] = "ring4"
-        self.assertTrue(any("B12X_ROCE_TOPOLOGY" in p for p in topology.problems(self.base, self.three)))
+        self.assertFalse([key for key in control["environment"] if key.startswith("SPARKNET_ROCE_")])
 
     def sparknet(self):
         """The sparknet candidate on the example ring map, with its lock."""
@@ -252,33 +250,47 @@ class TopologyTest(unittest.TestCase):
             self.assertEqual(env["SPARKNET_ROCE_TOPOLOGY"], "ring4")
             self.assertEqual(set(json.loads(env["SPARKNET_ROCE_PEER_HCAS"])),
                              {str((node["rank"] - 1) % 4), str((node["rank"] + 1) % 4)})
+            # A sparknet before 0.5.0 reads one slot: this configuration pins it.
             self.assertEqual(env["SPARKNET_ROCE_GID_INDEX"], str(node.get("roce_gid_index", 3)))
-            self.assertFalse([k for k in env if k.startswith("B12X_ROCE_") or k in topology.B12X_VLLM_SETTINGS])
+            self.assertNotIn("SPARKNET_ROCE_SUBNETS", env)
             self.assertNotIn("--disable-custom-all-reduce", spark.expected_command(cluster, node))
-        self.assertEqual(spark.roce_gid_setting(cluster, self.four["nodes"][1])[0],
-                         self.four["nodes"][1].get("roce_gid_index", 3))
+        self.assertEqual(spark.roce_gid_pins(cluster, self.four["nodes"][1]),
+                         {3: ["SPARKNET_ROCE_GID_INDEX", "NCCL_IB_GID_INDEX"]})
 
-    def test_oneshot_refuses_b12x_settings_and_mismatched_images(self):
+    def test_sparknet_by_address_renders_subnets_and_pins_nothing(self):
         cluster, lock = self.sparknet()
-        for key, value in (("VLLM_ENABLE_ROCE_ALLREDUCE", "1"), ("B12X_ROCE_TOPOLOGY", "ring4"),
-                           ("VLLM_ROCE_ALLREDUCE_MAX_SIZE", "2MB")):
-            changed = copy.deepcopy(cluster)
-            changed["environment"][key] = value
-            self.assertTrue(any(key in p for p in topology.problems(changed, self.four)), key)
+        for key in ("NCCL_IB_GID_INDEX", "SPARKNET_ROCE_GID_INDEX"):
+            del cluster["environment"][key]
+        self.assertFalse(topology.gid_pinned(cluster))
+        self.assertEqual(topology.problems(cluster, self.four), [])
+        for node in self.four["nodes"]:
+            env = spark.expected_environment(cluster, node)
+            self.assertFalse([k for k in env if "GID_INDEX" in k])
+            self.assertEqual(json.loads(env["SPARKNET_ROCE_SUBNETS"]), node["roce_subnets"])
+            self.assertEqual(spark.roce_gid_pins(cluster, node), {})
+        # The slot of a node is no longer configuration.
+        self.four["nodes"][2]["roce_gid_index"] = 5
+        [refused] = topology.problems(cluster, self.four)
+        self.assertIn("dgx3: roce_gid_index is not read by a configuration that finds GIDs by address", refused)
+        del self.four["nodes"][2]["roce_gid_index"]
+        # A sparknet that reads a slot cannot run unpinned: it would take slot 3 whatever the table holds.
+        errors = [p for p in spark.local_doctor(cluster, self.four, lock) if not isinstance(p, spark.Warn)]
+        self.assertEqual(errors, ["a configuration that pins no GID slot needs sparknet 0.5.0 or later, which finds "
+                                  "each HCA's GID by address; the lock's sparknet is 0.2.0"])
+        lock["sources"]["sparknet"]["version"] = "0.5.0"
+        self.assertEqual([p for p in spark.local_doctor(cluster, self.four, lock) if not isinstance(p, spark.Warn)], [])
+
+    def test_oneshot_refuses_mismatched_settings_and_images(self):
+        cluster, lock = self.sparknet()
         changed = copy.deepcopy(cluster)
         changed["environment"]["SPARKNET_ROCE_TOPOLOGY"] = "direct"
         self.assertTrue(any("SPARKNET_ROCE_TOPOLOGY" in p for p in topology.problems(changed, self.four)))
         changed = copy.deepcopy(cluster)
         changed["serve_args"].append("--disable-custom-all-reduce")
         self.assertTrue(any("custom all-reduce enabled" in p for p in topology.problems(changed, self.four)))
-        relay = spark.read_json("experiments/2026-10-02-rocenante-ring4/cluster.json")
-        relay["environment"]["SPARKNET_ROCE_SPIN_LIMIT"] = "1"
-        self.assertTrue(any("does not run sparknet" in p for p in topology.problems(relay, self.four)))
-        # A sparknet image serves only oneshot-*; oneshot-* needs that image.
-        b12x = copy.deepcopy(cluster)
-        b12x["fabric"]["transport"] = "rocenante-ring4"
-        self.assertTrue(any("serves sparknet's oneshot-* transports" in str(p)
-                            for p in spark.local_doctor(b12x, self.four, lock)))
+        self.ring["environment"]["SPARKNET_ROCE_SPIN_LIMIT"] = "1"
+        self.assertTrue(any("does not run sparknet" in p for p in topology.problems(self.ring, self.four)))
+        # oneshot-* needs an image with sparknet's collectives.
         older = spark.read_json("experiments/2026-10-04-streamed-embeddings/upstreams.lock.json")
         self.assertTrue(any("requires an image with" in str(p) for p in spark.local_doctor(cluster, self.four, older)))
 
@@ -302,6 +314,36 @@ class TopologyTest(unittest.TestCase):
         self.assertNotEqual(spark.normalized_repository_url("https://github.com/example/spark-ds41f"),
                             spark.normalized_repository_url(current))
 
+    def test_control_ip_overrides_vllm_host_ip_and_master_addr(self):
+        nodes = copy.deepcopy(self.four)
+        for idx, node in enumerate(nodes["nodes"], 1):
+            node["control_ip"] = f"192.168.100.{idx}"
+        cand = topology.candidate(self.base, nodes, "config/nodes-ring.json")
+        self.assertEqual(cand["distributed"]["master_addr"], "192.168.100.1")
+        self.assertEqual(topology.problems(cand, nodes), [])
+        env = topology.node_environment(cand, nodes["nodes"][1])
+        self.assertEqual(env["VLLM_HOST_IP"], "192.168.100.2")
+
+
+    def test_two_node_switched_and_direct_topologies_are_valid(self):
+        switched = spark.read_cluster("releases/spark-ds41f-1126/cluster.json", "tp3-switched")
+        two_switched = spark.read_json("config/examples/nodes-switched.json")
+        two_switched["nodes"] = [copy.deepcopy(n) for n in two_switched["nodes"][:2]]
+        switched["distributed"]["master_addr"] = two_switched["nodes"][0]["management_ip"]
+        two_switched_cand = topology.candidate(switched, two_switched, "config/nodes.json")
+        self.assertEqual(topology.problems(two_switched_cand, two_switched), [])
+
+        two_direct = copy.deepcopy(self.four)
+        two_direct["nodes"] = [copy.deepcopy(n) for n in two_direct["nodes"][:2]]
+        for n in two_direct["nodes"]:
+            other = "1" if n["rank"] == 0 else "0"
+            kept_hcas = list(n["roce_peer_hcas"][other])
+            n["roce_peer_hcas"] = {other: kept_hcas}
+            n["roce_subnets"] = {h: n["roce_subnets"][h] for h in kept_hcas}
+        direct_base = copy.deepcopy(self.base)
+        direct_base["distributed"]["master_addr"] = two_direct["nodes"][0]["management_ip"]
+        two_direct_cand = topology.candidate(direct_base, two_direct, "config/nodes.json")
+        self.assertEqual(topology.problems(two_direct_cand, two_direct), [])
 
 if __name__ == "__main__":
     unittest.main()

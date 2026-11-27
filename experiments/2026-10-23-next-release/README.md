@@ -1,0 +1,515 @@
+# The next release after spark-ds41f-1022
+
+Owner, 2026-10-23: clear the open issues and PRs, keeping our quality standards: rework a
+contribution to meet them, close the ones we will not accept. "We must keep our quality
+standards and it would be nice to have a release with some performance boost." The release
+continues the TileLang migration: every kernel the deployment launches moves to TileLang, each
+port meeting or exceeding the kernel it reproduces; kernels that never launch are not ported
+and leave with their engine; fusion work starts once the serving path is TileLang.
+
+Base: spark-ds41f-1022 (image `-1022-4`, vLLM patch head 8fc15c18f, tree e68aa19c), TP4
+production on the ring since 2026-10-23 02:10 CET. The triangle keeps 1022's qualification
+until it is cabled again.
+
+## Contents (planned)
+
+| Piece | Where it comes from | State |
+| --- | --- | --- |
+| CED row selection in TileLang (vLLM: the 26 commits of experiments/2026-10-19-ced-kernels) | promised in the r6x and 1022 forum posts | ports bit-identical and 2-31% faster per call at serving shapes; full-model gate identical to r6x (TP3) |
+| CED nonfinal row skip | experiments/2026-10-19-ced-skip, -ced-gates | TP3: outputs identical, prefill +10.6-11.1% from 32K to 500K; TP4 unmeasured |
+| Block verification: fresh random draws across rounds (backport of vllm-project/vllm#61161) | experiments/2026-10-19-sampling-rounds | kernel gate: 74 sampler and DSpark tests pass; temperature 0 unchanged, sampled text changes by design |
+| V4.1 tokenizer: `add_generation_prompt` and `continue_final_message` | the v41-generation-controls branch (2026-10-19) | CPU tests pass |
+| The DeepSeek API's top-level `thinking` switch (#447) | this record | CPU tests pass (108 tokenizer, 21 request) |
+| The drafter's FP8 linear in TileLang (off B12X) | the TileLang migration | to build; gate: bit-identical, per call at least B12X's |
+| The launched-kernel inventory | the TileLang migration | one profiled boot, every request type the deployment serves |
+| GLP steering, off unless configured (#401, msuiche) | reworked on vLLM 3e09d60c2 | to rebase; off must be identical; its projection a TileLang kernel |
+| RoCE GIDs by address (#367, sparknet #1, sparknet 0.6.0) | experiments/2026-10-18-roce-gid-by-address | to qualify on the ring |
+| Live names: spark-ds41f in place of karmic-kraken, kkref and spark3 | release naming (forum post #51) | to do; caches move, not rebuilt |
+
+The vLLM branch is `release-next` (local, as vLLM working branches are): the 1022 series
+replayed to 8fc15c18f (tree e68aa19c, exact), then the sampling fix, the CED ports, the skip,
+the generation controls (one test-file conflict with 0227, both sets of tests kept) and the
+thinking switch.
+
+## Queue (owner's decisions, 2026-10-23)
+
+| Item | Decision |
+| --- | --- |
+| #461, #364 (ours) | merged |
+| #359 (ours) | rework: keep the externally reported notes, drop the comparison with another stack (repository rule) and the stale r6v 4 KiB plan |
+| #439 (JordiPosthumus, memory creep at 1M) | accept after reproducing on our cluster; the growth itself is root-caused separately |
+| #410 (JordiPosthumus, memguard) | take the warning line and the breach logging; the kill stays on the first sample below the line |
+| #450 (mxfp0, a vLLM 0.32 recipe) | the recipe closes: a second stack on another base, no serving gate; its scheduler metrics fix is taken as a patch with its tests if it reproduces on our tree |
+| #401 (msuiche, GLP steering) | accepted as a default-off option, reworked to our standards |
+| #455, #434, #30 | fixed (recipe flag; capture sizes from the sizing; image-limit docs) |
+| #447 | fixed (above) |
+
+## Ring screen ([screen-tp4.json](screen-tp4.json))
+
+[make_screen.py](make_screen.py) writes it from the vLLM branch: every file the branch
+changes since 8fc15c18f is a runtime overlay over image `-1022-4`
+([overlays/](overlays), the arms mount the 8 sources; no test code). One window on the ring,
+production restored once at the end:
+
+1. **GPU tests** ([bundles/gpu-tests](bundles/gpu-tests)), the cluster stopped: the CED TileLang
+   kernels and metadata, the skip, the CED model and router, block-verification sampling.
+2. **Gate** on [candidate-tp4.json](candidate-tp4.json): temperature-0 outputs identical to 1022's
+   ring hashes (3eab5112 / db25fde3, c9cf9dbe / c6bb4f4e), control spellings, sink counters and
+   probes on every rank.
+3. **Screen**, one session, candidate first: [screen-suite-tp4.json](screen-suite-tp4.json) on
+   [candidate-tp4-dev.json](candidate-tp4-dev.json), spark-ds41f-1022, the candidate again.
+   1022's trimmed TP4 promotion suite (model at 16 streams, grid, closed loops at 16 and 1, 32K and
+   131K prefill), one cold 1M prefill, and the sampled suite's sixteen streams.
+
+This is a screen, not the release comparison: the release image, its release tests and the
+comparison follow once the remaining pieces are in.
+
+**First screen (2026-10-23 09:11-09:15 CET): stopped at the candidate's boot.** The GPU tests
+passed on dgx4 (341 passed: CED kernels, metadata and skip, CED model and router, block-verification
+sampling). The candidate then stopped in memory profiling on every rank: "TileLang kernel
+'ced_copy_rows' was not prepared ... copy_rows_kernel('float32', (4,), (1,), True, True)". A
+compacted decoder scatters the sink detector's columns ([tokens, hc_mult] float32, 0221) back to
+every row; the CED ports, qualified on r6x before the detector existed, declared that layout only
+under pipeline parallelism. Kernel preparation stopped the boot by name, as designed; the window
+restored production at 09:15 (`doctor --live` OK). 0259 declares the layout when the model keeps
+the columns, with a test that the frozen cache serves it and refuses it without the declaration.
+Preserved logs: [runs/failed-starts](runs/failed-starts).
+
+The second screen (run `next-release-screen2-tp4`) adds 0259, GLP steering (unset, so the arms
+must equal 1022), the GLP tests in the GPU bundle and [controls_probe.py](controls_probe.py) in
+the gate.
+
+## Release candidate 1 (image `-next-1`)
+
+[vllm/series](vllm/series): 1022's series (184 patches, the local ones by path into the 1022
+record) plus 0228-0260, exported from `release-next`:
+
+| Patches | Change |
+| --- | --- |
+| 0228 | block verification refreshes its random draws across rounds (vllm-project/vllm#61161 backport) |
+| 0229-0254 | CED row selection in TileLang: requests, row map, row copy, their benchmarks and tests |
+| 0255 | the CED nonfinal row skip |
+| 0256 | the V4.1 tokenizer honors `add_generation_prompt` and `continue_final_message` |
+| 0257 | the DeepSeek API's top-level `thinking` switch (#447) |
+| 0258 | GLP steering, off unless `WEIGHTLESS_STEER_PATH` is set (#401, Matt Suiche) |
+| 0259 | CED declares the sink detector's column scatter (found by the first screen, below) |
+| 0260 | the DS4.1 model test stubs carry the GLP steering attribute (found by the second screen's GPU tests) |
+
+A clean `git am` of 0228-0260 on 8fc15c18f (the build's committer and dates) gives patch head
+2ed0a422, tree 1232558d, the branch's tree ([source.json](source.json),
+[upstreams.lock.json](upstreams.lock.json)). Release tests: `scripts/release_tests.py check`
+selects 126 files, 69 gate (four new: the thinking switch, the TileLang CED kernels, GLP, block
+verification's draws, classified in config/release-tests.json), 0 problems;
+[release-tests-gate-manifest.json](release-tests-gate-manifest.json) and
+[bundles/release-tests](bundles/release-tests) (its `head` is the branch's 1fa3028ec, same tree).
+
+[rc1-tp4.json](rc1-tp4.json), one window on the ring: the image built on dgx2 and copied over the
+ring's links ([image-rc-dgx2.json](image-rc-dgx2.json)); the release tests on dgx4; the gate on
+[rc-tp4.json](rc-tp4.json) (determinism against 1022's ring hashes, control spellings,
+[controls_probe.py](controls_probe.py) for 0256 and 0257, the TTFT trace, memory, sink counters
+and probes); then the one-session comparison on [screen-suite-tp4.json](screen-suite-tp4.json):
+the candidate, spark-ds41f-1022, the candidate again. [rc-tp3.json](rc-tp3.json) is the triangle's
+arm for when it is cabled.
+
+GLP steering ships off: its gate here is that the unset path leaves outputs identical. Steering on,
+with its projection as a TileLang kernel, is qualified in its own experiment (the migration rule:
+a kernel that does not launch is not ported; this one launches only when configured).
+
+**Candidate 1 on the ring (2026-10-23 10:47-14:20 CET, run `next-rc1-tp4`): passed.** Release
+tests on dgx4: 2,081 passed, 159 skipped, none failed. Gate: temperature-0 outputs identical to
+1022's ring hashes (3eab5112 / db25fde3, c9cf9dbe / c6bb4f4e), control spellings and the controls
+probe pass, no ordinary sink counts and no collapsed probes on any rank; TTFT trace p50 217.4 ms at
+4 streams, 286.3 ms at 8, 122.9 ms isolated. Comparison, verdicts against the run's own repeat:
+
+| Metric | spark-ds41f-1022 | candidate 1 | Change | Verdict |
+| --- | --- | --- | --- | --- |
+| decode step, grid geometric mean (20 shapes) | | | -1.05% ±0.17% | better |
+| 16 streams, output tok/s | 254.05 | 253.64 | -0.16% | same |
+| 1 stream, output tok/s | 73.39 | 73.31 | -0.11% | same |
+| prefill 32,768, tok/s | 6,009 | 6,364 | +5.90% ±0.49% | better |
+| prefill 131,072, tok/s | 5,971 | 6,329 | +5.99% ±0.66% | better |
+| prefill 1,000,000 (one cold run), tok/s | 4,417 | 4,670 | +5.7% | (no interval) |
+| sampled, 16 streams, output tok/s | | | -0.28% | same |
+
+Greedy responses 64/64 identical, teacher-forced KL 0, acceptance unchanged; TTFT level (16
+streams p50 0.404 -> 0.403 s, 1 stream 0.129 -> 0.129 s). Lowest MemAvailable 21.0-23.4 GiB per
+node in every arm.
+
+## The ring's long-prefill budget with the skip ([budget-tp4.json](budget-tp4.json))
+
+Owner, 2026-10-23 11:45 CET: "measure a 16384 prefill budget on the ring too". On four Sparks the
+skip measured prefill +5.6-6.0% (32K-1M) in the second screen, half the triangle's +11%: the ring's
+chunks are 8,192 tokens, so a long prompt has half as many nonfinal chunks to trim.
+[budget-16384-tp4.json](budget-16384-tp4.json) is candidate 1 at a 16,384-token budget (threshold
+16,384 - 16 x 6 = 16,288), everything else as [rc-tp4.json](rc-tp4.json).
+[budget-suite-tp4.json](budget-suite-tp4.json) is the TP3 sweep's suite at TP4: cold prefill at 32K,
+131K and 524K (three repeats), the stall step (what fifteen decoding streams wait during a cold 131K
+prefill), and one cold 1M prefill; the run's memory watch records every node's lowest MemAvailable.
+One session on image `-next-1`: 8,192, 16,384, 8,192 again. Queued behind candidate 1 in the same
+window. The budget is the owner's choice; the recipe does not change here.
+
+**Result (same window, 14:20 CET, run `next-budget-tp4`).** Verdicts 16,384 -> 8,192 against the
+8,192 repeat:
+
+| Metric | 8,192 | 16,384 | 16,384 vs 8,192 |
+| --- | --- | --- | --- |
+| prefill 32,768, tok/s | 6,364 | 6,742 | +5.9% |
+| prefill 131,072, tok/s | 6,334 | 6,730 | +6.3% |
+| prefill 524,288, tok/s | 5,506 | 5,805 | +5.4% |
+| prefill 1,000,000 (one cold run), tok/s; TTFT | 4,673; 214.0 s | 4,900; 204.1 s | +4.8% |
+| prefill 131,072 under 15 decoding streams, tok/s | 5,759 | 6,308 | +9.5% |
+| those streams' decode step during it, p50 / p99 | 1.33 / 1.42 s | 2.36 / 2.61 s | +78% / +84% |
+| their worst wait | 2.69 s | 3.37 s | same (±95%) |
+| lowest MemAvailable (dgx1, the tightest node) | 22.0 GiB | 18.7 GiB | -3.3 GiB |
+
+The trade is the chunk: twice the tokens per long-prefill step, so the prompt finishes 5-6% sooner
+(9.5% under decode load) while every stream decoding beside it waits about twice as long per step
+for that prompt's duration. Memory stays 13.7 GiB above dgx1's 5 GiB guard. With candidate 1,
+16,384 would put prefill at +12.2% (32K), +12.7% (131K) and +10.9% (1M) over spark-ds41f-1022
+(the 8,192 arms of the two sessions agree to 0.01% at 32K).
+
+
+## Before promotion: the remaining items
+
+Owner, 2026-10-23: "we won't promote until we address the 'other items' at least" (the live-name
+rename, the start-up memory peak, draft acceptance, GLP steering on, and #439's memory growth),
+then "do 16 and work through the rest": the ring's long-prefill budget becomes 16,384 in the
+release (candidate 2 carries it; its gate and comparison qualify it).
+
+### Memory: #439's growth and the start-up peak ([memory/](memory))
+
+#439 (JordiPosthumus) measured, on two TP3 rings at 1M, about 1.2 GiB lost over three hours of
+ordinary use: the API server 1.68 -> 2.44 GiB and the engine core 1.43 -> 1.97 GiB, never
+returned; the GPU worker flat. Production here has served nothing since its 14:20 CET restore
+(API server 1.69 GiB, engine core 1.49 GiB, worker 4.86 GiB at 16:44), so the growth is
+reproduced under load in a window, not waited for.
+
+[memory-tp4.json](memory/memory-tp4.json), one window on the ring, two arms of candidate 1 at
+16,384 with the start-up allocator trace (a diagnostic overlay of `gpu_worker.py`, behaviour
+unchanged; from experiments/2026-10-21-startup-memory):
+
+1. [soak.py](memory/soak.py) for 75 minutes: four agent sessions resend their whole history
+   every turn, growing by a 16-48K-token real-text tool result until they pass 960K tokens and
+   start over, beside eight short chat streams. Every turn makes the API server parse, render
+   and tokenize up to a million tokens again and the engine core hash and schedule them.
+2. The same with glibc malloc's growth sources pinned (`MALLOC_ARENA_MAX=2`, a fixed 1 MiB
+   `MALLOC_MMAP_THRESHOLD_`), as a hypothesis test.
+
+[sampler.py](memory/sampler.py) runs on every node through the window (armed by
+[watch.sh](memory/watch.sh)): MemAvailable every 0.1 s, every container process's RSS every
+0.5 s, and every 30 s the API server's and engine core's resident memory by mapping kind (brk
+heap, CPython arenas, glibc thread arenas, large single mappings, files), which separates
+allocator high-water from live objects. Each arm's two boots also give the start-up peak's
+attribution by phase (allocator trace against the engine log) on four nodes.
+
+**Result (2026-10-23 17:15-19:50 CET, run `next-memory-tp4`).** Both arms served the same load
+without an error: 554 agent turns (20 restarts of a session, prompts up to 966,014 tokens, 270M
+prompt tokens) and about 310 chat requests. dgx1, where the API server and engine core run:
+
+| Process | Plain: soak start -> 10 min -> 75 min (high) | Malloc pinned |
+| --- | --- | --- |
+| API server | 1.76 -> 2.84 -> 2.92 GiB (3.19) | 1.67 -> 1.95 -> 2.02 GiB (2.28) |
+| engine core | 1.51 -> 1.64 -> 1.67 GiB | 1.44 -> 1.55 -> 1.61 GiB |
+| lowest MemAvailable during the soak | 17.10 GiB | 18.11 GiB |
+
+By mapping kind, the plain API server's growth is glibc's per-thread arenas: 79 MiB in 19 arena
+mappings at the start, 1,158 MiB in 36 at the end (+1,078 of its +1,159 MiB); the brk heap, CPython's
+arenas and file mappings barely move. It is a high-water mark, not a leak: the API server reaches
+it within ten minutes and holds it (2.72-2.99 GiB from 20 to 75 minutes). Each request thread that
+parses, renders and tokenizes a million-token conversation frees its buffers into its own arena,
+and glibc keeps an arena's freed memory; glibc also raises its mmap threshold after a large free,
+so later large buffers come from the arenas instead of mmap. With two arenas and a fixed 1 MiB
+threshold the API server grows 0.35 GiB, nearly all in the first ten minutes (1.95 GiB at 10
+minutes, 2.02 at 75). The engine core's smaller growth (+0.16 GiB) is the same in both arms.
+#439's three hours of ordinary use (API server +0.76 GiB, engine core +0.54 GiB) fit this.
+
+The fix is the two settings in the recipe's environment (`MALLOC_ARENA_MAX=2`,
+`MALLOC_MMAP_THRESHOLD_=1048576`), for every process of the container; candidate 2 carries them and
+its release comparison checks that they cost nothing.
+
+**Start-up on the ring: nothing to cut.** Each arm's boot was traced (allocator totals every
+0.1 s against the engine log; [analyze_startup.py](memory/analyze_startup.py)). dgx1 reaches API
+readiness with 19.15 and 19.32 GiB available, 14 GiB above the 5 GiB guard; the lows after that
+(18.93, 18.69 GiB) come with the soak's first minute, not the boot. torch's reserve only grows
+through the boot (72.9 GiB weights, 77.7 with the KV pool, 88.1 after preparation, 91.0 after graph
+capture; nothing is released and reallocated), and MemAvailable falls as the page cache gives way
+to the GPU's memory. The 0.5-1.2 GiB released late after TP3 boots (2026-10-22, four boots) does
+not occur at TP4; attributing it needs the triangle cabled. What TP3's guard was short of in #439 is
+steady headroom on the head node, which the arena fix returns (about 1 GiB at the soak's load).
+
+### A 24,576 budget ([budget24-tp4.json](budget24-tp4.json))
+
+Suggested to the owner on 2026-10-23: try 24K. [budget-24576-tp4.json](budget-24576-tp4.json) is
+candidate 1 at 24,576 (threshold 24,480); the sweep is the 16,384 one's suite, 24,576 against
+16,384 (24,576 first and again), queued behind the memory window in the same window. Expected:
+a smaller step than 8K -> 16K (the per-step overhead is already amortized over twice the tokens,
+and the CED skip trims fewer nonfinal chunks), about three times 8K's stall step, and about
+3 GiB more peak memory.
+
+**Result (2026-10-23 19:50-20:29 CET, run `next-budget24-tp4`).** Verdicts 16,384 -> 24,576
+against the 24,576 repeat:
+
+| Metric | 16,384 | 24,576 | Change |
+| --- | --- | --- | --- |
+| prefill 32,768, tok/s | 6,733 | 6,907 | +2.6% |
+| prefill 131,072, tok/s | 6,733 | 6,865 | +2.0% |
+| prefill 524,288, tok/s | 5,805 | 5,902 | +1.7% |
+| prefill 1,000,000 (one cold run), tok/s | 4,893 | 4,962 / 4,981 | +1.4-1.8% |
+| prefill 131,072 under 15 decoding streams, tok/s | 6,311 | 6,531 | +3.5% |
+| those streams' decode step during it, p50 / p99 | 2.36 / 2.61 s | 1.63 / 3.74 s | -31% / +43% |
+| their worst wait | 4.10 s | 6.04 s | same (interval ±100%) |
+| lowest MemAvailable (dgx1) | 18.0 GiB | 15.4 GiB | -2.6 GiB |
+
+The second step is a third of the first (8,192 -> 16,384 gave +5.4-6.3%): 2% more prefill for
+steps up to 43% longer at p99 beside a long prompt and 2.6 GiB less headroom. The release stays at
+16,384 (owner, 2026-10-23: "do 16").
+
+### Draft acceptance ([acceptance/](acceptance))
+
+The ceiling first (experiments/2026-10-18-dspark-acceptance, candidate 2: copy-aware drafting).
+On a local proxy for agent traffic (634 coding-agent sessions, 71,030 assistant turns, 26.4M
+output tokens rebuilt in DS4.1's prompt format and tokenized with its tokenizer; only counts
+kept), a suffix drafter (propose up to 16 tokens after the latest earlier occurrence of the last
+8) would cover 38% of output tokens. Taking its proposal whenever there is one and DSpark's flat
+2.25 tokens a step elsewhere gives 3.27 tokens a step (+45%); +28% at a 16-token match, +37%
+without DSML tool-call markup. The transcripts hide reasoning (about half the output); if it
+copies like prose, the figure is +14-23%. Most of the gain is in tool-call arguments (Bash +49%,
+edits +31%); prose gains 6%.
+
+What that leaves open is DSpark itself on those spans: it may already accept most of a copy.
+[copy_probe.py](acceptance/copy_probe.py) measures both on the same output: one stream,
+temperature 0, four categories (prose; reproduce a source file; the file with a comment above
+every `def`; an edit tool call whose old_string is a copied function), DSpark's tokens a step from
+the spec-decode counters, and a suffix drafter simulated on the exact token ids the server
+returns. Queued as [copy-tp4.json](acceptance/copy-tp4.json) in the same window.
+
+**Result (2026-10-23 20:29-20:37 CET, run `next-copy-tp4`, candidate 1).** Twelve requests a category,
+no errors; DSpark's tokens a step from the counters, a suffix drafter simulated on the same token ids:
+
+| Category | Output tokens | DSpark | Suffix, 8-token match, up to 16 | 16-token match | 8-token match, up to 8 |
+| --- | --- | --- | --- | --- | --- |
+| prose | 4,464 | 2.24 | 2.24 | 2.24 | 2.24 |
+| reproduce a file | 18,177 | 4.96 | 15.9 | 16.3 | 8.4 |
+| the file with comments added | 18,310 | 5.10 | 14.9 | 14.9 | 8.2 |
+| an edit tool call | 2,122 | 5.41 | 7.1 | 7.3 | 6.1 |
+
+DSpark already takes about 5 of its 6 possible tokens a step on copied text: the transcripts
+study's flat 2.25 overstated the gap. What a suffix drafter adds is length: 16 tokens instead of
+DSpark's block of 5, three times the tokens a step on long copies, a third more on tool calls,
+nothing on prose. Weighted by the agent proxy's copy share (38% of output tokens, 19% if hidden
+reasoning copies like prose), with DSpark at about 5 on copies and 2.25 elsewhere, that is
+roughly +7-17% tokens a step at one stream, before the cost of verifying 17-row blocks. Building
+it is a hybrid drafter (per request, a suffix proposal when one matches, DSpark otherwise),
+variable-length block verification and graphs for the wider blocks: the next release's work, not
+this one's.
+
+### spark-ds41f-1022's recipe frozen ([1022/](1022))
+
+The next release renames the live names (the owner's decision of 2026-10-19): the container
+`dsv41-karmic-kraken` becomes `spark-ds41f`, the image repository `vllm-ds41f-kkref` becomes
+`spark-ds41f`, the labels `local.spark3.*` become `local.spark-ds41f.*`, `/opt/spark3` becomes
+`/opt/spark-ds41f`, the `SPARK3_*` variables become `SPARK_DS41F_*` and `/cache/kkref` becomes
+`/cache/spark-ds41f`. Image -1022-4 and candidate 1 (-next-1) read only the old names, so
+spark-ds41f-1022's recipe is frozen as it was promoted, with its lock, in
+[1022/cluster.json](1022/cluster.json) (verbatim, plus `upstreams_config`), and every arm here and
+in experiments/2026-10-22-spark-ds41f-1022 that extended `config/cluster.json` extends the frozen
+copy instead ([candidate-tp4.json](candidate-tp4.json) through [make_screen.py](make_screen.py)).
+Each resolves exactly as before. The frozen copy is the previous release's arm in the release
+comparison and the rollback.
+
+## Release candidate 2 ([rc2/](rc2))
+
+Candidate 1 plus the remaining items: vLLM 0261 (GLP steering's projection as one TileLang
+launch, `tilelang/glp.py`, with its kernel tests against FP64 and a paired benchmark against the
+compiled torch projection) and 0262 (the deployment's variables are `SPARK_DS41F_*`), on
+[rc2/cluster.json](rc2/cluster.json): spark-ds41f-1022's recipe under the spark-ds41f names (#484)
+with the ring's 16,384 budget and glibc malloc pinned (#439), the recipe the promotion makes
+`config/cluster.json`. Until then the recipe stays 1022's, so production and its restores are
+unchanged; images built from here on carry the new labels and paths (docker/Dockerfile, from #484).
+[rc2/vllm/series](rc2/vllm/series) is candidate 1's series plus 0261-0262; a clean `git am` on
+candidate 1's patch head gives patch head 42c0e8f6, tree 6720401c, the branch's tree
+([rc2/source.json](rc2/source.json), [rc2/upstreams.lock.json](rc2/upstreams.lock.json)).
+`release_tests.py check` selects 127 files, 70 gate (the GLP kernel tests added), 0 problems.
+
+Image `spark-ds41f:19f2c20ed4d6-next-2`. One window on the ring ([rc2/rc2-tp4.json](rc2/rc2-tp4.json)),
+production restored as it is:
+
+1. the image, built on dgx2 and copied over the ring;
+2. the release tests and the GLP benchmark (gate: not slower at a decode step of 16 streams or a
+   16K prefill chunk) on dgx4;
+3. the gate on [rc2/rc-tp4.json](rc2/rc-tp4.json) (16,384): determinism, control spellings, the
+   controls probe, the TTFT trace, memory, sink counters and probes;
+4. determinism at 8,192 ([rc2/rc-tp4-8k.json](rc2/rc-tp4-8k.json)), which must equal 1022's ring
+   hashes bit for bit (the long prompt is two chunks there, one at 16,384), and with GLP steering on
+   ([rc2/glp-tp4.json](rc2/glp-tp4.json), a synthetic file of seeded random directions,
+   [glp/make_glp.py](glp/make_glp.py)): repeatable, and different from off;
+5. the release comparison, candidate 2 / spark-ds41f-1022 (frozen) / candidate 2, on
+   [screen-suite-tp4.json](screen-suite-tp4.json).
+
+Then [rc2/rc2-glp-tp4.json](rc2/rc2-glp-tp4.json): what steering on costs (grid, 16 and 1 streams,
+prefill; on / off / on).
+
+At the window's start, with serving stopped, each node's `cache/kkref` moves to
+`cache/spark-ds41f` with a relative link `kkref -> spark-ds41f` (the frozen recipes keep their
+paths and warm caches).
+
+**GLP projection speed (candidate 2's window, 2026-10-23 21:35 CET).** The kernel benchmark failed its
+gate: 0261's projection matches the compiled torch projection at decode (one stream 2.3 against
+2.5 us, sixteen streams 7.4 against 7.3 us, level) but is 1.2-1.4% slower on long-prefill chunks
+(8K tokens 2,872 against 2,826 us; 16K 5,694 against 5,609 us, +77 us, 95% interval +40 to +114),
+where both run near the memory's bandwidth (about 236 against 239 GB/s). A port must meet or
+exceed what it replaces, so [rc2/bundles/glp-variants](rc2/bundles/glp-variants) times ten
+variants of the kernel (threads per row, values a load, the direction held in registers or
+re-read from L1 in the write pass) against the same torch projection, each checked against FP64
+and across batch sizes first ([rc2/glp-variants-tp4.json](rc2/glp-variants-tp4.json), a
+kernel-only window after candidate 2's). The release tests' one failure (2,104 passed) was the
+GLP kernel test's own bound on what alpha 1 leaves along the direction (0.037 against a 0.02
+limit): BF16 rounding of rows with a large component leaves that much; the FP64 test (every
+element within one rounding) passed. The bound is now what correctly rounded BF16 leaves.
+
+**Candidate 2's window (2026-10-23 21:09-23:40 CET, runs `next-rc2-tp4`, `next-rc2-glp-tp4`).**
+- Image `spark-ds41f:19f2c20ed4d6-next-2` (sha256:f82cf24cfd6a), one ID on every node.
+- Release tests: 2,104 passed, 159 skipped, 1 failed (the GLP test bound above).
+- Gate at 16,384: temperature-0 outputs identical to spark-ds41f-1022's ring hashes (3eab5112 /
+  db25fde3, c9cf9dbe / c6bb4f4e), the long prompt included although it now prefills in one chunk
+  instead of two; the same at 8,192. Control spellings, the controls probe and the sink probes
+  pass. GLP steering on (the synthetic file): repeatable, and the outputs move (eight prompts
+  c9cf9dbe -> d58000f3; the long prompt's text unchanged, its logprobs moved).
+- Comparison, verdicts against the repeat:
+
+| Metric | spark-ds41f-1022 | candidate 2 | Change | Verdict |
+| --- | --- | --- | --- | --- |
+| prefill 32,768, tok/s | 6,025 | 6,712 | +11.4% | better |
+| prefill 131,072, tok/s | 5,985 | 6,716 | +12.2% | better |
+| prefill 1,000,000 (one cold run), tok/s | 4,419 | 4,898 / 4,905 | +10.9% | (no interval) |
+| decode step, grid geometric mean | | | +0.79% (repeat +0.53%) | **worse** |
+| 16 streams / 1 stream / sampled 16, output tok/s | | | -0.04% / -0.52% / +0.40% | same |
+
+  Greedy 64/64 identical, KL 0; TTFT level. Candidate 1 measured the grid -1.05% against 1022;
+  candidate 2 adds the 16,384 budget, glibc malloc pinned in every process, the rename and the
+  GLP code (off), so one of the first two costs a decode step about 1.8%. Lowest MemAvailable
+  on dgx1 18.1-18.6 GiB (1022: 20.3).
+- Steering on against off ([rc2/glp-suite-tp4.json](rc2/glp-suite-tp4.json)): grid +2.41%, 16
+  streams -1.2%, prefill -1.9%: the folded residual and the projection on every layer.
+
+**The GLP kernel variants (23:42-23:49 CET, run `next-glp-variants`).** All ten correct (FP64,
+batch independence). One block of 640 threads a row, eight values a thread (the whole row in one
+load) is the fastest at every shape: one stream 2.4 against the torch projection's 2.5 us,
+sixteen streams 7.8 against 8.0 us, 8K prefill 2,789 against 2,864 us (-2.0%), 16K 5,465 against
+5,639 us (-2.5%, 95% interval -77 to -211 us). It replaces 0261's 128 threads in candidate 3.
+
+**Where the decode step went ([rc2/ab-tp4.json](rc2/ab-tp4.json)).** One session on image -next-2,
+the grid and closed loops at 16 and 1 streams: candidate 2 as it is, without the malloc settings,
+without them at 8,192, and as it is again.
+
+**Result (2026-10-24 05:15-05:59 CET, run `next-rc2-ab-tp4`).** Grid geometric mean against the plain
+16,384 arm, in run order: malloc pinned at 16,384 (first) -0.14%, plain 16,384 (second) 0, plain
+8,192 (third) -0.93%, malloc pinned at 16,384 again (fourth) -0.79%. The repeat drifted 0.65% faster
+over the session; allowing for that, the malloc settings cost nothing and the 16,384 budget costs
+a decode step about 0.7%. 16 and 1 streams are level throughout. A decode step does not use the
+long-prefill budget, so something in it scales with `max_num_batched_tokens`:
+[profile/profile-tp4.json](profile/profile-tp4.json) profiles decode at one and sixteen streams at
+16,384, 8,192 and 16,384 again (torch profiler, every rank), and compares the kernels' costs.
+
+**The decode profile (2026-10-24 06:58-07:09 CET, run `next-budget-decode-profile`).** Served decode
+under the torch profiler on image -next-2, every rank, in run order 16,384 / 8,192 / 16,384:
+one stream 38.98 / 39.03 / 38.82 ms a step, sixteen streams (code) 68.29 / 69.01 / 68.91 ms. The
+budget costs a served decode step nothing; no kernel's time moves with it beyond the
+collectives' run-to-run spread. Read per shape, the A/B agrees: the 8,192 arm and the 16,384
+repeat beside it differ by 0.14%, inside the interval; its -0.93% came from a step between the
+session's second and third boots, not from the budget. So neither the budget nor the malloc
+settings explain candidate 2's grid, and nothing else candidate 2 changed reads differently:
+the image holds no reader of an old `SPARK3_*` name, the `SPARK_DS41F_*` names it reads are the
+ones the recipe sets, and the variable dropped as dead is read by neither 1022 nor candidate 2.
+Against spark-ds41f-1022 the candidates' grids were, first run and repeat: candidate 1's
+overlay screen -1.12 / -0.87%, candidate 1's image -1.05 / -1.88%, candidate 2 +0.79 / +1.33%.
+Candidate 3's window settles it in one session, alternating candidate 3 with candidate 1's image
+([rc3/decode-tp4.json](rc3/decode-tp4.json)).
+
+## Release candidate 3 ([rc3/](rc3))
+
+Candidate 2 plus vLLM 0263 (GLP steering's projection at 640 threads a row: the fastest of the ten
+variants at every shape) and 0264 (the sink detector's rank log says its count covers every
+executed step, including the steps whose output the scheduler discards; #489), on
+[rc3/cluster.json](rc3/cluster.json): candidate 2's recipe with #469's prompt-cache report
+(`--enable-prompt-tokens-details`). [rc3/vllm/series](rc3/vllm/series): candidate 2's plus
+0263-0264; patch head 599011be, tree 4b241dcc ([rc3/source.json](rc3/source.json)); image
+`spark-ds41f:19f2c20ed4d6-next-3`. `release_tests.py check`: 127 files, 70 gate, 0 problems.
+
+One window on the ring:
+1. [rc3/rc3-tp4.json](rc3/rc3-tp4.json): the image; the release tests and the GLP benchmark;
+   the gate at 16,384; determinism at 8,192 and with steering on; the release comparison
+   (candidate 3 / spark-ds41f-1022 / candidate 3).
+2. [rc3/decode-tp4.json](rc3/decode-tp4.json): the grid and closed loops at 16 and 1 streams,
+   candidate 3 / candidate 1 / candidate 3 / candidate 1.
+3. [rc3/rc3-glp-tp4.json](rc3/rc3-glp-tp4.json): steering on against off.
+
+## Release candidate 4 ([rc4/](rc4))
+
+Candidate 3's GLP benchmark failed its gate at sixteen streams (640 threads a row 7.7 against the
+compiled torch projection's 7.2 us, interval +0.1 to +1.2; faster on long prefill: 8K -1.1%, 16K
+-1.5%). In the variant run 640 threads was only level there; 320 threads was faster at every
+serving shape (sixteen streams 6.9 against 7.9 us, 16K -1.3%). A thread count chosen by the step's
+size would make a decode row's result depend on whether a prefill chunk shares its step, so one
+configuration serves every batch: vLLM 0265, 320 threads. Candidate 4 is candidate 3 plus 0265
+(patch head 4cd21d89, tree 97fc3579, image `spark-ds41f:19f2c20ed4d6-next-4`) on candidate 3's
+recipe. Only GLP's kernel changes, and it launches only with steering on, so candidate 3's release
+comparison stands; [rc4/rc4-tp4.json](rc4/rc4-tp4.json) builds the image and runs the release tests,
+the GLP benchmark, the gate (outputs identical to candidate 3's and to spark-ds41f-1022's) and
+determinism at 8,192 and with steering on; [rc4/rc4-glp-tp4.json](rc4/rc4-glp-tp4.json) measures
+steering on against off. The same window runs the mHC port's GPU tests and benchmark
+(experiments/2026-10-24-tilelang-completion/bundles/mhc-port, vLLM branch tilelang-mhc-post) on
+dgx3 beside the release tests.
+
+### Deploying the renamed names (with the promotion)
+
+The rename (branch `next-release-rename`) goes live with the promotion commit, which also moves
+`container.image` to the new image and its `expected_labels` trees: an image built from a commit
+that contains the rename (labels `local.spark-ds41f.*`, trees under `/opt/spark-ds41f/candidate`,
+vLLM reading `SPARK_DS41F_*`), tagged `spark-ds41f:19f2c20ed4d6-MMDD`, with one image ID on every
+node. The renamed recipe refuses image -1022-4 (its labels are `local.spark3.*`), so it cannot
+serve an old image under the new variable names. From dgx1, under a deploy hold:
+
+1. Stop spark-ds41f-1022 with its frozen recipe, which names the running container
+   (`dsv41-karmic-kraken` and its memory guard):
+   `bin/spark --cluster-config experiments/2026-10-23-next-release/1022/cluster.json cluster stop --apply --parallel`.
+   The stopped container is kept for the rollback.
+2. Sync every node to the promotion commit:
+   `bin/spark --cluster-config experiments/2026-10-23-next-release/1022/cluster.json cluster sync --revision <commit> --apply`.
+3. On every node, move the cache and leave a relative link under the old name (done on
+   2026-10-23 at 21:09 CET in candidate 2's window, which needed it; the commands below skip a
+   node already linked), so the frozen
+   recipes (1022 and earlier, the release comparison's previous-release arm included) stay warm
+   and Triton's group files, which hold absolute `/cache/kkref/...` paths, keep resolving:
+
+   ```sh
+   for host in dgx1 dgx2 dgx3 dgx4; do
+     ssh "$host" 'cd ~/projects/spark-ds41f/cache && test -d kkref && test ! -L kkref &&
+       test ! -e spark-ds41f && mv kkref spark-ds41f && ln -s spark-ds41f kkref; ls -ld kkref spark-ds41f'
+   done
+   ```
+
+   Nothing is deleted: `jit/vllm-r5o` stays for the old recipes (the new one compiles into
+   `jit/vllm`), and B12X recompiles once because its compile key includes
+   `B12X_CUTE_COMPILE_CACHE_DIR` (the first boot warms it).
+4. On every node, replace the boot memory service (`spark3-kernel-memory` becomes
+   `spark-ds41f-kernel-memory`, its backup moves to `/var/lib/spark-ds41f`); the installer does
+   not reboot or touch swap, and starting the service applies the values already in force:
+
+   ```sh
+   for host in dgx1 dgx2 dgx3 dgx4; do
+     ssh "$host" 'cd ~/projects/spark-ds41f && sudo -n experiments/2026-10-02-kernel-64k/install-boot-support.sh &&
+       sudo -n systemctl start spark-ds41f-kernel-memory.service && systemctl is-active spark-ds41f-kernel-memory.service'
+   done
+   ```
+5. Start the promoted recipe: `bin/spark --cluster-config config/cluster.json cluster start` (plan:
+   `live:` names no engine, since the stopped container has the old name; `shape:` new engine),
+   then the same with `--apply`. The first boot compiles what the moved caches do not cover.
+6. `bin/spark --cluster-config config/cluster.json doctor --live` must report the live cluster
+   matching (`spark-ds41f`, `spark-ds41f-memguard`), with no kernel memory service warning.
+
+Rollback: `bin/spark --cluster-config config/cluster.json cluster stop --apply --parallel`, then
+`bin/spark --cluster-config experiments/2026-10-23-next-release/1022/cluster.json cluster start --replace --apply`
+and `doctor --live` with that profile; it reads its caches through `cache/kkref`. Remove the kept
+`dsv41-karmic-kraken` containers (`docker rm`) only once the rollback is no longer wanted, and
+keep the `cache/kkref` link while any recipe names it.

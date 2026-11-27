@@ -1,0 +1,6 @@
+spark01: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8f254013d510e35bcd30f712ba62915c6661c59c
+spark02: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8f254013d510e35bcd30f712ba62915c6661c59c
+spark03: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8f254013d510e35bcd30f712ba62915c6661c59c
+spark04: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8f254013d510e35bcd30f712ba62915c6661c59c
+all nodes now use deployment commit 8f254013d510e35bcd30f712ba62915c6661c59c
+every node holds ds41f-1126-attention:vllm-7c445f265a7b

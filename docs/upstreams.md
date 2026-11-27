@@ -1,74 +1,88 @@
 # Upstreams and contribution flow
 
+Site maintenance follows the [fork maintenance policy](../AGENTS.md). Upstream repositories are read-only integration sources.
+
 `upstreams.lock.json` is the promoted machine-readable authority. An experimental
 cluster profile may select a separate repository-relative lock through
 `upstreams_config`; build preparation, doctor and image builds use that lock.
 This lets candidates add patches without changing the promoted image identity.
-The site's promoted lock selects the tested 1022 attention-steering series:
-vLLM base `19f2c20e`, patch head `b70fe11a`, tree `dc13e8dd`; all native component
-trees are unchanged from the qualified RC3 image. Exact identities are in
-[`2026-10-24-homelab-1022-attention-source.json`](../manifests/sources/2026-10-24-homelab-1022-attention-source.json).
-The earlier r6 source chain below is historical background:
+The production chain (revisions and series in `upstreams.lock.json`; the image in
+`config/cluster.json`) is:
 
 ```text
-local-inference-lab/vllm integration/karmic-kraken-beta @ 04c30fa9
-        (canonical base vllm-project/vllm @ 0f8fa53a)
-        + patches/vllm/series (Engram projection TP padding,
-                               asynchronous Engram rows, DSML tool
-                               parameters, multimodal block hashes;
-                               dead verification rows; sequence-
-                               parallel prefill; one-read custom-op
-                               defaults; explicit collective policy;
-                               packed BF16 output head; vocabulary
-                               weights loaded into the display carve-
-                               out; disjoint profiling-context blocks;
-                               the TileLang kernel family: kernels,
-                               TileKernels router and mHC, vocabulary
-                               heads, sparknet collectives, race-free
-                               decode tiles; other DSpark tools off by
-                               default)
+local-inference-lab/vllm integration/karmic-kraken-beta
+        (canonical base vllm-project/vllm, parked)
+        + the release's vLLM series (TileLang kernels end to end, direct
+          O_DIRECT checkpoint loader, contiguous CUDA pool, zero-copy
+          io_uring expert slot cache on TP1/TP2, PP=2 pipeline parallelism
+          and intra-stage SP, Engram projection TP padding and native
+          async rows, multimodal block hashes and TileLang vision tower,
+          DSpark + CopyDrafter adaptive verification, sequence-parallel
+          prefill, packed BF16 output head, sparknet collectives and P2P,
+          GLP steering, the SPARK_DS41F_* variables)
                     \
-local-inference-lab/b12x integration/karmic-kraken-beta @ f8069b2c
-        + patches/b12x/series (switchless RoCEnante routing, CuTe DSL 4.7.1,
-          top-k position ties, TMA stage-release fences, four-node relay
-          and mesh transports, packed BF16 vocabulary projection)
+docker.io/vllm/vllm-openai (nightly base)
+        + hash-locked CUDA 13.5.37 toolkit & math libraries (over 13.0.2)
+        + CUTLASS v4.7.1 headers (SM121 stable CUDA extension rebuild)
                     |
-tile-ai/tilelang main @ b95ee4ff (0.1.15)
-        + patches/tilelang/series (SM120/SM121 block-scaled MMA:
-          MXFP8, FP8 x FP4, MXFP4)
-deepseek-ai/TileKernels main @ 66258df6 (2.0.0, unpatched)
-christopherowen/dgx-spark-networking main @ f73a3cea (sparknet 0.2.0)
-                     ---- vllm-ds41f-kkref:04c30fa98e79-r6 (sha256:b5225c98…)
+tile-ai/tilelang main (0.1.15)
+        + patches (SM120/SM121 block-scaled MMA: MXFP8, FP8 x FP4, MXFP4,
+          device-compiler cache key)
+deepseek-ai/TileKernels main (2.0.0) + patches/tile_kernels
+christopherowen/dgx-spark-networking (sparknet v0.6.0, zero local patches:
+        one-shot RoCE collectives, one-shot PP P2P, proxy ABI 10)
+                     ---- spark-ds41f:<release>
                     /
-NVIDIA/nccl v2.30.7-1 @ 73cf1122
-        + patches/nccl/series (IB send-path fence, bidirectional switchless
+NVIDIA/nccl v2.30.7-1
+        + its series (IB send-path fence, bidirectional switchless
           rings, balanced channels), replacing the base
           image's nvidia-nccl-cu13 libnccl.so.2
 
-deepseek-ai/DeepSeek-V4.1-Flash @ dba1be0a (unchanged; TP3 head padding is in
-        the serving source, so no config overlay is mounted)
+deepseek-ai/DeepSeek-V4.1-Flash-1017 (the recipe's model; unchanged native
+        FP8/FP4/BF16 weights; uneven TP shard padding is in serving source)
+msuiche/DeepSeek-V4.1-Flash-1017-abliterated-cyber-GLP-27-L11-37-a3.5
+        (optional pinned GLP steering vector for deepseek-v4.1-flash-weightless)
 ```
 
-The official vLLM nightly at `af1c0149` supplies the CUDA/runtime base, including
-FlashInfer 0.6.18.post1; only vLLM's two stable CUDA extensions are rebuilt for
-SM121 against CUTLASS v4.7.1. Canonical vLLM main is parked while the Local
-Inference Lab integration branch is the serving source.
+The official vLLM nightly at `af1c0149` supplies the runtime Python/Torch base,
+upgraded with the hash-locked CUDA `13.5.37` toolkit layer; only vLLM's two
+stable CUDA extensions are rebuilt for SM121 against CUTLASS `v4.7.1`. Canonical
+vLLM main is parked while the Local Inference Lab integration branch is the
+serving source. B12X (`local-inference-lab/b12x`) was completely retired in
+`spark-ds41f-1120` (`vLLM 0802`) and is no longer listed in promoted locks.
 
 ## Source map
 
 | Lock key | Canonical upstream | Contribution fork | Purpose |
 |---|---|---|---|
 | `vllm` | `local-inference-lab/vllm` (`integration/karmic-kraken-beta`) | `christopherowen/vllm` | serving source; canonical `vllm-project/vllm` main is parked |
-| `vllm_base_image` | `docker.io/vllm/vllm-openai` | not applicable | official CUDA/Torch/native-extension foundation |
-| `b12x` | `local-inference-lab/b12x` (`integration/karmic-kraken-beta`) | not created yet | DS4.1 kernels and RoCEnante transport |
+| `vllm_base_image` | `docker.io/vllm/vllm-openai` | not applicable | official PyTorch/runtime foundation |
+| `cuda_toolkit` | NVIDIA's Ubuntu 24.04 SBSA CUDA apt repository | not applicable | SHA-256-locked CUDA `13.5.37` toolchain and math-library `.deb` layer over the base image's CUDA `13.0.2` (active in promoted locks since `spark-ds41f-1120`; [docker/README.md](../docker/README.md#cuda-toolkit)) |
+| `tilelang` | `tile-ai/tilelang` (`main`) | `christopherowen/tilelang` | the promoted kernel compiler (`0.1.15`), with `patches/tilelang` for SM120/SM121 |
+| `tile_kernels` | `deepseek-ai/TileKernels` (`main`) | not created yet | DeepSeek's TileLang kernels (`2.0.0`): MoE gate, casts, mHC |
+| `sparknet` | `christopherowen/dgx-spark-networking` (`v0.6.0` / `main`) | not applicable | one-shot RoCE collectives, one-shot PP P2P, and proxy ABI 10 for the TileLang family (`0` local patches from `v0.6.0`) |
 | `nccl` | `NVIDIA/nccl` (tag `v2.30.7-1`) | not created yet | the base image's NCCL version, rebuilt for SM121 with `patches/nccl` |
-| `tilelang` | `tile-ai/tilelang` (`main`) | `christopherowen/tilelang` | the promoted kernel compiler, with `patches/tilelang` for SM120/SM121 |
-| `tile_kernels` | `deepseek-ai/TileKernels` (`main`) | not created yet | DeepSeek's TileLang kernels: MoE gate, casts, mHC |
-| `sparknet` | `christopherowen/dgx-spark-networking` (`main`) | not applicable | one-shot RoCE collectives for the TileLang family |
-| `flashinfer` | `flashinfer-ai/flashinfer` | not created yet | not a promoted build input (the runtime base supplies 0.6.18.post1) |
-| `cutlass` | `NVIDIA/cutlass` | not created yet | SM121 stable-extension headers at `v4.7.1` |
+| `cutlass` | `NVIDIA/cutlass` (`v4.7.1`) | not created yet | SM121 stable-extension headers at `v4.7.1` |
 | `cutlass_dsl` | NVIDIA packages on PyPI | not applicable | SHA-256-locked ARM64 CuTe DSL wheel set |
-| `model` | `deepseek-ai/DeepSeek-V4.1-Flash` | not applicable | unchanged native model weights and tokenizer |
+| `torch` | PyTorch's wheel index (`download.pytorch.org/whl/nightly/cu135`) | not applicable | optional, listed only by a lock that also lists the CUDA toolkit it was compiled for: SHA-256-locked wheels (`requirements/torch-2-16-cu135-aarch64.txt`) |
+| `flashinfer` | `flashinfer-ai/flashinfer` | not created yet | not a promoted build input (the runtime base supplies `0.6.18.post1`); tracked for upstream review only |
+| `b12x` *(retired)* | `local-inference-lab/b12x` (`integration/karmic-kraken-beta`, archived) | none (archived) | retired in `spark-ds41f-1120` (`vLLM 0802`); present only in historical locks (`spark-ds41f-1025` and earlier) |
+| `model` | `deepseek-ai/DeepSeek-V4.1-Flash` (`1017` revision) | not applicable | unchanged native FP8/FP4/BF16 model weights and tokenizer |
+
+Three additional pinned dependencies live outside the image build lock because they are
+host-side tools or optional runtime weights rather than container image inputs:
+
+- [Sonar](https://github.com/christopherowen/Sonar) (`christopherowen/Sonar`, `main`): the
+  benchmark client, pinned in `config/sonar.json` by URL and full revision, checked out on
+  first use under `.work/sonar/<revision>`, and shared across every arm a run compares. To
+  move the pin, merge the change into Sonar, set the new revision in `config/sonar.json`,
+  and record which outputs (suite digests, request payloads, result formats) stay unchanged.
+- [dgx-spark-memory-saver](https://github.com/christopherowen/dgx-spark-memory-saver): the
+  signed DKMS kernel module required on 64 KiB DGX Spark profiles for UVM leaf-table packing
+  ([setup.md](setup.md#2-kernel-64-kib-profiles)).
+- **GLP steering vector** (`msuiche/DeepSeek-V4.1-Flash-1017-abliterated-cyber-GLP-27-L11-37-a3.5`):
+  pinned by repository, commit revision, filename, and SHA-256 in `config/cluster.json` under
+  `glp` to serve `deepseek-v4.1-flash-weightless` beside the unchanged stock model.
 
 The URL and full immutable revision in `upstreams.lock.json`, not a directory
 name or Docker tag, define identity. The `tracking_ref` says which canonical
@@ -80,7 +94,8 @@ Prepare an isolated tree:
 
 ```sh
 bin/spark upstream prepare vllm
-bin/spark upstream prepare b12x
+bin/spark upstream prepare tilelang
+bin/spark upstream prepare sparknet
 ```
 
 The helper clones the canonical repository as `upstream`, adds Christopher's fork
@@ -93,12 +108,57 @@ small patch series, build a new immutable image tag, and record it as an experim
 Do not advance `upstreams.lock.json` merely because a newer commit exists.
 
 Shared runtime packages move forward, never back. CuTe DSL is used by vLLM,
-quack-kernels, B12X, FlashInfer and the cuDNN frontend; the locked wheel set in
+quack-kernels, FlashInfer, the cuDNN frontend and B12X (while a lock lists it); the
+locked wheel set in
 `requirements/cutlass-dsl-aarch64.txt` must satisfy every one of them and must
 not be older than the version the vLLM base image installs. When a component
 pins an older version, patch the component's pin forward and qualify it rather
 than downgrading the others. The image build checks each consumer's declared
 requirement and fails on a mismatch.
+
+## Patched release arms
+
+Published release manifests (`manifests/sources/`, `releases/*/source.json`, and
+`upstreams.lock.json`) are immutable provenance records. Extending a release profile
+with only a rebuilt `container.image` and updated `expected_labels` makes
+`build distribute` and `doctor` disagree: `distribute` reads `expected_labels`
+from the profile while `doctor` checks the release's `source.json`.
+
+To ship a release plus one or more local patches so `build prepare`, `build image`,
+`build distribute`, `cluster sync`, and `doctor` all agree:
+
+1. Create an arm series in `experiments/<dir>/<project>/series` using `include`
+   to compose the base series with the extra patch(es):
+
+   ```text
+   include ../../../releases/<release>/vllm/series
+   0001-local-fix.patch
+   ```
+
+2. Copy the release's `upstreams.lock.json` and `source.json` into the arm
+   directory, point `source_manifest` and `patch_series` at the arm copies, and set
+   `upstreams_config` in the arm profile overlay.
+3. Run `bin/spark --cluster-config <profile> build prepare --lock` to compute and
+   align `patchset_sha256`, `patch_head`, `expected_tree`, and
+   `container.expected_labels` across the arm's lock, manifest, and profile.
+4. Build and distribute normally with `bin/spark --cluster-config <profile> build image --apply`
+   and `build distribute --apply`.
+
+## Locks without B12X
+
+Promoted locks since `spark-ds41f-1030` / `spark-ds41f-1120` omit `b12x` completely: the
+vLLM series carries the direct `O_DIRECT` checkpoint loader (`--load-format direct`,
+`VLLM_PLUGINS` empty), packed BF16 LM-head packer, Engram token map/geometry/caps, and
+TileLang gathers for resident Engram tables
+([experiments/2026-10-26-retire-b12x](../experiments/2026-10-26-retire-b12x/README.md);
+B12X retired fully in `vLLM 0802`). `bin/spark build` supports both current and historical
+locks:
+
+- Current locks (without `b12x`) prepare no B12X project or context, build the TileLang
+  runtime directly on `runtime-core` (`TILELANG_BASE_STAGE`), record no `b12x` labels, and
+  verify during GPU image smoke that B12X is not installed.
+- Historical locks (`spark-ds41f-1025` and earlier, which still list `b12x`) continue to
+  build the `b12x-source` context and `local.spark-ds41f.b12x.*` labels for reproducibility.
 
 ## Contributing back
 
@@ -110,9 +170,9 @@ Preserve tests and benchmark evidence alongside it. After acceptance:
 3. rebuild once and distribute the same digest;
 4. reproduce the accepted baseline before promotion.
 
-The B12X contribution fork does not yet exist, so its `contribution_remote` is
-currently `null`. Add the fork URL only when creating the first contribution.
-The same rule applies to FlashInfer and CUTLASS: do not invent a fork URL or use
+B12X is archived (the lock pins its last commit), so it gets no contribution fork
+and its `contribution_remote` stays `null`. FlashInfer and CUTLASS have no fork yet:
+add one only when creating the first contribution, and do not invent a fork URL or use
 this deployment repository as their `origin`.
 
 The GLM switchless repository is recorded as a research reference, not an

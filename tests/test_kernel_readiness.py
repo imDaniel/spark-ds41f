@@ -46,7 +46,7 @@ def ready(uuid="node-a"):
             "cpu_tools": True, "governors": ["performance"],
             "modules": {m: {"vermagic": NEW + " SMP", "version": POLICY["driver"]} for m in
                         ("nvidia", "nvidia_uvm", "nvidia_drm", "mlx5_core", "mlx5_ib", "dgx_ec_fan_control")},
-            "fan_dkms": f"dgx-spark-fan-control/0.1.3, {NEW}, aarch64: installed",
+            "fan_dkms": f"dgx-spark-fan-control/0.1.4, {NEW}, aarch64: installed",
             "grub": kernel.grub_inventory(menu(uuid), "")}
 
 
@@ -149,12 +149,27 @@ class ReadinessTest(unittest.TestCase):
     def test_64k_boot_requires_its_swap_and_memory_policy(self):
         data = ready()
         data.update(kernel=NEW, page_size=65536)
-        issues, _ = kernel.findings("dgx1", data, POLICY)
+        issues, fixes = kernel.findings("dgx1", data, POLICY)
         self.assertTrue(any("64 KiB swap" in x for x in issues))
-        data.update(thp="always madvise [never]", active_swap=["/swap-64k.img"], memory_service="active")
+        # The service is spark-ds41f's since the release after spark-ds41f-1022 (host/kernel-memory).
+        self.assertTrue(any("journalctl -u spark-ds41f-kernel-memory.service" in x for x in fixes))
+        data.update(thp="always madvise [never]", active_swap=["/swap-64k.img"], memory_service="active",
+                    memory_service_unit="spark-ds41f-kernel-memory.service")
         data["uvm_leaf_packing"] = "Y"
         data["loaded_nvidia_sources"]["nvidia_uvm"] = POLICY["memory_saver"]["srcversion"]
         self.assertEqual(kernel.findings("dgx1", data, POLICY), ([], []))
+
+    def test_legacy_spark3_memory_service_is_the_same_policy(self):
+        data = ready()
+        data.update(kernel=NEW, page_size=65536, thp="always madvise [never]",
+                    active_swap=["/swap-64k.img"], memory_service="active",
+                    memory_service_unit="spark3-kernel-memory.service")
+        data["uvm_leaf_packing"] = "Y"
+        data["loaded_nvidia_sources"]["nvidia_uvm"] = POLICY["memory_saver"]["srcversion"]
+        issues, fixes = kernel.findings("dgx1", data, POLICY)
+        self.assertTrue(any("still spark3-kernel-memory.service" in x for x in issues))
+        self.assertFalse(any("is not active" in x for x in issues))
+        self.assertTrue(any("journalctl -u spark3-kernel-memory.service" in x for x in fixes))
 
     def test_missing_memory_saver_warns_even_on_stock_kernel(self):
         data = ready()

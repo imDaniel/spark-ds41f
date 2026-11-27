@@ -1,0 +1,8 @@
+{
+  "window_id": "67e78433-1bdb-4ff8-a0c9-6549ee37a8e6",
+  "replacement_pid": 2210859,
+  "active_unit": "ds41f-1126-watchdog-next",
+  "old_unit_stopped": true,
+  "source_revision": "8c89f1c0e5f0bbc20b48e77fa3051dc0e2b2f68b",
+  "watchdog_source_sha256": "5012869febd0c7a54acef2e822df93a7f4c2ef59180fa0ea24f7bfaa0b300f62"
+}

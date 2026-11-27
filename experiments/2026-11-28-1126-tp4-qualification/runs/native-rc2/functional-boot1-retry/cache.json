@@ -1,0 +1,422 @@
+{
+  "nonce": "a9cffb56-7d51-4490-8e90-ae006177b344",
+  "prompt_tokens": 32768,
+  "tokens_sha256": "0a9acdd72f0316a96cf3b88eee94af751a895a609ee4f844dd9576585b991d28",
+  "rows": [
+    {
+      "kind": "sequential",
+      "scale": 0,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 3.2711625420488417,
+      "duration": 3.3637573150917888,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 334.6425813727792,
+      "cached_tokens": 0
+    },
+    {
+      "kind": "sequential",
+      "scale": 0,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 0.18108397582545877,
+      "duration": 0.274169844109565,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 332.954939171624,
+      "cached_tokens": 32512
+    },
+    {
+      "kind": "sequential",
+      "scale": 1,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 3.2857672860845923,
+      "duration": 3.3779652630910277,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 336.08879231352756,
+      "cached_tokens": 0
+    },
+    {
+      "kind": "sequential",
+      "scale": 1,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 0.20098778419196606,
+      "duration": 0.2922384822741151,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 339.5893321682185,
+      "cached_tokens": 32512
+    },
+    {
+      "kind": "sequential",
+      "scale": 4,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 3.30477573024109,
+      "duration": 3.39866877021268,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 330.0263705731816,
+      "cached_tokens": 0
+    },
+    {
+      "kind": "sequential",
+      "scale": 4,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 0.1870187227614224,
+      "duration": 0.27904754085466266,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 336.7936819659946,
+      "cached_tokens": 32512
+    },
+    {
+      "kind": "sequential",
+      "scale": 0,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 0.18421976594254375,
+      "duration": 0.2775490372441709,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 332.0846126260177,
+      "cached_tokens": 32512
+    },
+    {
+      "kind": "mixed-c4",
+      "scale": 0,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 0.353255711030215,
+      "duration": 0.5126533908769488,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 194.46498952854765,
+      "cached_tokens": 32512
+    },
+    {
+      "kind": "mixed-c4",
+      "scale": 1,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 0.35098378686234355,
+      "duration": 0.5095182219520211,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 195.5053806626892,
+      "cached_tokens": 32512
+    },
+    {
+      "kind": "mixed-c4",
+      "scale": 4,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 0.34840537793934345,
+      "duration": 0.5076880319975317,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 194.61393139581656,
+      "cached_tokens": 32512
+    },
+    {
+      "kind": "mixed-c4",
+      "scale": 0,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 0.34646142832934856,
+      "duration": 0.5056686252355576,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 194.70452334611218,
+      "cached_tokens": 32512
+    },
+    {
+      "kind": "cancel",
+      "scale": 1,
+      "cancelled": true,
+      "ttft": 0.1994757461361587
+    },
+    {
+      "kind": "stock-after-cancel",
+      "scale": 0,
+      "text": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+      "text_sha256": "3c7ff5bce0410acdba81115bd5f00adba7d8d52d7ec3badce3329700ab7fb669",
+      "ttft": 0.2083258368074894,
+      "duration": 0.3016150100156665,
+      "usage": {
+        "prompt_tokens": 32768,
+        "total_tokens": 32800,
+        "completion_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 32512
+        },
+        "sink_rejection": {
+          "flagged_rows": 0,
+          "flagged_draft_zero": 0,
+          "flagged_drafter": 0,
+          "flagged_prompt": 0,
+          "draft_zero_rejections": 0,
+          "draft_cuts": 0,
+          "fallthroughs": 0
+        }
+      },
+      "finish_reason": "length",
+      "message": {
+        "role": "assistant",
+        "content": " is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a neutral prefix cache isolation measurement sentence. This is a",
+        "reasoning": ""
+      },
+      "token_ids": [],
+      "decode_tps": 332.1716708599527,
+      "cached_tokens": 32512
+    }
+  ],
+  "passed": true
+}

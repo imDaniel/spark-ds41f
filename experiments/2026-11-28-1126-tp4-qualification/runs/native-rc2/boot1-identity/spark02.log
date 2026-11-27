@@ -1,0 +1,1197 @@
+WARNING 11-27 18:46:29 [envs.py:2770] Unknown vLLM environment variable detected: VLLM_L2_PREFETCH_GRID
+WARNING 11-27 18:46:29 [envs.py:2770] Unknown vLLM environment variable detected: VLLM_DS41_L2_PREFETCH_NEXT_MB
+WARNING 11-27 18:46:29 [envs.py:2770] Unknown vLLM environment variable detected: VLLM_DS41_L2_PREFETCH_WO_MB
+WARNING 11-27 18:46:29 [envs.py:2770] Unknown vLLM environment variable detected: VLLM_DS41_L2_PREFETCH_FFN_MB
+WARNING 11-27 18:46:29 [envs.py:2770] Unknown vLLM environment variable detected: VLLM_L2_PREFETCH_KERNELS
+WARNING 11-27 18:46:29 [envs.py:2770] Unknown vLLM environment variable detected: VLLM_CACHE_DIR
+WARNING 11-27 18:46:29 [envs.py:2770] Unknown vLLM environment variable detected: VLLM_DS41_L2_PREFETCH_WO_BANDS
+WARNING 11-27 18:46:29 [envs.py:2770] Unknown vLLM environment variable detected: VLLM_NATIVE_CACHE_DIR
+INFO 11-27 18:46:29 [config.py:852] Detected quantization_config.scale_fmt=ue8m0; enabling UE8M0 for DeepGEMM.
+INFO 11-27 18:46:34 [model.py:693] Resolved architecture: DeepseekV41ForCausalLM
+INFO 11-27 18:46:34 [model.py:2066] Using max model len 1048576
+INFO 11-27 18:46:35 [arg_utils.py:2462] Inferred data_parallel_rank 0 from node_rank 1
+INFO 11-27 18:46:35 [model.py:693] Resolved architecture: DeepseekV41ForCausalLM
+INFO 11-27 18:46:35 [model.py:2066] Using max model len 1048576
+INFO 11-27 18:46:43 [scheduler.py:436] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 11-27 18:46:43 [vllm.py:1521] Resolved Engram configuration: EngramConfig(cpu_offload=True, embedding_across_dp=False, dp_shared_memory=False, table_memory='disk', projection_tp=True, disk_resident_scales=False)
+INFO 11-27 18:46:44 [kernel.py:435] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['triton', 'native'])
+INFO 11-27 18:46:44 [vllm.py:2464] Copy drafts widen max_num_batched_tokens from 8192 to 8203: an aligned 8096-token prefill chunk beside 107 decode rows.
+INFO 11-27 18:46:44 [vllm.py:2496] Copy drafts widen the CUDA-graph capture range from 96 to 107 rows.
+INFO 11-27 18:46:44 [deepseek_v41.py:1215] dsv41-structural-dsml-v1: structural DSML closers active
+INFO 11-27 18:46:44 [compilation.py:336] Enabled custom fusions: norm_quant, act_quant
+INFO 11-27 18:46:44 [serve.py:251] Launching vLLM (v0.29.1rc1.dev187+gaf1c01499) headless multiproc executor, with head node address 10.42.0.1:9999 for torch.distributed process group.
+(Worker pid=1) INFO 11-27 18:46:48 [parallel_state.py:1953] world_size=4 rank=1 local_rank=0 distributed_init_method=tcp://10.42.0.1:9999 backend=nccl
+(Worker pid=1) 2026-11-27 18:46:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `oneshot_allreduce` with `out_idx=None`
+(Worker pid=1) 2026-11-27 18:46:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `oneshot_allreduce`
+(Worker pid=1) 2026-11-27 18:46:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `oneshot_reducescatter` with `out_idx=None`
+(Worker pid=1) 2026-11-27 18:46:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `oneshot_reducescatter`
+(Worker pid=1) 2026-11-27 18:46:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `oneshot_allreduce` with `out_idx=None`
+(Worker pid=1) 2026-11-27 18:47:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `oneshot_allreduce`
+(Worker pid=1) 2026-11-27 18:47:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `oneshot_reducescatter` with `out_idx=None`
+(Worker pid=1) 2026-11-27 18:47:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `oneshot_reducescatter`
+(Worker pid=1) 2026-11-27 18:47:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `oneshot_allreduce` with `out_idx=None`
+(Worker pid=1) 2026-11-27 18:47:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `oneshot_allreduce`
+(Worker pid=1) 2026-11-27 18:47:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `oneshot_reducescatter` with `out_idx=None`
+(Worker pid=1) 2026-11-27 18:47:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `oneshot_reducescatter`
+(Worker pid=1) 2026-11-27 18:47:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `oneshot_allgather` with `out_idx=None`
+(Worker pid=1) 2026-11-27 18:47:03  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `oneshot_allgather`
+(Worker pid=1) 2026-11-27 18:47:03  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `oneshot_exchange` with `out_idx=None`
+(Worker pid=1) 2026-11-27 18:47:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `oneshot_exchange`
+(Worker pid=1) INFO 11-27 18:47:04 [parallel_state.py:2393] rank 1 in world size 4 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 1, ETP rank 1, EP rank 1, EPLB rank N/A
+(Worker pid=1) INFO 11-27 18:47:04 [gpu_worker.py:1110] Using V2 Model Runner
+(Worker pid=1) INFO 11-27 18:47:05 [speculator.py:314] DSpark pre-drafting Markov head truncation enabled
+(Worker_TP1 pid=1) INFO 11-27 18:47:06 [model_runner.py:525] Loading model from scratch...
+(Worker_TP1 pid=1) INFO 11-27 18:47:07 [sp_prefill.py:194] DeepSeek V4.1 prefill sequence parallelism from 205 tokens (capacity floor=2097152 bytes; independent of all-reduce dispatch)
+(Worker_TP1 pid=1) INFO 11-27 18:47:14 [mxfp4.py:464] Using 'TILELANG_MXFP4_MXFP8' Mxfp4 MoE backend.
+(Worker_TP1 pid=1) WARNING 11-27 18:47:15 [compilation.py:1361] Op 'quant_fp8' not present in model, enabling with '+quant_fp8' has no effect
+(Worker_TP1 pid=1) WARNING 11-27 18:47:15 [vllm.py:3751] `torch.compile` is turned on, but the model /models does not support it. Please open an issue on GitHub if you want it to be supported.
+(Worker_TP1 pid=1) INFO 11-27 18:47:15 [direct_loader.py:453] Buddy hugepage sponge soaked 9344.0 MiB (73 chunks) in 0.24 s so 73569.4 MiB of weights draw >= 2.0 MiB contiguous physical blocks (65816.0 MiB available)
+(Worker_TP1 pid=1) INFO 11-27 18:47:48 [default_loader.py:575] Loading weights took 30.61 seconds
+(Worker_TP1 pid=1) 2026-11-27 18:47:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_histogram` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:47:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_exception_count` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:47:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_histogram`
+(Worker_TP1 pid=1) 2026-11-27 18:47:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_exception_count`
+(Worker_TP1 pid=1) 2026-11-27 18:47:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_pack_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:47:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_build_screen` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:47:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_pack_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:47:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_build_screen`
+(Worker_TP1 pid=1) INFO 11-27 18:47:51 [prepare.py:503] TileLang warm index: 0 fast-loaded, 4 compiled/missed in 2.92 s (index=prepare-index-93d39c262202b16c.json)
+(Worker_TP1 pid=1) INFO 11-27 18:47:51 [mxfp4.py:2011] Using MoEPrepareAndFinalizeNoDPEPModular
+(Worker_TP1 pid=1) INFO 11-27 18:47:51 [mxfp4.py:2012] Using TileLangExperts
+(Worker_TP1 pid=1) INFO 11-27 18:48:02 [packed_bf16.py:152] Packed the BF16 LM head exactly into 12 bits per weight: exponents 112..126, 25456 out-of-window values kept exactly per shard.
+(Worker_TP1 pid=1) INFO 11-27 18:48:22 [engram.py:791] Engram packed rows layer=1 tp=4 rank=1 layout=264-v1 bytes=26214809600 written_bytes=26214809600 reused=False pack_s=20.309712 path=/cache/spark-ds41f/engram-264-v1/engram-layer1-tp4-rank1.packed
+(Worker_TP1 pid=1) INFO 11-27 18:48:46 [engram.py:791] Engram packed rows layer=14 tp=4 rank=1 layout=264-v1 bytes=26215530496 written_bytes=26215530496 reused=False pack_s=20.944295 path=/cache/spark-ds41f/engram-264-v1/engram-layer14-tp4-rank1.packed
+(Worker_TP1 pid=1) INFO 11-27 18:48:51 [direct_loader.py:1043] Direct loader: weights loaded, 75.47 GB of checkpoint payload in 30.61 s (2.47 GB/s); 149.91 GB read from disk, 0.00 GB BF16 expanded in the ring, 0.00 GB converted in the GPU scratch, 0.00 GB copied by Torch
+(Worker_TP1 pid=1) INFO 11-27 18:48:51 [eagle3_utils.py:27] Using Eagle3 auxiliary layers from config: (37, 38, 39)
+(Worker_TP1 pid=1) INFO 11-27 18:48:51 [kernel.py:435] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['triton', 'native'])
+(Worker_TP1 pid=1) 2026-11-27 18:48:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `context_inputs` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:48:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `context_inputs`
+(Worker_TP1 pid=1) 2026-11-27 18:48:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `split_columns` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:48:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `split_columns`
+(Worker_TP1 pid=1) 2026-11-27 18:48:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `join_columns_and_cast_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:48:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `join_columns_and_cast_mxfp8`
+(Worker_TP1 pid=1) WARNING 11-27 18:48:53 [vllm.py:3751] `torch.compile` is turned on, but the model /models does not support it. Please open an issue on GitHub if you want it to be supported.
+(Worker_TP1 pid=1) INFO 11-27 18:48:53 [direct_loader.py:453] Buddy hugepage sponge soaked 10112.0 MiB (79 chunks) in 0.25 s so 2822.2 MiB of weights draw >= 64.0 MiB contiguous physical blocks (3584.0 MiB available)
+(Worker_TP1 pid=1) INFO 11-27 18:48:54 [weight_utils.py:705] Safetensors index filter selected 3/48 checkpoint shards.
+(Worker_TP1 pid=1) INFO 11-27 18:48:54 [dspark.py:1203] DSpark draft model loaded: 97 params
+(Worker_TP1 pid=1) INFO 11-27 18:48:54 [default_loader.py:575] Loading weights took 0.84 seconds
+(Worker_TP1 pid=1) 2026-11-27 18:48:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_histogram` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:48:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_exception_count` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:48:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_exception_count`
+(Worker_TP1 pid=1) 2026-11-27 18:48:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_histogram`
+(Worker_TP1 pid=1) 2026-11-27 18:48:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_pack_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:48:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_build_screen` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:48:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_pack_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:48:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_build_screen`
+(Worker_TP1 pid=1) INFO 11-27 18:48:57 [prepare.py:503] TileLang warm index: 0 fast-loaded, 4 compiled/missed in 2.95 s (index=prepare-index-93d39c262202b16c.json)
+(Worker_TP1 pid=1) INFO 11-27 18:48:58 [packed_bf16.py:152] Packed the BF16 LM head exactly into 12 bits per weight: exponents 114..128, 1847 out-of-window values kept exactly per shard.
+(Worker_TP1 pid=1) INFO 11-27 18:48:58 [direct_loader.py:1043] Direct loader: weights loaded, 2.07 GB of checkpoint payload in 0.84 s (2.47 GB/s); 4.00 GB read from disk, 0.00 GB BF16 expanded in the ring, 0.00 GB converted in the GPU scratch, 0.00 GB copied by Torch
+(Worker_TP1 pid=1) WARNING 11-27 18:48:58 [speculator.py:246] Draft model DSparkDeepseekV4ForCausalLM does not support external multimodal embeddings. Embeddings from the target model will not be passed to the drafter; using text-only draft inputs instead.
+(Worker_TP1 pid=1) INFO 11-27 18:48:59 [model_runner.py:576] Model loading took 71.6 GiB memory and 113.433368 seconds
+(Worker_TP1 pid=1) INFO 11-27 18:48:59 [model_runner.py:4016] Sink detector: residual column 2455, threshold 85000, rejection on (3 alternates per provisional token)
+(Worker_TP1 pid=1) 2026-11-27 18:49:12  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_copy_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:12  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_indices` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_copy_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:49:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_indices`
+(Worker_TP1 pid=1) 2026-11-27 18:49:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_sp_indices` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_token_metadata` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_token_metadata`
+(Worker_TP1 pid=1) 2026-11-27 18:49:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_routing_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_sp_indices`
+(Worker_TP1 pid=1) 2026-11-27 18:49:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_slots` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_routing_mask`
+(Worker_TP1 pid=1) 2026-11-27 18:49:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `zero_packs` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_slots`
+(Worker_TP1 pid=1) 2026-11-27 18:49:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_copy_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `zero_packs`
+(Worker_TP1 pid=1) 2026-11-27 18:49:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_copy_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_copy_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:49:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_copy_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_copy_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:49:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_copy_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_copy_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:49:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_copy_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_copy_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:49:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_copy_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_copy_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:49:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_copy_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_copy_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:49:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_copy_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_copy_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:49:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_copy_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_copy_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:49:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_copy_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_copy_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:49:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_requests` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_copy_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:49:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_requests` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_requests`
+(Worker_TP1 pid=1) 2026-11-27 18:49:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `ced_requests` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_requests`
+(Worker_TP1 pid=1) 2026-11-27 18:49:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gather_lookback` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `ced_requests`
+(Worker_TP1 pid=1) 2026-11-27 18:49:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_embedding` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gather_lookback`
+(Worker_TP1 pid=1) 2026-11-27 18:49:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_embedding` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_embedding`
+(Worker_TP1 pid=1) 2026-11-27 18:49:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_embedding`
+(Worker_TP1 pid=1) 2026-11-27 18:49:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:49:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:49:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16`
+(Worker_TP1 pid=1) 2026-11-27 18:50:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:03  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:50:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:50:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:50:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:50:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:12  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:50:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_swiglu_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:50:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_swiglu_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:50:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:50:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:50:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:50:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_swiglu_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:50:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_swiglu_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:50:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:50:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:50:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:50:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:50:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:43  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:50:43  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:50:43  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_combine` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_combine` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_combine`
+(Worker_TP1 pid=1) 2026-11-27 18:50:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_combine` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_combine`
+(Worker_TP1 pid=1) 2026-11-27 18:50:45  [TileLang:tilelang.cache.kernel_cache:WARNING] (kernel_cache.py:457): Found kernel 'moe_dispatch' in memory cache. For better performance, consider using `@tilelang.jit` instead of direct kernel caching.
+(Worker_TP1 pid=1) 2026-11-27 18:50:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_combine`
+(Worker_TP1 pid=1) 2026-11-27 18:50:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:50:47  [TileLang:tilelang.cache.kernel_cache:WARNING] (kernel_cache.py:457): Found kernel 'moe_dispatch' in memory cache. For better performance, consider using `@tilelang.jit` instead of direct kernel caching.
+(Worker_TP1 pid=1) 2026-11-27 18:50:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:50:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:50:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:50:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:50:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:50:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_two` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:51:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_splitk` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_two`
+(Worker_TP1 pid=1) 2026-11-27 18:51:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_splitk` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_splitk`
+(Worker_TP1 pid=1) 2026-11-27 18:51:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_splitk` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_splitk`
+(Worker_TP1 pid=1) 2026-11-27 18:51:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_splitk` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:12  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_splitk`
+(Worker_TP1 pid=1) 2026-11-27 18:51:12  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_splitk`
+(Worker_TP1 pid=1) 2026-11-27 18:51:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:51:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:51:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:51:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:51:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8_rope_mxfp4` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:51:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8_rope_mxfp4`
+(Worker_TP1 pid=1) 2026-11-27 18:51:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16`
+(Worker_TP1 pid=1) 2026-11-27 18:51:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:51:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:51:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:51:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:51:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_splitk_reduce` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_splitk_reduce`
+(Worker_TP1 pid=1) 2026-11-27 18:51:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16`
+(Worker_TP1 pid=1) 2026-11-27 18:51:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:51:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:51:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:51:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_splitk_reduce` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_splitk_reduce`
+(Worker_TP1 pid=1) 2026-11-27 18:51:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:51:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_splitk` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16`
+(Worker_TP1 pid=1) 2026-11-27 18:51:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_splitk` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_splitk`
+(Worker_TP1 pid=1) 2026-11-27 18:51:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_splitk` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_splitk`
+(Worker_TP1 pid=1) 2026-11-27 18:51:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_splitk` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_splitk`
+(Worker_TP1 pid=1) 2026-11-27 18:51:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_projection` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_splitk`
+(Worker_TP1 pid=1) 2026-11-27 18:51:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_projection` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:51:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_projection`
+(Worker_TP1 pid=1) 2026-11-27 18:51:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_projection` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_projection`
+(Worker_TP1 pid=1) 2026-11-27 18:52:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_projection` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_projection`
+(Worker_TP1 pid=1) 2026-11-27 18:52:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_projection`
+(Worker_TP1 pid=1) 2026-11-27 18:52:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_x_norm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_row_thresholds` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_x_norm`
+(Worker_TP1 pid=1) 2026-11-27 18:52:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_compact_tiles` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_row_thresholds`
+(Worker_TP1 pid=1) 2026-11-27 18:52:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_active_greedy_finish` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_compact_tiles`
+(Worker_TP1 pid=1) 2026-11-27 18:52:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_active_greedy_finish` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_active_greedy_finish`
+(Worker_TP1 pid=1) 2026-11-27 18:52:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_screen_greedy_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_active_greedy_finish`
+(Worker_TP1 pid=1) 2026-11-27 18:52:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_screen_greedy_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_screen_greedy_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_screen_greedy_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_screen_greedy_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_screen_greedy_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_screen_greedy_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_refine_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_screen_greedy_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_refine_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_refine_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_refine_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_refine_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_refine_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_refine_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_markov_row_thresholds` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_refine_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_markov_refine_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_markov_row_thresholds`
+(Worker_TP1 pid=1) 2026-11-27 18:52:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_active_greedy_finish` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_active_greedy_finish`
+(Worker_TP1 pid=1) 2026-11-27 18:52:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_markov_refine_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:52:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:52:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:52:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:52:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:52:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:52:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:52:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:52:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:52:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:52:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:52:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:52:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_grouped_fp8_fp4_gemm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:52:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:52:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_grouped_fp8_fp4_gemm`
+(Worker_TP1 pid=1) 2026-11-27 18:53:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:53:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:53:03  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:53:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:53:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_combine` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_combine` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_combine`
+(Worker_TP1 pid=1) 2026-11-27 18:53:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_combine` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_combine`
+(Worker_TP1 pid=1) 2026-11-27 18:53:06  [TileLang:tilelang.cache.kernel_cache:WARNING] (kernel_cache.py:457): Found kernel 'moe_dispatch' in memory cache. For better performance, consider using `@tilelang.jit` instead of direct kernel caching.
+(Worker_TP1 pid=1) 2026-11-27 18:53:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_combine`
+(Worker_TP1 pid=1) 2026-11-27 18:53:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:53:08  [TileLang:tilelang.cache.kernel_cache:WARNING] (kernel_cache.py:457): Found kernel 'moe_dispatch' in memory cache. For better performance, consider using `@tilelang.jit` instead of direct kernel caching.
+(Worker_TP1 pid=1) 2026-11-27 18:53:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:53:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_dispatch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:53:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_projection` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_dispatch`
+(Worker_TP1 pid=1) 2026-11-27 18:53:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_x_norm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_x_norm`
+(Worker_TP1 pid=1) 2026-11-27 18:53:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_projection`
+(Worker_TP1 pid=1) 2026-11-27 18:53:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_row_thresholds` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_screen_greedy_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:12  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_row_thresholds`
+(Worker_TP1 pid=1) 2026-11-27 18:53:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_refine_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_screen_greedy_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:53:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_markov_greedy_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_refine_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:53:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_greedy_finish` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_markov_greedy_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:53:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `finish_packed_markov_top2_exact_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_greedy_finish`
+(Worker_TP1 pid=1) 2026-11-27 18:53:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vocab_packed_markov_screen_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `finish_packed_markov_top2_exact_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:53:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_pad_columns` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vocab_packed_markov_screen_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:53:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_pad_columns`
+(Worker_TP1 pid=1) 2026-11-27 18:53:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_linear` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_add_norm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_add_norm`
+(Worker_TP1 pid=1) 2026-11-27 18:53:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_linear` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_linear`
+(Worker_TP1 pid=1) 2026-11-27 18:53:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_rope_qkv` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_rope_qkv`
+(Worker_TP1 pid=1) 2026-11-27 18:53:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_linear`
+(Worker_TP1 pid=1) 2026-11-27 18:53:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_attention` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_linear` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_linear`
+(Worker_TP1 pid=1) 2026-11-27 18:53:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_add_norm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_attention`
+(Worker_TP1 pid=1) 2026-11-27 18:53:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_swiglu_linear` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_add_norm`
+(Worker_TP1 pid=1) 2026-11-27 18:53:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_linear` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_swiglu_linear`
+(Worker_TP1 pid=1) 2026-11-27 18:53:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_gemv` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_linear`
+(Worker_TP1 pid=1) 2026-11-27 18:53:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_gemv` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_gemv`
+(Worker_TP1 pid=1) 2026-11-27 18:53:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_gemv` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_gemv`
+(Worker_TP1 pid=1) 2026-11-27 18:53:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_gemv` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_gemv`
+(Worker_TP1 pid=1) 2026-11-27 18:53:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_gemv`
+(Worker_TP1 pid=1) 2026-11-27 18:53:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_gemv` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `collectives_rank_order_sum` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_gemv`
+(Worker_TP1 pid=1) 2026-11-27 18:53:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `collectives_rank_order_sum`
+(Worker_TP1 pid=1) 2026-11-27 18:53:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_spatial_merge` with `out_idx=None`
+[18:54:17] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `j` with extent 8 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[18:54:17] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `j` with extent 8 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[18:54:21] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `j` with extent 8 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[18:54:22] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `j` with extent 8 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[18:55:22] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `v` with extent 8 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[18:55:29] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `i` with extent 4 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[18:55:32] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `i` with extent 4 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[18:56:29] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `i` with extent 4 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[18:56:34] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `i` with extent 4 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[18:56:34] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `i` with extent 4 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[18:56:35] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `i` with extent 4 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[18:56:35] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `i` with extent 4 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+(Worker_TP1 pid=1) 2026-11-27 18:53:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_linear` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_spatial_merge`
+(Worker_TP1 pid=1) 2026-11-27 18:53:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_linear` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_linear`
+(Worker_TP1 pid=1) 2026-11-27 18:53:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_gemv` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_gemv`
+(Worker_TP1 pid=1) 2026-11-27 18:53:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_linear`
+(Worker_TP1 pid=1) 2026-11-27 18:53:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `vision_gemv` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `collectives_rank_order_strided` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `vision_gemv`
+(Worker_TP1 pid=1) 2026-11-27 18:53:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `collectives_rank_order_strided` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `collectives_rank_order_strided`
+(Worker_TP1 pid=1) 2026-11-27 18:53:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `collectives_rank_order_strided` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `collectives_rank_order_strided`
+(Worker_TP1 pid=1) 2026-11-27 18:53:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `collectives_rank_order_strided` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `collectives_rank_order_strided`
+(Worker_TP1 pid=1) 2026-11-27 18:53:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `collectives_rank_order_strided` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `collectives_rank_order_strided`
+(Worker_TP1 pid=1) 2026-11-27 18:53:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `collectives_rank_order_strided` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `collectives_rank_order_strided`
+(Worker_TP1 pid=1) 2026-11-27 18:53:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `collectives_rank_order_strided`
+(Worker_TP1 pid=1) 2026-11-27 18:53:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `collectives_rank_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `collectives_rank_rows_bytes` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `collectives_rank_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:53:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `collectives_rank_rows_bytes`
+(Worker_TP1 pid=1) 2026-11-27 18:53:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `collectives_rank_rows_bytes` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `collectives_rank_rows_bytes` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `collectives_rank_rows_bytes`
+(Worker_TP1 pid=1) 2026-11-27 18:53:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `collectives_rank_rows_bytes`
+(Worker_TP1 pid=1) 2026-11-27 18:53:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `l2_prefetch` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_collapse_column` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `l2_prefetch`
+(Worker_TP1 pid=1) 2026-11-27 18:53:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_post_collapse_norm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_collapse_column`
+(Worker_TP1 pid=1) 2026-11-27 18:53:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_post_collapse_norm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:53:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_post_collapse_norm`
+(Worker_TP1 pid=1) 2026-11-27 18:53:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_post_collapse_norm`
+(Worker_TP1 pid=1) 2026-11-27 18:53:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `router_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `router_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:03  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `router_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:54:03  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `router_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:54:03  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `routing_masks` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `routing_masks` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `routing_masks`
+(Worker_TP1 pid=1) 2026-11-27 18:54:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `routing_masks` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `routing_masks`
+(Worker_TP1 pid=1) 2026-11-27 18:54:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `routing_masks` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `routing_masks`
+(Worker_TP1 pid=1) 2026-11-27 18:54:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `routing_masks` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `routing_masks`
+(Worker_TP1 pid=1) 2026-11-27 18:54:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_chunk` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `routing_masks`
+(Worker_TP1 pid=1) 2026-11-27 18:54:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_chunk` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_chunk`
+(Worker_TP1 pid=1) 2026-11-27 18:54:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_builder` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_chunk`
+(Worker_TP1 pid=1) 2026-11-27 18:54:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `rope` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `rope`
+(Worker_TP1 pid=1) 2026-11-27 18:54:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `rope` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `rope`
+(Worker_TP1 pid=1) 2026-11-27 18:54:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `cache_writer` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `cache_writer`
+(Worker_TP1 pid=1) 2026-11-27 18:54:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `attention_front` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `attention_front`
+(Worker_TP1 pid=1) 2026-11-27 18:54:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `attention_front` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `attention_front`
+(Worker_TP1 pid=1) 2026-11-27 18:54:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `cache_writer` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `cache_writer`
+(Worker_TP1 pid=1) 2026-11-27 18:54:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_fp8w_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_builder`
+(Worker_TP1 pid=1) 2026-11-27 18:54:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_fp8w_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_fp8w_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:54:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_fp8w_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_fp8w_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:54:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_fp8w_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_fp8w_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:54:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_fp8w_bf16_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_fp8w_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:54:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_fp8w_bf16_cast` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_fp8w_bf16_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:54:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_splitk_reduce_cast` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_fp8w_bf16_cast`
+(Worker_TP1 pid=1) 2026-11-27 18:54:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_splitk_reduce_cast`
+(Worker_TP1 pid=1) 2026-11-27 18:54:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:54:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:54:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:54:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:54:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:54:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:54:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:54:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sparse_mla` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:55:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `activation_swiglu_clamp_cast` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `activation_swiglu_clamp_cast`
+(Worker_TP1 pid=1) 2026-11-27 18:55:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_project_streams` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_project_streams`
+(Worker_TP1 pid=1) 2026-11-27 18:55:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sparse_mla`
+(Worker_TP1 pid=1) 2026-11-27 18:55:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_project_streams` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_project_streams` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_project_streams`
+(Worker_TP1 pid=1) 2026-11-27 18:55:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_project_streams` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_project_streams`
+(Worker_TP1 pid=1) 2026-11-27 18:55:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_project_streams` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_project_streams`
+(Worker_TP1 pid=1) 2026-11-27 18:55:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_project_streams` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_project_streams`
+(Worker_TP1 pid=1) 2026-11-27 18:55:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_finalize` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_finalize`
+(Worker_TP1 pid=1) 2026-11-27 18:55:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_finalize` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_project_streams`
+(Worker_TP1 pid=1) 2026-11-27 18:55:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_finalize_norm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_finalize`
+(Worker_TP1 pid=1) 2026-11-27 18:55:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_finalize_sinkhorn` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_finalize_norm`
+(Worker_TP1 pid=1) 2026-11-27 18:55:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_finalize_sinkhorn` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_finalize_sinkhorn`
+(Worker_TP1 pid=1) 2026-11-27 18:55:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_post` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_finalize_sinkhorn`
+(Worker_TP1 pid=1) 2026-11-27 18:55:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_post` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_post`
+(Worker_TP1 pid=1) 2026-11-27 18:55:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_collapse` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_post`
+(Worker_TP1 pid=1) 2026-11-27 18:55:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_post_collapse` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_collapse`
+(Worker_TP1 pid=1) 2026-11-27 18:55:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_post_collapse` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_post_collapse`
+(Worker_TP1 pid=1) 2026-11-27 18:55:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_post_collapse_norm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_post_collapse`
+(Worker_TP1 pid=1) 2026-11-27 18:55:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_post_collapse_norm` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_post_collapse_norm`
+(Worker_TP1 pid=1) 2026-11-27 18:55:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `engram_gate` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_post_collapse_norm`
+(Worker_TP1 pid=1) 2026-11-27 18:55:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `engram_post_gate` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `engram_gate`
+(Worker_TP1 pid=1) 2026-11-27 18:55:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `copy_columns` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `engram_post_gate`
+(Worker_TP1 pid=1) 2026-11-27 18:55:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `engram_post_gate` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `copy_columns`
+(Worker_TP1 pid=1) 2026-11-27 18:55:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `engram_gate_blocked` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `engram_post_gate`
+(Worker_TP1 pid=1) 2026-11-27 18:55:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `engram_post_gate_blocked` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `engram_gate_blocked`
+(Worker_TP1 pid=1) 2026-11-27 18:55:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `engram_post_gate_blocked` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `engram_post_gate_blocked`
+(Worker_TP1 pid=1) 2026-11-27 18:55:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `engram_rows_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `engram_post_gate_blocked`
+(Worker_TP1 pid=1) 2026-11-27 18:55:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_decode` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `engram_rows_step`
+(Worker_TP1 pid=1) 2026-11-27 18:55:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_decode` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_decode`
+(Worker_TP1 pid=1) 2026-11-27 18:55:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_mask_lengths` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_decode`
+(Worker_TP1 pid=1) 2026-11-27 18:55:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_pages` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_mask_lengths`
+(Worker_TP1 pid=1) 2026-11-27 18:55:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_pages` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_pages`
+(Worker_TP1 pid=1) 2026-11-27 18:55:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_builder` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_pages`
+(Worker_TP1 pid=1) 2026-11-27 18:55:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_builder` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_builder`
+(Worker_TP1 pid=1) 2026-11-27 18:55:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `cache_writer` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `cache_writer`
+(Worker_TP1 pid=1) 2026-11-27 18:55:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sparse_mla` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:55:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_builder`
+(Worker_TP1 pid=1) 2026-11-27 18:55:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sparse_mla` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sparse_mla`
+(Worker_TP1 pid=1) 2026-11-27 18:56:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_score` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_score`
+(Worker_TP1 pid=1) 2026-11-27 18:56:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_score` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_score`
+(Worker_TP1 pid=1) 2026-11-27 18:56:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_segment` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_segment`
+(Worker_TP1 pid=1) 2026-11-27 18:56:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_merge` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sparse_mla`
+(Worker_TP1 pid=1) 2026-11-27 18:56:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_score_blockmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_score_blockmax`
+(Worker_TP1 pid=1) 2026-11-27 18:56:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_segment` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_merge`
+(Worker_TP1 pid=1) 2026-11-27 18:56:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_gather32` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_segment`
+(Worker_TP1 pid=1) 2026-11-27 18:56:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_score` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_gather32`
+(Worker_TP1 pid=1) 2026-11-27 18:56:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_score` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_score`
+(Worker_TP1 pid=1) 2026-11-27 18:56:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_segment` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_score`
+(Worker_TP1 pid=1) 2026-11-27 18:56:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_mxfp4_quantize` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_mxfp4_quantize`
+(Worker_TP1 pid=1) 2026-11-27 18:56:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_mxfp4_quantize` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_segment`
+(Worker_TP1 pid=1) 2026-11-27 18:56:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_mxfp4_quantize` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_mxfp4_quantize`
+(Worker_TP1 pid=1) 2026-11-27 18:56:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `compress_gather_partial_state` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `compress_gather_partial_state`
+(Worker_TP1 pid=1) 2026-11-27 18:56:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `compress` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_mxfp4_quantize`
+(Worker_TP1 pid=1) 2026-11-27 18:56:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `compress` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `compress`
+(Worker_TP1 pid=1) 2026-11-27 18:56:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_project_streams` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `compress`
+(Worker_TP1 pid=1) 2026-11-27 18:56:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mhc_project_streams` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_project_streams`
+(Worker_TP1 pid=1) 2026-11-27 18:56:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mhc_project_streams`
+(Worker_TP1 pid=1) 2026-11-27 18:56:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `engram_rows_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `router_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `engram_rows_step`
+(Worker_TP1 pid=1) 2026-11-27 18:56:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `router_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `router_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:56:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_decode` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `router_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:56:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_decode` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_decode`
+(Worker_TP1 pid=1) 2026-11-27 18:56:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_pages` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_decode`
+(Worker_TP1 pid=1) 2026-11-27 18:56:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_builder` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_pages`
+(Worker_TP1 pid=1) 2026-11-27 18:56:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `cache_writer` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:56:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `cache_writer`
+(Worker_TP1 pid=1) 2026-11-27 18:57:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sparse_mla` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sparse_mla`
+(Worker_TP1 pid=1) 2026-11-27 18:57:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sparse_mla` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_builder`
+(Worker_TP1 pid=1) 2026-11-27 18:57:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_score` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_score`
+(Worker_TP1 pid=1) 2026-11-27 18:57:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_score` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_score`
+(Worker_TP1 pid=1) 2026-11-27 18:57:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_segment` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_segment`
+(Worker_TP1 pid=1) 2026-11-27 18:57:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_segment` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sparse_mla`
+(Worker_TP1 pid=1) 2026-11-27 18:57:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_merge` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_segment`
+(Worker_TP1 pid=1) 2026-11-27 18:57:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_score_blockmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_score_blockmax`
+(Worker_TP1 pid=1) 2026-11-27 18:57:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_segment` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_merge`
+(Worker_TP1 pid=1) 2026-11-27 18:57:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_merge` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_merge`
+(Worker_TP1 pid=1) 2026-11-27 18:57:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_gather32` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_segment`
+(Worker_TP1 pid=1) 2026-11-27 18:57:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_mxfp4_quantize` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:43  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_mxfp4_quantize`
+(Worker_TP1 pid=1) 2026-11-27 18:57:43  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_mxfp4_quantize` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_gather32`
+(Worker_TP1 pid=1) 2026-11-27 18:57:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `compress` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_mxfp4_quantize`
+(Worker_TP1 pid=1) 2026-11-27 18:57:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `compress` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `compress`
+(Worker_TP1 pid=1) 2026-11-27 18:57:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_score` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_score`
+(Worker_TP1 pid=1) 2026-11-27 18:57:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `indexer_topk_segment` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:57:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `compress`
+(Worker_TP1 pid=1) 2026-11-27 18:57:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `engram_hash` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `engram_hash`
+(Worker_TP1 pid=1) 2026-11-27 18:58:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `indexer_topk_segment`
+(Worker_TP1 pid=1) 2026-11-27 18:58:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:58:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:58:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:58:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:58:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_splitk_reduce` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_splitk_reduce`
+(Worker_TP1 pid=1) 2026-11-27 18:58:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gemm_mxfp8` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:58:12  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `router_partials` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gemm_mxfp8`
+(Worker_TP1 pid=1) 2026-11-27 18:58:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `metadata_chunk` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `metadata_chunk`
+(Worker_TP1 pid=1) 2026-11-27 18:58:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `attention_front` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `router_partials`
+(Worker_TP1 pid=1) 2026-11-27 18:58:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `attention_front` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `attention_front`
+(Worker_TP1 pid=1) 2026-11-27 18:58:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sparse_mla` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `attention_front`
+(Worker_TP1 pid=1) 2026-11-27 18:58:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sparse_mla` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sparse_mla`
+(Worker_TP1 pid=1) 2026-11-27 18:58:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `dspark_confidence` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `dspark_confidence`
+(Worker_TP1 pid=1) 2026-11-27 18:58:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `dspark_confidence_calibrate` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `dspark_confidence_calibrate`
+(Worker_TP1 pid=1) 2026-11-27 18:58:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sparse_mla`
+(Worker_TP1 pid=1) INFO 11-27 18:58:30 [prepare.py:503] TileLang warm index: 0 fast-loaded, 329 compiled/missed in 569.31 s (index=prepare-index-93d39c262202b16c.json)
+(Worker_TP1 pid=1) 2026-11-27 18:58:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `per_token_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:58:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `per_token_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:58:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `per_token_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:58:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `per_token_cast_kernel`
+(Worker_TP1 pid=1) INFO 11-27 18:58:34 [l2_prefetch.py:300] [l2_prefetch] TileLang kernel ready (grid=2 block=32 chunk=65536)
+(Worker_TP1 pid=1) INFO 11-27 18:58:34 [model.py:532] [l2_prefetch] layer 0 WO 3 segs 15.0 MB: wo_a.weight:8.4MB, wo_a.tilelang_weight_sf:0.0MB, wo_b.weight[head]:6.6MB [17-32 rows: 10.0 MB] | COMP - | FFN 7 segs 12.0 MB: mhc.hc_ffn_fn:2.0MB, mhc.hc_ffn_base:0.0MB, ffn_norm.weight:0.0MB, gate.weight:3.9MB, gate_up_proj.weight:5.9MB, gate_up_proj.tilelang_weight_sf:0.0MB, down_proj.weight[head]:0.2MB | NEXT 6 segs 12.0 MB: mhc.hc_attn_fn:2.0MB, mhc.hc_attn_base:0.0MB, attn_norm.weight:0.0MB, wqa_wkv.weight:2.3MB, wqa_wkv.tilelang_weight_sf:0.0MB, wq_b.weight[head]:7.7MB | ENGRAM 1 segs 12.0 MB: engram.wkv.weight[head]:12.0MB
+(Worker_TP1 pid=1) INFO 11-27 18:58:34 [model.py:532] [l2_prefetch] layer 39 WO 3 segs 15.0 MB: wo_a.weight:8.4MB, wo_a.tilelang_weight_sf:0.0MB, wo_b.weight[head]:6.6MB [17-32 rows: 10.0 MB] | COMP - | FFN 7 segs 12.0 MB: mhc.hc_ffn_fn:2.0MB, mhc.hc_ffn_base:0.0MB, ffn_norm.weight:0.0MB, gate.weight:3.9MB, gate_up_proj.weight:5.9MB, gate_up_proj.tilelang_weight_sf:0.0MB, down_proj.weight[head]:0.2MB | NEXT - | ENGRAM -
+(Worker_TP1 pid=1) 2026-11-27 18:58:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `moe_topk_gate_forward_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `moe_topk_gate_forward_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:58:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `per_token_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:58:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `per_token_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:58:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `per_token_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:58:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `per_token_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:58:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `norm_forward_and_per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `norm_forward_and_per_token_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:58:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `norm_forward_and_per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `norm_forward_and_per_token_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:58:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `norm_forward_and_per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:43  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `norm_forward_and_per_token_cast_kernel`
+(Worker_TP1 pid=1) 2026-11-27 18:58:43  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `norm_forward_and_per_token_cast_kernel` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `norm_forward_and_per_token_cast_kernel`
+(Worker_TP1 pid=1) INFO 11-27 18:58:44 [model_runner.py:2955] Greedy verification from vocabulary shards: on
+(Worker_TP1 pid=1) INFO 11-27 18:58:44 [model_runner.py:2974] Sampled verification from vocabulary shards: on
+[18:59:14] /workspace/tilelang/src/transform/thread_storage_sync.cc:1240: Warning: [ThreadSync] Hoisting sync out of an if whose condition is not safe for an in-if sync. This is not a fix: both ends of the conflict are inside the branch, so the hoisted barrier no longer separates them and the race remains. Constraining the condition -- a T.assume on the parameters it reads -- keeps the barrier in place instead. Condition: chunk * 256 + tx < num_reqs * 5
+[18:59:20] /workspace/tilelang/src/transform/thread_storage_sync.cc:1240: Warning: [ThreadSync] Hoisting sync out of an if whose condition is not safe for an in-if sync. This is not a fix: both ends of the conflict are inside the branch, so the hoisted barrier no longer separates them and the race remains. Constraining the condition -- a T.assume on the parameters it reads -- keeps the barrier in place instead. Condition: chunk * 256 + tx < num_reqs * 16
+[18:59:33] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `k` with extent 4 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[19:00:43] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `k` with extent 4 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[19:00:44] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `k` with extent 4 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[19:01:52] /workspace/tilelang/src/transform/verify_buffer_init.cc:394: Warning: Buffer read before initialization: 1 buffer(s) read before anything writes them
+  [1] `best` is read before anything writes it
+Initialize the buffer before its first read (for example with `T.clear`, `T.fill`, or a `T.copy` into it). If you believe this is a false positive, disable the check by setting `PassConfigKey.TL_DISABLE_BUFFER_INIT_CHECK` in the pass config.
+[19:01:53] /workspace/tilelang/src/transform/verify_buffer_init.cc:394: Warning: Buffer read before initialization: 1 buffer(s) read before anything writes them
+  [1] `best` is read before anything writes it
+Initialize the buffer before its first read (for example with `T.clear`, `T.fill`, or a `T.copy` into it). If you believe this is a false positive, disable the check by setting `PassConfigKey.TL_DISABLE_BUFFER_INIT_CHECK` in the pass config.
+[19:01:54] /workspace/tilelang/src/transform/verify_buffer_init.cc:394: Warning: Buffer read before initialization: 1 buffer(s) read before anything writes them
+  [1] `best` is read before anything writes it
+Initialize the buffer before its first read (for example with `T.clear`, `T.fill`, or a `T.copy` into it). If you believe this is a false positive, disable the check by setting `PassConfigKey.TL_DISABLE_BUFFER_INIT_CHECK` in the pass config.
+[19:01:55] /workspace/tilelang/src/transform/verify_buffer_init.cc:394: Warning: Buffer read before initialization: 1 buffer(s) read before anything writes them
+  [1] `best` is read before anything writes it
+Initialize the buffer before its first read (for example with `T.clear`, `T.fill`, or a `T.copy` into it). If you believe this is a false positive, disable the check by setting `PassConfigKey.TL_DISABLE_BUFFER_INIT_CHECK` in the pass config.
+[19:01:57] /workspace/tilelang/src/transform/verify_buffer_init.cc:394: Warning: Buffer read before initialization: 1 buffer(s) read before anything writes them
+  [1] `best` is read before anything writes it
+Initialize the buffer before its first read (for example with `T.clear`, `T.fill`, or a `T.copy` into it). If you believe this is a false positive, disable the check by setting `PassConfigKey.TL_DISABLE_BUFFER_INIT_CHECK` in the pass config.
+[19:01:57] /workspace/tilelang/src/transform/verify_buffer_init.cc:394: Warning: Buffer read before initialization: 1 buffer(s) read before anything writes them
+  [1] `best` is read before anything writes it
+Initialize the buffer before its first read (for example with `T.clear`, `T.fill`, or a `T.copy` into it). If you believe this is a false positive, disable the check by setting `PassConfigKey.TL_DISABLE_BUFFER_INIT_CHECK` in the pass config.
+[19:02:30] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `v` with extent 8 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[19:02:30] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `v` with extent 8 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[19:02:31] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `v` with extent 8 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[19:02:31] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `v` with extent 8 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[19:02:32] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `v` with extent 8 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+[19:02:32] /workspace/tilelang/src/transform/legalize_vectorized_loop.cc:86: Warning: T.vectorized loop over `v` with extent 8 is lowered as a serial loop because TileLang could not find a valid vectorization plan. Scalar accumulator updates inside the loop are a common cause; move reductions to T.unroll or T.serial if this is intended.
+(Worker_TP1 pid=1) 2026-11-27 18:58:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `apply_write` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `apply_write` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `apply_write`
+(Worker_TP1 pid=1) 2026-11-27 18:58:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `apply_write`
+(Worker_TP1 pid=1) 2026-11-27 18:58:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `apply_write` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `apply_write` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `apply_write`
+(Worker_TP1 pid=1) 2026-11-27 18:58:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `apply_write`
+(Worker_TP1 pid=1) 2026-11-27 18:58:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gather_block_tables` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `compute_slot_mappings` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gather_block_tables`
+(Worker_TP1 pid=1) 2026-11-27 18:58:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `prepare_prefill_inputs` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `compute_slot_mappings`
+(Worker_TP1 pid=1) 2026-11-27 18:58:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `prepare_pos_seq_lens` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `prepare_prefill_inputs`
+(Worker_TP1 pid=1) 2026-11-27 18:58:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `combine_sampled_and_draft_tokens` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `prepare_pos_seq_lens`
+(Worker_TP1 pid=1) 2026-11-27 18:58:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `combine_sampled_and_draft_tokens` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `combine_sampled_and_draft_tokens`
+(Worker_TP1 pid=1) 2026-11-27 18:58:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `combine_sampled_and_draft_tokens` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `combine_sampled_and_draft_tokens`
+(Worker_TP1 pid=1) 2026-11-27 18:58:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `combine_sampled_and_draft_tokens` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:58:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `combine_sampled_and_draft_tokens`
+(Worker_TP1 pid=1) 2026-11-27 18:58:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `expand_idx_mapping` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `expand_idx_mapping`
+(Worker_TP1 pid=1) 2026-11-27 18:59:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `post_update` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `post_update`
+(Worker_TP1 pid=1) 2026-11-27 18:59:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `combine_sampled_and_draft_tokens`
+(Worker_TP1 pid=1) 2026-11-27 18:59:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `post_update` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `post_update` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `post_update`
+(Worker_TP1 pid=1) 2026-11-27 18:59:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `scatter_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `scatter_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gather_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gather_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `padding_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `padding_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `adaptive_offsets` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `adaptive_offsets`
+(Worker_TP1 pid=1) 2026-11-27 18:59:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `assign_draft_budget` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `assign_draft_budget`
+(Worker_TP1 pid=1) 2026-11-27 18:59:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `adaptive_offsets` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `adaptive_offsets`
+(Worker_TP1 pid=1) 2026-11-27 18:59:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `assign_draft_budget` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `post_update`
+(Worker_TP1 pid=1) 2026-11-27 18:59:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `scatter_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `assign_draft_budget`
+(Worker_TP1 pid=1) 2026-11-27 18:59:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `fill_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `scatter_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `fill_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `fill_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `copy_match` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `fill_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `copy_alloc` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `copy_alloc`
+(Worker_TP1 pid=1) 2026-11-27 18:59:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `copy_apply` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `copy_apply`
+(Worker_TP1 pid=1) 2026-11-27 18:59:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `fill_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `copy_match`
+(Worker_TP1 pid=1) 2026-11-27 18:59:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `token_counts` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `fill_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `token_counts` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `token_counts`
+(Worker_TP1 pid=1) 2026-11-27 18:59:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `token_counts` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `token_counts`
+(Worker_TP1 pid=1) 2026-11-27 18:59:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `token_counts` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `token_counts`
+(Worker_TP1 pid=1) 2026-11-27 18:59:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `token_counts` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `token_counts`
+(Worker_TP1 pid=1) 2026-11-27 18:59:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `token_counts` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `token_counts`
+(Worker_TP1 pid=1) 2026-11-27 18:59:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `logits_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `token_counts`
+(Worker_TP1 pid=1) 2026-11-27 18:59:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `min_p` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `logits_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gather_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `min_p`
+(Worker_TP1 pid=1) 2026-11-27 18:59:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gather_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gather_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gather_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gather_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gather_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gather_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_topp` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gather_rows`
+(Worker_TP1 pid=1) 2026-11-27 18:59:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 18:59:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_topp`
+(Worker_TP1 pid=1) 2026-11-27 18:59:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 18:59:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_topp` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:43  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 18:59:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 18:59:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 18:59:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 18:59:50  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 18:59:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_topp`
+(Worker_TP1 pid=1) 2026-11-27 18:59:53  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 18:59:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 18:59:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 18:59:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 18:59:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 18:59:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:58  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 18:59:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 19:00:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 19:00:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 19:00:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 19:00:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 19:00:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 19:00:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 19:00:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 19:00:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 19:00:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 19:00:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 19:00:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 19:00:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:12  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 19:00:12  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 19:00:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 19:00:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 19:00:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 19:00:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 19:00:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 19:00:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 19:00:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 19:00:20  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_step` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_stats`
+(Worker_TP1 pid=1) 2026-11-27 19:00:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topp_mask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_step`
+(Worker_TP1 pid=1) 2026-11-27 19:00:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_topp` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topp_mask`
+(Worker_TP1 pid=1) 2026-11-27 19:00:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_topp` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_topp`
+(Worker_TP1 pid=1) 2026-11-27 19:00:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gumbel_sample` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gumbel_sample`
+(Worker_TP1 pid=1) 2026-11-27 19:00:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gumbel_sample` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gumbel_sample`
+(Worker_TP1 pid=1) 2026-11-27 19:00:32  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `copy_logits_unmasked` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_topp`
+(Worker_TP1 pid=1) 2026-11-27 19:00:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `copy_logits_unmasked`
+(Worker_TP1 pid=1) 2026-11-27 19:00:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `copy_logits_unmasked` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `copy_logits_masked` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `copy_logits_unmasked`
+(Worker_TP1 pid=1) 2026-11-27 19:00:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `copy_logits_masked` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `copy_logits_masked`
+(Worker_TP1 pid=1) 2026-11-27 19:00:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `temperature` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `copy_logits_masked`
+(Worker_TP1 pid=1) 2026-11-27 19:00:36  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `temperature` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `temperature`
+(Worker_TP1 pid=1) 2026-11-27 19:00:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `gumbel_finish` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `temperature`
+(Worker_TP1 pid=1) 2026-11-27 19:00:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `penalties` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `gumbel_finish`
+(Worker_TP1 pid=1) 2026-11-27 19:00:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `bincount` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `bincount`
+(Worker_TP1 pid=1) 2026-11-27 19:00:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `clear_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:43  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `penalties`
+(Worker_TP1 pid=1) 2026-11-27 19:00:43  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `bias` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `clear_rows`
+(Worker_TP1 pid=1) 2026-11-27 19:00:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `bias` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `bias`
+(Worker_TP1 pid=1) 2026-11-27 19:00:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `bad_words` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `bias`
+(Worker_TP1 pid=1) 2026-11-27 19:00:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `reset_markers` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `bad_words`
+(Worker_TP1 pid=1) 2026-11-27 19:00:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `update_markers` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `reset_markers`
+(Worker_TP1 pid=1) 2026-11-27 19:00:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `thinking` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `thinking`
+(Worker_TP1 pid=1) 2026-11-27 19:00:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `update_markers`
+(Worker_TP1 pid=1) 2026-11-27 19:00:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `fill_ids` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_ids` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:00:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `fill_ids`
+(Worker_TP1 pid=1) 2026-11-27 19:00:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_ids` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_ids`
+(Worker_TP1 pid=1) 2026-11-27 19:01:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_ids_only` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_ids`
+(Worker_TP1 pid=1) 2026-11-27 19:01:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `token_ranks` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `token_ranks`
+(Worker_TP1 pid=1) 2026-11-27 19:01:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_log_softmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_log_softmax`
+(Worker_TP1 pid=1) 2026-11-27 19:01:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_log_softmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_log_softmax`
+(Worker_TP1 pid=1) 2026-11-27 19:01:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_log_softmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_log_softmax`
+(Worker_TP1 pid=1) 2026-11-27 19:01:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_ids_only`
+(Worker_TP1 pid=1) 2026-11-27 19:01:18  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_log_softmax_ranks` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `topk_log_softmax_ranks` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_log_softmax_ranks`
+(Worker_TP1 pid=1) 2026-11-27 19:01:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `topk_log_softmax_ranks`
+(Worker_TP1 pid=1) 2026-11-27 19:01:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `insert` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `insert` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:24  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `insert`
+(Worker_TP1 pid=1) 2026-11-27 19:01:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `local_stats` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `insert`
+(Worker_TP1 pid=1) 2026-11-27 19:01:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `resample` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `local_stats`
+(Worker_TP1 pid=1) 2026-11-27 19:01:27  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `resample` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `resample`
+(Worker_TP1 pid=1) 2026-11-27 19:01:29  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `verify` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `resample`
+(Worker_TP1 pid=1) 2026-11-27 19:01:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `verify`
+(Worker_TP1 pid=1) 2026-11-27 19:01:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `verify` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `verify` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `verify`
+(Worker_TP1 pid=1) 2026-11-27 19:01:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `verify` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `verify`
+(Worker_TP1 pid=1) 2026-11-27 19:01:34  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `insert` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `verify`
+(Worker_TP1 pid=1) 2026-11-27 19:01:35  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `insert` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `insert`
+(Worker_TP1 pid=1) 2026-11-27 19:01:37  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `flatten_sampled` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `insert`
+(Worker_TP1 pid=1) 2026-11-27 19:01:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `mask_dead_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:38  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `flatten_sampled`
+(Worker_TP1 pid=1) 2026-11-27 19:01:39  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `prompt_ids` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `mask_dead_rows`
+(Worker_TP1 pid=1) 2026-11-27 19:01:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `grammar_bitmask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:40  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `prompt_ids`
+(Worker_TP1 pid=1) 2026-11-27 19:01:41  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `grammar_bitmask` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `grammar_bitmask`
+(Worker_TP1 pid=1) 2026-11-27 19:01:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_flags` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `grammar_bitmask`
+(Worker_TP1 pid=1) 2026-11-27 19:01:42  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_flags` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_flags`
+(Worker_TP1 pid=1) 2026-11-27 19:01:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_cut` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_flags`
+(Worker_TP1 pid=1) 2026-11-27 19:01:44  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_cut` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_cut`
+(Worker_TP1 pid=1) 2026-11-27 19:01:45  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_shard_top` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_cut`
+(Worker_TP1 pid=1) 2026-11-27 19:01:46  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_cut_cols` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:47  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_cut_cols`
+(Worker_TP1 pid=1) 2026-11-27 19:01:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_select_top_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_shard_top`
+(Worker_TP1 pid=1) 2026-11-27 19:01:48  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_merge` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_select_top_rows`
+(Worker_TP1 pid=1) 2026-11-27 19:01:49  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_merge` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_merge`
+(Worker_TP1 pid=1) 2026-11-27 19:01:51  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_rows` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_merge`
+(Worker_TP1 pid=1) 2026-11-27 19:01:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_policy` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_rows`
+(Worker_TP1 pid=1) 2026-11-27 19:01:52  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_policy` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_policy`
+(Worker_TP1 pid=1) 2026-11-27 19:01:54  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_policy` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_policy`
+(Worker_TP1 pid=1) 2026-11-27 19:01:55  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_policy` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:56  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_policy`
+(Worker_TP1 pid=1) 2026-11-27 19:01:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_policy` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_policy`
+(Worker_TP1 pid=1) 2026-11-27 19:01:57  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_policy` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_policy`
+(Worker_TP1 pid=1) 2026-11-27 19:01:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_candidates` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:01:59  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_policy`
+(Worker_TP1 pid=1) 2026-11-27 19:02:00  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_candidates` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:01  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_candidates`
+(Worker_TP1 pid=1) 2026-11-27 19:02:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `sink_candidates` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_candidates`
+(Worker_TP1 pid=1) 2026-11-27 19:02:02  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `partial_argmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `sink_candidates`
+(Worker_TP1 pid=1) 2026-11-27 19:02:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `partial_argmax`
+(Worker_TP1 pid=1) 2026-11-27 19:02:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `finish_argmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:04  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `finish_argmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:05  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `finish_argmax`
+(Worker_TP1 pid=1) 2026-11-27 19:02:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `greedy_rejection` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `finish_argmax`
+(Worker_TP1 pid=1) 2026-11-27 19:02:06  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `greedy_rejection` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `greedy_rejection`
+(Worker_TP1 pid=1) 2026-11-27 19:02:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `greedy_rejection` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:07  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `greedy_rejection`
+(Worker_TP1 pid=1) 2026-11-27 19:02:08  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `greedy_rejection` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `greedy_rejection`
+(Worker_TP1 pid=1) 2026-11-27 19:02:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `greedy_rejection`
+(Worker_TP1 pid=1) 2026-11-27 19:02:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `resample_shard_pair` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:09  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `insert_shard_resampled` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:10  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `resample_shard_pair`
+(Worker_TP1 pid=1) 2026-11-27 19:02:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `verify_shard` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `insert_shard_resampled`
+(Worker_TP1 pid=1) 2026-11-27 19:02:11  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `verify_shard` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:12  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `verify_shard`
+(Worker_TP1 pid=1) 2026-11-27 19:02:13  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `insert_shard_resampled` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `verify_shard`
+(Worker_TP1 pid=1) 2026-11-27 19:02:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `verify_shard` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:14  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `insert_shard_resampled`
+(Worker_TP1 pid=1) 2026-11-27 19:02:15  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `verify_shard` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `verify_shard`
+(Worker_TP1 pid=1) 2026-11-27 19:02:16  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `local_stats_shard` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `verify_shard`
+(Worker_TP1 pid=1) 2026-11-27 19:02:17  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `resample_shard` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `local_stats_shard`
+(Worker_TP1 pid=1) 2026-11-27 19:02:19  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `resample_shard` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `resample_shard`
+(Worker_TP1 pid=1) 2026-11-27 19:02:21  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `prepare_dflash_inputs` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:22  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `resample_shard`
+(Worker_TP1 pid=1) 2026-11-27 19:02:23  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `partial_argmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `prepare_dflash_inputs`
+(Worker_TP1 pid=1) 2026-11-27 19:02:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `partial_argmax`
+(Worker_TP1 pid=1) 2026-11-27 19:02:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `partial_argmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:25  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `finish_argmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `finish_argmax`
+(Worker_TP1 pid=1) 2026-11-27 19:02:26  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `finish_argmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `finish_argmax`
+(Worker_TP1 pid=1) 2026-11-27 19:02:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `partial_argmax`
+(Worker_TP1 pid=1) 2026-11-27 19:02:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `finish_argmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:28  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `select_first_argmax` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `select_first_argmax`
+(Worker_TP1 pid=1) 2026-11-27 19:02:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `select_first_argmax_top2` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `finish_argmax`
+(Worker_TP1 pid=1) 2026-11-27 19:02:30  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `markov_anchor_embed` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `select_first_argmax_top2`
+(Worker_TP1 pid=1) 2026-11-27 19:02:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `markov_anchor_embed`
+(Worker_TP1 pid=1) 2026-11-27 19:02:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `select_first_argmax_embed` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:31  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:137): TileLang begins to compile kernel `select_first_argmax_embed_top2` with `out_idx=None`
+(Worker_TP1 pid=1) 2026-11-27 19:02:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `select_first_argmax_embed`
+(Worker_TP1 pid=1) 2026-11-27 19:02:33  [TileLang:tilelang.jit.kernel:INFO] (kernel.py:145): TileLang completes to compile kernel `select_first_argmax_embed_top2`
+(Worker_TP1 pid=1) INFO 11-27 19:02:33 [prepare.py:503] TileLang warm index: 0 fast-loaded, 173 compiled/missed in 228.35 s (index=prepare-index-93d39c262202b16c.json)
+(Worker_TP1 pid=1) INFO 11-27 19:02:37 [gpu_worker.py:2188] Prepared 329 TileLang calls and the registry's other kernels in 817.6 s.
+(Worker_TP1 pid=1) INFO 11-27 19:02:38 [gpu_worker.py:1367] Initial free memory 114.37 GiB, reserved 10.5 GiB memory for KV Cache as specified by kv_cache_memory_bytes config and skipped memory profiling. This does not respect the gpu_memory_utilization config. Only use kv_cache_memory_bytes config when you want manual control of KV cache memory size. If OOM'ed, check the difference of initial free memory between the current run and the previous run where kv_cache_memory_bytes is suggested and update it correspondingly.
+(Worker_TP1 pid=1) INFO 11-27 19:02:38 [adaptive_verification.py:172] DSpark dead verification rows below survival 0.2
+(Worker_TP1 pid=1) WARNING 11-27 19:02:38 [torch_utils.py:275] OMP_NUM_THREADS=8 is set; leaving Torch threads at 8 for serving. Multi-threaded torch CPU ops during serving can degrade performance through spin-wait contention and cgroup CPU-quota throttling.
+(Worker_TP1 pid=1) INFO 11-27 19:02:38 [kernel_warmup.py:174] JIT kernel warmup starting.
+(Worker_TP1 pid=1) INFO 11-27 19:02:38 [kernel_warmup.py:187] JIT kernel warmup finished in 0.00s.
+(Worker_TP1 pid=1) INFO 11-27 19:02:38 [kernel_warmup.py:252] Skipping FlashInfer autotune because it is disabled.
+(Worker_TP1 pid=1) INFO 11-27 19:02:41 [mhc.py:1593] [mhc] async Sinkhorn split active (max_rows=128)
+(Worker_TP1 pid=1) INFO 11-27 19:02:42 [l2_prefetch.py:574] [l2_prefetch] persisting L2 set-aside on cuda:0: L2 25 MB, max 19 MB, requested 0 MB, now 0 MB
+(Worker_TP1 pid=1) INFO 11-27 19:02:54 [model.py:532] [l2_prefetch] layer 40 WO 3 segs 15.0 MB: wo_a.weight:8.4MB, wo_a.tilelang_weight_sf:0.0MB, wo_b.weight[head]:6.6MB [17-32 rows: 10.0 MB] | COMP - | FFN 7 segs 12.0 MB: mhc.hc_ffn_fn:2.0MB, mhc.hc_ffn_base:0.0MB, ffn_norm.weight:0.0MB, gate.weight:1.3MB, gate_up_proj.weight:5.9MB, gate_up_proj.tilelang_weight_sf:0.0MB, down_proj.weight[head]:2.8MB | NEXT 6 segs 12.0 MB: mhc.hc_attn_fn:2.0MB, mhc.hc_attn_base:0.0MB, attn_norm.weight:0.0MB, wqa_wkv.weight:9.2MB, wqa_wkv.tilelang_weight_sf:0.0MB, wq_b.weight[head]:0.8MB | ENGRAM -
+(Worker_TP1 pid=1) INFO 11-27 19:02:54 [model.py:532] [l2_prefetch] layer 42 WO 3 segs 15.0 MB: wo_a.weight:8.4MB, wo_a.tilelang_weight_sf:0.0MB, wo_b.weight[head]:6.6MB [17-32 rows: 10.0 MB] | COMP - | FFN 7 segs 12.0 MB: mhc.hc_ffn_fn:2.0MB, mhc.hc_ffn_base:0.0MB, ffn_norm.weight:0.0MB, gate.weight:1.3MB, gate_up_proj.weight:5.9MB, gate_up_proj.tilelang_weight_sf:0.0MB, down_proj.weight[head]:2.8MB | NEXT - | ENGRAM -
+(Worker_TP1 pid=1) INFO 11-27 19:03:08 [model_runner.py:3391] Using certified W_q screened greedy verification under sink rejection (top_k=4)
+(Worker_TP1 pid=1) INFO 11-27 19:03:19 [speculator.py:172] Capturing model for DSpark speculator...
+(Worker_TP1 pid=1) INFO 11-27 19:03:27 [model_runner.py:2203] Graph capturing finished in 17 secs, took 4.46 GiB
+(Worker_TP1 pid=1) INFO 11-27 19:03:28 [gpu_worker.py:2821] [memory_breakdown] rank=1 weights=71.6 GiB kv_cache=10.5 GiB workspace=1.39 GiB other_torch_allocated=1.63 GiB torch_allocated=85.12 GiB torch_reserved=85.58 GiB torch_allocator_slack=0.47 GiB peak_activation=0.0 GiB cudagraph=4.46 GiB non_torch_cuda=14.57 GiB free_memory=23.56 GiB
+(Worker_TP1 pid=1) INFO 11-27 19:04:39 [sink.py:468] Sink detector, rank 1: 1 flagged rows in executed steps (draft zero 1, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:04:44 [sink.py:468] Sink detector, rank 1: 2 flagged rows in executed steps (draft zero 2, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:04:49 [sink.py:468] Sink detector, rank 1: 3 flagged rows in executed steps (draft zero 3, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:04:51 [sink.py:468] Sink detector, rank 1: 4 flagged rows in executed steps (draft zero 4, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:04:51 [sink.py:468] Sink detector, rank 1: 5 flagged rows in executed steps (draft zero 5, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:04:53 [sink.py:468] Sink detector, rank 1: 6 flagged rows in executed steps (draft zero 6, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:04:54 [sink.py:468] Sink detector, rank 1: 7 flagged rows in executed steps (draft zero 7, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:04:56 [sink.py:468] Sink detector, rank 1: 8 flagged rows in executed steps (draft zero 8, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:08:08 [sink.py:468] Sink detector, rank 1: 9 flagged rows in executed steps (draft zero 9, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:08:09 [sink.py:468] Sink detector, rank 1: 10 flagged rows in executed steps (draft zero 10, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:08:14 [sink.py:468] Sink detector, rank 1: 11 flagged rows in executed steps (draft zero 11, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:08:18 [sink.py:468] Sink detector, rank 1: 12 flagged rows in executed steps (draft zero 12, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:08:20 [sink.py:468] Sink detector, rank 1: 13 flagged rows in executed steps (draft zero 13, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:08:20 [sink.py:468] Sink detector, rank 1: 14 flagged rows in executed steps (draft zero 14, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:08:22 [sink.py:468] Sink detector, rank 1: 15 flagged rows in executed steps (draft zero 15, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:08:23 [sink.py:468] Sink detector, rank 1: 16 flagged rows in executed steps (draft zero 16, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)
+(Worker_TP1 pid=1) INFO 11-27 19:08:25 [sink.py:468] Sink detector, rank 1: 17 flagged rows in executed steps (draft zero 17, drafter 0, prompt 0; vllm:sink_* counts committed outputs only)

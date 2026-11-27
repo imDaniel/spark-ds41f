@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="5" time="21.124" timestamp="2026-11-27T18:07:12.856635+00:00" hostname="a21b35f7d2fc"><testcase classname="" name="test_disk_engram_model_allocates_hash_buffer_from_declared_caps" time="0.219" /><testcase classname="" name="test_fused_consumer_graph_matches_independent_projection[3]" time="10.964"><failure message="AssertionError: Tensor-likes are not 'equal'!&#10;&#10;Mismatched elements: 158762 / 327680 (48.5%)&#10;The first mismatched element is at index (3, 0).">kernels = (&lt;module 'vllm.models.deepseek_v4_1.steering.ops' from '/opt/spark-ds41f/candidate/vllm/vllm/models/deepseek_v4_1/stee...eek_v4_1.steering.row_kernel' from '/opt/spark-ds41f/candidate/vllm/vllm/models/deepseek_v4_1/steering/row_kernel.py'&gt;)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe612d8cd9700&gt;
+rows = 3
+
+    @pytest.mark.usefixtures("default_vllm_config")
+    @pytest.mark.parametrize("rows", [3, 16, 96, 129])
+    def test_fused_consumer_graph_matches_independent_projection(
+        kernels, monkeypatch, rows
+    ):
+        """The actual TileLang fold and one active graph must survive dose changes."""
+        if torch.cuda.get_device_capability()[0] != 12:
+            pytest.skip("DeepSeek mHC target requires SM12x")
+        from types import SimpleNamespace
+    
+        from vllm.models.deepseek_v4_1.tilelang.mhc import TileKernelsMHC
+        from vllm.v1.worker.workspace import (
+            collect_cuda_graph_capture_resources,
+            init_workspace_manager,
+            is_workspace_manager_initialized,
+            reset_workspace_manager,
+        )
+    
+        owned_workspace = not is_workspace_manager_initialized()
+        if owned_workspace:
+            init_workspace_manager(torch.device("cuda"))
+        ops, _ = kernels
+        h = 5120
+        gen = torch.Generator(device="cuda").manual_seed(1729)
+        writer = torch.randn(rows, h, device="cuda", dtype=torch.bfloat16, generator=gen)
+        residual = torch.randn(
+            rows, 4, h, device="cuda", dtype=torch.bfloat16, generator=gen
+        )
+        direction = torch.randn(h, device="cuda", generator=gen)
+        direction /= direction.double().norm().float()
+        scales = torch.zeros(rows, device="cuda")
+        dots = torch.full((rows, 2), float("nan"), device="cuda")
+        layer = TileKernelsMHC(
+            SimpleNamespace(
+                hc_mult=4,
+                hidden_size=h,
+                rms_norm_eps=1e-6,
+                hc_eps=1e-6,
+                hc_sinkhorn_iters=20,
+            )
+        )
+        layer.steering_enabled = True
+        monkeypatch.setattr(
+            layer,
+            "_entries",
+            lambda: [(mode, 1) for mode in ("pre", "post_pre", "broadcast")],
+        )
+        layer.declare_kernels()
+        post = torch.rand(rows, 4, device="cuda", generator=gen)
+        comb = torch.rand(rows, 4, 4, device="cuda", generator=gen)
+        fn = torch.randn(24, 4 * h, device="cuda", generator=gen) / (4 * h) ** 0.5
+        norm = torch.ones(h, device="cuda", dtype=torch.bfloat16)
+        params = (
+            residual,
+            post,
+            comb,
+            fn,
+            torch.ones(3, device="cuda"),
+            torch.zeros(24, device="cuda"),
+            norm,
+            post,
+        )
+    
+        def fused():
+            controls = ops.prepare_consumer(writer, direction, scales, dots, None, 2.5)[1]
+            return layer.post_pre(writer, *params, **controls)
+    
+        try:
+            stream = torch.cuda.Stream()
+            stream.wait_stream(torch.cuda.current_stream())
+            with torch.cuda.stream(stream):
+                fused()
+            torch.cuda.current_stream().wait_stream(stream)
+            graph = torch.cuda.CUDAGraph()
+            with (
+                collect_cuda_graph_capture_resources() as resources,
+                torch.cuda.graph(graph),
+            ):
+                observed = fused()
+            def buffers(result):
+                *states, mxfp8 = result
+                return [*states, mxfp8.rows, mxfp8.values, mxfp8.scales]
+    
+            pointers = [t.data_ptr() for t in buffers(observed)] + [dots.data_ptr()]
+            for i in range(101):
+                scales.fill_(4 * i / 100)
+                scales[0] = 0  # mixed rows, including poisoned but unread dot entries
+                graph.replay()
+                projected = writer.clone()
+                ops.project_writer(projected, direction, scales, 2.5)
+                expected = layer.post_pre(projected, *params)
+                for actual, oracle in zip(buffers(observed), buffers(expected)):
+&gt;                   torch.testing.assert_close(actual, oracle, rtol=0, atol=0)
+E                   AssertionError: Tensor-likes are not 'equal'!
+E                   
+E                   Mismatched elements: 158762 / 327680 (48.5%)
+E                   The first mismatched element is at index (3, 0).
+
+/probe/tests/models/test_deepseek_v4_1_steering_gpu.py:280: AssertionError</failure></testcase><testcase classname="" name="test_fused_consumer_graph_matches_independent_projection[16]" time="4.749"><failure message="AssertionError: Tensor-likes are not equal!&#10;&#10;Mismatched elements: 7680 / 10240 (75.0%)&#10;Greatest absolute difference: 1 at index (16, 0)&#10;Greatest relative difference: 1.0 at index (16, 0)">kernels = (&lt;module 'vllm.models.deepseek_v4_1.steering.ops' from '/opt/spark-ds41f/candidate/vllm/vllm/models/deepseek_v4_1/stee...eek_v4_1.steering.row_kernel' from '/opt/spark-ds41f/candidate/vllm/vllm/models/deepseek_v4_1/steering/row_kernel.py'&gt;)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe61072739b80&gt;
+rows = 16
+
+    @pytest.mark.usefixtures("default_vllm_config")
+    @pytest.mark.parametrize("rows", [3, 16, 96, 129])
+    def test_fused_consumer_graph_matches_independent_projection(
+        kernels, monkeypatch, rows
+    ):
+        """The actual TileLang fold and one active graph must survive dose changes."""
+        if torch.cuda.get_device_capability()[0] != 12:
+            pytest.skip("DeepSeek mHC target requires SM12x")
+        from types import SimpleNamespace
+    
+        from vllm.models.deepseek_v4_1.tilelang.mhc import TileKernelsMHC
+        from vllm.v1.worker.workspace import (
+            collect_cuda_graph_capture_resources,
+            init_workspace_manager,
+            is_workspace_manager_initialized,
+            reset_workspace_manager,
+        )
+    
+        owned_workspace = not is_workspace_manager_initialized()
+        if owned_workspace:
+            init_workspace_manager(torch.device("cuda"))
+        ops, _ = kernels
+        h = 5120
+        gen = torch.Generator(device="cuda").manual_seed(1729)
+        writer = torch.randn(rows, h, device="cuda", dtype=torch.bfloat16, generator=gen)
+        residual = torch.randn(
+            rows, 4, h, device="cuda", dtype=torch.bfloat16, generator=gen
+        )
+        direction = torch.randn(h, device="cuda", generator=gen)
+        direction /= direction.double().norm().float()
+        scales = torch.zeros(rows, device="cuda")
+        dots = torch.full((rows, 2), float("nan"), device="cuda")
+        layer = TileKernelsMHC(
+            SimpleNamespace(
+                hc_mult=4,
+                hidden_size=h,
+                rms_norm_eps=1e-6,
+                hc_eps=1e-6,
+                hc_sinkhorn_iters=20,
+            )
+        )
+        layer.steering_enabled = True
+        monkeypatch.setattr(
+            layer,
+            "_entries",
+            lambda: [(mode, 1) for mode in ("pre", "post_pre", "broadcast")],
+        )
+        layer.declare_kernels()
+        post = torch.rand(rows, 4, device="cuda", generator=gen)
+        comb = torch.rand(rows, 4, 4, device="cuda", generator=gen)
+        fn = torch.randn(24, 4 * h, device="cuda", generator=gen) / (4 * h) ** 0.5
+        norm = torch.ones(h, device="cuda", dtype=torch.bfloat16)
+        params = (
+            residual,
+            post,
+            comb,
+            fn,
+            torch.ones(3, device="cuda"),
+            torch.zeros(24, device="cuda"),
+            norm,
+            post,
+        )
+    
+        def fused():
+            controls = ops.prepare_consumer(writer, direction, scales, dots, None, 2.5)[1]
+            return layer.post_pre(writer, *params, **controls)
+    
+        try:
+            stream = torch.cuda.Stream()
+            stream.wait_stream(torch.cuda.current_stream())
+            with torch.cuda.stream(stream):
+                fused()
+            torch.cuda.current_stream().wait_stream(stream)
+            graph = torch.cuda.CUDAGraph()
+            with (
+                collect_cuda_graph_capture_resources() as resources,
+                torch.cuda.graph(graph),
+            ):
+                observed = fused()
+            def buffers(result):
+                *states, mxfp8 = result
+                return [*states, mxfp8.rows, mxfp8.values, mxfp8.scales]
+    
+            pointers = [t.data_ptr() for t in buffers(observed)] + [dots.data_ptr()]
+            for i in range(101):
+                scales.fill_(4 * i / 100)
+                scales[0] = 0  # mixed rows, including poisoned but unread dot entries
+                graph.replay()
+                projected = writer.clone()
+                ops.project_writer(projected, direction, scales, 2.5)
+                expected = layer.post_pre(projected, *params)
+                for actual, oracle in zip(buffers(observed), buffers(expected)):
+&gt;                   torch.testing.assert_close(actual, oracle, rtol=0, atol=0)
+E                   AssertionError: Tensor-likes are not equal!
+E                   
+E                   Mismatched elements: 7680 / 10240 (75.0%)
+E                   Greatest absolute difference: 1 at index (16, 0)
+E                   Greatest relative difference: 1.0 at index (16, 0)
+
+/probe/tests/models/test_deepseek_v4_1_steering_gpu.py:280: AssertionError</failure></testcase><testcase classname="" name="test_fused_consumer_graph_matches_independent_projection[96]" time="0.190"><failure message="AssertionError: Tensor-likes are not equal!&#10;&#10;Mismatched elements: 3103 / 20480 (15.2%)&#10;Greatest absolute difference: 255 at index (98, 62)&#10;Greatest relative difference: 1.0 at index (96, 3)">kernels = (&lt;module 'vllm.models.deepseek_v4_1.steering.ops' from '/opt/spark-ds41f/candidate/vllm/vllm/models/deepseek_v4_1/stee...eek_v4_1.steering.row_kernel' from '/opt/spark-ds41f/candidate/vllm/vllm/models/deepseek_v4_1/steering/row_kernel.py'&gt;)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xe61072729850&gt;
+rows = 96
+
+    @pytest.mark.usefixtures("default_vllm_config")
+    @pytest.mark.parametrize("rows", [3, 16, 96, 129])
+    def test_fused_consumer_graph_matches_independent_projection(
+        kernels, monkeypatch, rows
+    ):
+        """The actual TileLang fold and one active graph must survive dose changes."""
+        if torch.cuda.get_device_capability()[0] != 12:
+            pytest.skip("DeepSeek mHC target requires SM12x")
+        from types import SimpleNamespace
+    
+        from vllm.models.deepseek_v4_1.tilelang.mhc import TileKernelsMHC
+        from vllm.v1.worker.workspace import (
+            collect_cuda_graph_capture_resources,
+            init_workspace_manager,
+            is_workspace_manager_initialized,
+            reset_workspace_manager,
+        )
+    
+        owned_workspace = not is_workspace_manager_initialized()
+        if owned_workspace:
+            init_workspace_manager(torch.device("cuda"))
+        ops, _ = kernels
+        h = 5120
+        gen = torch.Generator(device="cuda").manual_seed(1729)
+        writer = torch.randn(rows, h, device="cuda", dtype=torch.bfloat16, generator=gen)
+        residual = torch.randn(
+            rows, 4, h, device="cuda", dtype=torch.bfloat16, generator=gen
+        )
+        direction = torch.randn(h, device="cuda", generator=gen)
+        direction /= direction.double().norm().float()
+        scales = torch.zeros(rows, device="cuda")
+        dots = torch.full((rows, 2), float("nan"), device="cuda")
+        layer = TileKernelsMHC(
+            SimpleNamespace(
+                hc_mult=4,
+                hidden_size=h,
+                rms_norm_eps=1e-6,
+                hc_eps=1e-6,
+                hc_sinkhorn_iters=20,
+            )
+        )
+        layer.steering_enabled = True
+        monkeypatch.setattr(
+            layer,
+            "_entries",
+            lambda: [(mode, 1) for mode in ("pre", "post_pre", "broadcast")],
+        )
+        layer.declare_kernels()
+        post = torch.rand(rows, 4, device="cuda", generator=gen)
+        comb = torch.rand(rows, 4, 4, device="cuda", generator=gen)
+        fn = torch.randn(24, 4 * h, device="cuda", generator=gen) / (4 * h) ** 0.5
+        norm = torch.ones(h, device="cuda", dtype=torch.bfloat16)
+        params = (
+            residual,
+            post,
+            comb,
+            fn,
+            torch.ones(3, device="cuda"),
+            torch.zeros(24, device="cuda"),
+            norm,
+            post,
+        )
+    
+        def fused():
+            controls = ops.prepare_consumer(writer, direction, scales, dots, None, 2.5)[1]
+            return layer.post_pre(writer, *params, **controls)
+    
+        try:
+            stream = torch.cuda.Stream()
+            stream.wait_stream(torch.cuda.current_stream())
+            with torch.cuda.stream(stream):
+                fused()
+            torch.cuda.current_stream().wait_stream(stream)
+            graph = torch.cuda.CUDAGraph()
+            with (
+                collect_cuda_graph_capture_resources() as resources,
+                torch.cuda.graph(graph),
+            ):
+                observed = fused()
+            def buffers(result):
+                *states, mxfp8 = result
+                return [*states, mxfp8.rows, mxfp8.values, mxfp8.scales]
+    
+            pointers = [t.data_ptr() for t in buffers(observed)] + [dots.data_ptr()]
+            for i in range(101):
+                scales.fill_(4 * i / 100)
+                scales[0] = 0  # mixed rows, including poisoned but unread dot entries
+                graph.replay()
+                projected = writer.clone()
+                ops.project_writer(projected, direction, scales, 2.5)
+                expected = layer.post_pre(projected, *params)
+                for actual, oracle in zip(buffers(observed), buffers(expected)):
+&gt;                   torch.testing.assert_close(actual, oracle, rtol=0, atol=0)
+E                   AssertionError: Tensor-likes are not equal!
+E                   
+E                   Mismatched elements: 3103 / 20480 (15.2%)
+E                   Greatest absolute difference: 255 at index (98, 62)
+E                   Greatest relative difference: 1.0 at index (96, 3)
+
+/probe/tests/models/test_deepseek_v4_1_steering_gpu.py:280: AssertionError</failure></testcase><testcase classname="" name="test_fused_consumer_graph_matches_independent_projection[129]" time="0.253" /></testsuite></testsuites>

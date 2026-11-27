@@ -1,0 +1,7 @@
+include ../../2026-10-26-spark-ds41f-candidate/candidate-74/vllm/series
+0500-Bind-attention-profiles-to-request-and-prefix-cache-.patch
+0501-Track-attention-scales-across-V2-request-slots-and-g.patch
+0502-Apply-request-scaled-attention-projection-to-1126-wr.patch
+0503-Protect-literal-controls-in-nested-JSON-keys-and-val.patch
+0504-Align-byte-fallback-text-before-matching-stripped-st.patch
+0505-Verify-attention-hooks-and-kernel-contracts-on-1126.patch

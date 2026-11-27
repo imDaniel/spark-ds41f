@@ -1,0 +1,23 @@
+{
+ "description": "Buffer placement, round 2 (placement2.py): whether the fast buffer of round 1 is a place in memory or a place in the order (graphs built in reverse; timed without graphs; a map of twenty 48 MiB slices of one 1 GiB allocation).",
+ "image": "spark-ds41f:19f2c20ed4d6-next-4",
+ "env": {
+  "HF_HUB_OFFLINE": "1",
+  "PYTHONPATH": "/b:/opt/spark-ds41f/candidate/vllm:/opt/spark-ds41f/candidate/b12x"
+ },
+ "workdir": "vllm",
+ "argv": [
+  "/b/placement2.py"
+ ],
+ "verdict": "status",
+ "mounts": [
+  [
+   "placement.py",
+   "/b/placement.py"
+  ],
+  [
+   "placement2.py",
+   "/b/placement2.py"
+  ]
+ ]
+}
