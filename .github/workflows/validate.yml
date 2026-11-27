@@ -76,9 +76,7 @@ jobs:
                 esac
               done
       - name: Validate JSON
-        run: |
-          find config manifests experiments -name '*.json' -print0 \
-            | xargs -0 -n1 python3 -m json.tool >/dev/null
+        run: python3 scripts/check_json.py
       - name: Check manifest-generated docs and GitHub Page
         run: python3 scripts/render_docs.py --check
       - name: Check the pull request's whitespace
