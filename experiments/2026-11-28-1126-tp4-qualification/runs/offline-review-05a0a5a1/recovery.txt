@@ -1,0 +1,50 @@
+test_authorization_mismatch_or_expiry (recovery_fixtures.Admission.test_authorization_mismatch_or_expiry) ... ok
+test_bad_initial_inventory (recovery_fixtures.Admission.test_bad_initial_inventory) ... ok
+test_busy_queue_never_kills_request (recovery_fixtures.Admission.test_busy_queue_never_kills_request) ... ok
+test_disabled_manifest_cannot_even_probe (recovery_fixtures.Admission.test_disabled_manifest_cannot_even_probe) ... ok
+test_drifted_recipe_refused (recovery_fixtures.Admission.test_drifted_recipe_refused) ... ok
+test_executor_hash_is_part_of_authorization (recovery_fixtures.Admission.test_executor_hash_is_part_of_authorization) ... ok
+test_foreign_hold_is_preserved (recovery_fixtures.Admission.test_foreign_hold_is_preserved) ... ok
+test_missing_queue_metrics_restores_without_stopping_user_service (recovery_fixtures.Admission.test_missing_queue_metrics_restores_without_stopping_user_service) ... ok
+test_missing_watchdog (recovery_fixtures.Admission.test_missing_watchdog) ... ok
+test_pinned_executable_drift (recovery_fixtures.Admission.test_pinned_executable_drift) ... ok
+test_same_process_is_not_independent_watchdog (recovery_fixtures.Admission.test_same_process_is_not_independent_watchdog) ... ok
+test_stale_or_missing_rank (recovery_fixtures.Admission.test_stale_or_missing_rank) ... ok
+test_unverified_source_assets_are_rejected (recovery_fixtures.Admission.test_unverified_source_assets_are_rejected) ... ok
+test_expired_open_authorization_still_allows_owned_restore (recovery_fixtures.Recovery.test_expired_open_authorization_still_allows_owned_restore) ... ok
+test_failed_candidate_stop_never_starts_retained (recovery_fixtures.Recovery.test_failed_candidate_stop_never_starts_retained) ... ok
+test_final_api_failure_preserves_hold (recovery_fixtures.Recovery.test_final_api_failure_preserves_hold) ... ok
+test_foreign_component_job_blocks_restore (recovery_fixtures.Recovery.test_foreign_component_job_blocks_restore) ... ok
+test_full_four_arm_sequence_and_pinned_restore (recovery_fixtures.Recovery.test_full_four_arm_sequence_and_pinned_restore) ... ok
+test_gateway_acceptance_failure_reblocks_ingress (recovery_fixtures.Recovery.test_gateway_acceptance_failure_reblocks_ingress) ... ok
+test_gateway_alias_drift_blocks_mutation (recovery_fixtures.Recovery.test_gateway_alias_drift_blocks_mutation) ... ok
+test_gpu_fault_does_not_attempt_restart (recovery_fixtures.Recovery.test_gpu_fault_does_not_attempt_restart) ... ok
+test_guard_or_gpu_process_survives_stop (recovery_fixtures.Recovery.test_guard_or_gpu_process_survives_stop) ... ok
+test_healthy_service_is_noop (recovery_fixtures.Recovery.test_healthy_service_is_noop) ... ok
+test_lost_node_does_not_attempt_restart (recovery_fixtures.Recovery.test_lost_node_does_not_attempt_restart) ... ok
+test_owned_job_stop_and_identity (recovery_fixtures.Recovery.test_owned_job_stop_and_identity) ... ok
+test_partial_candidate_launch_restores_all_ranks (recovery_fixtures.Recovery.test_partial_candidate_launch_restores_all_ranks) ... ok
+test_partial_retained_requires_coordinated_stop (recovery_fixtures.Recovery.test_partial_retained_requires_coordinated_stop) ... ok
+test_retained_doctor_failure_never_reopens_ingress (recovery_fixtures.Recovery.test_retained_doctor_failure_never_reopens_ingress) ... ok
+test_retained_start_failure_preserves_hold (recovery_fixtures.Recovery.test_retained_start_failure_preserves_hold) ... ok
+test_shape_change_is_never_applied (recovery_fixtures.Recovery.test_shape_change_is_never_applied) ... ok
+test_site_plan_refusal_is_not_overridden (recovery_fixtures.Recovery.test_site_plan_refusal_is_not_overridden) ... ok
+test_surviving_gpu_process_blocks_retained_start (recovery_fixtures.Recovery.test_surviving_gpu_process_blocks_retained_start) ... ok
+test_changed_hold_is_not_stolen (recovery_fixtures.Watchdog.test_changed_hold_is_not_stolen) ... ok
+test_command_timeout_stops_worker_and_restores (recovery_fixtures.Watchdog.test_command_timeout_stops_worker_and_restores) ... ok
+test_concurrent_controller_and_watchdog_share_lock (recovery_fixtures.Watchdog.test_concurrent_controller_and_watchdog_share_lock) ... ok
+test_deadline_restores_even_with_fresh_heartbeat (recovery_fixtures.Watchdog.test_deadline_restores_even_with_fresh_heartbeat) ... ok
+test_fresh_window_does_nothing (recovery_fixtures.Watchdog.test_fresh_window_does_nothing) ... ok
+test_heartbeat_loss_restores (recovery_fixtures.Watchdog.test_heartbeat_loss_restores) ... ok
+test_independent_process_recovers_killed_controller_during_launch (recovery_fixtures.Watchdog.test_independent_process_recovers_killed_controller_during_launch) ... ok
+test_pending_pid_reuse_preserves_hold (recovery_fixtures.Watchdog.test_pending_pid_reuse_preserves_hold) ... ok
+test_pid_reuse_is_not_signalled (recovery_fixtures.Watchdog.test_pid_reuse_is_not_signalled) ... ok
+test_reboot_invalidates_old_window (recovery_fixtures.Watchdog.test_reboot_invalidates_old_window) ... ok
+test_wall_clock_rollback_cannot_extend_window (recovery_fixtures.Watchdog.test_wall_clock_rollback_cannot_extend_window) ... ok
+test_worker_eof_before_go_cannot_execute (recovery_fixtures.Watchdog.test_worker_eof_before_go_cannot_execute) ... ok
+test_delayed_idle_observation_still_opens_and_restores (__main__.SlowObservation.test_delayed_idle_observation_still_opens_and_restores) ... ok
+
+----------------------------------------------------------------------
+Ran 45 tests in 39.057s
+
+OK

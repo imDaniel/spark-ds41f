@@ -32,13 +32,13 @@
     "working_tree_whitespace": "passed"
   },
   "log_sha256": {
-    "diff.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "docs.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "install.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "recovery.log": "01617e807bbd1fae69fc56c73786e6198415908918441b77b477c395673eef90",
-    "repository.log": "7c9bb27354a6694b2f7be0d871806d63977616e701d7cfd3ee6e37ac73b8a41a",
-    "shapes.log": "2c0b998d5e560ddabe5539fb2449525e8dd6453512537604fbe0f8a04cdae90e",
-    "window.log": "9d8c78c4a81742ce2fa6feb4ebfbecdeb19d5f4364c91dd5f0d3388fbeea3c7f"
+    "diff.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "install.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "recovery.txt": "01617e807bbd1fae69fc56c73786e6198415908918441b77b477c395673eef90",
+    "repository.txt": "7c9bb27354a6694b2f7be0d871806d63977616e701d7cfd3ee6e37ac73b8a41a",
+    "shapes.txt": "2c0b998d5e560ddabe5539fb2449525e8dd6453512537604fbe0f8a04cdae90e",
+    "window.txt": "9d8c78c4a81742ce2fa6feb4ebfbecdeb19d5f4364c91dd5f0d3388fbeea3c7f"
   },
   "github": {
     "pr": "https://github.com/imDaniel/spark-ds41f/pull/58",
