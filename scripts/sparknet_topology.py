@@ -14,12 +14,14 @@ import os
 import subprocess
 import sys
 import tempfile
+import threading
 from pathlib import Path
 from types import ModuleType
 
 CACHE = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "spark-ds41f" / "sparknet"
 PATHS = ("sparknet/__init__.py", "sparknet/topology")
 _LOADED: dict[str, ModuleType] = {}
+_IMPORT_LOCK = threading.RLock()
 
 
 def locked_source(upstreams: dict) -> tuple[str, str]:
@@ -72,16 +74,25 @@ def checkout(upstream: str, revision: str) -> Path:
 
 def package(upstreams: dict) -> ModuleType:
     """``sparknet.topology`` at the lock's revision, imported under its own name."""
-    upstream, revision = locked_source(upstreams)
-    if revision in _LOADED:
-        return _LOADED[revision]
-    root = checkout(upstream, revision) / "sparknet" / "topology"
-    name = f"_sparknet_topology_{revision[:12]}"
-    spec = importlib.util.spec_from_file_location(name, root / "__init__.py", submodule_search_locations=[str(root)])
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    for submodule in ("nodes", "render"):
-        importlib.import_module(f"{name}.{submodule}")
-    _LOADED[revision] = module
-    return module
+    # sys.modules publishes the package before its submodules are ready.
+    # Serialize the whole import, including the cache lookup, across callers.
+    with _IMPORT_LOCK:
+        upstream, revision = locked_source(upstreams)
+        if revision in _LOADED:
+            return _LOADED[revision]
+        root = checkout(upstream, revision) / "sparknet" / "topology"
+        name = f"_sparknet_topology_{revision[:12]}"
+        spec = importlib.util.spec_from_file_location(name, root / "__init__.py", submodule_search_locations=[str(root)])
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        try:
+            spec.loader.exec_module(module)
+            for submodule in ("nodes", "render"):
+                importlib.import_module(f"{name}.{submodule}")
+        except BaseException:
+            for key in list(sys.modules):
+                if key == name or key.startswith(name + "."):
+                    del sys.modules[key]
+            raise
+        _LOADED[revision] = module
+        return module
