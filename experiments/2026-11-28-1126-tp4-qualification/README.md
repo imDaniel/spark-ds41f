@@ -1,0 +1,5 @@
+# 1126 Attention on the four-node site ring
+
+The integration parent is `825450d51480d920068165d100b527fe4e610859`. This arm enables the reviewed 1126 attention profile for on-hardware qualification. The comparison is the site's recorded 1022 RC3 release. Use the same official 1017 checkpoint, TP4 ring, 1M context, 16 sequences, 8,192 batched tokens and 10.5 GiB KV per rank. Use the original matched performance client, cases, prompt corpus, prefix priming and thermal gate. Baseline receipts are under `experiments/2026-10-24-1022-matched-performance`.
+
+Record native image identity, four-rank identity, validated profile and kernel results. Run the functional, capacity and serving tests, including named/auto tool parsing, mixed scales, cache isolation and vision. Report throughput, TTFT, TPOT and end-to-end tails for the six matched load runs. Keep all attempts. The rollback target during the qualification window is the exact 1022 production checkout and image recorded in its baseline manifest.

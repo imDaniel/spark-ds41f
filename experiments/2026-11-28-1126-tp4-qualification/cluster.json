@@ -1,0 +1,10 @@
+{
+  "extends": {
+    "config": "experiments/2026-11-28-1126-attention/cluster.json"
+  },
+  "set": {
+    "deployment": {
+      "launch_enabled": true
+    }
+  }
+}
