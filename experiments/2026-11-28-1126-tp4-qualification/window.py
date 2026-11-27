@@ -191,7 +191,7 @@ def restore_service(h):
 
 def stop_owned_component(h):
     name = "ds41f-1126-component-check"
-    result = subprocess.run(["docker", "inspect", name], capture_output=True, text=True)
+    result = subprocess.run(["docker", "inspect", name], capture_output=True, text=True, timeout=30)
     if result.returncode:
         if "No such object" in result.stderr or "No such container" in result.stderr:
             return
