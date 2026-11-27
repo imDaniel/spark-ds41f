@@ -1,0 +1,9 @@
+# 1126 Attention fixture qualification
+
+This arm adds one test-contract patch to the published 1126 Attention stack. The 748 parent patches remain included in their original order. The new patch supplies the isolated model's `additional_config`, establishes the standard vLLM config context for the fused graph tests, and compares the live token rows of padded MXFP8 storage. Numerical equality and graph-pointer assertions remain active.
+
+The parent native image completed the selected component suite with five failing checks in these two files. Supplying the config fixtures exposed three comparisons of undefined padding rows, whose first differing indices were at or beyond the token count. Correcting the comparison boundary passed all five checks on that same native image. Parent runs and both probe attempts remain on the head under `/srv/ai-cluster/operations/1126-attention-20261128`.
+
+[The patch map](patch-map.json) records the old and new heads, tree, patchset and profile reuse. The production Python, C++, CMake and requirements paths have identical Git contents to the parent. The existing 1126 profile binding applies to the same model, template and operator. The candidate's image and source identity include the test patch.
+
+Replay the new series with `bin/spark --cluster-config experiments/2026-11-28-1126-attention-rc2/cluster.json build prepare`, then run `build check`. The isolated four-node qualification overlay is in `../2026-11-28-1126-tp4-qualification/cluster.json`. Qualification requires the final native image, its component and real-tokenizer gates, all four matching ranks, functional and capacity requests, and the preserved workload through Sonar on two candidate starts. Production adoption follows successful validation.

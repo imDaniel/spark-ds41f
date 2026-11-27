@@ -1,0 +1,58 @@
+From 4c1f4691b1313b9690d67627b06028b0bc94f831 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 02:11:28 +0800
+Subject: [PATCH] Supply config fixtures and live-row comparisons for DS4.1
+ contracts
+
+The upstream base is d8784b841c360f523ec20e44bf8fb0898f36d3e4 and the downstream base is 320e4b04cbf1351b5aa65711f3cf67467d291ca2.
+
+Give the isolated Engram model fixture the additional_config field supplied by VllmConfig. Use the standard current-config fixture while declaring fused mHC kernels. Compare the live token rows of padded MXFP8 values and scales, retaining exact numerical checks and graph pointer checks.
+
+Quality coverage includes the existing FP64 projection oracles, four captured graph sizes and 101 dose updates per graph.
+
+Validation on the native 1126 image passed all five previously failing checks with these fixture changes. The full native candidate suite and TP4 qualification follow this patch.
+
+Upstream status is downstream maintenance, with no upstream submission.
+---
+ tests/models/test_deepseek_v4_1_engram.py       | 1 +
+ tests/models/test_deepseek_v4_1_steering_gpu.py | 5 ++++-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/tests/models/test_deepseek_v4_1_engram.py b/tests/models/test_deepseek_v4_1_engram.py
+index 6e57cf7d4..1e957f868 100644
+--- a/tests/models/test_deepseek_v4_1_engram.py
++++ b/tests/models/test_deepseek_v4_1_engram.py
+@@ -954,6 +954,7 @@ def test_disk_engram_model_allocates_hash_buffer_from_declared_caps(monkeypatch)
+         scheduler_config=SimpleNamespace(max_num_batched_tokens=13),
+         lora_config=None,
+         speculative_config=None,
++        additional_config={},
+     )
+     monkeypatch.setattr(
+         model_module,
+diff --git a/tests/models/test_deepseek_v4_1_steering_gpu.py b/tests/models/test_deepseek_v4_1_steering_gpu.py
+index 480f9d9b5..f755631ae 100644
+--- a/tests/models/test_deepseek_v4_1_steering_gpu.py
++++ b/tests/models/test_deepseek_v4_1_steering_gpu.py
+@@ -185,6 +185,7 @@ def test_openai_wire_boolean_is_not_coerced_into_a_dose():
+             model(model="test", **prompt, steering_profile="p", use_beam_search=True)
+ 
+ 
++@pytest.mark.usefixtures("default_vllm_config")
+ @pytest.mark.parametrize("rows", [3, 16, 96, 129])
+ def test_fused_consumer_graph_matches_independent_projection(
+     kernels, monkeypatch, rows
+@@ -265,7 +266,9 @@ def test_fused_consumer_graph_matches_independent_projection(
+             observed = fused()
+         def buffers(result):
+             *states, mxfp8 = result
+-            return [*states, mxfp8.rows, mxfp8.values, mxfp8.scales]
++            tokens = mxfp8.rows.shape[0]
++            # Compare the live token rows of the tiled MXFP8 storage.
++            return [*states, mxfp8.rows, mxfp8.values[:tokens], mxfp8.scales[:tokens]]
+ 
+         pointers = [t.data_ptr() for t in buffers(observed)] + [dots.data_ptr()]
+         for i in range(101):
+-- 
+2.43.0
+

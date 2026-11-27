@@ -199,7 +199,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review, 2026-10-23-1022-output-parser, 2026-10-23-1022-release-fixtures, 2026-10-23-1022-parser-byte-alignment, 2026-11-28-1126-attention]
+        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review, 2026-10-23-1022-output-parser, 2026-10-23-1022-release-fixtures, 2026-10-23-1022-parser-byte-alignment, 2026-11-28-1126-attention, 2026-11-28-1126-attention-rc2]
     env:
       STEERING_EXPERIMENT: ${{ matrix.experiment }}
     steps:
@@ -256,7 +256,7 @@ jobs:
                           str(root / "release-tests.json")], check=True)
           PY
       - name: Check rendered JSON controls with the byte tokenizer fixture
-        if: matrix.experiment == '2026-10-23-1022-attention-review' || matrix.experiment == '2026-11-28-1126-attention'
+        if: matrix.experiment == '2026-10-23-1022-attention-review' || matrix.experiment == '2026-11-28-1126-attention' || matrix.experiment == '2026-11-28-1126-attention-rc2'
         env:
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
           PYTHONDONTWRITEBYTECODE: "1"
@@ -265,6 +265,7 @@ jobs:
           # This selection does not open checkpoint files; real-tokenizer cases
           # are validated locally and intentionally deselected in this job.
           STEERING_MODEL_IDENTITY: .work/unused-checkpoint
+          STEERING_ENCODER_EXPERIMENT: ${{ matrix.experiment == '2026-11-28-1126-attention-rc2' && '2026-11-28-1126-attention' || matrix.experiment }}
         run: |
           export STEERING_VLLM_SOURCE=$(PYTHONPATH=scripts .work/steering-1022-cpu-venv/bin/python - <<'PY'
           import os
@@ -275,8 +276,8 @@ jobs:
           PY
           )
           .work/steering-1022-cpu-venv/bin/python -m pytest -p no:cacheprovider \
-            --confcutdir=experiments/$STEERING_EXPERIMENT/tools -o addopts= -q \
-            experiments/$STEERING_EXPERIMENT/tools/test_encoder_offline.py \
+            --confcutdir=experiments/$STEERING_ENCODER_EXPERIMENT/tools -o addopts= -q \
+            experiments/$STEERING_ENCODER_EXPERIMENT/tools/test_encoder_offline.py \
             -k 'not checkpoint_tokenizer' --junitxml=.work/steering-1022-encoder.xml
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
@@ -285,7 +286,7 @@ jobs:
           assert counts == {"tests": 38, "failures": 0, "errors": 0, "skipped": 0}, counts
           PY
       - uses: actions/upload-artifact@v4
-        if: always() && (matrix.experiment == '2026-10-23-1022-attention-review' || matrix.experiment == '2026-11-28-1126-attention')
+        if: always() && (matrix.experiment == '2026-10-23-1022-attention-review' || matrix.experiment == '2026-11-28-1126-attention' || matrix.experiment == '2026-11-28-1126-attention-rc2')
         with:
           name: steering-encoder-${{ matrix.experiment }}
           path: .work/steering-1022-encoder.xml
