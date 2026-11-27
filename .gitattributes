@@ -6,6 +6,7 @@
 # Recorded outputs (logs, receipts, tables) and copied upstream files are kept
 # byte-for-byte as they were produced.
 experiments/**/runs*/** -whitespace
+experiments/**/receipts/** -whitespace
 experiments/**/results/** -whitespace
 experiments/**/overlay/** -whitespace
 experiments/2026-10-19-sink-rejection-v2/analysis/*.txt -whitespace
@@ -14,3 +15,12 @@ experiments/2026-10-19-prefix-replay/bundles/prefix-tests/test_prefix_caching.py
 *.csv -whitespace
 # Preserve the captured runtime log byte-for-byte, including emitted whitespace.
 experiments/2026-10-23-1022-scale-results/evidence/candidate-rank0.log -whitespace
+
+# Keep imported 1126 experiment sources byte-identical to their release.
+experiments/2026-10-25-kernel-audit/bundles/audit-diagnostics/metadata_variants.py whitespace=-blank-at-eof
+experiments/2026-10-25-kernel-audit/bundles/audit-diagnostics/mhc_variants.py whitespace=-blank-at-eof
+experiments/2026-10-26-spark-ds41f-candidate/rc11/make_series.py whitespace=-blank-at-eol
+experiments/2026-10-26-spark-ds41f-candidate/rc12/make_series.py whitespace=-blank-at-eol
+experiments/2026-10-31-iket-full-43l-and-runtime-opt/test_iket_43l_and_runtime.py whitespace=-blank-at-eof
+experiments/2026-11-04-semantic-indexer/bounds.py whitespace=-blank-at-eof
+experiments/2026-11-05-block-load/load_score.py whitespace=-blank-at-eof

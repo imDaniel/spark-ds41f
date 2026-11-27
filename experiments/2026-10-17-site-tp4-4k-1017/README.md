@@ -16,6 +16,8 @@ the same client battery. It is a receipt from another site, not a promotion requ
 | Arm | [`candidate-arm.json`](candidate-arm.json): `config/cluster.json` at `tp4-ring` with the host kernel at 4 KiB / no memory saver, a snapshot+blobs model profile, per-build DSpark curves, and r6v 0180's `pynccl.py` mounted read-only (sha256 `e3990cd5...4bbc`); started with `--unqualified-shape` |
 | Sizing | unchanged from the recipe: 1,048,576 context, 16 sequences, 8,192 batched tokens, KV 10.5 GiB |
 
+The mounted `r6v-0180/.../pynccl.py` is site-local and not in this repository; r6v and later images include vLLM [0180](../2026-10-17-r6v/vllm/0180-PyNCCL-row-all-to-all-over-a-four-node-ring-the-far-.patch) (its series builds the same file, sha256 `e3990cd5...4bbc`), so on them the arm needs no such mount.
+
 ## Findings worth knowing upstream
 
 1. **r6u alone does not boot on this ring; r6v's 0180 fixes it.** The first boot loaded the weights and prepared 188
@@ -46,6 +48,9 @@ SGLang = MiaAI-Lab DeepSeek-v4.1-Flash-DGX-Sparks production line (cad252b, TP4/
 
 Losses: one reproducible extra qeval miss (`json_count`: 11 for 10); at C16, coding / math / format 1-7% below SGLang in
 both runs. The two spark-ds41f runs agree within 0.4% on decode and produce identical qeval text (temperature 0).
+
+Follow-up (2026-10-18): DeepSeek's reference implementation answers `json_count` with 11 as well, and production
+matches it; see [2026-10-18-json-count](../2026-10-18-json-count/README.md).
 
 Limits: one boot per engine, no confidence intervals, no soak or agent workload; the battery is this site's own, not
 `bin/spark bench` (no fan-floor control installed); run 2's v41bench prefill cells hit the prefix cache and are not used -

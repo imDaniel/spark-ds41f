@@ -42,3 +42,7 @@ class QualificationCompatibilityTest(unittest.TestCase):
         for ids in ([], ["cmpl-real"], ["req_0_"], ["req_1_wrong_index"]):
             with self.subTest(ids=ids):
                 self.assertFalse(self.guard(SimpleNamespace(req_ids=ids), self.states))
+
+
+if __name__ == "__main__":
+    unittest.main()

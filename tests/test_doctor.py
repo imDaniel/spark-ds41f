@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
+import base64
 import contextlib
 import io
-import importlib.machinery
-import importlib.util
+import struct
+import subprocess
+import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
-loader = importlib.machinery.SourceFileLoader("spark", str(ROOT / "bin" / "spark"))
-spec = importlib.util.spec_from_loader("spark", loader)
-spark = importlib.util.module_from_spec(spec)
-loader.exec_module(spark)
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+# A recipe frozen for these tests, so a release does not move them.
+FIXTURE = "tests/fixtures/cluster.json"
+import spark_ds41f as spark
 
 
 class DesktopTest(unittest.TestCase):
@@ -88,7 +92,7 @@ FAN_WORKING = (
     "grub_splash=0\n"
     "idle_services=\n"
     "kernel=7.0.0-1019-nvidia\n"
-    "fan_dkms=dgx-spark-fan-control/0.1.3, 7.0.0-1019-nvidia, aarch64: installed\n"
+    "fan_dkms=dgx-spark-fan-control/0.1.4, 7.0.0-1019-nvidia, aarch64: installed\n"
     "fan_module=1\n"
     "fan_cooling_device=1\n"
     "fan_service=installed\n"
@@ -108,10 +112,19 @@ class ModesetTest(unittest.TestCase):
     def test_disabled_mode_setting_is_reported(self) -> None:
         problems = spark.modeset_problems("dgx1", facts(modeset="N"))
         self.assertEqual(len(problems), 1)
+        self.assertNotIsInstance(problems[0], spark.Warn)
+        self.assertIn("modeset is N, expected Y", problems[0])
+
+    def test_disabled_mode_setting_warns_when_carveout_weights_are_off(self) -> None:
+        problems = spark.modeset_problems("dgx1", facts(modeset="N"), carveout_weights=False)
+        self.assertEqual(len(problems), 1)
+        self.assertIsInstance(problems[0], spark.Warn)
         self.assertIn("modeset is N, expected Y", problems[0])
 
     def test_unreadable_mode_setting_is_reported(self) -> None:
         problems = spark.modeset_problems("dgx1", facts(modeset=""))
+        self.assertEqual(len(problems), 1)
+        self.assertIsInstance(problems[0], spark.Warn)
         self.assertIn("modeset is unreadable", problems[0])
 
 
@@ -128,6 +141,8 @@ class ConsoleTest(unittest.TestCase):
 
     def test_unreadable_fbdev_is_reported(self) -> None:
         problems = spark.fbdev_problems("dgx3", facts(fbdev=""))
+        self.assertEqual(len(problems), 1)
+        self.assertIsInstance(problems[0], spark.Warn)
         self.assertIn("fbdev is unreadable", problems[0])
 
     def test_drm_master_holder_is_reported(self) -> None:
@@ -295,20 +310,26 @@ class IdleServicesTest(unittest.TestCase):
 class SeverityTest(unittest.TestCase):
     """Required capabilities are errors; latent or minor findings are warnings."""
 
-    def test_missing_nvidia_card_is_an_error(self) -> None:
+    def test_missing_nvidia_card_is_an_error_for_legacy_drm_and_warn_for_rm(self) -> None:
         self.assertEqual(spark.drm_card_problems("dgx3", facts()), [])
         self.assertEqual(spark.drm_card_problems("dgx3", facts(drm_card="1")), [])
         problems = spark.drm_card_problems("dgx3", facts(drm_card=""))
         self.assertEqual(len(problems), 1)
         self.assertNotIsInstance(problems[0], spark.Warn)
         self.assertIn("display carve-out cannot be allocated", problems[0])
+        warn = spark.drm_card_problems("dgx3", facts(drm_card=""), carveout_weights=False)
+        self.assertEqual(len(warn), 1)
+        self.assertIsInstance(warn[0], spark.Warn)
+        self.assertIn("/dev/dri/card0", warn[0])
+        self.assertFalse(spark.drm_carveout_enabled(spark.read_cluster("releases/spark-ds41f-1126/cluster.json", "tp3-triangle")))
+        self.assertTrue(spark.drm_carveout_enabled(
+            spark.read_cluster("releases/spark-ds41f-1107/cluster.json", "tp3-triangle")))
 
     def test_required_display_pieces_are_errors(self) -> None:
         for problems in (
             spark.modeset_problems("dgx1", facts(modeset="N")),
             spark.fbdev_problems("dgx1", facts(fbdev="N")),
             spark.drm_master_problems("dgx1", facts(drm_masters="Xorg/123")),
-            spark.console_mode_problems("dgx1", facts(console="tty1:1")),
         ):
             self.assertEqual(len(problems), 1)
             self.assertNotIsInstance(problems[0], spark.Warn)
@@ -318,10 +339,15 @@ class SeverityTest(unittest.TestCase):
             spark.splash_problems("dgx1", facts(cmdline_splash="1", grub_splash="1")),
             spark.splash_problems("dgx1", facts(cmdline_splash="1", grub_splash="0")),
             spark.drm_master_problems("dgx1", facts(drm_masters="unreadable")),
+            spark.console_mode_problems("dgx1", facts(console="tty1:1")),
             spark.console_mode_problems("dgx1", facts(console="tty1:")),
             spark.idle_service_warnings("dgx1", facts(idle_services="cups.service")),
             spark.desktop_problems("dgx1", "graphical.target\ninactive\n"),
             spark.boot_order_problems("dgx1", ""),
+            spark.modeset_problems("dgx1", facts(modeset="")),
+            spark.modeset_problems("dgx1", facts(modeset="N"), carveout_weights=False),
+            spark.fbdev_problems("dgx1", facts(fbdev="")),
+            spark.fan_control_problems("dgx1", facts(fan_dkms="")),
         ):
             self.assertEqual(len(problems), 1)
             self.assertIsInstance(problems[0], spark.Warn)
@@ -347,10 +373,18 @@ class FanControlTest(unittest.TestCase):
         problems = spark.fan_control_problems(
             "dgx3", facts(fan_dkms="", fan_module="0", fan_cooling_device="0")
         )
-        self.assertEqual(
-            problems, ["dgx3: DKMS dgx-spark-fan-control is not installed for 7.0.0-1019-nvidia; run "
-                "sudo dkms autoinstall -k 7.0.0-1019-nvidia"]
+        self.assertEqual(len(problems), 1)
+        self.assertIsInstance(problems[0], spark.Warn)
+        self.assertIn("DKMS dgx-spark-fan-control is not installed for 7.0.0-1019-nvidia", problems[0])
+        self.assertIn("sudo dkms autoinstall -k 7.0.0-1019-nvidia", problems[0])
+
+    def test_other_dkms_version_is_reported(self) -> None:
+        problems = spark.fan_control_problems(
+            "dgx3", facts(fan_dkms="dgx-spark-fan-control/0.1.3, 7.0.0-1019-nvidia, aarch64: installed")
         )
+        self.assertEqual(len(problems), 1)
+        self.assertIn("is 0.1.3 for 7.0.0-1019-nvidia, and this recipe uses 0.1.4", problems[0])
+        self.assertIn("blob/v0.1.4/docs/maintenance.md", problems[0])
 
     def test_unloaded_module_is_reported(self) -> None:
         problems = spark.fan_control_problems("dgx3", facts(fan_module="0"))
@@ -363,18 +397,18 @@ class FanControlTest(unittest.TestCase):
         self.assertEqual(len(problems), 1)
         self.assertIn("cooling device is missing", problems[0])
 
-    def test_missing_service_is_an_error(self) -> None:
-        # bench needs it; whether it runs while serving is not checked.
+    def test_missing_service_warns(self) -> None:
+        # bench needs it; serving does not, so doctor must not fail a live cluster.
         problems = spark.fan_control_problems("dgx2", facts(fan_service="absent"))
         self.assertEqual(len(problems), 1)
-        self.assertNotIsInstance(problems[0], spark.Warn)
+        self.assertIsInstance(problems[0], spark.Warn)
         self.assertIn("dgx-fan-control.service is not installed", problems[0])
         self.assertIn("sudo systemctl daemon-reload", problems[0])
 
     def test_missing_driver_layer_is_reported_before_the_service(self) -> None:
         problems = spark.fan_control_problems("dgx2", facts(fan_module="0", fan_service="absent"))
         self.assertEqual(len(problems), 1)
-        self.assertNotIsInstance(problems[0], spark.Warn)
+        self.assertIsInstance(problems[0], spark.Warn)
         self.assertIn("dgx_ec_fan_control is not loaded", problems[0])
 
 
@@ -483,6 +517,10 @@ class RoceGidTest(unittest.TestCase):
         self.assertIn("GID index 1 is RoCEv2 fe80", problems[0])
         self.assertIn("at index 3", problems[0])
 
+    def test_the_fixing_settings_are_named(self) -> None:
+        problems = spark.roce_gid_problems("dgx3", 3, ["rocep1s0f0"], SHIFTED_GIDS, ["SPARKNET_ROCE_GID_INDEX", "NCCL_IB_GID_INDEX"])
+        self.assertIn("rocep1s0f0 GID index 3 (fixed by SPARKNET_ROCE_GID_INDEX, NCCL_IB_GID_INDEX) is empty", problems[0])
+
     def test_missing_device_and_missing_ipv4_are_reported(self) -> None:
         output = "rocep1s0f1 missing\nrocep1s0f0 1 RoCEv2 fe80:0000:0000:0000:4ebb:47ff:fee9:7f2b enp1s0f0np0\n"
         problems = spark.roce_gid_problems("dgx2", 3, ["rocep1s0f0", "rocep1s0f1"], output)
@@ -493,6 +531,95 @@ class RoceGidTest(unittest.TestCase):
                 "dgx2: RDMA device rocep1s0f1 is missing",
             ],
         )
+
+
+# /proc/buddyinfo summed over zones, 64 KiB pages, as dgx4 reported it on 2026-11-18:
+# up ten days, and a minute after its reboot.
+BUDDY_TEN_DAYS = "3354,5561,5949,5688,4717,3686,2913,2212,1649,829,104,15,0,0"
+BUDDY_FRESH = "143,63,43,39,36,30,17,10,4,5,4,4,2,233"
+
+
+class MemoryBlocksTest(unittest.TestCase):
+    def test_free_memory_by_block_size(self) -> None:
+        free_gib, share, block_mib = spark.free_memory_blocks(facts(buddy=BUDDY_FRESH, page_kb="64"))
+        self.assertEqual(block_mib, 512)
+        self.assertAlmostEqual(free_gib, 118.3, places=1)
+        self.assertGreater(share, 0.94)
+        self.assertEqual(spark.free_memory_blocks(facts(buddy=BUDDY_TEN_DAYS, page_kb="64"))[1], 0.0)
+
+    def test_fresh_node_passes(self) -> None:
+        self.assertEqual(
+            spark.memory_block_warnings("dgx4", facts(buddy=BUDDY_FRESH, page_kb="64", gpu_apps="0")), []
+        )
+
+    def test_idle_node_without_large_blocks_warns(self) -> None:
+        warnings = spark.memory_block_warnings("dgx1", facts(buddy=BUDDY_TEN_DAYS, page_kb="64", gpu_apps="0"))
+        self.assertEqual(len(warnings), 1)
+        self.assertIsInstance(warnings[0], spark.Warn)
+        self.assertIn("dgx1: 0% of the 106 GiB free is in 512 MiB blocks", warnings[0])
+        self.assertIn("--stream-rate", warnings[0])
+
+    def test_node_whose_gpu_is_held_is_not_judged(self) -> None:
+        # A serving engine holds most of the memory: what is left says nothing.
+        self.assertEqual(
+            spark.memory_block_warnings("dgx1", facts(buddy="900,400,90,20,4,0,0,0,0,0,0,0,0,0", page_kb="64", gpu_apps="1")),
+            [],
+        )
+
+    def test_little_free_memory_is_not_judged(self) -> None:
+        self.assertEqual(
+            spark.memory_block_warnings("dgx1", facts(buddy="900,400,90,20,4,0,0,0,0,0,0,0,0,0", page_kb="64", gpu_apps="0")),
+            [],
+        )
+
+    def test_unreadable_blocks_warn(self) -> None:
+        for changes in ({"buddy": "", "page_kb": "64"}, {"buddy": "1,2,3", "page_kb": ""}, {"buddy": "0,0,0", "page_kb": "4"}):
+            warnings = spark.memory_block_warnings("dgx2", facts(gpu_apps="0", **changes))
+            self.assertEqual(warnings, ["dgx2: cannot read free memory by block size (/proc/buddyinfo)"])
+
+    def test_query_reads_the_blocks_and_the_gpus_processes(self) -> None:
+        for needle in ("/proc/buddyinfo", "getconf PAGESIZE", "--query-compute-apps=pid"):
+            self.assertIn(needle, spark.HOST_FACTS_QUERY)
+
+
+class StreamRateTest(unittest.TestCase):
+    def test_fast_node_is_printed_without_a_warning(self) -> None:
+        line, warnings = spark.stream_rate_findings("dgx4", 'noise\n{"stream_gbs": 253.6}\n')
+        self.assertEqual(line, "dgx4: memory reads at 253.6 GB/s")
+        self.assertEqual(warnings, [])
+
+    def test_slow_node_warns(self) -> None:
+        line, warnings = spark.stream_rate_findings("dgx1", '{"stream_gbs": 235.8}')
+        self.assertEqual(line, "dgx1: memory reads at 235.8 GB/s")
+        self.assertEqual(len(warnings), 1)
+        self.assertIsInstance(warnings[0], spark.Warn)
+        self.assertIn("below 245", warnings[0])
+
+    def test_skipped_node_is_reported_without_a_warning(self) -> None:
+        line, warnings = spark.stream_rate_findings("dgx2", '{"skipped": "a process holds the GPU"}')
+        self.assertEqual(line, "dgx2: memory read not measured (a process holds the GPU)")
+        self.assertEqual(warnings, [])
+
+    def test_failed_probe_warns_with_its_last_line(self) -> None:
+        line, warnings = spark.stream_rate_findings("dgx3", "", "docker: Error response from daemon: no such image")
+        self.assertEqual(line, "dgx3: memory read not measured")
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("no such image", warnings[0])
+
+    def test_script_skips_a_held_gpu_and_runs_the_profiles_image(self) -> None:
+        script = spark.stream_rate_script("spark-ds41f:candidate-60")
+        self.assertIn("--query-compute-apps=pid", script)
+        self.assertIn("flock -n 9", script)
+        self.assertIn("/tmp/spark-lab-gpu.lock", script)
+        self.assertIn("--entrypoint python3 spark-ds41f:candidate-60 -c", script)
+        self.assertLess(script.index("flock -n 9"), script.index("docker run"))
+
+    def test_stream_rate_needs_live(self) -> None:
+        args = mock.Mock(live=False, stream_rate=True, fragmentation_commands=False, cluster_config=None)
+        with mock.patch.object(spark.doctor, "configuration", return_value=({}, {}, {})), \
+                mock.patch.object(spark.doctor, "cluster_config_path", return_value=("x", "x")):
+            with self.assertRaises(SystemExit):
+                spark.command_doctor(args)
 
 
 class ClockLatchTest(unittest.TestCase):
@@ -527,7 +654,7 @@ SPARKNET_BIND = "/home/swank/sparknet-port/sparknet:/usr/local/lib/python3.12/di
 
 class LiveMountsTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.cluster = spark.read_cluster("experiments/2026-10-24-1022-promotion/previous/cluster.json", "tp4-ring")
+        self.cluster = spark.read_cluster(FIXTURE, "tp4-ring")
         self.wanted = spark.expected_binds(self.cluster)
 
     def test_docker_run_is_given_the_compared_binds(self) -> None:
@@ -575,6 +702,40 @@ class LiveMountsTest(unittest.TestCase):
         )
 
 
+class CheckoutPlaceholderTest(unittest.TestCase):
+    """The JIT cache mount names {checkout}: it follows deployment.path, so a site that clones
+    elsewhere mounts its own cache instead of one under our path, which a start refuses as an
+    unavailable rw source."""
+
+    def site(self, path: str) -> dict:
+        base = spark.read_cluster(FIXTURE, "tp3-triangle")
+        return spark.cluster_recipe.overlay({"extends": {}, "set": {"deployment": {"path": path}}}, base)
+
+    def test_our_recipe_resolves_to_the_production_binds_at_every_shape(self) -> None:
+        for shape in ("tp4-ring", "tp3-triangle", "tp3-triangle-4k"):
+            cluster = spark.read_cluster(FIXTURE, shape)
+            self.assertIn(["{checkout}/cache", "/cache", "rw"], cluster["container"]["mounts"])
+            self.assertEqual(spark.expected_binds(cluster), PRODUCTION_BINDS)
+            self.assertEqual(spark.repository_path(cluster), "/home/swank/projects/spark-ds41f")
+
+    def test_a_site_checkout_elsewhere_mounts_its_own_cache(self) -> None:
+        cluster = self.site("{home}/src/ds41f")
+        cache = "/home/swank/src/ds41f/cache"
+        self.assertEqual(spark.expected_binds(cluster),
+                         ["/home/swank/.cache/huggingface/hub:/hub:ro", f"{cache}:/cache:rw"])
+        self.assertIn(f"test -w {cache} || printf '%s %s\\n' rw {cache}", spark.mount_test_script(cluster))
+        # The cache is still inside the checkout, so the checkout's cleanliness check skips it.
+        self.assertIn("':(exclude)cache'", spark.remote_status_command(cluster))
+
+    def test_an_absolute_checkout_needs_no_home(self) -> None:
+        cluster = self.site("/srv/ds41f")
+        self.assertEqual(spark.expected_binds(cluster)[1], "/srv/ds41f/cache:/cache:rw")
+
+    def test_the_checkout_cannot_name_itself(self) -> None:
+        with self.assertRaises(SystemExit):
+            spark.repository_path(self.site("{checkout}/nested"))
+
+
 # Config.Env of the r6 image (sha256:b5225c98...) as dgx1 reported it on 2026-10-06, abridged.
 IMAGE_ENV = [
     "PATH=/usr/local/cuda/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/sbin:"
@@ -597,7 +758,7 @@ def container_env(wanted: dict[str, str]) -> list[str]:
 
 class LiveEnvironmentTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.cluster = spark.read_cluster("config/cluster.json", "tp4-ring")
+        self.cluster = spark.read_cluster(FIXTURE, "tp4-ring")
         site = spark.json.loads((ROOT / "config" / "examples" / "nodes-ring4.json").read_text())
         self.node = site["nodes"][0]
         self.wanted = spark.expected_environment(self.cluster, self.node)
@@ -622,10 +783,7 @@ class LiveEnvironmentTest(unittest.TestCase):
         arm["environment"]["VLLM_DS41_L2_PREFETCH_FFN_MB"] = "8"
         live = container_env(spark.expected_environment(arm, self.node))
         problems = spark.environment_problems("dgx1", self.wanted, live, IMAGE_ENV)
-        # The ring derives its cost curves per build, so the arm's curves directory differs too.
-        self.assertEqual(len(problems), 2, problems)
-        self.assertIn("dgx1: extra variable VLLM_DS41_L2_PREFETCH_FFN_MB='8'", problems)
-        self.assertTrue(any(p.startswith("dgx1: SPARK3_DSPARK_COST_DIR=") for p in problems), problems)
+        self.assertEqual(problems, ["dgx1: extra variable VLLM_DS41_L2_PREFETCH_FFN_MB='8'"])
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             status = spark.report_doctor(problems, [], live=True)
@@ -805,7 +963,7 @@ class MountTestScriptTest(unittest.TestCase):
 class ClusterReplaceTest(unittest.TestCase):
     """start --replace stops every node's old container (concurrently) and rolls back on failure."""
 
-    def run_start(self, fail_rename_on=None):
+    def run_start(self, fail_rename_on=None, fail_launch_on=None):
         import argparse
         from unittest import mock
 
@@ -822,6 +980,8 @@ class ClusterReplaceTest(unittest.TestCase):
             code = 0
             if command[:2] == ("docker", "rename") and node["name"] == fail_rename_on:
                 code = 1
+            if command[:2] == ("docker", "run") and node["name"] == fail_launch_on:
+                code = 1
             return subprocess.CompletedProcess(command, code, stdout="id\n", stderr="")
 
         import subprocess
@@ -831,8 +991,7 @@ class ClusterReplaceTest(unittest.TestCase):
             mock.patch.object(spark, "rendered_docker_command", return_value=["docker", "run"]),
             mock.patch.object(spark, "expected_command", return_value=["--nnodes", "3"]),
             mock.patch.object(spark, "live_engine", return_value=None),
-            mock.patch.object(spark, "require_local_deployment_state", return_value="rev"),
-            mock.patch.object(spark, "remote_runtime_problems", return_value=[]),
+            mock.patch.object(spark, "start_findings", return_value=[]),
             mock.patch.object(spark, "stop_memguard",
                               side_effect=lambda c, n, node: guards.discard(node["name"])),
             mock.patch.object(spark, "start_memguard",
@@ -844,6 +1003,9 @@ class ClusterReplaceTest(unittest.TestCase):
             mock.patch.object(spark, "run_ssh", side_effect=run_ssh),
             mock.patch.object(spark, "preserve_failed_start_logs", return_value=None),
             mock.patch.object(spark, "restore_containers"),
+            mock.patch.object(spark, "wait_for_memory_recovery",
+                              side_effect=lambda c, n, stopped: calls.append(
+                                  ("recovery", tuple(node["name"] for node in stopped)))),
         ]
         for patch in patches:
             patch.start()
@@ -866,12 +1028,75 @@ class ClusterReplaceTest(unittest.TestCase):
         self.assertEqual(removed, ["dgx1", "dgx2", "dgx3"])
         restore.assert_not_called()
 
+    def test_memory_recovers_after_every_stop_and_before_any_launch(self) -> None:
+        _, calls, _ = self.run_start()
+        recovery = calls.index(("recovery", ("dgx1", "dgx2", "dgx3")))
+        stops = [i for i, (_, command) in enumerate(calls) if command == ("docker", "stop")]
+        launches = [i for i, (_, command) in enumerate(calls) if command == ("docker", "run")]
+        self.assertLess(max(stops), recovery)
+        self.assertLess(recovery, min(launches))
+
     def test_a_failed_rename_rolls_back_the_stopped_nodes(self) -> None:
         code, calls, restore = self.run_start(fail_rename_on="dgx2")
         self.assertEqual(code, 1)
         backups = restore.call_args.args[2]
         self.assertEqual(sorted(backups), ["dgx1", "dgx3"])
         self.assertNotIn(("dgx1", ("docker", "run")), calls)
+
+    def test_followers_launch_before_head_and_roll_back_on_partial_failure(self) -> None:
+        code, calls, _ = self.run_start()
+        self.assertEqual(code, 0)
+        launched = [node for node, command in calls if command == ("docker", "run")]
+        self.assertEqual(sorted(launched[:2]), ["dgx2", "dgx3"])
+        self.assertEqual(launched[2], "dgx1")
+
+        code, calls, restore = self.run_start(fail_launch_on="dgx2")
+        self.assertEqual(code, 1)
+        started_nodes = [node["name"] for node in restore.call_args.args[3]]
+        self.assertEqual(started_nodes, ["dgx3"])
+        self.assertNotIn(("dgx1", ("docker", "run")), calls)
+
+
+class MemoryRecoveryTest(unittest.TestCase):
+    """After --replace stops the old engine, the start waits for MemAvailable to stop rising."""
+
+    CLUSTER = {"host": {"startup_memguard_gib": 5}}
+    NODES = {"ssh_user": "u", "nodes": [{"name": "dgx1", "management_ip": "1"},
+                                        {"name": "dgx2", "management_ip": "2"}]}
+
+    def wait(self, readings: dict[str, list[float]]):
+        import subprocess
+        from unittest import mock
+
+        clock = [0.0]
+
+        def run_ssh(_nodes, node, *command):
+            kib = int(readings[node["name"]].pop(0) * 1048576)
+            return subprocess.CompletedProcess(command, 0, stdout=f"{kib}\n", stderr="")
+
+        def sleep(seconds):
+            clock[0] += seconds
+
+        out = io.StringIO()
+        with mock.patch.object(spark, "run_ssh", side_effect=run_ssh), contextlib.redirect_stdout(out):
+            spark.wait_for_memory_recovery(self.CLUSTER, self.NODES, self.NODES["nodes"],
+                                           sleep=sleep, clock=lambda: clock[0])
+        return clock[0], out.getvalue()
+
+    def test_waits_until_each_node_stops_rising(self) -> None:
+        waited, out = self.wait({"dgx1": [40.0, 90.0, 116.0, 116.2], "dgx2": [116.0, 116.1]})
+        self.assertEqual(waited, 3 * spark.MEMORY_SETTLE_INTERVAL_SECONDS)
+        self.assertIn("dgx1: MemAvailable 116.2 GiB", out)
+        self.assertIn("dgx2: MemAvailable 116.1 GiB", out)
+
+    def test_memory_settled_at_the_guard_is_refused(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "dgx1: MemAvailable settled at 4.03 GiB"):
+            self.wait({"dgx1": [4.0, 4.03], "dgx2": [116.0, 116.0]})
+
+    def test_memory_still_rising_at_the_deadline_is_refused(self) -> None:
+        rising = [10.0 + i for i in range(100)]
+        with self.assertRaisesRegex(RuntimeError, "still rising 180s .*dgx1"):
+            self.wait({"dgx1": rising, "dgx2": [116.0] * 100})
 
 
 class KernelPolicyPathTest(unittest.TestCase):
@@ -907,3 +1132,508 @@ class CpusetTest(unittest.TestCase):
         self.assertEqual(spark.cpuset_problems("n", "5-9,15-19", "15-19,5-9", self.CAPACITIES), [])
         self.assertIn("runs on CPUs all", spark.cpuset_problems("n", "5-9,15-19", "", self.CAPACITIES)[0])
         self.assertIn("not this node's fast cores", spark.cpuset_problems("n", "0-9", "0-9", self.CAPACITIES)[0])
+
+
+class GLPTest(unittest.TestCase):
+    """GLP steering in a profile: the dual-serving candidate's glp block, and its file on a node."""
+
+    GLP = ("/home/swank/.cache/huggingface/hub/models--msuiche--DeepSeek-V4.1-Flash-1017-abliterated-cyber-GLP-39-L1-39-a0.75"
+           "/snapshots/2715ffd51f59899115853e1118db080536966c44/glp.deepseek-v41-flash-1017-GLP-39-L1-39-a0.75.gguf")
+    DOWNLOAD = ("hf download msuiche/DeepSeek-V4.1-Flash-1017-abliterated-cyber-GLP-39-L1-39-a0.75 "
+                "glp.deepseek-v41-flash-1017-GLP-39-L1-39-a0.75.gguf --revision 2715ffd51f59899115853e1118db080536966c44")
+    SHA256 = "9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185f20f7f3f09fbf5cf"
+
+    def cluster(self) -> dict:
+        cluster = spark.read_cluster("experiments/2026-10-28-glp-dual-serving/rc-tp4.json")
+        cluster["host"]["home"] = "/home/swank"
+        return cluster
+
+    def node(self, cluster: dict, returncode: int, stdout: str = "", stderr: str = "") -> list[str]:
+        calls = []
+
+        def run_ssh(nodes, node, *argv):
+            calls.append(argv)
+            return spark.subprocess.CompletedProcess(argv, returncode, stdout, stderr)
+
+        original, spark.run_ssh = spark.run_ssh, run_ssh
+        try:
+            problems = spark.node_glp_problems(cluster, {}, {"name": "dgx2"})
+        finally:
+            spark.run_ssh = original
+        self.assertEqual(calls, [("sha256sum", self.GLP)])
+        return problems
+
+    def test_the_candidate_passes(self) -> None:
+        cluster = self.cluster()
+        self.assertEqual(spark.served_model_names(cluster),
+                         ["deepseek-v4.1-flash", "deepseek-v4.1-flash-weightless"])
+        self.assertEqual(spark.glp_problems(cluster), [])
+
+    def test_a_profile_without_steering_passes(self) -> None:
+        self.assertEqual(spark.glp_problems(spark.read_cluster(FIXTURE)), [])
+
+    def test_steering_by_hand_is_reported(self) -> None:
+        cluster = spark.read_cluster(FIXTURE)
+        cluster["environment"]["WEIGHTLESS_STEER_PATH"] = "/glp/vector.gguf"
+        self.assertIn("without a glp block", spark.glp_problems(cluster)[0])
+
+    def test_malformed_fields_are_reported(self) -> None:
+        cluster = self.cluster()
+        cluster["glp"].update(revision="main", sha256="9c66d477", repo="no-owner", file="vector.bin")
+        problems = spark.glp_problems(cluster)
+        self.assertEqual(sorted(problem.split(" ")[0] for problem in problems),
+                         ["glp.file", "glp.repo", "glp.revision", "glp.sha256"])
+
+    def test_the_steered_name_must_follow_the_stock_name(self) -> None:
+        for names in (["deepseek-v4.1-flash"],
+                      ["deepseek-v4.1-flash-weightless", "deepseek-v4.1-flash"],
+                      ["deepseek-v4.1-flash", "deepseek-v4.1-flash-weightless", "deepseek-v4.1-flash-weightless"]):
+            cluster = self.cluster()
+            args = cluster["serve_args"]
+            at = args.index("--served-model-name") + 1
+            args[at:at + 2] = names
+            with self.subTest(names=names):
+                self.assertIn("after the stock name", spark.glp_problems(cluster)[0])
+
+    def test_a_node_with_the_file_passes(self) -> None:
+        self.assertEqual(self.node(self.cluster(), 0, f"{self.SHA256}  {self.GLP}\n"), [])
+
+    def test_a_missing_file_names_its_download(self) -> None:
+        problems = self.node(self.cluster(), 1, stderr="No such file or directory")
+        self.assertEqual(len(problems), 1)
+        self.assertIn("dgx2: GLP steering file is missing", problems[0])
+        self.assertIn(self.DOWNLOAD, problems[0])
+
+    def test_a_file_with_other_contents_is_reported(self) -> None:
+        problems = self.node(self.cluster(), 0, f"{'0' * 64}  {self.GLP}\n")
+        self.assertIn(f"not glp.sha256 {self.SHA256}", problems[0])
+        self.assertIn(self.DOWNLOAD, problems[0])
+
+    def test_an_unreachable_node_is_not_reported_as_missing_the_file(self) -> None:
+        problems = self.node(self.cluster(), 255, stderr="ssh: connect to host dgx2 port 22: Connection refused\n")
+        self.assertEqual(problems, ["dgx2: cannot check the GLP steering file: "
+                                    "ssh: connect to host dgx2 port 22: Connection refused"])
+
+
+class GLPReaderTest(unittest.TestCase):
+    """On the head, the profile image's own GLP reader reads the file as the engine mounts it."""
+
+    GLP, SHA256 = GLPTest.GLP, GLPTest.SHA256
+    IMAGE = "spark-ds41f:1107"
+    READER = ("docker", "run", "--rm", "--pull=never", "--network=none",
+              "--entrypoint=/usr/bin/timeout", "--volume", f"{GLP}:/glp/vector.gguf:ro", IMAGE,
+              "--signal=TERM", "--kill-after=10s", "120s",
+              "python3", "-m", "vllm.models.deepseek_v4_1.glp", "/glp/vector.gguf")
+    SPEC_V3 = {"glp.mode": "project", "glp.spec_version": 3, "glp.hook_point": "hc_fold_pre_engram"}
+    REFUSAL = ("Traceback (most recent call last):\n"
+               '  File "<frozen runpy>", line 198, in _run_module_as_main\n'
+               "ValueError: /glp/vector.gguf: glp.spec_version is 3; this reader implements "
+               "version 1 (rank 1, no alpha scaling keys)\n")
+
+    @staticmethod
+    def gguf(fields: dict) -> bytes:
+        """A GGUF header with these keys (an int as uint32, a str as a string) and no tensors."""
+        def string(text: str) -> bytes:
+            return struct.pack("<Q", len(text.encode())) + text.encode()
+        body = b"".join(string(key) + (struct.pack("<II", 4, value) if isinstance(value, int)
+                                       else struct.pack("<I", 8) + string(value))
+                        for key, value in fields.items())
+        return b"GGUF" + struct.pack("<IQQ", 3, 0, len(fields)) + body
+
+    def head(self, returncode: int, stderr: str = "", header: bytes = b"",
+             digest: str = SHA256) -> tuple[list[str], list[tuple]]:
+        cluster = GLPTest().cluster()
+        cluster["container"]["image"] = self.IMAGE
+        calls = []
+
+        def run_ssh(nodes, node, *argv):
+            calls.append(argv)
+            if argv[0] == "sha256sum":
+                return subprocess.CompletedProcess(argv, 0, f"{digest}  {self.GLP}\n", "")
+            if argv[0] == "docker":
+                return subprocess.CompletedProcess(argv, returncode, "", stderr)
+            return subprocess.CompletedProcess(argv, 0, base64.b64encode(header).decode(), "")
+
+        with mock.patch.object(spark, "run_ssh", run_ssh):
+            problems = spark.node_glp_problems(cluster, {}, {"name": "dgx1", "head": True})
+        return problems, calls
+
+    def test_a_vector_the_image_reads_passes(self) -> None:
+        problems, calls = self.head(0)
+        self.assertEqual(problems, [])
+        self.assertEqual(calls, [("sha256sum", self.GLP), self.READER])
+        self.assertFalse(any(argument.startswith("--gpus") for argument in calls[1]))
+
+    def test_a_vector_the_image_refuses_is_reported_with_its_spec_and_hook(self) -> None:
+        problems, calls = self.head(1, self.REFUSAL, self.gguf(self.SPEC_V3))
+        self.assertEqual(len(problems), 1)
+        self.assertTrue(problems[0].startswith(
+            f"dgx1: {self.IMAGE} cannot read the GLP steering file {self.GLP} "
+            "(glp.spec_version 3, glp.hook_point 'hc_fold_pre_engram'): ValueError: "
+            "/glp/vector.gguf: glp.spec_version is 3; this reader implements version 1"))
+        self.assertIn("would not start, the stock model name included", problems[0])
+        self.assertEqual(calls[2], ("sh", "-c", f"head -c 65536 {self.GLP} | base64 -w0"))
+
+    def test_a_refusal_without_readable_metadata_still_fails(self) -> None:
+        problems, _ = self.head(1, "ValueError: /glp/vector.gguf: not a GGUF file\n", b"\0" * 64)
+        self.assertIn("(its GGUF metadata is unreadable): ValueError", problems[0])
+        problems, _ = self.head(1, "ValueError: boom\n", self.gguf({"glp.mode": "project"}))
+        self.assertIn("(no glp.spec_version, no glp.hook_point): ValueError: boom", problems[0])
+
+    def test_an_image_the_head_lacks_is_left_to_the_image_checks(self) -> None:
+        problems, calls = self.head(125, f"docker: Error response from daemon: No such image: {self.IMAGE}.\n")
+        self.assertEqual(problems, [])
+        self.assertEqual(calls, [("sha256sum", self.GLP), self.READER])
+
+    def test_a_reader_that_cannot_run_or_finish_is_reported(self) -> None:
+        problems, _ = self.head(127, "/usr/bin/timeout: failed to run command 'python3': No such file or directory\n")
+        self.assertEqual(problems, [f"dgx1: cannot run {self.IMAGE}'s GLP reader: /usr/bin/timeout: "
+                                    "failed to run command 'python3': No such file or directory"])
+        problems, _ = self.head(125, "docker: Error response from daemon: invalid mount config\n\n"
+                                     "Run 'docker run --help' for more information\n")
+        self.assertEqual(problems, [f"dgx1: cannot run {self.IMAGE}'s GLP reader: "
+                                    "docker: Error response from daemon: invalid mount config"])
+        problems, _ = self.head(124)
+        self.assertEqual(problems, [f"dgx1: {self.IMAGE}'s GLP reader did not finish within 120s"])
+
+    def test_only_the_head_runs_the_reader_and_only_on_the_pinned_file(self) -> None:
+        problems, calls = self.head(1, self.REFUSAL, digest="0" * 64)
+        self.assertIn("not glp.sha256", problems[0])
+        self.assertEqual(calls, [("sha256sum", self.GLP)])
+
+    def test_metadata_is_read_as_far_as_the_bytes_reach(self) -> None:
+        header = self.gguf({"glp.spec_version": 1, "glp.hook_point": "residual_stream_post_layer"})
+        self.assertEqual(spark.gguf_metadata(header),
+                         {"glp.spec_version": 1, "glp.hook_point": "residual_stream_post_layer"})
+        self.assertEqual(spark.gguf_metadata(header[:-4]), {"glp.spec_version": 1})
+        array = (b"GGUF" + struct.pack("<IQQ", 3, 0, 1) + struct.pack("<Q", 10) + b"glp.layers"
+                 + struct.pack("<IIQ", 9, 5, 2) + struct.pack("<ii", 11, 37))
+        self.assertEqual(spark.gguf_metadata(array), {"glp.layers": [11, 37]})
+        with self.assertRaisesRegex(ValueError, "not a GGUF file"):
+            spark.gguf_metadata(b"GGML")
+
+
+class NewUserOnboardingTest(unittest.TestCase):
+    def test_missing_node_map_prints_setup_guidance_for_each_shape(self) -> None:
+        general = spark.missing_nodes_message()
+        self.assertIn("no site node map is configured", general)
+        self.assertNotIn("is missing: run", general)
+        self.assertIn("cp config/examples/nodes-switched.json config/nodes-switched.local.json", general)
+        self.assertIn("cp config/examples/nodes-ring4.json config/nodes-ring4.local.json", general)
+        self.assertIn("cp config/nodes.example.json config/nodes.json", general)
+        self.assertIn("cp config/nodes.example.json config/nodes.json",
+                      spark.missing_nodes_message("config/nodes.json"))
+        self.assertIn("cp config/examples/nodes-ring4.json config/nodes-ring4.local.json",
+                      spark.missing_nodes_message("config/nodes-ring4.local.json"))
+        self.assertIn("cp config/examples/nodes-switched.json config/nodes-switched.local.json",
+                      spark.missing_nodes_message("config/nodes-switched.local.json"))
+        self.assertIn("docs/setup.md", spark.missing_nodes_message("config/nodes.json"))
+        self.assertNotIn("docs/replicate.md", spark.missing_nodes_message("config/nodes.json"))
+        self.assertNotIn("example_site.py", spark.missing_nodes_message("config/nodes.json"))
+
+    def test_live_doctor_rejects_unedited_example_ips(self) -> None:
+        cluster = {"nodes_config": "config/nodes-switched.local.json"}
+        nodes = {"nodes": [{"name": "dgx1", "management_ip": "192.0.2.1"}]}
+        findings = spark.live_doctor(cluster, nodes)
+        self.assertEqual(len(findings), 1)
+        self.assertIn("example placeholder addresses (192.0.2.x)", findings[0])
+        args = spark.argparse.Namespace(cluster_config="config/cluster.json", shape=None, live=False, verbose=False)
+        with (
+            mock.patch.object(spark, "configuration", return_value=(cluster, nodes, {})),
+            mock.patch.object(spark, "local_doctor", return_value=[]),
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            self.assertEqual(spark.command_doctor(args), 0)
+
+    def test_ssh_resolution_problem_checks_ssh_config_or_dns(self) -> None:
+        nodes = {"ssh_user": "ubuntu", "nodes": [{"name": "unresolvable-label-xyz", "management_ip": "192.168.20.10"}]}
+        with mock.patch("subprocess.run") as run_mock, mock.patch("socket.getaddrinfo") as gai_mock:
+            run_mock.return_value = subprocess.CompletedProcess(
+                ["ssh", "-G", "ubuntu@unresolvable-label-xyz"], 0, "hostname unresolvable-label-xyz\n", ""
+            )
+            gai_mock.side_effect = spark.socket.gaierror("nodename nor servname provided")
+            problem = spark.ssh_resolution_problem(nodes, nodes["nodes"][0])
+            self.assertIsNotNone(problem)
+            assert problem is not None
+            self.assertIn("cannot resolve SSH target", problem)
+            self.assertIn("Host unresolvable-label-xyz", problem)
+            self.assertIn("192.168.20.10", problem)
+
+        with mock.patch("subprocess.run") as run_mock, mock.patch("socket.getaddrinfo") as gai_mock:
+            run_mock.return_value = subprocess.CompletedProcess(
+                ["ssh", "-G", "ubuntu@unresolvable-label-xyz"], 0, "hostname 192.168.20.10\n", ""
+            )
+            gai_mock.return_value = [(spark.socket.AF_INET, spark.socket.SOCK_STREAM, 6, "", ("192.168.20.10", 0))]
+            self.assertIsNone(spark.ssh_resolution_problem(nodes, nodes["nodes"][0]))
+            gai_mock.assert_called_once_with("192.168.20.10", None)
+
+    def test_topology_flags_deprecated_ssh_host_field(self) -> None:
+        cluster = spark.read_cluster("config/cluster.json")
+        nodes = spark.read_json("config/examples/nodes-ring4.json")
+        nodes["nodes"][0]["ssh_host"] = "192.168.20.10"
+        errors = spark.topology.problems(cluster, nodes)
+        self.assertTrue(any("ssh_host is no longer used because name is now the SSH target" in e for e in errors))
+        self.assertFalse(any("unknown fields" in e for e in errors))
+
+    def test_local_tp1_topology_problems(self) -> None:
+        import copy
+
+        cluster = spark.read_cluster("experiments/2026-11-16-c61-decode/tp1.json")
+        nodes = spark.read_json("config/examples/nodes-tp1.json")
+        cluster["distributed"]["master_addr"] = nodes["nodes"][0]["management_ip"]
+        self.assertEqual(spark.topology.problems(cluster, nodes), [])
+        self.assertEqual(spark.topology.hcas(cluster, nodes["nodes"][0]), [])
+
+        two_nodes = copy.deepcopy(nodes)
+        two_nodes["nodes"].append({"name": "spark-2", "rank": 1, "management_ip": "192.0.2.2", "head": False})
+        errors = spark.topology.problems(cluster, two_nodes)
+        self.assertTrue(any("local deployment requires 1 node, got 2" in e for e in errors))
+
+        with_sparknet = copy.deepcopy(cluster)
+        with_sparknet["environment"]["SPARKNET_ROCE_TIMEOUT_MS"] = "10000"
+        errors = spark.topology.problems(with_sparknet, nodes)
+        self.assertTrue(any("local does not run sparknet; SPARKNET_ROCE_* settings do not apply" in e for e in errors))
+
+    def test_docker_permission_denied_points_to_docker_group(self) -> None:
+        stderr = (
+            "permission denied while trying to connect to the Docker daemon socket at "
+            "unix:///var/run/docker.sock: Get \"http://%2Fvar%2Frun%2Fdocker.sock/v1.45/info\": "
+            "dial unix /var/run/docker.sock: connect: permission denied"
+        )
+        detail = spark.docker_error_detail("dgx1", stderr)
+        self.assertIn("sudo usermod -aG docker", detail)
+
+    def test_kernel_profile_mismatch_warns_instead_of_failing(self) -> None:
+        policy = spark.read_json("config/kernel-trial.json")
+        profile = {"release": policy["candidate"], "page_size": 65536, "memory_saver_required": True}
+        data = {"kernel": "7.0.0-1024-nvidia", "page_size": 4096, "driver": "580.142"}
+        findings = [spark.Warn(p) for p in spark.kernel_readiness.profile_problems("dgx1", data, profile, policy)]
+        errors, warnings = spark.split_findings(findings)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("serving profile recommends" in w and "65536-byte pages" in w for w in warnings))
+
+    def test_summarize_live_warnings_groups_into_user_recommendations(self) -> None:
+        raw = [
+            "sp1: 64 KiB package versions differ: linux-image-7.0.0-1019-nvidia-64k",
+            "sp1: missing or empty /boot/vmlinuz-7.0.0-1019-nvidia-64k",
+            "sp2: serving profile recommends 7.0.0-1019-nvidia-64k / 65536-byte pages; running '6.17.0-1019-nvidia' / 4096",
+            "sp1: memory-saver DKMS 0.1.3 is missing or not installed for 7.0.0-1019-nvidia-64k",
+            "sp2: candidate UVM does not select the expected memory-saver DKMS module",
+            "sp1: 64 KiB swap or boot memory service is not active",
+            "sp1: nvme0 sleeps in PS3 (11 ms to wake) after 100 ms idle",
+            "sp1: NVMe interrupt coalescing is on (nvme0=0x00000107)",
+            *spark.wireless_warnings("sp1", facts(wifi_radio="enabled")),
+            "sp1: cannot inspect spark-ds41f: permission denied at /var/run/docker.sock; add the SSH user to the docker group on sp1 (sudo usermod -aG docker $USER) and reconnect",
+            "sp1: DKMS dgx-spark-fan-control is not installed for 6.17.0-1019-nvidia",
+            "sp1: CPU governors differ from performance: ['schedutil']",
+            "sp1: bluetooth.service enabled or running, though unused on a headless inference node",
+            "sp1: nvidia-drm modeset is N, expected Y",
+            "sp1: runtime image local/spark-ds41f-runtime:latest is not present",
+            "sp2: serving container spark-ds41f is not running",
+            "Kernel corrections (not executed):\n  sp1: sudo apt-get install ...",
+        ]
+        summary = spark.summarize_live_warnings(raw, "config/switched.local.json")
+        self.assertEqual(len(summary), 13)
+        expected = [
+            ("install 64kb page kernel (sp1, sp2)", "sudo scripts/install-64k-kernel"),
+            ("install memory-saver (sp1, sp2)", "scripts/install-memory-saver"),
+            ("configure swap (sp1)", "sudo scripts/configure-swap"),
+            ("configure nvme sleep settings (sp1)", "sudo scripts/configure-nvme-sleep"),
+            ("disable nvme interrupt coalescing (sp1)", "sudo scripts/disable-nvme-coalescing"),
+            ("management port off wireless (sp1)", "sudo nmcli radio wifi off"),
+            ("configure docker permissions (sp1)", "sudo usermod -aG docker $USER"),
+            ("install fan-control (sp1)", "scripts/install-fan-control"),
+            ("set cpu governor to performance (sp1)", "sudo systemctl restart nv-cpu-governor.service"),
+            ("disable idle desktop services and boot splash (sp1)", "scripts/host-recovery apply"),
+            ("enable nvidia-drm modeset (sp1)", "sudo apt-get purge -y nvidia-drm-options-modeset0"),
+            (
+                "build and distribute runtime image (sp1)",
+                "bin/spark build prepare && bin/spark --cluster-config config/switched.local.json build image --apply && bin/spark --cluster-config config/switched.local.json build distribute --apply",
+            ),
+            (
+                "start serving container (sp2)",
+                "bin/spark --cluster-config config/switched.local.json cluster start --apply",
+            ),
+        ]
+        for line, (label, command) in zip(summary, expected, strict=True):
+            self.assertIn(f"recommend: {label} -> run: ", line)
+            self.assertIn(command, line)
+
+    def test_wireless_warnings_detect_control_plane_on_wireless_interface(self) -> None:
+        node = {"name": "sp1", "management_ip": "192.168.1.10"}
+        env = {"GLOO_SOCKET_IFNAME": "wlp1s0"}
+        warnings = spark.wireless_warnings(
+            "sp1",
+            facts(wifi_radio="disabled", wireless_ifaces="wlp1s0:192.168.1.10"),
+            node=node,
+            env=env,
+        )
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("control plane uses wireless interface wlp1s0", warnings[0])
+        self.assertEqual(
+            spark.wireless_warnings(
+                "sp1",
+                facts(wifi_radio="disabled", wireless_ifaces="wlp1s0:192.168.1.10"),
+                node={**node, "control_ip": "192.168.100.10"},
+                env={"GLOO_SOCKET_IFNAME": "enp1s0f0np0"},
+            ),
+            [],
+        )
+
+
+class IdentifierAlignmentTest(unittest.TestCase):
+    def test_arm_notes_and_lock_identifiers_are_checked_and_synced(self) -> None:
+        import copy
+
+        lock = copy.deepcopy(spark.read_json("experiments/2026-10-26-spark-ds41f-candidate/candidate-33/upstreams.lock.json"))
+        manifest = copy.deepcopy(spark.read_json(lock["source_manifest"]))
+        arm = spark.read_cluster("experiments/2026-10-26-spark-ds41f-candidate/candidate-33/tp4.json")
+        self.assertEqual(spark.source_identifier_problems(lock, manifest), [])
+        self.assertEqual(spark.arm_note_problems(arm, lock, manifest), [])
+
+        stale_arm = copy.deepcopy(arm)
+        stale_arm["notes"] = (
+            "candidate-33 at tp4-ring: candidate-27 + #790; "
+            "vLLM 0568..0636 (patch head 2c2d396f, tree 88468fc7)."
+        )
+        problems = spark.arm_note_problems(stale_arm, lock, manifest)
+        self.assertEqual(len(problems), 3)
+        self.assertTrue(any("patch head 2c2d396f, expected 10bef730" in p for p in problems))
+        self.assertTrue(any("vllm tree 88468fc7, expected 354fd6e6" in p for p in problems))
+        self.assertTrue(any("vLLM 0568..0636" in p and "ends at 0663" in p for p in problems))
+
+        synced_notes = spark.sync_arm_notes(stale_arm["notes"], lock, manifest)
+        self.assertIn("vLLM 0568..0663 (patch head 10bef730, tree 354fd6e6)", synced_notes)
+        stale_arm["notes"] = synced_notes
+        self.assertEqual(spark.arm_note_problems(stale_arm, lock, manifest), [])
+
+        stale_lock = copy.deepcopy(lock)
+        stale_lock["sources"]["vllm"]["expected_tree"] = "88468fc7" + "0" * 32
+        stale_manifest = copy.deepcopy(manifest)
+        stale_manifest["vllm"]["patch_count"] = 512
+        lock_problems = spark.source_identifier_problems(stale_lock, stale_manifest)
+        self.assertTrue(any("lock expected_tree" in p for p in lock_problems))
+        self.assertTrue(any("patch_count is 512" in p for p in lock_problems))
+
+
+class QualifiedRecipeProblemsTest(unittest.TestCase):
+    def _nodes(self, shape: str) -> dict:
+        example_by_shape = {
+            "tp4-ring": "config/examples/nodes-ring4.json",
+            "tp4-switched": "config/examples/nodes-switched.json",
+            "tp3-triangle": "config/nodes.example.json",
+            "tp3-triangle-4k": "config/nodes.example.json",
+            "tp3-switched": "config/examples/nodes-switched3.json",
+            "tp5-switched": "config/examples/nodes-switched5.json",
+            "tp6-switched": "config/examples/nodes-switched6.json",
+            "tp7-switched": "config/examples/nodes-switched7.json",
+            "tp8-switched": "config/examples/nodes-switched8.json",
+        }
+        return spark.read_json(example_by_shape[shape])
+
+    def test_canonical_production_and_candidate_profiles_pass_cleanly(self) -> None:
+        prod_lock = spark.read_json("releases/spark-ds41f-1126/upstreams.lock.json")
+        for shape in (
+            "tp4-ring", "tp4-switched", "tp3-triangle", "tp3-switched",
+            "tp3-triangle-4k", "tp5-switched", "tp6-switched", "tp7-switched", "tp8-switched",
+        ):
+            with self.subTest(config="production", shape=shape):
+                cluster = spark.read_cluster("releases/spark-ds41f-1126/cluster.json", shape)
+                self.assertEqual(spark.qualified_recipe_problems(cluster, self._nodes(shape), prod_lock), [])
+
+        c55_lock = spark.read_json("experiments/2026-10-26-spark-ds41f-candidate/candidate-55/upstreams.lock.json")
+        stem_to_shape = {"tp4": "tp4-ring", "tp3": "tp3-triangle"}
+        for base in (
+            "experiments/2026-10-26-spark-ds41f-candidate/candidate-55",
+            "experiments/2026-11-14-c58-prefill-10k",
+            "experiments/2026-11-15-c59-prefill",
+        ):
+            for stem in ("tp4", "tp4-switched", "tp3", "tp3-switched", "tp5-switched"):
+                with self.subTest(base=base, stem=stem):
+                    cluster = spark.read_cluster(f"{base}/{stem}.json")
+                    dev = spark.read_cluster(f"{base}/{stem}-dev.json")
+                    nodes = self._nodes(stem_to_shape.get(stem, stem))
+                    self.assertEqual(spark.qualified_recipe_problems(cluster, nodes, c55_lock), [])
+                    self.assertEqual(spark.qualified_recipe_problems(dev, nodes, c55_lock), [])
+                    if base != "experiments/2026-10-26-spark-ds41f-candidate/candidate-55":
+                        # Without site nodes-switched*.local.json, validate topology/recipe checks via example nodes.
+                        dev["distributed"]["master_addr"] = nodes["nodes"][0]["management_ip"]
+                        with unittest.mock.patch.object(spark, "tracked_secret_problems", return_value=[]):
+                            findings = spark.local_doctor(dev, nodes, c55_lock)
+                        self.assertEqual(findings, [])
+
+    def test_unset_or_wrong_l2_prefetch_budgets_warn_without_15_12_12_overlay(self) -> None:
+        import copy
+
+        c55_lock = spark.read_json("experiments/2026-10-26-spark-ds41f-candidate/candidate-55/upstreams.lock.json")
+        base_tp4 = spark.read_cluster("experiments/2026-10-26-spark-ds41f-candidate/candidate-55/tp4.json")
+        nodes = self._nodes("tp4-ring")
+
+        unset_tp4 = copy.deepcopy(base_tp4)
+        for key in ("VLLM_DS41_L2_PREFETCH_WO_MB", "VLLM_DS41_L2_PREFETCH_FFN_MB", "VLLM_DS41_L2_PREFETCH_NEXT_MB"):
+            unset_tp4["environment"].pop(key)
+        warnings = spark.qualified_recipe_problems(unset_tp4, nodes, c55_lock)
+        self.assertEqual(len(warnings), 3)
+        self.assertTrue(all(isinstance(w, spark.Warn) for w in warnings))
+        self.assertTrue(any("VLLM_DS41_L2_PREFETCH_WO_MB is unset" in w for w in warnings))
+
+        stale_tp4 = copy.deepcopy(base_tp4)
+        stale_tp4["environment"]["VLLM_DS41_L2_PREFETCH_WO_MB"] = "20"
+        stale_tp4["environment"]["VLLM_DS41_L2_PREFETCH_FFN_MB"] = "16"
+        stale_tp4["environment"]["VLLM_DS41_L2_PREFETCH_NEXT_MB"] = "20"
+        warnings = spark.qualified_recipe_problems(stale_tp4, nodes, c55_lock)
+        self.assertEqual(len(warnings), 3)
+        self.assertTrue(any("VLLM_DS41_L2_PREFETCH_WO_MB='20', expected qualified '15'" in w for w in warnings))
+
+        # C58/C59 mount l2_prefetch.py with 15/12/12 defaults, so unsetting the env vars is clean.
+        overlaid = spark.read_cluster("experiments/2026-11-14-c58-prefill-10k/tp4.json")
+        for key in ("VLLM_DS41_L2_PREFETCH_WO_MB", "VLLM_DS41_L2_PREFETCH_FFN_MB", "VLLM_DS41_L2_PREFETCH_NEXT_MB"):
+            overlaid["environment"].pop(key)
+        self.assertEqual(spark.qualified_recipe_problems(overlaid, nodes, c55_lock), [])
+
+    def test_missing_or_wrong_wo_bands_and_roce_cutoff_warn(self) -> None:
+        import copy
+
+        c55_lock = spark.read_json("experiments/2026-10-26-spark-ds41f-candidate/candidate-55/upstreams.lock.json")
+        noband = spark.read_cluster("experiments/2026-10-26-spark-ds41f-candidate/candidate-55/tp4-noband.json")
+        warnings = spark.qualified_recipe_problems(noband, self._nodes("tp4-ring"), c55_lock)
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("VLLM_DS41_L2_PREFETCH_WO_BANDS=None, expected qualified '17-32=10'", warnings[0])
+
+        tp3 = spark.read_cluster("experiments/2026-10-26-spark-ds41f-candidate/candidate-55/tp3-switched.json")
+        wrong_tp3 = copy.deepcopy(tp3)
+        wrong_tp3["environment"]["VLLM_DS41_L2_PREFETCH_WO_BANDS"] = "17-32=10"
+        wrong_tp3["environment"].pop("SPARKNET_ROCE_MAX_COLLECTIVE_BYTES")
+        warnings = spark.qualified_recipe_problems(wrong_tp3, self._nodes("tp3-switched"), c55_lock)
+        self.assertEqual(len(warnings), 2)
+        self.assertTrue(any("WO_BANDS='17-32=10', expected qualified '17-32=12'" in w for w in warnings))
+        self.assertTrue(any("SPARKNET_ROCE_MAX_COLLECTIVE_BYTES=None, expected qualified '4194304'" in w for w in warnings))
+
+        tp4 = spark.read_cluster("experiments/2026-10-26-spark-ds41f-candidate/candidate-55/tp4.json")
+        wrong_tp4 = copy.deepcopy(tp4)
+        wrong_tp4["environment"]["SPARKNET_ROCE_MAX_COLLECTIVE_BYTES"] = "4194304"
+        wrong_tp4["serve_args"] = wrong_tp4["serve_args"] + ["--disable-log-requests"]
+        warnings = spark.qualified_recipe_problems(wrong_tp4, self._nodes("tp4-ring"), c55_lock)
+        self.assertEqual(len(warnings), 2)
+        self.assertTrue(any("SPARKNET_ROCE_MAX_COLLECTIVE_BYTES='4194304', expected qualified '2097152'" in w for w in warnings))
+        self.assertTrue(any("serve_args differ from qualified profile" in w for w in warnings))
+
+    def test_profiler_arm_is_not_serve_args_drift(self) -> None:
+        import copy
+
+        c55_lock = spark.read_json("experiments/2026-10-26-spark-ds41f-candidate/candidate-55/upstreams.lock.json")
+        tp4 = spark.read_cluster("experiments/2026-10-26-spark-ds41f-candidate/candidate-55/tp4.json")
+        nodes = self._nodes("tp4-ring")
+        self.assertEqual(spark.qualified_recipe_problems(tp4, nodes, c55_lock), [])
+        profiled = copy.deepcopy(tp4)
+        profiled["serve_args"] = profiled["serve_args"] + ["--profiler-config", '{"profiler": "torch"}']
+        self.assertEqual(spark.qualified_recipe_problems(profiled, nodes, c55_lock), [])
+        # Another argument beside it is still drift.
+        profiled["serve_args"] = profiled["serve_args"] + ["--disable-log-requests"]
+        warnings = spark.qualified_recipe_problems(profiled, nodes, c55_lock)
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("serve_args differ from qualified profile", warnings[0])
+
+
+if __name__ == "__main__":
+    unittest.main()

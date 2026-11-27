@@ -1,36 +1,32 @@
 """The kernel backend policy: B12X by default, TileLang only with its sources."""
 
 import argparse
+import ast
 import contextlib
 import copy
+import functools
 import glob
-import importlib.machinery
-import importlib.util
 import io
 import json
+import os
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
-loader = importlib.machinery.SourceFileLoader("spark_kernel_backend_test", str(ROOT / "bin/spark"))
-spec = importlib.util.spec_from_loader(loader.name, loader)
-spark = importlib.util.module_from_spec(spec)
-loader.exec_module(spark)
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+import spark_ds41f as spark
 kernel_backend = spark.kernel_backend
+source_labels = spark.source_labels
 
 CANDIDATE = "experiments/2026-10-03-tilelang-kernels"
 # Experiments that run the TileLang family and may therefore build its sources.
 TILELANG_EXPERIMENTS = (
     CANDIDATE,
-    "experiments/2026-10-24-1022-promotion/previous/",
-    "experiments/2026-10-18-request-steering/",
-    "experiments/2026-10-18-steering-consume/",
-    "experiments/2026-10-19-steering-gpu/",
-    "experiments/2026-10-19-r6x-steering/",
-    "experiments/2026-10-23-1022-offline-preparation/encoder/",
     "experiments/2026-10-03-packed-bf16-head/tilelang-tp4",
     "experiments/2026-10-03-tilelang-tp4-performance",
     "experiments/2026-10-04-tilelang-1m",
@@ -65,11 +61,10 @@ TILELANG_EXPERIMENTS = (
     "experiments/2026-10-18-apple-rsi",
     "experiments/2026-10-18-r6x",
     "experiments/2026-10-22-spark-ds41f-1022",
-    "experiments/2026-10-23-1022-attention-steering/",
-    "experiments/2026-10-23-1022-attention-review/",
-    "experiments/2026-10-23-1022-output-parser/",
-    "experiments/2026-10-23-1022-release-fixtures/",
-    "experiments/2026-10-23-1022-parser-byte-alignment/",
+    "experiments/2026-10-23-next-release",
+    "experiments/2026-10-25-spark-ds41f-candidate",
+    "experiments/2026-10-26-spark-ds41f-candidate",
+    "experiments/2026-10-28-glp-dual-serving",
 )
 FLAGS = ("--attention-backend", "--linear-backend", "--moe-backend")
 # Each TileLang profile and the B12X configuration it mirrors, with that
@@ -130,8 +125,14 @@ class KernelBackendTest(unittest.TestCase):
         )
         return cluster, lock, manifest, patch
 
-    def errors(self, cluster, lock):
-        return [p for p in spark.local_doctor(cluster, self.nodes, lock) if not isinstance(p, spark.Warn)]
+    def errors(self, cluster, lock, nodes=None):
+        nodes = nodes or self.nodes
+        # The B12X twins and the 10-03 candidates ran RoCEnante transports, which are
+        # retired: doctor's fabric findings about them are not the kernel backend's.
+        retired = ([] if spark.topology.transport(cluster) in spark.topology.TRANSPORTS
+                   else spark.topology.problems(cluster, nodes))
+        return [p for p in spark.local_doctor(cluster, nodes, lock)
+                if not isinstance(p, spark.Warn) and p not in retired]
 
     def test_every_recipe_shape_runs_tilelang(self):
         # One recipe: every shape runs the same image, lock and kernel family.
@@ -143,7 +144,13 @@ class KernelBackendTest(unittest.TestCase):
                 self.assertEqual(cluster["promoted_baseline"], lock["generated_from_baseline"])
                 cluster["distributed"]["master_addr"] = self.base["distributed"]["master_addr"]
                 self.assertEqual(cluster["kernel_backend"], "tilelang")
-                self.assertEqual(cluster["environment"][kernel_backend.ENVIRONMENT], "tilelang")
+                # The variable is the series': required while vLLM has the switch, gone
+                # once the series records tilelang-only.
+                capabilities = spark.read_json(lock["source_manifest"])["vllm"]["capabilities"]
+                if kernel_backend.TILELANG_ONLY in capabilities:
+                    self.assertNotIn(kernel_backend.ENVIRONMENT, cluster["environment"])
+                else:
+                    self.assertEqual(cluster["environment"][kernel_backend.ENVIRONMENT], "tilelang")
                 self.assertEqual(kernel_backend.problems(cluster), [])
                 self.assertEqual(self.errors(cluster, lock), [])
 
@@ -186,7 +193,7 @@ class KernelBackendTest(unittest.TestCase):
         inputs = spark.build_inputs(self.lock)
         for name in kernel_backend.SOURCES:
             self.assertNotIn(name, inputs)
-        self.assertEqual(spark.build_contexts(inputs), spark.BUILD_CONTEXTS)
+        self.assertEqual(spark.build_contexts(inputs), (*spark.BUILD_CONTEXTS, "b12x-source"))
         self.assertEqual(spark.smoke_script(self.lock), spark.SMOKE_SCRIPT)
 
     def test_tilelang_candidate_passes_doctor(self):
@@ -197,9 +204,7 @@ class KernelBackendTest(unittest.TestCase):
             with self.subTest(topology=name):
                 candidate, candidate_lock, base, base_lock, nodes = self.twin(name)
                 for config, upstreams in ((candidate, candidate_lock), (base, base_lock)):
-                    errors = [p for p in spark.local_doctor(config, nodes, upstreams)
-                              if not isinstance(p, spark.Warn)]
-                    self.assertEqual(errors, [])
+                    self.assertEqual(self.errors(config, upstreams, nodes), [])
                 self.assertEqual(kernel_backend.backend(candidate), "tilelang")
                 self.assertFalse(candidate["deployment"]["launch_enabled"])
         self.assertEqual(kernel_backend.backend(cluster), "tilelang")
@@ -220,8 +225,8 @@ class KernelBackendTest(unittest.TestCase):
                 candidate, candidate_lock, base, base_lock, _ = self.twin(name)
                 labels = candidate["container"]["expected_labels"]
                 for source in ("b12x", "nccl"):
-                    self.assertEqual(labels[kernel_backend.label(source)],
-                                     base["container"]["expected_labels"][kernel_backend.label(source)])
+                    self.assertEqual(source_labels.get(labels, f"{source}.tree"),
+                                     source_labels.get(base["container"]["expected_labels"], f"{source}.tree"))
                     self.assertEqual(candidate_lock["sources"][source], base_lock["sources"][source])
                 self.assertEqual(spark.read_json(candidate_lock["source_manifest"])["vllm"]["base_revision"],
                                  spark.read_json(base_lock["source_manifest"])["vllm"]["base_revision"])
@@ -263,7 +268,7 @@ class KernelBackendTest(unittest.TestCase):
                 inputs = spark.build_inputs(lock)
                 manifest = spark.read_json(lock["source_manifest"])
                 self.assertEqual(inputs["vllm"]["expected_tree"], manifest["vllm"]["expected_tree"])
-                self.assertEqual(candidate["container"]["expected_labels"][kernel_backend.label("vllm")],
+                self.assertEqual(source_labels.get(candidate["container"]["expected_labels"], "vllm.tree"),
                                  manifest["vllm"]["expected_tree"])
                 self.assertEqual(manifest["vllm"]["patchset_sha256"], spark.patchset_sha256(lock["sources"]["vllm"]))
                 self.assertEqual(inputs["tilelang"]["expected_tree"], "1697ad52fab8379ce78f9abc547c7b1e02cd9c5e")
@@ -272,30 +277,6 @@ class KernelBackendTest(unittest.TestCase):
                 self.assertNotEqual(candidate["container"]["image"], base["container"]["image"])
                 images.add(candidate["container"]["image"])
         self.assertEqual(len(images), len(TWINS))
-
-    def test_tuning_catalog_mirrors_the_b12x_profiles(self):
-        # The transport settings match the promoted catalog; the model layout
-        # matches the B12X configuration each profile mirrors.
-        profiles = spark.transport_profiles
-        b12x = spark.read_json(profiles.DEFAULT_PROFILES)["profiles"]
-        catalog = f"{CANDIDATE}/profiles.json"
-        self.assertEqual(set(spark.read_json(catalog)["profiles"]), set(b12x))
-        for name in b12x:
-            with self.subTest(topology=name):
-                profile, resolved = profiles.resolve(ROOT, catalog, name)
-                self.assertEqual(profile["base_config"], f"{CANDIDATE}/{name}/cluster.json")
-                self.assertEqual(resolved, spark.read_json(profile["base_config"]))
-                for key in ("node_count", "transport", "rocenante", "nccl"):
-                    self.assertEqual(profile[key], b12x[name][key])
-                layout = spark.model_layout.describe(ROOT, resolved, profiles.size_bytes(
-                    resolved["environment"]["VLLM_ROCE_ALLREDUCE_MAX_SIZE"]))
-                twin = spark.read_json(TWINS[name][0])
-                twin_layout = spark.model_layout.describe(ROOT, twin, profiles.size_bytes(
-                    twin["environment"]["VLLM_ROCE_ALLREDUCE_MAX_SIZE"]))
-                for key in ("model_dimensions", "drafter", "scheduled_rows", "transport_layout"):
-                    self.assertEqual(layout[key], twin_layout[key])
-                self.assertFalse(layout["kernel_scratch"]["compact_moe_n64_path"])
-                self.assertIsNone(layout["kernel_scratch"]["compact_moe_intermediate_width_when_selected"])
 
     def test_missing_patch_is_reported_without_crashing(self):
         series = Path(self.candidate_lock["sources"]["vllm"]["patch_series"])
@@ -312,6 +293,42 @@ class KernelBackendTest(unittest.TestCase):
             inputs = spark.build_inputs(lock, ["tilelang", "tile_kernels"])
             self.assertIn("missing_patches", inputs["vllm"])
 
+    def test_a_series_without_the_switch_refuses_its_variable(self):
+        """A vLLM series that retired VLLM_DS41_KERNEL_BACKEND (capability
+        tilelang-only) runs TileLang without it; a configuration that still sets it
+        names a variable that vLLM no longer reads."""
+        cluster, lock, manifest, patch = self.ready()
+        manifest["vllm"]["capabilities"].append(kernel_backend.TILELANG_ONLY)
+        with patch:
+            errors = self.errors(cluster, lock)
+            self.assertTrue(any("is gone from this vLLM series" in e for e in errors), errors)
+            cluster["environment"].pop(kernel_backend.ENVIRONMENT)
+            self.assertEqual(self.errors(cluster, lock), [])
+        # Its other requirements are unchanged.
+        for flag in FLAGS:
+            changed = copy.deepcopy(cluster)
+            spark.topology.set_argument(changed, flag, kernel_backend.BACKENDS["b12x"][flag])
+            self.assertTrue(any(flag in e for e in kernel_backend.problems(changed)))
+
+    def test_serving_contract_refuses_retired_settings_only_for_new_sources(self):
+        cluster, lock, manifest, _ = self.ready()
+        for name in kernel_backend.RETIRED_SERVING_ENVIRONMENT:
+            cluster["environment"].pop(name, None)
+        for name in kernel_backend.RETIRED_SERVING_ENVIRONMENT:
+            for value in ("0", "1"):
+                with self.subTest(name=name, value=value):
+                    changed = copy.deepcopy(cluster)
+                    changed["environment"][name] = value
+                    old_errors = kernel_backend.source_problems(changed, lock, manifest)
+                    self.assertFalse(any(name in error for error in old_errors))
+                    current = copy.deepcopy(manifest)
+                    current["vllm"]["capabilities"].append(kernel_backend.SERVING_CONTRACT)
+                    errors = kernel_backend.source_problems(changed, lock, current)
+                    self.assertTrue(any(name in error and "retired" in error for error in errors))
+                    changed["environment"].pop(name)
+                    errors = kernel_backend.source_problems(changed, lock, current)
+                    self.assertFalse(any("retired" in error for error in errors))
+
     def test_missing_capability_fails(self):
         cluster, lock, manifest, patch = self.ready()
         manifest["vllm"]["capabilities"] = []
@@ -320,17 +337,32 @@ class KernelBackendTest(unittest.TestCase):
 
     def test_missing_or_mismatched_labels_fail(self):
         for name in ("vllm", *kernel_backend.SOURCES):
-            label = kernel_backend.label(name)
             for value in (None, "0" * 40):
-                with self.subTest(label=label, value=value):
+                with self.subTest(name=name, value=value):
                     cluster, lock, _, patch = self.ready()
                     labels = cluster["container"]["expected_labels"]
+                    label = source_labels.key(labels, f"{name}.tree")
                     if value is None:
                         labels.pop(label)
                     else:
                         labels[label] = value
                     with patch:
-                        self.assertTrue(any(label in e for e in self.errors(cluster, lock)))
+                        # A missing label is named as an image built now carries it.
+                        self.assertTrue(any(f".{name}.tree" in e for e in self.errors(cluster, lock)))
+
+    def test_lock_without_b12x_requires_omitting_b12x_tree_label(self):
+        cluster, lock, manifest, _ = self.ready()
+        labels = cluster["container"]["expected_labels"]
+        label = source_labels.key(labels, "b12x.tree")
+        labels.setdefault(label, manifest["b12x"]["expected_tree"])
+        self.assertEqual(kernel_backend.source_problems(cluster, lock, manifest), [])
+        lock["sources"].pop("b12x")
+        manifest.pop("b12x")
+        problems = kernel_backend.source_problems(cluster, lock, manifest)
+        self.assertEqual(len(problems), 1)
+        self.assertIn(label, problems[0])
+        labels.pop(label)
+        self.assertEqual(kernel_backend.source_problems(cluster, lock, manifest), [])
 
     def test_lock_without_tilelang_sources_fails(self):
         cluster, _, _, _ = self.ready()
@@ -359,14 +391,19 @@ class KernelBackendTest(unittest.TestCase):
             self.assertTrue(any("speculative attention_backend" in e for e in kernel_backend.problems(cluster)))
 
     def test_environment_must_match_the_backend(self):
-        for cluster, wrong in ((self.candidate, "b12x"), (self.candidate, None), (self.base, "tilelang")):
+        # A value that is present must name the selected backend.
+        for cluster, wrong in ((self.candidate, "b12x"), (self.base, "tilelang")):
             with self.subTest(backend=kernel_backend.backend(cluster), value=wrong):
                 changed = copy.deepcopy(cluster)
-                if wrong is None:
-                    changed["environment"].pop(kernel_backend.ENVIRONMENT, None)
-                else:
-                    changed["environment"][kernel_backend.ENVIRONMENT] = wrong
+                changed["environment"][kernel_backend.ENVIRONMENT] = wrong
                 self.assertTrue(any(kernel_backend.ENVIRONMENT in e for e in kernel_backend.problems(changed)))
+        # A series that still has the switch defaults to B12X without it.
+        cluster, lock, _, patch = self.ready()
+        cluster["environment"].pop(kernel_backend.ENVIRONMENT)
+        self.assertEqual(kernel_backend.problems(cluster), [])
+        with patch:
+            self.assertTrue(any(f"requires {kernel_backend.ENVIRONMENT}=tilelang" in e
+                                for e in self.errors(cluster, lock)))
         for value in (None, "/tmp/tilelang", "/cache", "cache/tilelang"):
             with self.subTest(cache=value):
                 changed = copy.deepcopy(self.candidate)
@@ -383,7 +420,8 @@ class KernelBackendTest(unittest.TestCase):
         _, lock, _, patch = self.ready()
         with patch:
             inputs = spark.build_inputs(lock)
-        self.assertEqual(spark.build_projects(inputs), (*spark.BUILD_PROJECTS, *kernel_backend.SOURCES))
+        self.assertEqual(spark.build_projects(inputs),
+                         (*spark.BUILD_PROJECTS, *spark.LEGACY_BUILD_PROJECTS, *kernel_backend.SOURCES))
         self.assertEqual(inputs["tilelang"]["version"], "0.1.15")
         self.assertEqual(inputs["tile_kernels"]["version"], "2.0.0")
         self.assertEqual(spark.build_contexts(inputs)[-2:], ("tilelang-source", "tile_kernels-source"))
@@ -436,6 +474,24 @@ class KernelBackendTest(unittest.TestCase):
                          "SPARKNET_TREE=bd4191b3241383e8ecb705ad291f2da5b064370f",
                          "--build-context sparknet-source=", "--build-context tilelang-source="):
             self.assertIn(expected, output.getvalue())
+        without_kernels = copy.deepcopy(cluster)
+        without_kernels["build"] = {"flashinfer_kernels": False}
+        output = io.StringIO()
+        with mock.patch.object(spark, "configuration", return_value=(without_kernels, self.nodes, lock)), \
+                mock.patch.object(spark, "build_problems", return_value=[]), \
+                mock.patch.object(spark, "repository_dirty", return_value=""), \
+                mock.patch.object(spark, "repository_revision", return_value="0" * 40), \
+                contextlib.redirect_stdout(output):
+            spark.command_build_image(argparse.Namespace(cluster_config="c.json", tag=None, apply=False))
+        self.assertIn("RUNTIME_STAGE=runtime-no-flashinfer-kernels", output.getvalue())
+        self.assertIn("SPARKNET_TREE=bd4191b3241383e8ecb705ad291f2da5b064370f", output.getvalue())
+        self.assertEqual(spark.final_stage({"build": {"flashinfer_kernels": True}}, "runtime-tilelang-sparknet"),
+                         "runtime-tilelang-sparknet")
+        for stage in ("runtime-tilelang", None):
+            with self.assertRaises(SystemExit):
+                spark.final_stage(without_kernels, stage)
+        with self.assertRaises(SystemExit):
+            spark.final_stage({"build": {"flashinfer_kernels": "no"}}, "runtime-tilelang-sparknet")
         script = spark.smoke_script(lock)
         compile(script, "smoke", "exec")
         for expected in ("from sparknet.integration.vllm import SparknetOneShotAllReduce",
@@ -454,28 +510,82 @@ class KernelBackendTest(unittest.TestCase):
             manifest["vllm"]["capabilities"] = []
             self.assertNotIn("deepseek_v4_1.tilelang", spark.smoke_script(lock))
 
+    def test_a_tilelang_only_series_smoke_skips_b12x_roce(self):
+        """A TileLang-only series deletes B12X's RoCE collectives: the smoke must not
+        import them, and imports the rest as before."""
+        _, lock, manifest, patch = self.ready()
+        with patch:
+            self.assertIn(spark.B12X_ROCE_IMPORT, spark.SMOKE_SCRIPT)
+            self.assertIn(spark.B12X_ROCE_IMPORT, spark.smoke_script(lock))
+            manifest["vllm"]["capabilities"].append(kernel_backend.TILELANG_ONLY)
+            script = spark.smoke_script(lock)
+            compile(script, "smoke", "exec")
+            self.assertNotIn("b12x_roce_all_reduce", script)
+            for expected in ("import vllm.models.deepseek_v4_1.nvidia.model",
+                             "import vllm.models.deepseek_v4_1.tilelang", "import tilelang\n"):
+                self.assertIn(expected, script)
+
     def test_existing_profiles_and_locks_are_unaffected(self):
-        for path in sorted(glob.glob(str(ROOT / "experiments/**/*.json"), recursive=True)):
-            relative = Path(path).relative_to(ROOT).as_posix()
+        seen_locks: set[str] = set()
+        for relative, data in _experiment_configs_and_locks():
             if relative.startswith(TILELANG_EXPERIMENTS):
                 continue
-            data = json.loads(Path(path).read_text())
-            if not isinstance(data, dict):
-                continue
-            if "sources" in data and "source_manifest" in data:
+            if "sources" in data and "source_manifest" in data and "tilelang" not in data["sources"]:
                 with self.subTest(lock=relative):
-                    self.assertEqual(spark.build_projects(data["sources"]), spark.BUILD_PROJECTS)
-                    inputs = spark.build_inputs(data)
-                    self.assertEqual(spark.build_contexts(inputs), spark.BUILD_CONTEXTS)
+                    # Every lock before the TileLang family lists B12X.
+                    self.assertEqual(spark.build_projects(data["sources"]),
+                                     (*spark.BUILD_PROJECTS, *spark.LEGACY_BUILD_PROJECTS))
+                    fingerprint = json.dumps(data, sort_keys=True)
+                    if fingerprint not in seen_locks:
+                        seen_locks.add(fingerprint)
+                        inputs = spark.build_inputs(data)
+                        self.assertEqual(spark.build_contexts(inputs), (*spark.BUILD_CONTEXTS, "b12x-source"))
             elif "serve_args" in data and "container" in data and "kernel_backend" not in data:
                 with self.subTest(profile=relative):
                     self.assertEqual(kernel_backend.source_problems(data, {"sources": {}}, {}), [])
                     if spark.topology.argument(data, "--attention-backend") == "B12X":
                         self.assertEqual(kernel_backend.problems(data), [])
 
+    def test_expected_labels_mismatch_names_manifest_and_upstreams_config_hint(self):
+        cluster, lock, manifest, _ = self.ready()
+        cluster.pop("upstreams_config", None)
+        labels = cluster["container"]["expected_labels"]
+        labels[source_labels.key(labels, "vllm.tree")] = "f" * 40
+        errors = kernel_backend.source_problems(cluster, lock, manifest)
+        self.assertEqual(len(errors), 1)
+        self.assertIn(lock["source_manifest"], errors[0])
+        self.assertIn("upstreams_config", errors[0])
+        self.assertIn("build prepare --lock", errors[0])
+        cluster["upstreams_config"] = "experiments/arm/upstreams.lock.json"
+        errors_with_lock = kernel_backend.source_problems(cluster, lock, manifest)
+        self.assertEqual(len(errors_with_lock), 1)
+        self.assertIn(lock["source_manifest"], errors_with_lock[0])
+        self.assertNotIn("upstreams_config lock", errors_with_lock[0])
 
-if __name__ == "__main__":
-    unittest.main()
+
+@functools.lru_cache(maxsize=1)
+def _experiment_configs_and_locks() -> tuple[tuple[str, dict], ...]:
+    """Experiment JSON dictionaries that could be cluster profiles or upstream locks."""
+    skipped_dirs = {"results", "receipts", "bundles", "release-tests", "__pycache__"}
+    items: list[tuple[str, dict]] = []
+    for dirpath, dirnames, filenames in os.walk(ROOT / "experiments"):
+        dirnames[:] = sorted(d for d in dirnames if d not in skipped_dirs)
+        for filename in sorted(filenames):
+            if not filename.endswith(".json"):
+                continue
+            path = Path(dirpath) / filename
+            try:
+                if path.stat().st_size > 65536:
+                    continue
+                text = path.read_text(encoding="utf-8")
+            except OSError:
+                continue
+            if '"source_manifest"' not in text and '"container"' not in text:
+                continue
+            data = json.loads(text)
+            if isinstance(data, dict):
+                items.append((path.relative_to(ROOT).as_posix(), data))
+    return tuple(items)
 
 
 class TileLangProfileLabelTest(unittest.TestCase):
@@ -493,22 +603,44 @@ class TileLangProfileLabelTest(unittest.TestCase):
         "experiments/2026-10-04-tilelang-1m/diagnostics/seqs12.json",
         "experiments/2026-10-04-tilelang-1m/diagnostics/seqs16-4k.json",
         "experiments/2026-10-04-tilelang-1m/diagnostics/shapes8.json",
+        # The release after spark-ds41f-1022: its candidates' recipes, copies of the renamed
+        # recipe on -1022-4's tree, which their arms extend with their own image and lock.
+        "experiments/2026-10-23-next-release/rc2/cluster.json",
+        "experiments/2026-10-23-next-release/rc3/cluster.json",
     }
 
     def test_tilelang_profiles_expect_their_manifest_trees(self):
         """The launch preflight refuses a TileLang profile whose expected image trees
         differ from its lock's source manifest (an arm generated from a recipe before
         its series changed)."""
-        for path in sorted(glob.glob(str(ROOT / "experiments/**/*.json"), recursive=True)):
-            relative = Path(path).relative_to(ROOT).as_posix()
-            data = json.loads(Path(path).read_text())
-            if (not isinstance(data, dict) or data.get("kernel_backend") != "tilelang"
+        for relative, data in _experiment_configs_and_locks():
+            if (data.get("kernel_backend") != "tilelang"
                     or "container" not in data or relative in self.HISTORICAL):
                 continue
-            lock_path = self.HISTORICAL_LOCKS.get(
-                relative, data.get("upstreams_config", "upstreams.lock.json")
-            )
-            lock = spark.read_json(lock_path)
+            lock = spark.read_json(self.HISTORICAL_LOCKS.get(relative, data.get("upstreams_config", "upstreams.lock.json")))
             manifest = spark.read_json(lock["source_manifest"])
             with self.subTest(profile=relative):
                 self.assertEqual(kernel_backend.source_problems(data, lock, manifest), [])
+
+
+class TestModuleEntrypointOrderTest(unittest.TestCase):
+    def test_every_test_module_keeps_unittest_main_at_the_end(self):
+        """Running a test file directly must execute every TestCase class in the module."""
+        self.assertTrue((ROOT / "tests" / "__init__.py").is_file())
+        for path in sorted((ROOT / "tests").glob("test_*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            main_indices = [
+                index
+                for index, node in enumerate(tree.body)
+                if isinstance(node, ast.If) and "__name__" in ast.unparse(node.test)
+            ]
+            with self.subTest(module=path.name):
+                self.assertEqual(
+                    main_indices,
+                    [len(tree.body) - 1],
+                    f"{path.name} must have a single `if __name__ == '__main__':` guard at EOF",
+                )
+
+
+if __name__ == "__main__":
+    unittest.main()

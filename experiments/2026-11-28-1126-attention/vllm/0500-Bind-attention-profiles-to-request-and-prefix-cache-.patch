@@ -1,0 +1,1298 @@
+From 6d5e141fcc6539a5d0b886831feacf74f4f4e6d1 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 00:27:37 +0900
+Subject: [PATCH 500/505] Bind attention profiles to request and prefix-cache
+ identity
+
+Upstream base: spark-ds41f-1126 vLLM d8784b841c360f523ec20e44bf8fb0898f36d3e4.
+
+Retain the 1017 artifact, FP32 dose, cache identity and OpenAI request validation. Reject concurrent GLP selection during admission and worker initialization. CPU coverage lives in the steering profile, identity and request suites.
+
+Upstream status: downstream integration.
+---
+ .../openai/chat_completion/protocol.py        |   8 +-
+ .../entrypoints/openai/completion/protocol.py |   8 +-
+ vllm/entrypoints/serve/engine/protocol.py     |  59 +-
+ .../models/deepseek_v4_1/steering/__init__.py |   3 +
+ .../models/deepseek_v4_1/steering/artifact.py | 540 ++++++++++++++++++
+ vllm/models/deepseek_v4_1/steering/cache.py   |  28 +
+ vllm/models/deepseek_v4_1/steering/config.py  | 123 ++++
+ vllm/models/deepseek_v4_1/steering/profile.py | 238 ++++++++
+ .../deepseek_v4_1/steering/reference.py       |  21 +
+ vllm/models/deepseek_v4_1/steering/request.py |  80 +++
+ vllm/v1/engine/input_processor.py             |  25 +-
+ 11 files changed, 1127 insertions(+), 6 deletions(-)
+ create mode 100644 vllm/models/deepseek_v4_1/steering/__init__.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/artifact.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/cache.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/config.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/profile.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/reference.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/request.py
+
+diff --git a/vllm/entrypoints/openai/chat_completion/protocol.py b/vllm/entrypoints/openai/chat_completion/protocol.py
+index e51174638d..d27f6749e8 100644
+--- a/vllm/entrypoints/openai/chat_completion/protocol.py
++++ b/vllm/entrypoints/openai/chat_completion/protocol.py
+@@ -38,7 +38,11 @@ from vllm.entrypoints.generate.base.protocol import (
+     validate_structural_tag_response_format,
+     validate_structured_outputs_structural_tag,
+ )
+-from vllm.entrypoints.serve.engine.protocol import OpenAIBaseModel, UsageInfo
++from vllm.entrypoints.serve.engine.protocol import (
++    OpenAIBaseModel,
++    SteeringRequest,
++    UsageInfo,
++)
+ from vllm.exceptions import VLLMValidationError
+ from vllm.logger import init_logger
+ from vllm.logprobs import Logprob
+@@ -228,7 +232,7 @@ class ChatCompletionThinkingParam(OpenAIBaseModel):
+     type: Literal["enabled", "disabled"]
+ 
+ 
+-class ChatCompletionRequest(OpenAIBaseModel):
++class ChatCompletionRequest(SteeringRequest):
+     # Ordered by official OpenAI API documentation
+     # https://platform.openai.com/docs/api-reference/chat/create
+     messages: list[ChatCompletionMessageParam]
+diff --git a/vllm/entrypoints/openai/completion/protocol.py b/vllm/entrypoints/openai/completion/protocol.py
+index df090d2d49..2067b34a58 100644
+--- a/vllm/entrypoints/openai/completion/protocol.py
++++ b/vllm/entrypoints/openai/completion/protocol.py
+@@ -20,7 +20,11 @@ from vllm.entrypoints.generate.base.protocol import (
+     validate_structural_tag_response_format,
+     validate_structured_outputs_structural_tag,
+ )
+-from vllm.entrypoints.serve.engine.protocol import OpenAIBaseModel, UsageInfo
++from vllm.entrypoints.serve.engine.protocol import (
++    OpenAIBaseModel,
++    SteeringRequest,
++    UsageInfo,
++)
+ from vllm.exceptions import VLLMValidationError
+ from vllm.logger import init_logger
+ from vllm.logprobs import Logprob
+@@ -43,7 +47,7 @@ _INT64_MIN = -(2**63)
+ _INT64_MAX = 2**63 - 1
+ 
+ 
+-class CompletionRequest(OpenAIBaseModel):
++class CompletionRequest(SteeringRequest):
+     # Ordered by official OpenAI API documentation
+     # https://platform.openai.com/docs/api-reference/completions/create
+     model: str | None = None
+diff --git a/vllm/entrypoints/serve/engine/protocol.py b/vllm/entrypoints/serve/engine/protocol.py
+index cc25a4f96b..4937ee80bd 100644
+--- a/vllm/entrypoints/serve/engine/protocol.py
++++ b/vllm/entrypoints/serve/engine/protocol.py
+@@ -4,12 +4,15 @@
+ # Adapted from
+ # https://github.com/lm-sys/FastChat/blob/168ccc29d3f7edc50823016105c024fe2282732a/fastchat/protocol/openai_api_protocol.py
+ import time
+-from typing import ClassVar
++from typing import Any, ClassVar
+ 
+ from pydantic import (
+     BaseModel,
+     ConfigDict,
+     Field,
++    StrictFloat,
++    StrictInt,
++    StrictStr,
+     model_validator,
+ )
+ 
+@@ -44,6 +47,19 @@ class OpenAIBaseModel(BaseModel):
+     @model_validator(mode="wrap")
+     @classmethod
+     def __log_extra_fields__(cls, data, handler):
++        if isinstance(data, dict) and "steering_profile" not in cls.model_fields:
++            xargs = data.get("vllm_xargs")
++            sources = (data, xargs) if isinstance(xargs, dict) else (data,)
++            if any(
++                source.get(key) is not None
++                for source in sources
++                for key in ("steering_profile", "steering_scale")
++            ):
++                raise ValueError("Steering is not supported by this request type")
++        if isinstance(data, dict) and "vllm_xargs" in cls.model_fields:
++            xargs = data.get("vllm_xargs")
++            if isinstance(xargs, dict) and type(xargs.get("steering_scale")) is bool:
++                raise ValueError("steering_scale must be a number, not a boolean")
+         result = handler(data)
+         if not isinstance(data, dict):
+             return result
+@@ -76,6 +92,47 @@ class OpenAIBaseModel(BaseModel):
+         return result
+ 
+ 
++class SteeringRequest(OpenAIBaseModel):
++    steering_profile: StrictStr | None = Field(
++        default=None, description="Select the immutable profile loaded at startup."
++    )
++    steering_scale: StrictInt | StrictFloat | None = Field(
++        default=None,
++        description="Request strength in [0, 4]; a named profile defaults to 1.",
++    )
++
++    @model_validator(mode="before")
++    @classmethod
++    def _forward_steering_fields(cls, data: Any):
++        if not isinstance(data, dict):
++            return data
++        original = data.get("vllm_xargs")
++        if original is not None and not isinstance(original, dict):
++            return data
++        keys = ("steering_profile", "steering_scale")
++        if not any(key in data or key in (original or {}) for key in keys):
++            return data
++        extra = dict(original or {})
++        for key in keys:
++            value = data.get(key)
++            if value is not None:
++                if extra.get(key) is not None and extra[key] != value:
++                    raise ValueError(f"Conflicting {key} in request and vllm_xargs")
++                extra[key] = value
++            elif extra.get(key) is None:
++                extra.pop(key, None)
++        return {**data, "vllm_xargs": extra or None}
++
++    @model_validator(mode="after")
++    def _reject_unsupported_beam_search(self):
++        if getattr(self, "use_beam_search", False) and any(
++            (getattr(self, "vllm_xargs", None) or {}).get(key) is not None
++            for key in ("steering_profile", "steering_scale")
++        ):
++            raise ValueError("Steering with beam search is not supported")
++        return self
++
++
+ class ErrorInfo(OpenAIBaseModel):
+     message: str
+     type: str
+diff --git a/vllm/models/deepseek_v4_1/steering/__init__.py b/vllm/models/deepseek_v4_1/steering/__init__.py
+new file mode 100644
+index 0000000000..9588ec6380
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/__init__.py
+@@ -0,0 +1,3 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Explicit DeepSeek V4.1 attention steering contracts and execution."""
+diff --git a/vllm/models/deepseek_v4_1/steering/artifact.py b/vllm/models/deepseek_v4_1/steering/artifact.py
+new file mode 100644
+index 0000000000..2c63170ab9
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/artifact.py
+@@ -0,0 +1,540 @@
++# SPDX-License-Identifier: MIT
++# MIT License
++#
++# Copyright (c) 2026 gr8 engine contributors
++#
++# Permission is hereby granted, free of charge, to any person obtaining a copy
++# of this software and associated documentation files (the "Software"), to deal
++# in the Software without restriction, including without limitation the rights
++# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++# copies of the Software, and to permit persons to whom the Software is
++# furnished to do so, subject to the following conditions:
++#
++# The above copyright notice and this permission notice shall be included in all
++# copies or substantial portions of the Software.
++#
++# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++# SOFTWARE.
++# Adapted from kindlingai/gr8 tools/steering/release.py at
++# c53b5b869818950a96a9b72c647d4b156b057127.
++"""Pack and unpack the explicit DeepSeek attention extension deterministically.
++
++The payload has one F32 tensor, ``directions``. Metadata preserves the exact
++UTF-8 manifest. Only the standard library is needed to materialize a profile.
++"""
++
++import argparse
++import hashlib
++import json
++import math
++import os
++import re
++import shutil
++import struct
++import tempfile
++
++FORMAT = "gr8-steering-profile-v1+ds41-attention-v1"
++OPERATOR_VERSION = "attn-writer-project-bf16-rank-order-v1"
++MAX_HEADER = 1 << 20
++MAX_PAYLOAD = 64 << 20
++
++
++class ProfileError(ValueError):
++    pass
++
++
++def canonical(value):
++    return json.dumps(
++        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
++    )
++
++
++def sha256(data):
++    return hashlib.sha256(data).hexdigest()
++
++
++def _unique_object(pairs):
++    out = {}
++    for key, value in pairs:
++        if key in out:
++            raise ProfileError(f"duplicate JSON key {key}")
++        out[key] = value
++    return out
++
++
++def parse_json(raw, where):
++    def number(token):
++        value = float(token)
++        if not math.isfinite(value):
++            raise ProfileError(f"invalid {where}: non-finite number")
++        return value
++
++    def constant(token):
++        raise ProfileError(f"invalid {where}: non-finite number {token}")
++
++    def check(value, depth=0):
++        if depth > 64:
++            raise ProfileError(f"invalid {where}: nested too deeply")
++        if isinstance(value, str):
++            value.encode(
++                "utf-8"
++            )  # reject lone escaped surrogates, as the C++ reader does
++        elif isinstance(value, dict):
++            for key, item in value.items():
++                key.encode("utf-8")
++                check(item, depth + 1)
++        elif isinstance(value, list):
++            for item in value:
++                check(item, depth + 1)
++
++    try:
++        if isinstance(raw, bytes):
++            raw = raw.decode("utf-8")  # JSON here never accepts UTF-16/32 or a BOM
++        value = json.loads(
++            raw,
++            object_pairs_hook=_unique_object,
++            parse_float=number,
++            parse_constant=constant,
++        )
++        check(value)
++        return value
++    except ProfileError:
++        raise
++    except (UnicodeError, ValueError, RecursionError) as e:
++        raise ProfileError(f"invalid {where}: {e}") from None
++
++
++def read_limited(path, limit, what):
++    with open(path, "rb") as f:
++        raw = f.read(limit + 1)
++    if len(raw) > limit:
++        raise ProfileError(f"{what} is too large")
++    return raw
++
++
++def _object(value, keys, where):
++    if not isinstance(value, dict) or set(value) != set(keys):
++        raise ProfileError(f"invalid {where}")
++
++
++def _integer(value):
++    return isinstance(value, int) and not isinstance(value, bool)
++
++
++def _u32(value):
++    return _integer(value) and 0 <= value <= 0xFFFFFFFF
++
++
++def _digest(value):
++    return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
++
++
++def validate_manifest(manifest, payload, expected=None):
++    _object(
++        manifest,
++        (
++            "schema_version",
++            "profile_name",
++            "model",
++            "scope",
++            "layers",
++            "alphas",
++            "directions",
++            "provenance",
++            "operator_version",
++        ),
++        "manifest fields",
++    )
++    if not _integer(manifest.get("schema_version")) or manifest["schema_version"] != 1:
++        raise ProfileError("want a schema-v1 steering manifest")
++    name = manifest.get("profile_name")
++    if not isinstance(name, str) or not re.fullmatch(
++        r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", name
++    ):
++        raise ProfileError("invalid profile_name")
++    layers, alphas = manifest.get("layers"), manifest.get("alphas")
++    model, directions = manifest.get("model"), manifest.get("directions")
++    if (
++        not isinstance(layers, list)
++        or not layers
++        or not isinstance(alphas, list)
++        or len(layers) != len(alphas)
++    ):
++        raise ProfileError("inconsistent layers and alphas")
++    _object(
++        model,
++        (
++            "name",
++            "revision",
++            "weight_set",
++            "tokenizer_revision",
++            "chat_template_sha256",
++            "hidden_size",
++            "layer_count",
++        ),
++        "model fields",
++    )
++    for field in ("name", "revision", "weight_set", "tokenizer_revision"):
++        if not isinstance(model.get(field), str) or not model[field]:
++            raise ProfileError(f"invalid model.{field}")
++    if not _digest(model["weight_set"]):
++        raise ProfileError("invalid model.weight_set")
++    if (
++        not _u32(model.get("hidden_size"))
++        or model["hidden_size"] == 0
++        or not _u32(model.get("layer_count"))
++        or model["layer_count"] == 0
++    ):
++        raise ProfileError("invalid model dimensions")
++    if not _digest(model.get("chat_template_sha256")):
++        raise ProfileError("invalid model.chat_template_sha256")
++    if expected is not None:
++        _object(expected, model.keys(), "expected model identity fields")
++        if any(
++            type(expected[key]) is not type(value) or expected[key] != value
++            for key, value in model.items()
++        ):
++            raise ProfileError("model identity mismatch")
++    last = -1
++    for layer in layers:
++        if not _integer(layer) or layer <= last or layer >= model["layer_count"]:
++            raise ProfileError("layers must be unique, ordered, and in range")
++        last = layer
++    for alpha in alphas:
++        if (
++            isinstance(alpha, bool)
++            or not isinstance(alpha, (int, float))
++            or not 0.0 <= alpha <= 4.0
++            or not math.isfinite(alpha)
++        ):
++            raise ProfileError("alpha must be finite and in [0, 4]")
++    if manifest.get("scope") != "attention":
++        raise ProfileError("this operator requires attention scope")
++    if manifest.get("operator_version") != OPERATOR_VERSION:
++        raise ProfileError("unsupported attention operator version")
++    want = len(layers) * model["hidden_size"] * 4
++    _object(directions, ("file", "dtype", "byte_count", "sha256"), "directions record")
++    if (
++        directions.get("file") != "directions.f32"
++        or directions.get("dtype") != "float32-le"
++        or not _u32(directions.get("byte_count"))
++        or directions["byte_count"] != want
++    ):
++        raise ProfileError("invalid directions record")
++    if len(payload) != want or len(payload) > MAX_PAYLOAD:
++        raise ProfileError("directions payload size mismatch")
++    if directions.get("sha256") != sha256(payload):
++        raise ProfileError("directions payload digest mismatch")
++    provenance = manifest.get("provenance")
++    if not isinstance(provenance, dict):
++        raise ProfileError("invalid provenance")
++    kind = provenance.get("kind")
++    if kind == "imported":
++        _object(
++            provenance,
++            ("kind", "source", "conversion", "dataset_manifests"),
++            "import provenance",
++        )
++        if provenance["dataset_manifests"] is not None:
++            raise ProfileError(
++                "imported directions must declare unknown extraction datasets as null"
++            )
++        original = provenance["source"]
++        _object(
++            original,
++            ("repository", "revision", "license", "directions", "schedule"),
++            "source",
++        )
++        for field in ("repository", "license"):
++            if not isinstance(original[field], str) or not original[field]:
++                raise ProfileError(f"invalid source.{field}")
++        if not isinstance(original["revision"], str) or not re.fullmatch(
++            "[0-9a-f]{40}", original["revision"]
++        ):
++            raise ProfileError("invalid source revision")
++        for key, detail in (("directions", "tensor"), ("schedule", "value")):
++            record = original[key]
++            _object(record, ("file", "sha256", detail), f"source.{key}")
++            for field in ("file", detail):
++                if not isinstance(record[field], str) or not record[field]:
++                    raise ProfileError(f"invalid source.{key}.{field}")
++            if not _digest(record["sha256"]):
++                raise ProfileError(f"invalid source.{key} digest")
++        conversion = provenance["conversion"]
++        _object(conversion, ("tool", "sha256"), "conversion")
++        if (
++            not isinstance(conversion["tool"], str)
++            or not conversion["tool"]
++            or not _digest(conversion["sha256"])
++        ):
++            raise ProfileError("invalid conversion identity")
++    elif kind == "extracted":
++        _object(
++            provenance,
++            ("kind", "extraction_tool", "extraction_commit", "dataset_manifests"),
++            "extraction provenance",
++        )
++        for field in ("extraction_tool", "extraction_commit"):
++            if not isinstance(provenance[field], str) or not provenance[field]:
++                raise ProfileError(f"invalid {field}")
++        datasets = provenance["dataset_manifests"]
++        _object(datasets, ("train", "validation", "final"), "dataset manifests")
++        if not all(_digest(value) for value in datasets.values()):
++            raise ProfileError("extraction requires all dataset manifest digests")
++    else:
++        raise ProfileError("unknown provenance kind")
++    values = struct.iter_unpack("<f", payload)
++    width = model["hidden_size"]
++    norm2 = 0.0
++    for i, (value,) in enumerate(values, 1):
++        if not math.isfinite(value):
++            raise ProfileError("non-finite direction")
++        norm2 += value * value
++        if i % width == 0:
++            norm = math.sqrt(norm2)
++            if not 0.999 <= norm <= 1.001:
++                raise ProfileError("direction norm outside [0.999, 1.001]")
++            norm2 = 0.0
++    return name, [len(layers), model["hidden_size"]]
++
++
++def read_directory(profile_dir, expected_sha256=None):
++    """Read one manifest/payload pair with an optional exact manifest pin."""
++    manifest_path = os.path.join(profile_dir, "manifest.json")
++    payload_path = os.path.join(profile_dir, "directions.f32")
++    try:
++        raw = read_limited(manifest_path, MAX_HEADER, "manifest")
++        manifest = parse_json(raw, "manifest JSON")
++        payload = read_limited(payload_path, MAX_PAYLOAD, "directions payload")
++    except OSError as e:
++        raise ProfileError(str(e)) from None
++    if expected_sha256 is not None and sha256(raw) != expected_sha256:
++        raise ProfileError("steering manifest SHA-256 mismatch")
++    validate_manifest(manifest, payload)
++    return manifest, payload, raw
++
++
++def validate_directory(profile_dir, expected=None):
++    """Validate the directory against an optional complete model identity."""
++    manifest, payload, _ = read_directory(profile_dir)
++    validate_manifest(manifest, payload, expected)
++    return manifest
++
++
++def _atomic_write(path, chunks):
++    parent = os.path.dirname(os.path.abspath(path))
++    os.makedirs(parent, exist_ok=True)
++    fd, tmp = tempfile.mkstemp(prefix=".steering-", dir=parent)
++    try:
++        with os.fdopen(fd, "wb") as f:
++            for chunk in chunks:
++                f.write(chunk)
++            f.flush()
++            os.fsync(f.fileno())
++        os.replace(tmp, path)
++    finally:
++        if os.path.exists(tmp):
++            os.unlink(tmp)
++
++
++def pack(profile_dir, output):
++    """Pack exact input bytes and atomically publish the artifact."""
++    manifest_raw = read_limited(
++        os.path.join(profile_dir, "manifest.json"), MAX_HEADER, "manifest"
++    )
++    manifest = parse_json(manifest_raw, "manifest JSON")
++    payload = read_limited(
++        os.path.join(profile_dir, "directions.f32"), MAX_PAYLOAD, "directions payload"
++    )
++    _, shape = validate_manifest(manifest, payload)
++    manifest_json = manifest_raw.decode("utf-8")
++    header = {
++        "__metadata__": {
++            "format": FORMAT,
++            "gr8_manifest": manifest_json,
++            "manifest_sha256": sha256(manifest_raw),
++        },
++        "directions": {
++            "dtype": "F32",
++            "shape": shape,
++            "data_offsets": [0, len(payload)],
++        },
++    }
++    raw_header = canonical(header).encode()
++    raw_header += b" " * ((8 - len(raw_header) % 8) % 8)
++    if len(raw_header) > MAX_HEADER:
++        raise ProfileError("safetensors header is too large")
++    _atomic_write(output, (struct.pack("<Q", len(raw_header)), raw_header, payload))
++
++
++def read_artifact(path, expected_sha256=None):
++    with open(path, "rb") as f:
++        size = os.fstat(f.fileno()).st_size
++        raw = f.read(8)
++        if len(raw) != 8:
++            raise ProfileError("truncated safetensors header length")
++        (n,) = struct.unpack("<Q", raw)
++        if n <= 0 or n % 8 or n > MAX_HEADER or 8 + n > size:
++            raise ProfileError("invalid safetensors header length")
++        header_raw = f.read(n)
++        header = parse_json(header_raw, "safetensors header")
++        _object(
++            header,
++            ("__metadata__", "directions"),
++            "safetensors fields; want exactly one directions tensor",
++        )
++        meta, tensor = header["__metadata__"], header["directions"]
++        _object(
++            meta, ("format", "gr8_manifest", "manifest_sha256"), "GR8 metadata fields"
++        )
++        if meta.get("format") != FORMAT or not isinstance(
++            meta.get("gr8_manifest"), str
++        ):
++            raise ProfileError("missing GR8 steering metadata")
++        if (
++            not isinstance(tensor, dict)
++            or set(tensor) != {"dtype", "shape", "data_offsets"}
++            or tensor["dtype"] != "F32"
++        ):
++            raise ProfileError("directions must be one F32 tensor")
++        offsets = tensor["data_offsets"]
++        if (
++            not isinstance(offsets, list)
++            or len(offsets) != 2
++            or not all(_integer(x) for x in offsets)
++            or offsets != [0, size - 8 - n]
++            or not 0 <= offsets[1] <= MAX_PAYLOAD
++        ):
++            raise ProfileError("invalid directions data offsets")
++        payload = f.read(MAX_PAYLOAD + 1)
++        if len(payload) != offsets[1]:
++            raise ProfileError("directions payload size mismatch")
++    if (
++        expected_sha256 is not None
++        and sha256(raw + header_raw + payload) != expected_sha256
++    ):
++        raise ProfileError("steering profile SHA-256 mismatch")
++    manifest = parse_json(meta["gr8_manifest"], "embedded manifest")
++    manifest_raw = meta["gr8_manifest"].encode("utf-8")
++    if len(manifest_raw) > MAX_HEADER or meta.get("manifest_sha256") != sha256(
++        manifest_raw
++    ):
++        raise ProfileError("embedded manifest is too large or has the wrong digest")
++    _, shape = validate_manifest(manifest, payload)
++    if (
++        not isinstance(tensor["shape"], list)
++        or not all(_integer(x) for x in tensor["shape"])
++        or tensor["shape"] != shape
++    ):
++        raise ProfileError("directions tensor shape mismatch")
++    return manifest, payload, manifest_raw
++
++
++def read(path):
++    """Return the validated manifest mapping and directions bytes from an artifact."""
++    manifest, payload, _ = read_artifact(path)
++    return manifest, payload
++
++
++def resolve_bundled(model_dir, selector):
++    """Resolve only an explicitly selected artifact in a verified local release."""
++    if not isinstance(selector, str) or not selector.startswith("hf:"):
++        raise ProfileError("want hf:default or hf:NAME")
++    root = os.path.abspath(model_dir)
++    raw = read_limited(os.path.join(root, "steering/index.json"), MAX_HEADER, "index")
++    index = parse_json(raw, "steering index")
++    _object(index, ("schema_version", "default_profile", "profiles"), "index")
++    if type(index["schema_version"]) is not int or index["schema_version"] != 1:
++        raise ProfileError("unsupported steering index version")
++    if not isinstance(index["profiles"], list):
++        raise ProfileError("invalid profile records")
++    records = {}
++    for entry in index["profiles"]:
++        _object(entry, ("name", "file", "sha256", "byte_count"), "index record")
++        name = entry["name"]
++        if (
++            not isinstance(name, str)
++            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", name)
++            or name in records
++            or entry["file"] != f"steering/{name}.safetensors"
++            or not _digest(entry["sha256"])
++            or type(entry["byte_count"]) is not int
++            or not 8 < entry["byte_count"] <= 8 + MAX_HEADER + MAX_PAYLOAD
++        ):
++            raise ProfileError("invalid or duplicate steering index record")
++        records[name] = entry
++    default = index["default_profile"]
++    if not isinstance(default, str) or default not in records:
++        raise ProfileError("default_profile is not listed")
++    name = default if selector == "hf:default" else selector[3:]
++    if name not in records:
++        raise ProfileError("requested profile is not listed")
++    entry = records[name]
++    path = os.path.join(root, entry["file"])
++    if os.path.getsize(path) != entry["byte_count"]:
++        raise ProfileError("bundled profile size mismatch")
++    manifest, _, _ = read_artifact(path, entry["sha256"])
++    if manifest["profile_name"] != name:
++        raise ProfileError("bundled profile name mismatch")
++    return name, path, entry["sha256"]
++
++
++def unpack(path, output_dir):
++    """Publish exact contents; reuse identical bytes and reject conflicts."""
++    manifest, payload, manifest_raw = read_artifact(path)
++    output_dir = os.path.abspath(output_dir)
++    if os.path.islink(output_dir):
++        raise ProfileError("output directory must not be a symlink")
++    if os.path.isdir(output_dir) and os.listdir(output_dir):
++        if (
++            read_limited(
++                os.path.join(output_dir, "manifest.json"), MAX_HEADER, "manifest"
++            )
++            == manifest_raw
++            and read_limited(
++                os.path.join(output_dir, "directions.f32"),
++                MAX_PAYLOAD,
++                "directions payload",
++            )
++            == payload
++        ):
++            return manifest
++        raise ProfileError("output directory contains a different profile")
++    parent = os.path.dirname(output_dir)
++    os.makedirs(parent, exist_ok=True)
++    stage = tempfile.mkdtemp(prefix=".steering-", dir=parent)
++    try:
++        _atomic_write(os.path.join(stage, "manifest.json"), (manifest_raw,))
++        _atomic_write(os.path.join(stage, "directions.f32"), (payload,))
++        os.replace(stage, output_dir)
++    finally:
++        shutil.rmtree(stage, ignore_errors=True)
++    return manifest
++
++
++def main(argv=None):
++    ap = argparse.ArgumentParser()
++    sub = ap.add_subparsers(dest="command", required=True)
++    p = sub.add_parser("pack")
++    p.add_argument("profile_dir")
++    p.add_argument("output")
++    p = sub.add_parser("unpack")
++    p.add_argument("input")
++    p.add_argument("output_dir")
++    args = ap.parse_args(argv)
++    try:
++        if args.command == "pack":
++            pack(args.profile_dir, args.output)
++        else:
++            unpack(args.input, args.output_dir)
++    except (OSError, ProfileError) as e:
++        ap.exit(2, f"{ap.prog}: {e}\n")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/vllm/models/deepseek_v4_1/steering/cache.py b/vllm/models/deepseek_v4_1/steering/cache.py
+new file mode 100644
+index 0000000000..796934d7ce
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/cache.py
+@@ -0,0 +1,28 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""A content-addressed namespace in the existing request cache-salt field."""
++
++import hashlib
++import struct
++
++from .request import SteeringSelection
++
++
++def steering_cache_salt(
++    original: str | None, selection: SteeringSelection
++) -> str | None:
++    if not selection.active:
++        return original
++    if original is not None and not isinstance(original, str):
++        raise ValueError("cache_salt must be a string or absent")
++    salt = b"" if original is None else original.encode("utf-8")
++    identity = bytes.fromhex(selection.profile_identity)
++    payload = (
++        b"DS41-STEERING-CACHE\x00\x01"
++        + identity
++        + struct.pack("!I", selection.scale_bits)
++        + bytes([original is not None])
++        + struct.pack("!Q", len(salt))
++        + salt
++    )
++    return "ds41-steering-v1:" + hashlib.sha256(payload).hexdigest()
+diff --git a/vllm/models/deepseek_v4_1/steering/config.py b/vllm/models/deepseek_v4_1/steering/config.py
+new file mode 100644
+index 0000000000..092f4e123c
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/config.py
+@@ -0,0 +1,123 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Validate the opt-in startup contract before admission or graph preparation."""
++
++import os
++
++from .artifact import resolve_bundled
++from .profile import OPERATOR_VERSION, load_profile, model_identity, template_identity
++
++OFFICIAL_1017_REVISION = "1bae0e1088993b9b82de08f59de5be5a34e42170"
++
++
++def load_configured_profile(vllm_config):
++    additional = vllm_config.additional_config or {}
++    if "ds41_steering" not in additional:
++        return None
++    config = additional["ds41_steering"]
++    keys = {"schema_version", "operator_version", "profile_path", "profile_sha256"}
++    if (
++        not isinstance(config, dict)
++        or set(config) != keys
++        or type(config["schema_version"]) is not int
++        or config["schema_version"] != 1
++        or config["operator_version"] != OPERATOR_VERSION
++        or not isinstance(config["profile_path"], str)
++    ):
++        raise ValueError("Invalid additional_config.ds41_steering")
++    if os.getenv("WEIGHTLESS_STEER_PATH") or os.getenv("WEIGHTLESS_STEER_MODEL"):
++        raise ValueError("GLP and attention steering cannot share a target")
++    parallel = vllm_config.parallel_config
++    if (
++        parallel.tensor_parallel_size != 4
++        or parallel.pipeline_parallel_size != 1
++        or parallel.data_parallel_size != 1
++        or parallel.decode_context_parallel_size != 1
++        or getattr(parallel, "prefill_context_parallel_size", 1) != 1
++        or parallel.use_ubatching
++        or vllm_config.lora_config is not None
++        or vllm_config.kv_transfer_config is not None
++        or vllm_config.use_request_boundary_checkpoints
++    ):
++        raise ValueError(
++            "Steering requires TP4 without PP/DP/DBO/LoRA/KV connectors "
++            "or boundary checkpoints"
++        )
++    cache = vllm_config.cache_config
++    offload = vllm_config.offload_config
++    if offload.uva.cpu_offload_gb or offload.prefetch.offload_group_size:
++        raise ValueError("Steering weight offload is not qualified")
++    if getattr(cache, "kv_offloading_size", None) or getattr(
++        cache, "enable_kv_cache_transfer", False
++    ):
++        raise ValueError("Steering KV offload/transfer is not qualified")
++    if (
++        os.environ.get("VLLM_USE_V2_MODEL_RUNNER") != "1"
++        or os.environ.get("VLLM_DS41_KERNEL_BACKEND", "tilelang") != "tilelang"
++    ):
++        raise ValueError("Steering requires the V2 model runner and TileLang backend")
++    model = vllm_config.model_config
++    hf = model.hf_config
++    if (
++        getattr(hf, "model_type", None) != "deepseek_v41"
++        or hf.hidden_size != 5120
++        or hf.num_hidden_layers != 40
++        or model.tokenizer_mode != "deepseek_v41"
++    ):
++        raise ValueError(
++            "Steering requires DeepSeek V4.1 Flash 1017 with its native tokenizer"
++        )
++    profile_path = config["profile_path"]
++    selected_name = None
++    if profile_path.startswith("hf:"):
++        selected_name, profile_path, artifact_sha256 = resolve_bundled(
++            model.model, profile_path
++        )
++        if artifact_sha256 != config["profile_sha256"]:
++            raise ValueError("Bundled steering artifact differs from the startup pin")
++    profile = load_profile(
++        profile_path,
++        config["profile_sha256"],
++        expected_model_identity=model_identity(model.model),
++        expected_template_identity=template_identity(model.model),
++        expected_revision=OFFICIAL_1017_REVISION,
++        expected_tokenizer_revision=OFFICIAL_1017_REVISION,
++    )
++    if (
++        profile.model_revision != OFFICIAL_1017_REVISION
++        or profile.hidden_size != hf.hidden_size
++        or profile.num_hidden_layers != hf.num_hidden_layers
++    ):
++        raise ValueError("Steering profile and model revision/geometry do not match")
++    if selected_name is not None and profile.profile_id != selected_name:
++        raise ValueError("Selected steering profile name does not match its manifest")
++    return profile
++
++
++def admit(sampling_params, profile, original_salt, *, resumable=False, session_id=None):
++    from vllm.exceptions import VLLMValidationError
++
++    from .cache import steering_cache_salt
++    from .request import parse_selection
++
++    try:
++        selection = parse_selection(sampling_params.extra_args, profile)
++    except ValueError as exc:
++        raise VLLMValidationError(
++            str(exc), parameter=getattr(exc, "parameter", "steering_scale")
++        ) from exc
++    if selection.active and (resumable or session_id is not None):
++        raise VLLMValidationError(
++            "Steering identity changes require a new request; "
++            "resumable sessions are not qualified",
++            parameter="steering_profile",
++        )
++    if sampling_params.extra_args and (
++        "steering_profile" in sampling_params.extra_args
++        or "steering_scale" in sampling_params.extra_args
++    ):
++        extra = dict(sampling_params.extra_args)
++        if "steering_profile" in extra or "steering_scale" in extra:
++            extra["steering_scale"] = selection.scale
++        sampling_params.extra_args = extra
++    return steering_cache_salt(original_salt, selection)
+diff --git a/vllm/models/deepseek_v4_1/steering/profile.py b/vllm/models/deepseek_v4_1/steering/profile.py
+new file mode 100644
+index 0000000000..2d09b1cf02
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/profile.py
+@@ -0,0 +1,238 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Bounded, local-only profile loading. This module never loads pickle files."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import re
++import struct
++from dataclasses import dataclass
++from pathlib import Path
++from typing import Any
++
++from .artifact import OPERATOR_VERSION, read_artifact, read_directory
++
++SCHEMA_VERSION = 1
++MODEL_NAME = "deepseek-v4.1-flash-1017"
++MAX_LAYERS = 256
++MAX_HIDDEN = 32768
++NORM_ATOL = 1e-3
++IDENTITY_FILES = (
++    "config.json",
++    "model.safetensors.index.json",
++    "tokenizer.json",
++    "tokenizer_config.json",
++    "chat_template.jinja",
++)
++
++
++def canonical_json(value: Any) -> bytes:
++    return json.dumps(
++        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
++    ).encode("ascii")
++
++
++def content_hash(value: Any) -> str:
++    return hashlib.sha256(canonical_json(value)).hexdigest()
++
++
++def _unique_object(pairs):
++    result = {}
++    for key, value in pairs:
++        if key in result:
++            raise ValueError(f"Duplicate JSON key: {key}")
++        result[key] = value
++    return result
++
++
++def sha256_file(path: Path) -> str:
++    h = hashlib.sha256()
++    with path.open("rb") as f:
++        for chunk in iter(lambda: f.read(1024 * 1024), b""):
++            h.update(chunk)
++    return h.hexdigest()
++
++
++def model_identity(model_path: str | Path) -> str:
++    """Bind local checkpoint index, trusted weights inventory and tokenizer bytes.
++
++    Weight payload verification belongs to artifact preparation; never hash the
++    full checkpoint in each worker's startup. The trusted inventory is itself
++    bound here and the deployment verifier checks every hardlink against it.
++    """
++    root = Path(model_path)
++    if not root.is_dir():
++        raise ValueError("Steering requires a verified local model directory")
++    files = {
++        name: sha256_file(root / name)
++        for name in IDENTITY_FILES
++        if (root / name).is_file()
++    }
++    required = {
++        "config.json",
++        "model.safetensors.index.json",
++        "tokenizer.json",
++        "tokenizer_config.json",
++    }
++    if not required <= files.keys():
++        raise ValueError(
++            "Steering model is missing identity files or trusted weight inventory"
++        )
++    inventory_path = root / "model-file-hashes.json"
++    if not inventory_path.is_file():
++        raise ValueError("Steering model needs a trusted weight inventory")
++    inventory = json.loads(
++        inventory_path.read_bytes(), object_pairs_hook=_unique_object
++    )
++    if (
++        not isinstance(inventory, dict)
++        or inventory.get("schema_version") != 1
++        or inventory.get("algorithm") != "sha256"
++        or inventory.get("coverage") != "complete"
++        or not isinstance(inventory.get("files"), dict)
++    ):
++        raise ValueError("Invalid trusted weight inventory")
++    index = json.loads(
++        (root / "model.safetensors.index.json").read_bytes(),
++        object_pairs_hook=_unique_object,
++    )
++    shards = sorted(set(index["weight_map"].values()))
++    weights = {}
++    for name in shards:
++        if not isinstance(name, str) or Path(name).name != name:
++            raise ValueError("Invalid checkpoint shard name")
++        entry = inventory["files"].get(name)
++        if (
++            not isinstance(entry, dict)
++            or type(entry.get("size")) is not int
++            or entry["size"] <= 0
++        ):
++            raise ValueError("Checkpoint shard missing from trusted inventory")
++        weights[name] = {
++            "size": entry["size"],
++            "sha256": _digest(entry.get("sha256"), "weight"),
++        }
++    if not weights:
++        raise ValueError("Empty trusted weight inventory")
++    # Hostname, timestamp and inode identities differ between replicas. Bind
++    # verified content only so the same checkpoint has one identity on all ranks.
++    files["weight_inventory"] = content_hash(weights)
++    return content_hash(files)
++
++
++def template_identity(model_path: str | Path) -> str:
++    root = Path(model_path)
++    vllm_root = Path(__file__).resolve().parents[3]
++    files = {
++        name: sha256_file(vllm_root / name)
++        for name in (
++            "tokenizers/deepseek_v41.py",
++            "tokenizers/deepseek_v41_encoding.py",
++            "renderers/deepseek_v41.py",
++        )
++    }
++    for name in ("tokenizer.json", "tokenizer_config.json", "chat_template.jinja"):
++        if (root / name).is_file():
++            files["model/" + name] = sha256_file(root / name)
++    return content_hash(files)
++
++
++def _digest(value: Any, name: str) -> str:
++    if not isinstance(value, str) or re.fullmatch("[0-9a-f]{64}", value) is None:
++        raise ValueError(f"Invalid {name} SHA-256")
++    return value
++
++
++@dataclass(frozen=True)
++class SteeringProfile:
++    profile_id: str
++    model_revision: str
++    model_identity: str
++    template_identity: str
++    operator_version: str
++    layers: tuple[int, ...]
++    alphas: tuple[float, ...]
++    hidden_size: int
++    num_hidden_layers: int
++    artifact_sha256: str | None
++    schedule_sha256: str
++    directions: Any
++    manifest_sha256: str
++    tokenizer_revision: str
++
++    @property
++    def identity(self) -> str:
++        return content_hash(
++            {
++                "schema": SCHEMA_VERSION,
++                "profile": self.profile_id,
++                "manifest": self.manifest_sha256,
++                "tokenizer_revision": self.tokenizer_revision,
++                "model": self.model_identity,
++                "model_revision": self.model_revision,
++                "template": self.template_identity,
++                "operator": self.operator_version,
++                "schedule": self.schedule_sha256,
++            }
++        )
++
++
++def load_profile(
++    path: str | Path,
++    expected_sha256: str,
++    *,
++    expected_model_identity: str | None = None,
++    expected_template_identity: str | None = None,
++    expected_revision: str | None = None,
++    expected_tokenizer_revision: str | None = None,
++) -> SteeringProfile:
++    import numpy as np
++
++    _digest(expected_sha256, "profile")
++    directory = Path(path).is_dir()
++    reader = read_directory if directory else read_artifact
++    manifest, payload, manifest_raw = reader(path, expected_sha256)
++    model = manifest["model"]
++    if model["name"] != MODEL_NAME:
++        raise ValueError("Steering profile targets a different model architecture")
++    for key in ("revision", "tokenizer_revision"):
++        if re.fullmatch("[0-9a-f]{40}", model[key]) is None:
++            raise ValueError(f"Invalid model {key}")
++    for key, expected in (
++        ("weight_set", expected_model_identity),
++        ("chat_template_sha256", expected_template_identity),
++        ("revision", expected_revision),
++        ("tokenizer_revision", expected_tokenizer_revision),
++    ):
++        if expected is not None and model[key] != expected:
++            raise ValueError(f"Steering profile model {key} identity mismatch")
++    hidden, count = model["hidden_size"], model["layer_count"]
++    if hidden > MAX_HIDDEN or count > MAX_LAYERS:
++        raise ValueError("Steering model geometry exceeds bounded operator limits")
++    layers = tuple(manifest["layers"])
++    alphas = tuple(
++        struct.unpack("<f", struct.pack("<f", alpha))[0] for alpha in manifest["alphas"]
++    )
++    directions = np.frombuffer(payload, dtype="<f4").reshape(len(layers), hidden)
++    directions.flags.writeable = False
++    schedule_bytes = b"\x03" + b"".join(
++        struct.pack("<If", layer, alpha) for layer, alpha in zip(layers, alphas)
++    )
++    return SteeringProfile(
++        profile_id=manifest["profile_name"],
++        model_revision=model["revision"],
++        model_identity=model["weight_set"],
++        template_identity=model["chat_template_sha256"],
++        operator_version=OPERATOR_VERSION,
++        layers=layers,
++        alphas=alphas,
++        hidden_size=hidden,
++        num_hidden_layers=count,
++        artifact_sha256=None if directory else expected_sha256,
++        schedule_sha256=hashlib.sha256(schedule_bytes).hexdigest(),
++        directions=directions,
++        manifest_sha256=hashlib.sha256(manifest_raw).hexdigest(),
++        tokenizer_revision=model["tokenizer_revision"],
++    )
+diff --git a/vllm/models/deepseek_v4_1/steering/reference.py b/vllm/models/deepseek_v4_1/steering/reference.py
+new file mode 100644
+index 0000000000..f954ddcfdf
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/reference.py
+@@ -0,0 +1,21 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Numerical oracles, used by tests rather than the serving path."""
++
++import torch
++
++
++def project_reference(writer, direction, scales, alpha, *, fp64=False):
++    dtype = torch.float64 if fp64 else torch.float32
++    y, d = writer.to(dtype), direction.to(dtype)
++    dots = (y * d).sum(dim=-1, keepdim=True)
++    projected = y - (scales.to(dtype) * alpha)[:, None] * d * dots
++    # Bypass rather than multiply by zero: stock rows retain signed zeros/NaNs.
++    return torch.where((scales != 0)[:, None], projected.to(writer.dtype), writer)
++
++
++def rank_order_reference(parts):
++    total = parts[0].float()
++    for rank in range(1, parts.shape[0]):
++        total = total + parts[rank].float()
++    return total.to(parts.dtype)
+diff --git a/vllm/models/deepseek_v4_1/steering/request.py b/vllm/models/deepseek_v4_1/steering/request.py
+new file mode 100644
+index 0000000000..4c2b02ddb0
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/request.py
+@@ -0,0 +1,80 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Pure CPU request contract, independent of CUDA and model imports."""
++
++from __future__ import annotations
++
++import math
++import re
++import struct
++from dataclasses import dataclass
++from typing import TYPE_CHECKING, Any
++
++if TYPE_CHECKING:
++    from .profile import SteeringProfile
++
++
++@dataclass(frozen=True)
++class SteeringSelection:
++    profile_identity: str | None = None
++    scale_bits: int = 0
++
++    @property
++    def scale(self) -> float:
++        return struct.unpack("!f", struct.pack("!I", self.scale_bits))[0]
++
++    @property
++    def active(self) -> bool:
++        return self.scale_bits != 0
++
++
++STOCK = SteeringSelection()
++
++
++class SteeringRequestError(ValueError):
++    def __init__(self, message: str, parameter: str):
++        super().__init__(message)
++        self.parameter = parameter
++
++
++def parse_selection(
++    extra_args: dict[str, Any] | None, profile: SteeringProfile | None
++) -> SteeringSelection:
++    args = extra_args or {}
++    named = args.get("steering_profile") is not None
++    scaled = args.get("steering_scale") is not None
++    if not named and not scaled:
++        return STOCK
++    if named:
++        name = args["steering_profile"]
++        if (
++            not isinstance(name, str)
++            or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", name) is None
++        ):
++            raise SteeringRequestError(
++                "steering_profile must be a profile name", "steering_profile"
++            )
++    value = args["steering_scale"] if scaled else (1 if named else 0)
++    if type(value) not in (int, float):
++        raise SteeringRequestError("steering_scale must be a number", "steering_scale")
++    # Validate before rounding: an out-of-range double must not round into range.
++    if not 0 <= value <= 4 or not math.isfinite(value):
++        raise SteeringRequestError(
++            "steering_scale must be finite and in [0, 4]", "steering_scale"
++        )
++    bits = struct.unpack("!I", struct.pack("!f", float(value)))[0] & 0x7FFFFFFF
++    if not named and bits != 0:
++        raise SteeringRequestError(
++            "steering_scale requires steering_profile", "steering_scale"
++        )
++    if named:
++        if profile is None:
++            raise SteeringRequestError(
++                "steering is not enabled on this server", "steering_profile"
++            )
++        if name != profile.profile_id:
++            raise SteeringRequestError("unknown steering_profile", "steering_profile")
++    if bits == 0:
++        return STOCK
++    assert profile is not None
++    return SteeringSelection(profile.identity, bits)
+diff --git a/vllm/v1/engine/input_processor.py b/vllm/v1/engine/input_processor.py
+index bc22336a49..90cd21eec6 100644
+--- a/vllm/v1/engine/input_processor.py
++++ b/vllm/v1/engine/input_processor.py
+@@ -52,6 +52,14 @@ class InputProcessor:
+         self.structured_outputs_config = vllm_config.structured_outputs_config
+         self.observability_config = vllm_config.observability_config
+ 
++        self._steering_profile = None
++        if "ds41_steering" in (vllm_config.additional_config or {}):
++            from vllm.models.deepseek_v4_1.steering.config import (
++                load_configured_profile,
++            )
++
++            self._steering_profile = load_configured_profile(vllm_config)
++
+         self.generation_config_fields = model_config.try_get_generation_config()
+ 
+         self.renderer = renderer or renderer_from_config(vllm_config)
+@@ -419,6 +427,21 @@ class InputProcessor:
+                     )
+                 )
+ 
++        cache_salt = decoder_input.get("cache_salt")
++        extra_args = sampling_params.extra_args if sampling_params is not None else None
++        if extra_args and (
++            "steering_profile" in extra_args or "steering_scale" in extra_args
++        ):
++            from vllm.models.deepseek_v4_1.steering.config import admit
++
++            cache_salt = admit(
++                sampling_params,
++                self._steering_profile,
++                cache_salt,
++                resumable=resumable,
++                session_id=session_id,
++            )
++
+         return EngineCoreRequest(
+             request_id=request_id,
+             prompt_token_ids=prompt_token_ids,
+@@ -429,7 +452,7 @@ class InputProcessor:
+             pooling_params=pooling_params,
+             arrival_time=arrival_time,
+             lora_request=lora_request,
+-            cache_salt=decoder_input.get("cache_salt"),
++            cache_salt=cache_salt,
+             priority=priority,
+             data_parallel_rank=data_parallel_rank,
+             trace_headers=trace_headers,

@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-28",
+  "platform": "Apple Container, Ubuntu 24.04 aarch64, 6 vCPU, 8 GiB RAM",
+  "kind": "offline integration",
+  "source_head": "320e4b04cbf1351b5aa65711f3cf67467d291ca2",
+  "source_tree": "0487c35c06a4e3c0efb94a1ab117ccd00210df98",
+  "packages": {
+    "torch": "2.15.0+cpu",
+    "torchvision": "0.29.2+cpu",
+    "transformers": "5.16.1",
+    "tokenizers": "0.23.1",
+    "tilelang_host_import": "0.1.16",
+    "triton_host_import": "3.9.0",
+    "pytest": "9.2.0"
+  },
+  "gates": {
+    "doctor": ["promoted 1022", "1126 attention", "1126 GLP"],
+    "build_check": ["promoted 1022", "1126 candidate shared by both modes"],
+    "build_inputs": "All six candidate Git source trees, CUTLASS DSL wheels and 23 pinned CUDA toolkit debs verified. 748 vLLM patches replayed from the pinned base.",
+    "repository_unittest": {"collected": 1048, "passed_as_root": 1047, "skipped_as_root": 1, "nonroot_cache_tests_passed": 9, "unique_cases_passed_across_both_runs": 1048},
+    "attention_pinned_cpu": {"passed": 129, "skipped": 0},
+    "glp_and_aliases": {"passed": 81, "skipped": 1, "skipped_case": "test_a_published_ds41_file_holds_only_unit_directions", "fixture": "Generated GGUFs and the upstream per-step and API fixtures, with CPU import bindings in tools/check_glp_host.py"},
+    "encoder": {"passed": 66, "official_tokenizer_control_cases": 28, "remaining_cases": 38},
+    "parser_and_scanner": {"passed": 95},
+    "recorded_parser": {"recorded_output_token_ids": 91, "structural_passed": 32, "legacy_passed": 32},
+    "1022_recovery_and_watchdog": {"passed": 45, "other_historical_window_and_release_tests_passed": 84},
+    "profile": "Two independent 1126 rebindings produced identical receipts and artifacts; direction bytes and schedule matched the promoted profile.",
+    "generated_docs": "scripts/render_docs.py --check passed"
+  },
+  "initial_observations": [
+    "The initial repository test run had 36 failures and 50 errors, then 5 failures and 4 errors. Release-specific tests had assumed that the upstream multi-shape site was the promoted downstream site. Release fixtures now load the recorded release and the site tests still load the promoted site. Example node maps keep the matching master, GID and testbed.",
+    "The old image-placeholder test expected a literal marker to raise. In 1126 its ordinary-text spelling is escaped. The candidate checks that the literal stays text and a supplied image yields exactly one special token.",
+    "The upstream GLP reader imports compiled-kernel language bindings even for its host contracts. The CPU harness loads the installed TileLang and Triton language packages. The full GLP and alias collection then passed except for the real-file case.",
+    "The upstream GLP state occupies the old worker steering attribute. The downstream attention state has a separate attribute. Stock forward avoids looking up a downstream profile, and worker/admission setup rejects simultaneous modes.",
+    "The candidate build directory was initially unprepared. Complete input preparation and verification succeeded."
+  ],
+  "remaining": {
+    "real_glp_artifact": "The expected snapshot file was absent on the head node. The authenticated provider download required approval. The pinned file and all-rank SHA checks remain prerequisites for real GLP inference.",
+    "gb10": ["native OCI build and import smoke", "per-rank artifact and image identity", "TP4 functional, quality and performance validation", "gateway routing verification for the GLP alias"],
+    "measurements": "No new GPU inference, TPS, TTFT, tail latency or GPU memory measurements."
+  }
+}

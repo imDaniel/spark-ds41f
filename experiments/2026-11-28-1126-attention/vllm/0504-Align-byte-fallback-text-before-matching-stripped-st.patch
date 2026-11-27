@@ -1,0 +1,289 @@
+From d8ad43869568f18cc3eb770b7fd4d7712049c9e2 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 00:27:37 +0900
+Subject: [PATCH 504/505] Align byte-fallback text before matching stripped
+ stops
+
+Upstream base: spark-ds41f-1126 vLLM d8784b841c360f523ec20e44bf8fb0898f36d3e4.
+
+Preserve a literal EOS spelling in multibyte JSON while still removing actual stop IDs. Keep the 1126 serving parser and cover its registered adapters and scanner.
+
+Upstream status: downstream integration.
+---
+ .../test_deepseek_v41_token_provenance.py     | 153 ++++++++++++++++++
+ tests/parser/engine/test_token_id_scanner.py  |  40 +++++
+ vllm/parser/engine/token_id_scanner.py        |  37 +++--
+ 3 files changed, 214 insertions(+), 16 deletions(-)
+ create mode 100644 tests/parser/engine/test_deepseek_v41_token_provenance.py
+
+diff --git a/tests/parser/engine/test_deepseek_v41_token_provenance.py b/tests/parser/engine/test_deepseek_v41_token_provenance.py
+new file mode 100644
+index 0000000000..b1783ae190
+--- /dev/null
++++ b/tests/parser/engine/test_deepseek_v41_token_provenance.py
+@@ -0,0 +1,153 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Exercise the registered serving parser, including the JSON forced-tool path."""
++
++import json
++
++import pytest
++
++from tests.parser.engine.replay_harness import (
++    MockTokenizer,
++    _test_request,
++    collect_output,
++    replay_streaming,
++)
++from tests.parser.engine.test_deepseek_v41 import parser_for
++
++EOS = "<｜end▁of▁sentence｜>"
++VALUE = {
++    "role": "literal user value",
++    "type": "literal string value",
++    "nested": {'quote"key': EOS},
++}
++TOOLS = [
++    {
++        "type": "function",
++        "function": {
++            "name": "record_value",
++            "parameters": {
++                "type": "object",
++                "properties": {
++                    "role": {"type": "string"},
++                    "type": {"type": "string"},
++                    "nested": {"type": "object"},
++                },
++            },
++        },
++    }
++]
++NAMED = {"type": "function", "function": {"name": "record_value"}}
++
++
++def fixture(text):
++    vocab = {"<think>": 50, "</think>": 51, EOS: 52}
++    tokens = []
++    while text:
++        # EOS spelling in user data consists of ordinary tokens; only the
++        # actual reasoning boundary is a special token in this fixture.
++        piece = "</think>" if text.startswith("</think>") else text[0]
++        tokens.append((51 if piece == "</think>" else 100 + len(tokens), piece))
++        text = text[len(piece) :]
++    return MockTokenizer(vocab, tokens), tokens
++
++
++def output_for(choice):
++    args = json.dumps(VALUE, ensure_ascii=False)
++    if choice == "required":
++        return json.dumps(
++            [{"name": "record_value", "parameters": VALUE}], ensure_ascii=False
++        )
++    if choice == "auto":
++        return (
++            '<｜DSML｜ calls><｜DSML｜ invoke name="record_value">'
++            '<｜DSML｜ parameter name="role" string="true">literal user value'
++            '</｜DSML｜ parameter><｜DSML｜ parameter name="type" string="true">'
++            "literal string value</｜DSML｜ parameter>"
++            '<｜DSML｜ parameter name="nested" string="false">'
++            + json.dumps(VALUE["nested"], ensure_ascii=False)
++            + "</｜DSML｜ parameter></｜DSML｜ invoke></｜DSML｜ calls>"
++        )
++    return args
++
++
++@pytest.mark.parametrize("thinking", [False, True])
++@pytest.mark.parametrize("choice", ["named", "required", "auto", "none"])
++@pytest.mark.parametrize("json_tools", [False, True])
++def test_complete_output_retains_ordinary_control_spelling(
++    thinking, choice, json_tools
++):
++    syntax = "auto" if choice in ("named", "required") and not json_tools else choice
++    text = ("Plan.</think>" if thinking else "") + output_for(syntax)
++    tokenizer, tokens = fixture(text)
++    parser = parser_for(tokenizer, {"thinking": thinking})
++    request = _test_request(tools=TOOLS)
++    parser.tool_parser.supports_required_and_named = json_tools
++    # Validate the named choice into its real protocol object.
++    request = type(request).model_validate(
++        {**request.model_dump(), "tool_choice": NAMED if choice == "named" else choice}
++    )
++    ids = [tid for tid, _ in tokens]
++    reasoning, content, calls = parser.parse(
++        text, request, enable_auto_tools=True, model_output_token_ids=ids
++    )
++    assert (reasoning or "") == ("Plan." if thinking else "")
++    assert parser.count_reasoning_tokens(ids) == (5 if thinking else 0)
++    if choice == "none":
++        assert not calls
++        assert json.loads(content) == VALUE
++    else:
++        assert not (content or "").strip()
++        assert len(calls) == 1 and calls[0].name == "record_value"
++        assert json.loads(calls[0].arguments) == VALUE
++
++
++@pytest.mark.parametrize("thinking", [False, True])
++@pytest.mark.parametrize("chunk_size", [1, 7, 10000])
++def test_streaming_auto_retains_ordinary_control_spelling(thinking, chunk_size):
++    text = ("Plan.</think>" if thinking else "") + output_for("auto")
++    tokenizer, tokens = fixture(text)
++    parser = parser_for(tokenizer, {"thinking": thinking})
++    output = collect_output(
++        replay_streaming(
++            parser,
++            tokens,
++            chunk_size=chunk_size,
++            finished_on_last=True,
++            tools=TOOLS,
++            prompt_token_ids=[50 if thinking else 51],
++        )
++    )
++    assert output.reasoning == ("Plan." if thinking else "")
++    assert not output.content.strip()
++    assert json.loads(output.tool_calls[0]["arguments"]) == VALUE
++
++
++@pytest.mark.parametrize("thinking", [False, True])
++def test_real_eos_still_dropped_and_plain_spelling_retained(thinking):
++    text = ("Plan.</think>" if thinking else "") + "Literal: " + EOS
++    tokenizer, tokens = fixture(text)
++    tokens.append((52, EOS))
++    tokenizer = MockTokenizer(tokenizer.get_vocab(), tokens)
++    parser = parser_for(tokenizer, {"thinking": thinking})
++    reasoning, content, calls = parser.parse(
++        text + EOS,
++        _test_request(tools=TOOLS),
++        enable_auto_tools=True,
++        model_output_token_ids=[tid for tid, _ in tokens],
++    )
++    assert content == "Literal: " + EOS
++    assert not calls
++
++
++def test_auto_disabled_keeps_literal_content():
++    text = "Literal: " + EOS
++    tokenizer, tokens = fixture(text)
++    parser = parser_for(tokenizer, {"thinking": False})
++    _, content, calls = parser.parse(
++        text,
++        _test_request(tools=TOOLS),
++        enable_auto_tools=False,
++        model_output_token_ids=[tid for tid, _ in tokens],
++    )
++    assert content == text
++    assert not calls
+diff --git a/tests/parser/engine/test_token_id_scanner.py b/tests/parser/engine/test_token_id_scanner.py
+index f02f0a315d..42becc5c97 100644
+--- a/tests/parser/engine/test_token_id_scanner.py
++++ b/tests/parser/engine/test_token_id_scanner.py
+@@ -1155,6 +1155,46 @@ class TestRebuildFromAnchorsCascadingDeferral:
+ class TestStopStrippedTrailingDrop:
+     """Serving strips the stop token's text but keeps its ID in the delta."""
+ 
++    @pytest.mark.parametrize("stop_text_present", [False, True])
++    @pytest.mark.parametrize("reasoning_prefix", [False, True])
++    def test_byte_fallback_literal_does_not_steal_eos(
++        self, stop_text_present, reasoning_prefix
++    ):
++        eos = "<｜end▁of▁sentence｜>"
++        body = '{"value":"' + eos + '"}'
++        eos_id = 1000
++        prefix_id = 1001
++        prefix = "</think>"
++
++        class ByteTokenizer:
++            def decode(self, ids):
++                data = b"".join(
++                    (eos if tid == eos_id else prefix).encode()
++                    if tid in (eos_id, prefix_id)
++                    else bytes([tid])
++                    for tid in ids
++                )
++                return data.decode(errors="replace")
++
++        scanner = TokenIDScanner(
++            {eos_id: DROP_TERMINAL, prefix_id: "THINK_END"}, ByteTokenizer()
++        )
++        ids = list(body.encode()) + [eos_id]
++        text = body + (eos if stop_text_present else "")
++        if reasoning_prefix:
++            ids.insert(0, prefix_id)
++            text = prefix + text
++        items = [*scanner.scan(text, ids), *scanner.flush_pending()]
++        chunks = [item for item in items if isinstance(item, TextChunk)]
++        assert "".join(item.text for item in chunks) == body
++        assert sum(item.token_count for item in chunks) == len(body.encode())
++        terminals = [item for item in items if isinstance(item, PreLexedTerminal)]
++        assert terminals == (
++            [PreLexedTerminal("THINK_END", prefix_id, prefix)]
++            if reasoning_prefix
++            else []
++        ) + [PreLexedTerminal(DROP_TERMINAL, eos_id, eos)]
++
+     DROP_TEXT = "<|observation|>"
+     DROP_TEXT_2 = "<|user|>"
+     DROP_ID = 112
+diff --git a/vllm/parser/engine/token_id_scanner.py b/vllm/parser/engine/token_id_scanner.py
+index 004accca9e..4c88b56ab3 100644
+--- a/vllm/parser/engine/token_id_scanner.py
++++ b/vllm/parser/engine/token_id_scanner.py
+@@ -289,35 +289,40 @@ class TokenIDScanner:
+         results: list[LexerInput] = []
+         text_accum: list[str] = []
+         token_text_accum: list[str] = []
++        token_id_accum: list[int] = []
++
++        def flush_text() -> None:
++            joined = "".join(text_accum)
++            # Byte-fallback tokens may each decode to U+FFFD while their
++            # contiguous span is valid UTF-8. Keep the per-token accounting,
++            # but match stop-token removal against the reconstructed span.
++            if "\ufffd" in joined and len(token_id_accum) > 1:
++                decoded = self.tokenizer.decode(token_id_accum)
++                if isinstance(decoded, str):
++                    joined = decoded
++            if joined:
++                results.append(
++                    TextChunk(joined, tuple(token_text_accum), len(token_text_accum))
++                )
++            text_accum.clear()
++            token_text_accum.clear()
++            token_id_accum.clear()
+ 
+         for idx, tid in enumerate(delta_token_ids):
+             terminal = self.token_id_to_terminal.get(tid)
+             if terminal is not None:
+                 if text_accum:
+-                    joined = "".join(text_accum)
+-                    if joined:
+-                        results.append(
+-                            TextChunk(
+-                                joined,
+-                                tuple(token_text_accum),
+-                                len(token_text_accum),
+-                            )
+-                        )
+-                    text_accum.clear()
+-                    token_text_accum.clear()
++                    flush_text()
+                 results.append(
+                     PreLexedTerminal(terminal, tid, decoded_token_texts[idx])
+                 )
+             else:
+                 text_accum.append(decoded_token_texts[idx])
+                 token_text_accum.append(decoded_token_texts[idx])
++                token_id_accum.append(tid)
+ 
+         if text_accum:
+-            joined = "".join(text_accum)
+-            if joined:
+-                results.append(
+-                    TextChunk(joined, tuple(token_text_accum), len(token_text_accum))
+-                )
++            flush_text()
+ 
+         if deferred_trailing_count:
+             results.insert(0, TextChunk("", token_count=deferred_trailing_count))

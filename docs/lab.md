@@ -72,14 +72,17 @@ changes, so it cannot drift from what it is compared with:
 ```json
 {
   "extends": {"config": "config/cluster.json", "shape": "tp4-ring"},
-  "set": {"container": {"image": "vllm-ds41f-kkref:...-r6m"}, "environment": {"NAME": "value"}},
+  "set": {"container": {"image": "spark-ds41f:...-MMDD"}, "environment": {"NAME": "value"}},
   "unset": ["environment.OLD_NAME"]
 }
 ```
 
 `extends` may name another arm (a dev arm extends its release arm); an arm of the recipe
 must name its shape. `set` merges into the base, `unset` removes dotted paths (an unset
-the base does not have is an error). An arm never carries the recipe's shape or
+the base does not have is an error). `set` replaces a list whole, so an arm that changes one
+serving option gives its new value in `serve_options` instead (`{"--load-format": "direct"}`)
+and keeps every other argument of its base; the flag must be one `serve_args` passes once
+with a value. An arm never carries the recipe's shape or
 qualifying benchmark. Older experiments keep their complete files.
 
 A window never opens while production serves requests (`queue run` refuses a busy cluster).
@@ -106,8 +109,10 @@ window if none of ours is open.
 
 Specs are checked before anything boots:
 - every arm configuration and script must exist;
-- the arguments of servebench extras (`scripts/servebench_run.py`, `_engine.py`,
-  `_model.py`) must parse with servebench's own parser.
+- the arguments of Sonar extras (`scripts/sonar_run.py`, `_engine.py`, `_model.py`,
+  `_suite.py`, `_determinism.py`, `_single.py`, `_ttft.py`, `_mixed.py`, and
+  `scripts/distinct_streams.py` and `scripts/acceptance_sweep.py`) must parse with Sonar's
+  own parser, which the check fetches first (the pinned commit in `config/sonar.json`).
 
 `queue add` refuses a spec that fails. One whose jobs start with a `sync` is only warned
 about, because its files may arrive with the sync; the run checks again after the sync,
@@ -116,6 +121,10 @@ before the first boot. `run --dry-run` prints the problems.
 - **`measure`:** boots each arm with `cluster start --replace --change-shape`, with no
   stop in between, and measures it. The arm's node map must equal production's (below),
   so an arm can change context or KV size but never the node set.
+  - `--replace` replaces only a container of the arm's own name, and `cluster start`
+    refuses to run beside an engine serving under another (`dsv41-karmic-kraken` before
+    the rename to `spark-ds41f`, `spark-ds41f` after it). Before such a boot the lab stops
+    that engine with the profile that started it (its `spark.cluster-config` label).
   - The bench checks the live engine against the arm before it measures. A bench that
     exits non-zero (a cluster that differs from the arm, a failed quality gate, failed
     requests, an aborted run) ends the job before its scripts run.
@@ -131,6 +140,29 @@ before the first boot. `run --dry-run` prints the problems.
   - `"extras"` replaces the profile's workloads: `[script, [arguments], output stem]` each. A
     bare script name is the experiment's own; a path such as `scripts/distinct_streams.py` is
     repository-relative.
+  - A functional phase can declare `"evidence"` contracts keyed by extra output stem.
+    These require `"bench": false`; the controller starts its separate timing phase
+    only after the functional phase succeeds. For example,
+    `"evidence": {"greedy": {"kind": "summary", "label": "temperature-0 determinism",
+    "require": {"identical": true, "logprobs": false}}}` requires those exact JSON
+    values in one summary. Missing, malformed or failed required evidence stops
+    the run even if the collector exits zero, preserving the usual failure restore.
+    `"observe": ["field"]` retains an observation without asserting it is true.
+    Each declared collector gets a `.jsonl.evidence.json` receipt with separate
+    requirements, observations, source hash and process exit. Prior output, receipts
+    or request recordings are refused before boot; use a distinct run name.
+  - The sampled contract declares `"kind": "sampled"`, `"tokens"`, `"seed"`, `"cases"`
+    and separate `"batch_invariance"` / `"isolated_repeat"` policies, each `"require"`
+    or `"observe"`. Native block verification keys draws by local speculative step,
+    so request seed alone does not imply batch-invariant sampled trajectories.
+    C43 observes batch differences and requires the isolated repeat. With
+    `"record_requests": true`, the lab also requires a complete, hash-verified private
+    `.requests/` manifest and per-case requests/responses. These retain nonsecret
+    IDs, generation controls, token/logprob arrays and native token IDs when returned.
+    Native logit positions and local speculative steps are unavailable through HTTP
+    and are marked unavailable. Token and logprob differences are reported separately.
+    The collector still exits zero for observed differences; unannotated historical
+    jobs keep their existing semantics and recorded limitations.
   - Results land where `tables_arms.py` reads them: `results/private/bench/<run>-<label>/` and
     `results/private/determinism/<run>/<kind>-<label>.jsonl`.
 - **Sweeps:** `scripts/lab_sweep.py` writes a `measure` job for one environment variable:
@@ -156,8 +188,9 @@ before the first boot. `run --dry-run` prints the problems.
 - **`kernel`:** runs kernel-lab bundles on the named nodes concurrently, with the cluster
   stopped. It writes `results/private/lab/<run>/verdicts.json` and checks that the
   nodes agree.
-- **`measure` with `"suite": "<name>"`** (servebench's `screen`, `release`, `screen-tp3`
-  or `release-tp3`, or a suite file) replaces `extras`, `bench` and the profile. Each arm
+- **`measure` with `"suite": "<name>"`** (a deployment suite in `config/suites/`: `screen`,
+  `release`, `screen-tp3`, `release-tp3`, `single-stream`, `sampled`; or a Sonar built-in or a
+  suite file) replaces `extras`, `bench` and the profile. Each arm
   boots and runs `bin/spark bench --suite <name> --compare none` into
   `results/private/suites/<run>/<label>`. That brings every bench's conditions: the nodes
   cooled, the fan performance curve running, the memory floor and temperature ceilings
@@ -167,13 +200,26 @@ before the first boot. `run --dry-run` prints the problems.
   its arm, no fan curve) ends the job. A suite with an engine grid step needs an arm with
   `VLLM_SERVER_DEV_MODE=1`, which the pre-boot check enforces. Arms after
   the first score the first arm's text in model steps. The table
-  (`scripts/servebench_suite_table.py`) compares the second arm, the reference, with
+  (`scripts/sonar_table.py`, over Sonar's `table`) compares the second arm, the reference, with
   every other arm, and the first arm with the last as the run's own repeat. Order arms
-  candidate, reference, candidate again.
+  candidate, reference, candidate again; with `"reference"` (a recorded suite run, or
+  `"release"`, see Recorded references) the arms are the candidate's two boots and the
+  record stands in the table as the second arm. Its verdict block judges the closed loops' paired
+  decode row (requests paired by prompt) and the engine grid's geometric mean over both
+  candidate boots against recorded A/A floors (by testbed and suite where enough repeats were
+  recorded), so a lean A/B resolves about 0.3% at one stream
+  ([experiments/2026-10-26-paired-verdict](../experiments/2026-10-26-paired-verdict/README.md)).
+  When the reference has a repeat boot (an arm named `<reference>-again`, or a record beside
+  the recorded one named `<reference>-again`, `<reference>-again-<suite>` for a companion),
+  every headline row averages both boots of each side and the boot term shrinks to x0.707 of
+  one pair's; `"reference_repeat": "<path>"` on the job names a record called otherwise (the
+  plan checks it is a run of the same suite). The table's first line says which boots were
+  averaged; [release-benchmark.md](release-benchmark.md#reading-the-table) gives the arithmetic
+  and the floors.
 - **Companion suites:** `"suite": ["release-tp3", "single-stream"]` runs the release suite,
   then each further suite on the same boot of each arm, into
   `results/private/suites/<run>-<suite>/<label>` with its own table
-  (`results/private/lab/<run>-<suite>-table.txt`). A changed suite is a new suite (servebench
+  (`results/private/lab/<run>-<suite>-table.txt`). A changed suite is a new suite (Sonar
   compares only runs of the same definition), so measurements added to every release go in a
   companion suite and the release suite and its recorded references stay unchanged. Every
   release runs `single-stream` (one conversation at a time, concurrency 1 on distinct prompts):
@@ -182,6 +228,38 @@ before the first boot. `run --dry-run` prints the problems.
   Every other suite decodes greedily (temperature 0); `sampled` runs closed loops at 16, 8
   and 1 streams at the recipe's temperature 1 with a fixed seed, so a change to draft
   acceptance under sampling (probabilistic drafting, the draft budget) is measured there.
+- **`agentx`:** SemiAnalysis AgentX's agent-trace replay (agentx-harness 1.0.7, pinned in
+  `requirements/agentx-harness.txt`) on one arm at each concurrency of `"points"`, in order:
+
+  ```json
+  {"kind": "agentx", "arm": {"config": "production-agentx.json", "label": "1022"},
+   "points": [8, 16], "duration": 3600, "seed": 42, "dataset": "semianalysis_cc_traces_weka_062126"}
+  ```
+
+  - Every point boots the arm afresh (an empty prefix cache), then runs
+    `bin/spark workload --duration 15`: a request that finishes, runs or waits in it ends the job.
+  - `scripts/agentx.py run` then replays inside `bin/spark workload` (the server's view of the
+    whole run), with the step's node telemetry. The client runs on the cores the serving container
+    is not pinned to, inside a memory-capped user scope (12 GiB, no swap), and samples `/metrics`
+    every 5 s.
+  - Results land in `results/private/agentx/<run>/<label>-c<N>/`: the harness's files, `agentx.json`
+    (its verdicts and latency, the server's prefix-cache hits, cached prompt tokens, preemptions and
+    KV use over the profiling window, and time to first token against uncached prompt tokens) and
+    the clean check. The table is `results/private/lab/<run>-table.txt`.
+  - A failed point keeps its evidence and the next point boots and runs; the job then fails.
+  - Not a release gate: closed-loop replay drifts with the server's speed, so two builds never
+    replay quite the same mix.
+  - Before the first window on a host, between windows (never under a hold), install the harness
+    and rebuild the corpus once. The first replay of a corpus tokenizes every trace for minutes;
+    `prepare` does it against a local stub server, and runs refuse a dataset and seed that were not
+    prepared:
+
+    ```sh
+    scripts/agentx.py install
+    scripts/agentx.py prepare --tokenizer deepseek-ai/DeepSeek-V4.1-Flash-1017 \
+      --tokenizer-revision 1bae0e1088993b9b82de08f59de5be5a34e42170 \
+      --hf-hub-cache ~/.cache/huggingface/hub --avoid-cpus 5-9,15-19
+    ```
 - **Telemetry:** every bench and script step of a `measure` job samples, on each node:
   - GPU SM and memory clocks, power, temperature and clock-event reasons, once a second
     (`nvidia-smi` over SSH);
@@ -199,6 +277,32 @@ before the first boot. `run --dry-run` prints the problems.
   stops and every node's free memory by block size (`/proc/buddyinfo`) is saved to
   `memory-<label>.json`. `compact_memory` then runs
   `sudo -n sh -c 'sync; echo 1 > /proc/sys/vm/compact_memory'` and records the result.
+  Separately, every boot's `cluster start` drops clean caches and compacts memory before
+  launch unless the arm's profile sets `host.defragment_before_start` false
+  ([methodology](methodology.md)).
+- **Arm option `startup_memory`:** every node's `MemAvailable`, `MemFree` and page cache
+  (`Cached`) are sampled every 0.25 s from the arm's start command until it is ready, to
+  `startup-memory-<label>-<node>.txt`, and summarized in `startup-memory-<label>.json`: the
+  lowest `MemAvailable` (the startup guard's measure) and when it fell, the lowest `MemFree`
+  and the largest page cache. The guard only refuses a boot below its line; the sample shows
+  the margin. The samplers stop when the boot ends, failed or not, and after an hour at most.
+  - Sampling starts with the start command, while `cluster start --replace` still runs the
+    previous engine, so the summary starts where `MemAvailable` peaks once that engine has
+    stopped (`old_engine_stopped_at_seconds`): the boot's own floor. The samples before it are
+    summarized apart (`before_old_engine_stopped`), and the raw samples are kept unchanged.
+    Before 2026-11-10 the lowest value was usually the previous container's: candidate-57's
+    "4.04-5.31 GiB at boot" on sp5 were the engines before it, and its boots' own floors were
+    6.03 and 6.02 GiB.
+- **First boots and kernel compiles:** after every boot the lab reads each node's image ID and
+  counts the files the boot added to the kernel caches (`TILELANG_CACHE_DIR`,
+  `TRITON_CACHE_DIR`, `VLLM_CACHE_ROOT`, `CUDA_CACHE_PATH`, mapped through the container's
+  mounts to node paths). It appends the boot to `results/private/lab/boot-ledger.jsonl` and logs,
+  after the `boot <profile>: ready` line, where this was the image's first boot (no earlier
+  ledger entry of that image ID on that node) and the kernel-cache files added per node. An
+  image's first boot compiles its changed kernels (candidate-58: 273 TileLang kernels on sp1,
+  427 on sp5, then none), which is not the arm's cost; `candidate verdicts` leaves such boots
+  out of time to ready when they compiled kernels (the first-boot mark alone decides only when no cache could be read, since a ledger started late marks a warm boot first). A node that cannot be read is left out; the probe never fails a boot.
+  The CUDA JIT cache may not be readable as the lab's user, and then reads as 0.
 - **Placeholders:** `{label}` and `{run}` in extras arguments become each arm's label
   and the run's name, so arms that share extras write their own outputs.
 - **Reading results:** `scripts/lab.py report RUN` prints the run's table and each
@@ -214,27 +318,33 @@ before the first boot. `run --dry-run` prints the problems.
     the clocks first, so production never serves locked.
 
 Jobs that stop the cluster (`validate`, `profile`, `kernel`) run
-`bin/spark --cluster-config <production profile> cluster stop --apply --parallel`. The
-stopped containers are kept; the next boot's `cluster start --replace` replaces them.
+`bin/spark --cluster-config <production profile> cluster stop --apply --parallel`, and an
+arm serving under another container name than production's is stopped with its own
+profile. The stopped containers are kept; the next boot's `cluster start --replace`
+replaces them.
 Set `"remove_stopped": true` on a job to remove them as well (`cluster stop --remove`).
 `run --dry-run` prints the production profile and each stop command.
 
 A `profile` job can replace a workload's default arguments, for example
 `"workload_args": {"prefill": ["--tokens", "131072"]}` for a cold 128K profile.
-Other workloads retain their defaults.
+Other workloads retain their defaults. A profiler arm is its base profile with
+`--profiler-config` appended to `serve_args`; the qualified-profile check
+(`bin/spark doctor`) leaves that argument and its value out of its comparison, and any
+other difference is still drift.
 
 Every arm must use the production profile's node map. `boot` refuses any other
 node set before launch, because a window cannot recable the fabric.
 
-Before an arm's first boot, every mounted B12X file must carry at least as many
-`fence_proxy` calls as the image's own copy. Overlays built from an older B12X tree
-fail this check. The overlay hashes of each run go to
-`results/private/lab/overlays-<run>.txt`.
+Before an arm's first boot, the SHA-256 of every file it mounts over the image's source
+trees goes to `results/private/lab/overlays-<run>.txt`.
 
 ## Kernel-lab bundles
 
 A bundle is a directory holding `candidate.json` and `overlay/{vllm,b12x}/<package path>`.
-Overlay files are mounted over `/opt/spark3/candidate/<package>/<package>/...`.
+Overlay files are mounted over `<root>/<package>/<package>/...`, where `<root>` is the
+image's source root: the parent of the vLLM tree on its `PYTHONPATH`
+(`/opt/spark-ds41f/candidate` from the release after spark-ds41f-1022,
+`/opt/spark3/candidate` in the images before it), or the bundle's `source_root`.
 
 `candidate.json` holds:
 - `image`, `env`, `argv` (the harness command inside the container);
@@ -242,9 +352,10 @@ Overlay files are mounted over `/opt/spark3/candidate/<package>/<package>/...`.
   from `~/spark-lab/inputs`, then from the node's checkout;
 - `sync`: inputs that are not in Git, copied to `~/spark-lab/inputs` on the other nodes;
 - `variant_configs`: configurations allowed more than one row group, such as production;
-- `workdir`: the container working directory (default `/opt/spark3/candidate/b12x`);
+- `workdir`: the container working directory, relative to the source root (default `b12x`);
+  a bundle recorded with an absolute directory keeps it;
 - `verdict`: `"exit"` for a test-suite bundle, such as pytest over the image's own
-  `/opt/spark3/candidate/vllm/tests`. It passes on exit status 0 with tests passed and none
+  `<root>/vllm/tests`. It passes on exit status 0 with tests passed and none
   failed, and records the failed test ids, which the nodes must agree on.
 
 Before replaying, a kernel job brings its nodes below the bench's cooling threshold
@@ -284,16 +395,43 @@ the whole release benchmark (release tests, determinism gate, this comparison) a
 
 ```json
 {"kind": "measure", "profile": "release", "bracket": false,
- "arms": [{"config": "<candidate>.json", "label": "<candidate>"},
+ "arms": [{"config": "tp3-dev.json", "label": "candidate-<N>"},
           {"config": "<previous release>.json", "label": "<previous>"},
-          {"config": "<candidate>.json", "label": "<candidate>-again"}]}
+          {"config": "tp3-dev.json", "label": "candidate-<N>-again"}]}
 ```
+
+- **Unified `candidate-<N>` naming (from `candidate-25` onward).** Every release candidate
+  uses `candidate-<N>` everywhere (`rc<N>` and `19f2c20ed4d6-next-<N>` are retired):
+  - directory: `experiments/2026-10-26-spark-ds41f-candidate/candidate-<N>/`;
+  - cluster configurations inside `candidate-<N>/`: one for every shape of the release
+    recipe it extends, each with its `-dev` file, named by shape (`tp4` for `tp4-ring`,
+    `tp3` for `tp3-triangle`, and the shape name otherwise), plus `upstreams.lock.json`
+    (no `rc-` prefix). The rest of the folder and a round's steps are in
+    [release-benchmark.md](release-benchmark.md#candidates);
+  - container image tag: `"image": "spark-ds41f:candidate-<N>"`;
+  - suite run and arm label: `"run": "candidate-<N>-screen-tp3"` (or
+    `"candidate-<N>-release-tp3"`), `"label": "candidate-<N>"`;
+  - config `"notes"`: `"candidate-<N> at tp3-triangle ..."` /
+    `"candidate-<N> at tp4-ring ..."`;
+  - git commit subject: `candidate-<N>: ...`.
 
 - **One session, candidate first.** The arms run back to back on the same boot
   conditions. The candidate goes first, so heat soak never counts against it, and runs
   again last to bound the session's drift. Read the verdicts against the previous
   release: `scripts/release_table.py RUN <previous> <candidate> <candidate>-again`
   (the table compares each listed arm with the first listed, in argv order).
+- **Recorded references (owner, 2026-10-29).** A released build's numbers never change, so
+  it is not measured again: compare against its recorded runs (its `benchmark_reference`
+  under `manifests/suites`, with the repeat recorded beside it) and its recorded digests and
+  memory. The same holds for an earlier candidate already measured on the same image. Every
+  arm that is measured runs at least twice, a boot and a repeat boot, so each verdict keeps
+  a confidence interval; a digest is exact and needs one boot. The arms below then drop the
+  previous release: a suite job's `"reference": "release"` reads the recorded runs of the
+  release the first arm is built on (the `benchmark_reference` of the recipe shape its
+  `extends` chain ends at, companions at `<reference>-<suite>`), and
+  `scripts/sonar_table.py` takes a recorded run's path in place of a label. A
+  promotion keeps the release's suite runs whole, request tables included (only the model
+  step's text may be left out), so the next candidate's paired verdict can read them.
 - **The `release` profile (`scripts/lab.py`):**
   - quality;
   - decode on prose and code at 1, 2, 4, 8 and 16 streams, 5-10 samples until each
@@ -320,7 +458,126 @@ What the rules guard against (each found the hard way, 2026-10-11):
 - **Repeats.** With two repeats a t interval spans tens of percent. The report uses
   1.96 sd / sqrt(n) for prefill, with three repeats.
 - **Draft budget.** Since r6x the DSpark budget is a rule of the inputs (row cost 0.035)
-  and nothing is timed at boot, so arms of r6x and later draft identically. Arms of earlier
-  builds run on pinned DSpark cost curves (`SPARK3_DSPARK_COST_DIR`); to compare their step
-  costs, boot each with an empty cost directory and `SPARK3_DSPARK_PROFILE_TOKENS=random`
+  and nothing is timed at boot, so arms of r6x and later draft identically. Images of earlier
+  builds read DSpark cost curves from `SPARK3_DSPARK_COST_DIR`, which `bin/spark` no longer
+  derives: an arm of one sets the directory it ran with; to compare their step costs, boot
+  each with an empty cost directory and `SPARK3_DSPARK_PROFILE_TOKENS=random`
   (experiments/2026-10-11-c16-cost).
+
+## Candidate tooling
+
+`bin/spark candidate` runs the candidate process's orchestration steps
+([release-benchmark.md](release-benchmark.md#candidates)) from the owner's laptop, the one
+host that reaches both the dgx and the spaceport networks. It drives each testbed's head over
+ssh:
+
+| Testbed | Head | Shape profile |
+| --- | --- | --- |
+| `tp4-ring` | dgx1 (dgx2..dgx4) | `tp4.json` |
+| `tp4-switched` | sp1 (sp2..sp4) | `tp4-switched.json` |
+| `tp3-switched` | sp5 (sp6, sp7) | `tp3-switched.json` |
+
+Every node's checkout is `~/projects/spark-ds41f` and its production profile
+`config/cluster.json`.
+
+- **ssh:** every call has a 10 s connect timeout, an overall timeout and retries. A remote
+  read ends with a sentinel, so output cut short is retried and never read as an empty result.
+  Steps that are not idempotent (`queue add`, `window close`) are not retried blindly: `queue`
+  reads the queue again before adding a second time.
+- **Plans:** commands that change anything print the exact remote commands (each runs under
+  `bash -lc` on its node) and act only with `--apply`.
+
+The commands:
+- **`candidate status [testbed...]`:** the hold's holder and `current`; the running, pending,
+  last done and last failed queue entries; the idle watcher and queue runner; the serving
+  container's image and profile.
+- **`candidate queue <testbed> <spec>... [--idle-minutes 10] [--log-name NAME] [--apply]`:**
+  - It refuses a hold that is not the lab queue's.
+  - While a job runs, or a pending one is about to start in an open window, it never moves the
+    checkout. Each job's `sync` moves the checkouts to origin/main when the job starts, and a
+    spec is queued from the node's checkout. So it queues only specs that are there and
+    identical to origin/main; otherwise it refuses and says to retry when the queue is idle.
+  - Otherwise it detaches the head at origin/main and runs `cluster sync --apply`. Then it
+    dry-runs and lints each spec, refusing on any problem, and queues it. Last, unless a window
+    is open or a watcher runs, it starts `scripts/lab_idle_start.sh` detached (`setsid -f`),
+    logging the runner to `results/private/lab/NAME-window.log`.
+  - A run that is already pending or running is not queued again.
+- **`candidate wait [testbed...] [--timeout S] [--interval S]`:** blocks until an entry
+  arrives in `done/` or `failed/`, then prints it and each queue's state.
+  - The two directories are compared as sets, each listed on its own, so a running entry never
+    reads as finished.
+  - A read that fails is no change.
+  - It exits 0 on a change and 2 on timeout.
+- **`candidate ship <image> --from <host> --to <testbed>... [--profile-dir DIR] [--queue TESTBED=SPEC,...] [--via relay|laptop] [--full] [--apply]`:**
+  - It waits until the image exists on the source.
+  - It copies it once to the first spaceport head (one copy at a time), then over the fabric
+    head to head.
+  - **`--via relay` (the default):** the dgx nodes have no route to spaceport; only the
+    WireGuard container `dgx-spark-bench-wg` on `storage` reaches it. The laptop starts three
+    detached steps, so a dropped laptop connection does not stop a copy:
+    - a one-shot `nc` listener on the head, spooling to `/var/tmp/spark-ship-<port>.tar`;
+    - a one-shot listener on `storage`'s site address, forwarding through the container to the head;
+    - `docker save` on the source, sent to `storage`.
+    The head loads the spool only when its size and SHA-256 are what the source sent, then
+    removes it. `--via laptop` streams through the laptop as before.
+  - **Layer blobs the head holds stay behind:** before each attempt, ship reads the manifest of
+    the head's current image under the same tag (its previous build) and leaves those layer
+    blobs out of the stream. The containerd image store names blobs by digest, so the load finds
+    them there and the head ends with the complete image. A head without the tag, or a manifest
+    that does not read, gets every blob, and so does `--full`.
+  - Once each testbed's queue runs nothing, it detaches the head, runs `cluster sync --apply`
+    and `build distribute --apply` with `DIR/<shape>.json`. `DIR` defaults to the candidate
+    folder named by the tag.
+  - It checks that every node shows the source's image ID, and prints the IDs.
+  - Running it again resumes: a head or node with the right ID is skipped.
+  - `--queue` queues specs only after a testbed's IDs verify.
+- **`candidate gate <testbed> <run> [--expect REF/LONG] [--expect-text REF/LONG]`:** for each
+  `determinism-*.jsonl` and `greedy-*.jsonl` of the run:
+  - `identical`, the hashes and every scenario with token or log-probability differences,
+    with each differing request's prompt and first-diff positions;
+  - `--expect` is the log-probability run's `reference_sha256`/`long_sha256`, and
+    `--expect-text` the text hashes (`reference_text_sha256`/`long_text_sha256`), so a text
+    hash is never compared with a log-probability hash.
+- **`candidate verdicts <testbed> <run or queue entry>`:** each table's verdict block from the
+  entry's window-log segment, which runs from `QUEUE job X started` to `QUEUE job X done` or
+  `failed`. The table files are overwritten when a spec has two measure jobs. It also prints:
+  - each arm's headline numbers: closed-loop tok/s per concurrency, prefill tok/s per size, the
+    model step's acceptance length and perplexity, and boot ready times, each boot marked as an
+    image's first boot (kernels compiled) or warm;
+  - time to ready per arm over its warm boots only, with the first boots it left out (a log
+    from before the lab's kernel-cache probe counts its boots as warm, and says so);
+  - failed bench steps, by suite, and the tracebacks in the segment.
+- **`candidate receipts <testbed> <run or queue entry> <dest> [--force] [--apply]`:** copies
+  the run's evidence into `<dest>`, a folder under a candidate's `receipts/`:
+  - `lab/`: the run's tables, `overlays-<run>.txt`, the window-log segment as
+    `lab/<run>-window.log` (`*.log` is git-ignored: add it with `git add -f`) and any
+    `lab/<run>/`;
+  - `determinism/<run>/`;
+  - `suites/<run>/` and its companions. Each `model.json.gz` stays on the node, with its
+    sha256, bytes and location in `large-files-on-nodes.tsv`; engine logs are left out.
+  - It refuses a run that has not finished, and never overwrites without `--force`.
+- **`candidate overlay <folder> <name> --tree HOST:TREE --revert COMMIT [--profiles tp4,...] [--allow-later] [--note TEXT] [--apply]`:**
+  a revert control for a pure-Python patch:
+  - the files COMMIT modifies outside `tests/`, at their `COMMIT^` versions, into
+    `<folder>/<name>/overlay/`, by `git archive` of exactly those files;
+  - `<shape>-<name>.json`, which extends `<folder>/<shape>.json` with the base's mounts plus one
+    read-only mount per file at `/opt/spark-ds41f/candidate/vllm/<path>`;
+  - `<shape>-<name>-dev.json` with `VLLM_SERVER_DEV_MODE=1`.
+
+  It refuses a commit that changes no such file, one that adds, deletes or renames files, and
+  one whose files a later commit in the tree also touches. `--allow-later` overrides the last:
+  the overlay then reverts the later change too. The notes cite no hash.
+- **`candidate close <testbed> [--apply]`:** `scripts/lab.py window close` when nothing is
+  running or pending, then `doctor --live`. It never writes `~/spark-request.json`: the
+  runner reads that file between steps and stops the running job.
+- **`candidate lint <file>...`:** `queue` and `overlay` run the same checks:
+  - a profile's notes cite no hex hash but the image's own tree labels and its lock's patch
+    heads;
+  - JSON and Markdown files end in exactly one newline;
+  - a spec's arms name profiles that exist.
+
+```bash
+bin/spark candidate queue tp4-switched experiments/2026-10-26-spark-ds41f-candidate/candidate-<N>/screen-tp4-switched.json --apply
+bin/spark candidate wait tp4-switched tp3-switched
+bin/spark candidate verdicts tp4-switched candidate-<N>-screen-tp4-switched
+```

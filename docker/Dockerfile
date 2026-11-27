@@ -8,14 +8,95 @@
 # commits after it with no native-source changes in between, so only the two
 # stable CUDA extensions are rebuilt from the overlaid source.
 ARG BASE_IMAGE=docker.io/vllm/vllm-openai@sha256:3cf14c52765a0f0c2f09035e05fa79e1e4b2f9788b64afa90fa41c1ff12d29cf
+# The stage every builder stage and runtime-core start from: `base`, the base image
+# and its CUDA 13.0.2, unless the lock lists sources.cuda_toolkit; `bin/spark build
+# image` then selects that toolkit's stage (`cuda-13-5`), passes its hash-verified
+# packages as the cuda-toolkit-debs context, and sets RUNTIME_CORE_STAGE to the stage
+# that re-wires and checks the toolkit on runtime-core (`runtime-core-cuda-13-5`).
+# Without a toolkit neither argument is passed and BuildKit builds neither stage.
+ARG CUDA_STAGE=base
+ARG RUNTIME_CORE_STAGE=runtime-core
 # The image is the `runtime` stage unless the lock lists the TileLang sources;
 # `bin/spark build image` then selects `runtime-tilelang`, or
 # `runtime-tilelang-sparknet` when the lock also lists sparknet. BuildKit
 # builds only the stages the selected one needs, so a B12X-only build neither
 # builds TileLang nor needs its contexts, and its layers are unchanged.
 ARG RUNTIME_STAGE=runtime
+# The stage the TileLang runtime builds on: `runtime` (with B12X) while the lock
+# lists B12X, `runtime-core` (`runtime-core-cuda-13-5` in a CUDA 13.5 build) once it
+# does not; a build without B12X then needs no b12x-source context.
+ARG TILELANG_BASE_STAGE=runtime
 
-FROM ${BASE_IMAGE} AS vllm-native-builder
+# The base image as it is: CUDA 13.0.2 (nvcc/ptxas 13.0.88, libcublasLt 13.1.1.3).
+FROM ${BASE_IMAGE} AS base
+
+# CUDA 13.5 (nvcc/ptxas 13.5.37, libcudart 13.5.37, libcublasLt 13.10.0.20) over the
+# base image's CUDA 13.0.2, from the lock's packages (requirements/cuda-13-5-sbsa.txt,
+# verified by `bin/spark build prepare`). dpkg installs exactly that set with no
+# network access, so a dependency the set lacks fails the build. /usr/local/cuda,
+# /usr/local/cuda-13 and the pip nvidia/cu13 directory, which libtorch_cuda.so's
+# DT_RPATH and cuda.pathfinder search ahead of /usr/local/cuda, are wired to
+# /usr/local/cuda-13.5; nvcc reads TOP from its nvcc.profile because it does not
+# resolve the nvidia/cu13/bin link it may be called through.
+FROM ${BASE_IMAGE} AS cuda-13-5
+
+USER root
+
+ENV CUDA_HOME=/usr/local/cuda \
+    CUDA_VERSION=13.5.0 \
+    NV_CUDA_CUDART_VERSION=13.5.37-1 \
+    NV_CUDA_LIB_VERSION=13.5.0-1 \
+    NV_LIBCUBLAS_VERSION=13.10.0.20-1 \
+    PATH=/usr/local/cuda-13.5/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    LD_LIBRARY_PATH=/usr/local/cuda-13.5/targets/sbsa-linux/lib:/usr/local/cuda/targets/sbsa-linux/lib:/usr/local/cuda/lib64
+
+RUN --mount=type=bind,from=cuda-toolkit-debs,target=/tmp/cuda-toolkit-debs \
+    set -eux; \
+    DEBIAN_FRONTEND=noninteractive dpkg -i /tmp/cuda-toolkit-debs/*.deb; \
+    test -z "$(dpkg --audit)"; \
+    printf '%s\n' \
+      '#!/bin/sh' \
+      'set -eux' \
+      'ln -sfn /usr/local/cuda-13.5 /usr/local/cuda' \
+      'ln -sfn /usr/local/cuda-13.5 /usr/local/cuda-13' \
+      'ln -sfn /usr/local/cuda-13.5 /etc/alternatives/cuda' \
+      'ln -sfn /usr/local/cuda-13.5 /etc/alternatives/cuda-13' \
+      'sed -i "s|^TOP[[:space:]]*=.*|TOP = /usr/local/cuda-13.5|" /usr/local/cuda-13.5/bin/nvcc.profile' \
+      'cu13_dir=/usr/local/lib/python3.12/dist-packages/nvidia/cu13' \
+      'cuda_lib=/usr/local/cuda-13.5/targets/sbsa-linux/lib' \
+      'rm -rf "${cu13_dir}/bin" "${cu13_dir}/nvvm"' \
+      'ln -s /usr/local/cuda-13.5/bin "${cu13_dir}/bin"' \
+      'ln -s /usr/local/cuda-13.5/nvvm "${cu13_dir}/nvvm"' \
+      'for lib in libcublas.so.13 libcublasLt.so.13 libnvblas.so.13 libcudart.so.13 libcudart_static.a libcudadevrt.a libnvJitLink.so.13 libnvrtc.so.13 libnvrtc-builtins.so.13.5 libnvptxcompiler_static.a libcurand.so.10; do' \
+      '  ln -sfn "${cuda_lib}/${lib}" "${cu13_dir}/lib/${lib}"' \
+      'done' \
+      'rm -f "${cu13_dir}/lib/libnvrtc-builtins.so.13.0" "${cu13_dir}/lib/libnvrtc-builtins.so.13.2"' \
+      'ln -sfn /usr/local/cuda-13.5/nvvm/lib64/libnvvm.so.4.0.0 "${cu13_dir}/lib/libnvvm.so.4"' \
+      'ldconfig' \
+      > /usr/local/sbin/spark-wire-cuda-13-5; \
+    chmod 0755 /usr/local/sbin/spark-wire-cuda-13-5; \
+    /usr/local/sbin/spark-wire-cuda-13-5
+
+# torch 2.16.0.dev20261113+cu135 over the CUDA 13.5 stage, from the lock's wheels
+# (requirements/torch-2-16-cu135-aarch64.txt, verified by `bin/spark build prepare`):
+# torch, every package it requires at the version it requires, and the torchvision,
+# torchaudio and torchcodec builds of its date. pip installs exactly that set, with no
+# index and no dependency resolution, so a wheel the set lacks fails the import below.
+# The set's NCCL is the stock release torch was compiled against; runtime-core replaces
+# it with the patched build of the lock's NCCL, which must be that release. The set's
+# CUDA libraries are this toolkit's own versions, and nvidia/cu13 is wired to
+# /usr/local/cuda-13.5 again so one copy is what torch, nvcc and cuda.pathfinder resolve.
+# Every builder stage starts here, so each native extension is built against this torch.
+FROM cuda-13-5 AS cuda-13-5-torch-2-16
+
+RUN --mount=type=bind,from=torch-wheels,target=/tmp/torch-wheels \
+    set -eux; \
+    python3 -m pip install --no-cache-dir --no-index --no-deps --force-reinstall \
+      /tmp/torch-wheels/*.whl; \
+    /usr/local/sbin/spark-wire-cuda-13-5; \
+    python3 -c 'import torch, torchaudio, torchvision; assert torch.__version__ == "2.16.0.dev20261113+cu135", torch.__version__'
+
+FROM ${CUDA_STAGE} AS vllm-native-builder
 
 USER root
 
@@ -78,7 +159,7 @@ RUN --mount=type=secret,id=github_token,required=false \
 # NCCL 2.30.7 (the base image's nvidia-nccl-cu13 wheel), rebuilt from the
 # pinned release tag with patches/nccl for SM121 only. The runtime stage
 # replaces the wheel's libnccl.so.2 with it.
-FROM ${BASE_IMAGE} AS nccl-builder
+FROM ${CUDA_STAGE} AS nccl-builder
 
 USER root
 
@@ -99,7 +180,7 @@ RUN set -eux; \
 # the base image's z3-solver, which TileLang links and loads at run time.
 # TileKernels takes its version from setuptools-scm, which an export without
 # Git metadata cannot supply.
-FROM ${BASE_IMAGE} AS tilelang-builder
+FROM ${CUDA_STAGE} AS tilelang-builder
 
 USER root
 
@@ -125,13 +206,21 @@ RUN set -eux; \
 # sparknet (christopherowen/dgx-spark-networking): the one-shot RoCE
 # collectives vendored from B12X with spark's patches 0001-0011, used by the
 # TileLang family instead of b12x.comm.roce. Pure Python plus a C proxy.
-FROM ${BASE_IMAGE} AS sparknet-builder
+FROM ${CUDA_STAGE} AS sparknet-builder
 
 COPY --from=sparknet-source . /workspace/sparknet/
 RUN python3 -m pip wheel --no-cache-dir --no-deps --wheel-dir /opt/sparknet /workspace/sparknet && \
     ls /opt/sparknet/dgx_spark_networking-*.whl
 
-FROM ${BASE_IMAGE} AS runtime
+# Everything the image holds but B12X: the candidate vLLM tree with its two
+# rebuilt native extensions, the patched NCCL and the hash-locked CuTe DSL wheels.
+# While the lock lists B12X (spark-ds41f-1025 and earlier), `runtime` adds it on
+# top; a lock without it builds the TileLang runtime on this stage directly.
+FROM ${CUDA_STAGE} AS runtime-core
+
+# No usage reporting: vLLM's usage stats (stats.vllm.ai) stay off in every image and
+# every container started from it, whatever the deployment's environment.
+ENV VLLM_NO_USAGE_STATS=1 DO_NOT_TRACK=1
 
 ARG BASE_IMAGE_NAME=unrecorded
 ARG BASE_IMAGE_DIGEST=unrecorded
@@ -140,57 +229,50 @@ ARG VLLM_REF=unrecorded
 ARG VLLM_REVISION=unrecorded
 ARG VLLM_PATCH_HEAD=unrecorded
 ARG VLLM_TREE=unrecorded
-ARG B12X_UPSTREAM=unrecorded
-ARG B12X_REF=unrecorded
-ARG B12X_REVISION=unrecorded
-ARG B12X_PATCH_HEAD=unrecorded
-ARG B12X_TREE=unrecorded
 ARG NCCL_UPSTREAM=unrecorded
 ARG NCCL_REF=unrecorded
 ARG NCCL_REVISION=unrecorded
 ARG NCCL_PATCH_HEAD=unrecorded
 ARG NCCL_TREE=unrecorded
 ARG DEPLOYMENT_COMMIT=uncommitted
+# NCCL_VERSION_CODE of the lock's NCCL tag; `bin/spark build image` passes it when the
+# lock tracks another release than the base image's 2.30.7.
+ARG NCCL_VERSION_CODE=23007
 
 LABEL org.opencontainers.image.source="https://github.com/christopherowen/spark-ds41f" \
       org.opencontainers.image.revision="${DEPLOYMENT_COMMIT}" \
       org.opencontainers.image.base.name="${BASE_IMAGE_NAME}" \
       org.opencontainers.image.base.digest="${BASE_IMAGE_DIGEST}" \
-      local.spark3.vllm.upstream="${VLLM_UPSTREAM}" \
-      local.spark3.vllm.ref="${VLLM_REF}" \
-      local.spark3.vllm.revision="${VLLM_REVISION}" \
-      local.spark3.vllm.patch-head="${VLLM_PATCH_HEAD}" \
-      local.spark3.vllm.tree="${VLLM_TREE}" \
-      local.spark3.b12x.upstream="${B12X_UPSTREAM}" \
-      local.spark3.b12x.ref="${B12X_REF}" \
-      local.spark3.b12x.revision="${B12X_REVISION}" \
-      local.spark3.b12x.patch-head="${B12X_PATCH_HEAD}" \
-      local.spark3.b12x.tree="${B12X_TREE}" \
-      local.spark3.nccl.upstream="${NCCL_UPSTREAM}" \
-      local.spark3.nccl.ref="${NCCL_REF}" \
-      local.spark3.nccl.revision="${NCCL_REVISION}" \
-      local.spark3.nccl.patch-head="${NCCL_PATCH_HEAD}" \
-      local.spark3.nccl.tree="${NCCL_TREE}"
+      local.spark-ds41f.vllm.upstream="${VLLM_UPSTREAM}" \
+      local.spark-ds41f.vllm.ref="${VLLM_REF}" \
+      local.spark-ds41f.vllm.revision="${VLLM_REVISION}" \
+      local.spark-ds41f.vllm.patch-head="${VLLM_PATCH_HEAD}" \
+      local.spark-ds41f.vllm.tree="${VLLM_TREE}" \
+      local.spark-ds41f.nccl.upstream="${NCCL_UPSTREAM}" \
+      local.spark-ds41f.nccl.ref="${NCCL_REF}" \
+      local.spark-ds41f.nccl.revision="${NCCL_REVISION}" \
+      local.spark-ds41f.nccl.patch-head="${NCCL_PATCH_HEAD}" \
+      local.spark-ds41f.nccl.tree="${NCCL_TREE}"
 
 USER root
 
-COPY --from=vllm-source . /opt/spark3/candidate/vllm/
-COPY --from=b12x-source . /opt/spark3/candidate/b12x/
+COPY --from=vllm-source . /opt/spark-ds41f/candidate/vllm/
 COPY --from=vllm-native-builder \
   /opt/vllm-native/vllm/_C_stable_libtorch.abi3.so \
-  /opt/spark3/candidate/vllm/vllm/_C_stable_libtorch.abi3.so
+  /opt/spark-ds41f/candidate/vllm/vllm/_C_stable_libtorch.abi3.so
 COPY --from=vllm-native-builder \
   /opt/vllm-native/vllm/_moe_C_stable_libtorch.abi3.so \
-  /opt/spark3/candidate/vllm/vllm/_moe_C_stable_libtorch.abi3.so
+  /opt/spark-ds41f/candidate/vllm/vllm/_moe_C_stable_libtorch.abi3.so
 COPY --from=cutlass-dsl-wheels . /tmp/cutlass-dsl-wheels/
-COPY --from=nccl-builder /opt/nccl/ /opt/spark3/nccl/
+COPY --from=nccl-builder /opt/nccl/ /opt/spark-ds41f/nccl/
 RUN set -eux; \
     target=/usr/local/lib/python3.12/dist-packages/nvidia/nccl/lib/libnccl.so.2; \
     test -f "$target"; \
-    install -m 0755 /opt/spark3/nccl/libnccl.so.2 "$target"; \
-    rm /opt/spark3/nccl/libnccl.so.2
+    install -m 0755 /opt/spark-ds41f/nccl/libnccl.so.2 "$target"; \
+    rm /opt/spark-ds41f/nccl/libnccl.so.2
 
-# B12X builds its io_uring disk row reader at first use; it needs the header.
+# vLLM's direct loader and Engram disk row reader build their io_uring C helpers
+# into VLLM_NATIVE_CACHE_DIR below so no compiler runs on first boot.
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       liburing-dev liburing2 pkg-config \
@@ -204,36 +286,25 @@ COPY --from=vllm-deletions deleted.txt /tmp/vllm-deleted.txt
 RUN set -eux; \
     installed=$(python3 -c \
       'from pathlib import Path; import vllm; print(Path(vllm.__file__).parent)'); \
-    cp -a --no-clobber "$installed"/. /opt/spark3/candidate/vllm/vllm/; \
+    cp -a --no-clobber "$installed"/. /opt/spark-ds41f/candidate/vllm/vllm/; \
     while read -r relative; do \
       [ -n "$relative" ] || continue; \
-      rm -f "/opt/spark3/candidate/vllm/vllm/$relative"; \
+      rm -f "/opt/spark-ds41f/candidate/vllm/vllm/$relative"; \
       echo "kept deletion: $relative"; \
     done < /tmp/vllm-deleted.txt; \
     rm -f /tmp/vllm-deleted.txt; \
-    test -f /opt/spark3/candidate/vllm/vllm/third_party/flashmla/flash_mla_interface.py
+    test -f /opt/spark-ds41f/candidate/vllm/vllm/third_party/flashmla/flash_mla_interface.py
 
-# The nightly base installs CuTe DSL 4.7.1, which vLLM and quack-kernels require;
-# patches/b12x moves B12X's exact pin to it. Reinstall the hash-locked wheel set
-# (the same version) and B12X without dependencies.
+# The nightly base installs CuTe DSL 4.7.1, which vLLM and quack-kernels require.
+# Reinstall the hash-locked wheel set (the same version).
 RUN set -eux; \
     python3 -m pip install --no-cache-dir --no-deps --force-reinstall \
       /tmp/cutlass-dsl-wheels/*.whl; \
-    rm -rf /tmp/cutlass-dsl-wheels; \
-    python3 -m pip install --no-cache-dir --no-build-isolation --no-deps \
-      /opt/spark3/candidate/b12x
+    rm -rf /tmp/cutlass-dsl-wheels
 RUN python3 - <<'PY'
 import importlib.metadata as metadata
 
 from packaging.requirements import Requirement
-
-for raw_requirement in metadata.requires("b12x") or ():
-    requirement = Requirement(raw_requirement)
-    if requirement.marker and not requirement.marker.evaluate():
-        continue
-    installed = metadata.version(requirement.name)
-    if requirement.specifier and installed not in requirement.specifier:
-        raise RuntimeError(f"B12X requires {requirement}, but {installed} is installed")
 
 # Every package built on CuTe DSL must accept the installed version: a locked
 # wheel set older than one consumer's requirement silently breaks that consumer
@@ -255,15 +326,152 @@ for consumer in ("vllm", "quack-kernels", "flashinfer-python", "nvidia-cudnn-fro
             raise RuntimeError(f"{consumer} requires {requirement}, but {installed} is installed")
 PY
 
-ENV PYTHONPATH=/opt/spark3/candidate/vllm:/opt/spark3/candidate/b12x
+ENV PYTHONPATH=/opt/spark-ds41f/candidate/vllm
+ENV VLLM_NATIVE_CACHE_DIR=/opt/spark-ds41f/native
 
 RUN LIBRARY_PATH=/usr/local/cuda/lib64/stubs python3 - <<'PY'
+import ctypes
+import hashlib
 import importlib.metadata as metadata
+import os
 import subprocess
 
 assert metadata.version("nvidia-cutlass-dsl") == "4.7.1"
 import cutlass.base_dsl.enums  # noqa: F401  (quack-kernels, the DS4.1 L2 prefetch)
 import quack.compile_utils  # noqa: F401
+from vllm.model_executor.model_loader.direct_io import _native as direct_native
+from vllm.models.deepseek_v4_1.engram_rows import _native as engram_native
+
+# torch.cuda.nccl.version() reports the NCCL torch was compiled against, so
+# ask the installed library itself (NCCL_VERSION_CODE 2.30.7 = 23007).
+nccl = "/usr/local/lib/python3.12/dist-packages/nvidia/nccl/lib/libnccl.so.2"
+version = ctypes.c_int()
+assert ctypes.CDLL(nccl).ncclGetVersion(ctypes.byref(version)) == 0
+assert version.value == int(os.environ["NCCL_VERSION_CODE"]), version.value
+with open(nccl, "rb") as handle:
+    built = open("/opt/spark-ds41f/nccl/libnccl.so.2.sha256").read().strip()
+    assert hashlib.sha256(handle.read()).hexdigest() == built, "NCCL is not the patched build"
+for name in ("_C_stable_libtorch", "_moe_C_stable_libtorch"):
+    with open(f"/opt/spark-ds41f/candidate/vllm/vllm/{name}.abi3.so", "rb") as handle:
+        assert handle.read(4) == b"\x7fELF"
+for label, mod in (("direct_io", direct_native), ("engram_rows", engram_native)):
+    builder = getattr(mod, "prebuild", mod._build)
+    native_path = builder()
+    linked = subprocess.check_output(["ldd", str(native_path)], text=True)
+    assert "liburing.so" in linked, f"{label} was built without io_uring"
+print("runtime build checks passed")
+PY
+
+# A CUDA 13.5 build's runtime-core (RUNTIME_CORE_STAGE=runtime-core-cuda-13-5): the
+# CuTe DSL wheel reinstall above rewrites files in nvidia/cu13 (it put a 13.2
+# libnvrtc.so.13 back), so wire it to CUDA 13.5 again, then check the toolchain and
+# the libraries torch, cuda.pathfinder and ctypes resolve.
+FROM runtime-core AS runtime-core-cuda-13-5
+
+LABEL local.spark-ds41f.cuda.version="13.5.37"
+
+RUN /usr/local/sbin/spark-wire-cuda-13-5
+RUN python3 - <<'PY'
+import ctypes
+import subprocess
+from pathlib import Path
+
+from cuda.pathfinder import find_nvidia_binary_utility
+
+for tool in ("nvcc", "ptxas"):
+    out = subprocess.check_output([f"/usr/local/cuda/bin/{tool}", "--version"], text=True)
+    assert "release 13.5, V13.5.37" in out, out
+    resolved = Path(find_nvidia_binary_utility(tool)).resolve()
+    assert resolved == Path(f"/usr/local/cuda-13.5/bin/{tool}"), resolved
+for lib_path in (
+    "/usr/local/cuda/lib64/libcublasLt.so.13",
+    "/usr/local/lib/python3.12/dist-packages/nvidia/cu13/lib/libcublasLt.so.13",
+):
+    assert Path(lib_path).resolve() == Path(
+        "/usr/local/cuda-13.5/targets/sbsa-linux/lib/libcublasLt.so.13.10.0.20"
+    ), Path(lib_path).resolve()
+    assert ctypes.CDLL(lib_path).cublasLtGetVersion() == 131000
+for name in ("libcudart.so.13", "libnvrtc.so.13", "libnvJitLink.so.13", "libcublas.so.13"):
+    resolved = Path(f"/usr/local/lib/python3.12/dist-packages/nvidia/cu13/lib/{name}").resolve()
+    assert resolved.is_relative_to("/usr/local/cuda-13.5/targets/sbsa-linux/lib"), resolved
+cudart = ctypes.CDLL("/usr/local/cuda/lib64/libcudart.so.13")
+rt_ver = ctypes.c_int()
+assert cudart.cudaRuntimeGetVersion(ctypes.byref(rt_ver)) == 0
+assert rt_ver.value == 13050, rt_ver.value
+print("CUDA 13.5 build checks passed")
+PY
+
+# A build with the lock's torch (RUNTIME_CORE_STAGE=runtime-core-cuda-13-5-torch-2-16):
+# the installed torch is the lock's, compiled for this toolkit and for the NCCL release
+# the patched library is, and it loads that library (libtorch_cuda.so binds NCCL's
+# symbols when it loads, so the import fails on a release that lacks one).
+FROM runtime-core-cuda-13-5 AS runtime-core-cuda-13-5-torch-2-16
+
+ARG NCCL_VERSION_CODE=23007
+LABEL local.spark-ds41f.torch.version="2.16.0.dev20261113+cu135"
+
+RUN python3 - <<'PY'
+import ctypes
+import os
+
+import torch
+import torchaudio  # noqa: F401
+import torchvision
+
+assert torch.__version__ == "2.16.0.dev20261113+cu135", torch.__version__
+assert torch.version.cuda == "13.5", torch.version.cuda
+compiled = torch.cuda.nccl.version()
+code = int(os.environ["NCCL_VERSION_CODE"])
+assert tuple(compiled[:3]) == (code // 10000, code // 100 % 100, code % 100), (compiled, code)
+nccl = "/usr/local/lib/python3.12/dist-packages/nvidia/nccl/lib/libnccl.so.2"
+loaded = [line.split()[-1] for line in open("/proc/self/maps") if "libnccl.so" in line]
+assert loaded and set(loaded) == {nccl}, loaded
+version = ctypes.c_int()
+assert ctypes.CDLL(nccl).ncclGetVersion(ctypes.byref(version)) == 0 and version.value == code, version.value
+boxes = torch.tensor([[0.0, 0.0, 1.0, 1.0], [0.0, 0.0, 1.0, 1.0]])
+assert torchvision.ops.nms(boxes, torch.tensor([1.0, 0.5]), 0.5).tolist() == [0]
+print("torch build checks passed")
+PY
+
+# B12X, while the lock lists it (spark-ds41f-1025 and earlier): its tree on
+# PYTHONPATH, installed without dependencies (patches/b12x moves its exact CuTe
+# DSL pin to the locked wheel set's version).
+FROM ${RUNTIME_CORE_STAGE} AS runtime
+
+ARG B12X_UPSTREAM=unrecorded
+ARG B12X_REF=unrecorded
+ARG B12X_REVISION=unrecorded
+ARG B12X_PATCH_HEAD=unrecorded
+ARG B12X_TREE=unrecorded
+
+LABEL local.spark-ds41f.b12x.upstream="${B12X_UPSTREAM}" \
+      local.spark-ds41f.b12x.ref="${B12X_REF}" \
+      local.spark-ds41f.b12x.revision="${B12X_REVISION}" \
+      local.spark-ds41f.b12x.patch-head="${B12X_PATCH_HEAD}" \
+      local.spark-ds41f.b12x.tree="${B12X_TREE}"
+
+COPY --from=b12x-source . /opt/spark-ds41f/candidate/b12x/
+RUN python3 -m pip install --no-cache-dir --no-build-isolation --no-deps \
+      /opt/spark-ds41f/candidate/b12x
+RUN python3 - <<'PY'
+import importlib.metadata as metadata
+
+from packaging.requirements import Requirement
+
+for raw_requirement in metadata.requires("b12x") or ():
+    requirement = Requirement(raw_requirement)
+    if requirement.marker and not requirement.marker.evaluate():
+        continue
+    installed = metadata.version(requirement.name)
+    if requirement.specifier and installed not in requirement.specifier:
+        raise RuntimeError(f"B12X requires {requirement}, but {installed} is installed")
+PY
+
+ENV PYTHONPATH=/opt/spark-ds41f/candidate/vllm:/opt/spark-ds41f/candidate/b12x
+
+RUN LIBRARY_PATH=/usr/local/cuda/lib64/stubs python3 - <<'PY'
+import subprocess
+
 import b12x.attention.compressed_sparse_mla  # noqa: F401
 import b12x.comm.roce  # noqa: F401
 import b12x.integration.vllm.loader  # noqa: F401
@@ -274,29 +482,16 @@ print("RoCE proxy ABI", load().roce_abi_version())
 native_path = _build()
 linked = subprocess.check_output(["ldd", native_path], text=True)
 assert "liburing.so" in linked, "B12X was built without io_uring row staging"
-import ctypes
-import hashlib
-
-# torch.cuda.nccl.version() reports the NCCL torch was compiled against, so
-# ask the installed library itself (NCCL_VERSION_CODE 2.30.7 = 23007).
-nccl = "/usr/local/lib/python3.12/dist-packages/nvidia/nccl/lib/libnccl.so.2"
-version = ctypes.c_int()
-assert ctypes.CDLL(nccl).ncclGetVersion(ctypes.byref(version)) == 0
-assert version.value == 23007, version.value
-with open(nccl, "rb") as handle:
-    built = open("/opt/spark3/nccl/libnccl.so.2.sha256").read().strip()
-    assert hashlib.sha256(handle.read()).hexdigest() == built, "NCCL is not the patched build"
-for name in ("_C_stable_libtorch", "_moe_C_stable_libtorch"):
-    with open(f"/opt/spark3/candidate/vllm/vllm/{name}.abi3.so", "rb") as handle:
-        assert handle.read(4) == b"\x7fELF"
 print("B12X build checks passed")
 PY
 
 # The TileLang kernel backend: the patched TileLang replaces the base image's
 # tilelang 0.1.12 (vLLM's pin), and TileKernels is added, both without
 # dependencies. Every requirement must already hold; no shared package moves
-# back to suit one consumer (docs/upstreams.md).
-FROM runtime AS runtime-tilelang
+# back to suit one consumer (docs/upstreams.md). It builds on `runtime` while
+# the lock lists B12X and on `runtime-core` once it does not
+# (TILELANG_BASE_STAGE, set by `bin/spark build image`).
+FROM ${TILELANG_BASE_STAGE} AS runtime-tilelang
 
 ARG TILELANG_UPSTREAM=unrecorded
 ARG TILELANG_REF=unrecorded
@@ -311,16 +506,16 @@ ARG TILE_KERNELS_PATCH_HEAD=unrecorded
 ARG TILE_KERNELS_TREE=unrecorded
 ARG TILE_KERNELS_VERSION=unrecorded
 
-LABEL local.spark3.tilelang.upstream="${TILELANG_UPSTREAM}" \
-      local.spark3.tilelang.ref="${TILELANG_REF}" \
-      local.spark3.tilelang.revision="${TILELANG_REVISION}" \
-      local.spark3.tilelang.patch-head="${TILELANG_PATCH_HEAD}" \
-      local.spark3.tilelang.tree="${TILELANG_TREE}" \
-      local.spark3.tile_kernels.upstream="${TILE_KERNELS_UPSTREAM}" \
-      local.spark3.tile_kernels.ref="${TILE_KERNELS_REF}" \
-      local.spark3.tile_kernels.revision="${TILE_KERNELS_REVISION}" \
-      local.spark3.tile_kernels.patch-head="${TILE_KERNELS_PATCH_HEAD}" \
-      local.spark3.tile_kernels.tree="${TILE_KERNELS_TREE}"
+LABEL local.spark-ds41f.tilelang.upstream="${TILELANG_UPSTREAM}" \
+      local.spark-ds41f.tilelang.ref="${TILELANG_REF}" \
+      local.spark-ds41f.tilelang.revision="${TILELANG_REVISION}" \
+      local.spark-ds41f.tilelang.patch-head="${TILELANG_PATCH_HEAD}" \
+      local.spark-ds41f.tilelang.tree="${TILELANG_TREE}" \
+      local.spark-ds41f.tile_kernels.upstream="${TILE_KERNELS_UPSTREAM}" \
+      local.spark-ds41f.tile_kernels.ref="${TILE_KERNELS_REF}" \
+      local.spark-ds41f.tile_kernels.revision="${TILE_KERNELS_REVISION}" \
+      local.spark-ds41f.tile_kernels.patch-head="${TILE_KERNELS_PATCH_HEAD}" \
+      local.spark-ds41f.tile_kernels.tree="${TILE_KERNELS_TREE}"
 
 RUN --mount=type=bind,from=tilelang-builder,source=/opt/tilelang,target=/tmp/tilelang-wheels \
     python3 -m pip install --no-cache-dir --no-deps --force-reinstall \
@@ -393,7 +588,7 @@ for dist in metadata.distributions():
     if consumer != "vllm":
         for raw in dist.requires or ():
             check(consumer, raw, SHARED)
-for line in Path("/opt/spark3/candidate/vllm/requirements/cuda.txt").read_text().splitlines():
+for line in Path("/opt/spark-ds41f/candidate/vllm/requirements/cuda.txt").read_text().splitlines():
     line = line.split("#", 1)[0].strip()
     if line and not line.startswith("-"):
         check("vllm (requirements/cuda.txt)", line, SHARED)
@@ -413,11 +608,11 @@ ARG SPARKNET_PATCH_HEAD=unrecorded
 ARG SPARKNET_TREE=unrecorded
 ARG SPARKNET_VERSION=unrecorded
 
-LABEL local.spark3.sparknet.upstream="${SPARKNET_UPSTREAM}" \
-      local.spark3.sparknet.ref="${SPARKNET_REF}" \
-      local.spark3.sparknet.revision="${SPARKNET_REVISION}" \
-      local.spark3.sparknet.patch-head="${SPARKNET_PATCH_HEAD}" \
-      local.spark3.sparknet.tree="${SPARKNET_TREE}"
+LABEL local.spark-ds41f.sparknet.upstream="${SPARKNET_UPSTREAM}" \
+      local.spark-ds41f.sparknet.ref="${SPARKNET_REF}" \
+      local.spark-ds41f.sparknet.revision="${SPARKNET_REVISION}" \
+      local.spark-ds41f.sparknet.patch-head="${SPARKNET_PATCH_HEAD}" \
+      local.spark-ds41f.sparknet.tree="${SPARKNET_TREE}"
 
 ENV SPARKNET_ROCE_CACHE_DIR=/opt/sparknet/roce
 RUN --mount=type=bind,from=sparknet-builder,source=/opt/sparknet,target=/tmp/sparknet-wheels \
@@ -434,6 +629,30 @@ from sparknet.oneshot._proxy import load
 
 print("sparknet proxy ABI", load().roce_abi_version())
 print("sparknet build checks passed")
+PY
+
+# An experiment's runtime without FlashInfer's precompiled kernels (an arm's
+# "build": {"flashinfer_kernels": false}): the base image's flashinfer-cubin and
+# flashinfer-jit-cache are removed; flashinfer-python stays, since vLLM imports it.
+# The image is no smaller, because the base image's layers still hold the files.
+FROM runtime-tilelang-sparknet AS runtime-no-flashinfer-kernels
+
+LABEL local.spark-ds41f.flashinfer-kernels="removed"
+
+RUN python3 -m pip uninstall -y flashinfer-cubin flashinfer-jit-cache
+RUN python3 - <<'PY'
+import importlib.metadata as metadata
+import importlib.util
+
+for package, module in (("flashinfer-cubin", "flashinfer_cubin"), ("flashinfer-jit-cache", "flashinfer_jit_cache")):
+    try:
+        metadata.version(package)
+    except metadata.PackageNotFoundError:
+        pass
+    else:
+        raise SystemExit(f"{package} is still installed")
+    assert importlib.util.find_spec(module) is None, f"{module} still imports"
+print("flashinfer-python", metadata.version("flashinfer-python"), "without its precompiled kernels")
 PY
 
 FROM ${RUNTIME_STAGE}

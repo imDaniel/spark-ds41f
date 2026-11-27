@@ -64,6 +64,11 @@ def collect(policy):
         except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
             data["errors"].append(f"{label}: {error}")
             return ""
+    def probe(*args):
+        try:
+            return command(*args)
+        except (OSError, RuntimeError, subprocess.TimeoutExpired):
+            return ""
     data["driver"] = read("loaded driver", "cat", "/sys/module/nvidia/version")
     # A locally built UVM module can report the same release as the packaged
     # driver. Compare the loaded binaries' source identities across nodes too.
@@ -80,7 +85,7 @@ def collect(policy):
     packing = Path("/sys/module/nvidia_uvm/parameters/uvm_pack_sysmem_leaf_tables")
     data["uvm_leaf_packing"] = packing.read_text().strip() if packing.exists() else "stock"
     for name in policy["packages"]:
-        value = read(name, "dpkg-query", "-W", "-f=${Status}|${Version}", name)
+        value = probe("dpkg-query", "-W", "-f=${Status}|${Version}", name)
         data["packages"][name] = value.removeprefix("install ok installed|") if value.startswith("install ok installed|") else ""
     for release in (policy["fallback"], target):
         for kind in ("vmlinuz", "initrd.img", "config"):
@@ -88,26 +93,25 @@ def collect(policy):
             data["files"][path] = Path(path).is_file() and Path(path).stat().st_size > 0
     data["headers"] = Path(f"/lib/modules/{target}/build/Makefile").is_file()
     data["cpu_tools"] = Path(f"/usr/lib/linux-tools/{target}/cpupower").is_file()
+    data["running_cpu_tools"] = Path(f"/usr/lib/linux-tools/{data['kernel']}/cpupower").is_file()
     data["governors"] = sorted({p.read_text().strip() for p in Path("/sys/devices/system/cpu/cpufreq").glob("policy*/scaling_governor")})
     config = Path(f"/boot/config-{target}")
     data["config_64k"] = config.exists() and "CONFIG_ARM64_64K_PAGES=y" in config.read_text()
     for module in ("nvidia", "nvidia_uvm", "nvidia_drm", "mlx5_core", "mlx5_ib", "dgx_ec_fan_control"):
         data["modules"][module] = {
-            "vermagic": read(module, "modinfo", "-k", target, "-F", "vermagic", module),
-            "version": read(module, "modinfo", "-k", target, "-F", "version", module),
+            "vermagic": probe("modinfo", "-k", target, "-F", "vermagic", module),
+            "version": probe("modinfo", "-k", target, "-F", "version", module),
         }
-    data["fan_dkms"] = read("fan DKMS", "dkms", "status", "-m", "dgx-spark-fan-control", "-k", target)
+    data["fan_dkms"] = probe("dkms", "status", "-m", "dgx-spark-fan-control", "-k", target)
     if policy.get("memory_saver"):
         saver = policy["memory_saver"]
-        data["memory_saver_dkms"] = read("memory-saver DKMS", "dkms", "status",
-                                        "-m", saver["package"], "-k", target)
+        data["memory_saver_dkms"] = probe("dkms", "status", "-m", saver["package"], "-k", target)
         data["memory_saver_disk"] = {
-            field: read("memory-saver " + field, "modinfo", "-k", target,
-                        "-F", field, "nvidia_uvm")
+            field: probe("modinfo", "-k", target, "-F", field, "nvidia_uvm")
             for field in ("filename", "srcversion", "signer")
         }
     data["secure_boot"] = read("Secure Boot", "mokutil", "--sb-state")
-    data["fan_signer"] = read("fan signature", "modinfo", "-k", target, "-F", "signer", "dgx_ec_fan_control")
+    data["fan_signer"] = probe("modinfo", "-k", target, "-F", "signer", "dgx_ec_fan_control")
     if data["secure_boot"] == "SecureBoot enabled":
         result = subprocess.run(["mokutil", "--test-key", policy["fan_signing_certificate"]],
                                 capture_output=True, text=True, timeout=20,
@@ -121,9 +125,42 @@ def collect(policy):
     data["min_free_kbytes"] = read("memory reserve", "cat", "/proc/sys/vm/min_free_kbytes")
     swaps = read("active swap", "cat", "/proc/swaps")
     data["active_swap"] = [line.split()[0] for line in swaps.splitlines()[1:] if line.split()]
+    data["swap_64k_ready"] = (
+        Path("/swap-64k.img").is_file()
+        and Path("/etc/systemd/system/spark-ds41f-kernel-memory.service").is_file()
+    )
     if data["page_size"] == 65536:
-        data["memory_service"] = read("kernel memory service", "systemctl", "is-active", "spark3-kernel-memory.service")
+        unit = memory_policy_unit()
+        data["memory_service"] = "active" if unit else ""
+        data["memory_service_unit"] = unit
     return data
+
+
+MEMORY_POLICY_UNITS = (
+    "spark-ds41f-kernel-memory.service",
+    "spark3-kernel-memory.service",
+)
+
+
+def memory_policy_unit() -> str:
+    """The active boot-memory unit, if any.
+
+    Sites that installed before the release after spark-ds41f-1022 still run
+    ``spark3-kernel-memory.service``; the installer renames it. ``systemctl
+    is-active`` exits 3 when a unit is inactive, so this does not treat that
+    as an inventory error.
+    """
+    for unit in MEMORY_POLICY_UNITS:
+        result = subprocess.run(
+            ["systemctl", "is-active", unit],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            env=dict(os.environ, LC_ALL="C"),
+        )
+        if result.stdout.strip() == "active":
+            return unit
+    return ""
 
 
 def findings(name, data, policy):
@@ -160,6 +197,8 @@ def findings(name, data, policy):
         issues.append(f"{name}: candidate headers or CONFIG_ARM64_64K_PAGES=y missing")
     if not data.get("cpu_tools"):
         issues.append(f"{name}: candidate cpupower tool is missing; nv-cpu-governor.service cannot run on that kernel")
+    if data.get("running_cpu_tools") is False:
+        issues.append(f"{name}: running cpupower tool is missing for {running}; nv-cpu-governor.service cannot run")
     if data.get("governors") != ["performance"]:
         issues.append(f"{name}: CPU governors differ from performance: {data.get('governors')!r}")
         fixes.append(f"{name}: after installing matching linux-tools, sudo systemctl restart nv-cpu-governor.service")
@@ -185,13 +224,25 @@ def findings(name, data, policy):
     if grub.get("next_entry") or grub.get("initrdfail") or grub.get("prev_entry"):
         issues.append(f"{name}: a GRUB next-boot/recovery override is armed; kernel is not merely staged")
         fixes.append(f"{name}: inspect sudo grub-editenv list; cancel an unintended one-shot with sudo grub-editenv unset next_entry (review recovery state separately)")
+    if data.get("page_size") == 4096 and "active_swap" in data and data.get("active_swap") != ["/swap.img"]:
+        issues.append(f"{name}: 4 KiB swap (/swap.img) is not active")
     if data.get("page_size") == 65536:
         if "[never]" not in data.get("thp", "") or data.get("min_free_kbytes") != "45166":
             issues.append(f"{name}: 64 KiB THP/reserve policy differs from never/45166 KiB")
         if data.get("active_swap") != ["/swap-64k.img"] or data.get("memory_service") != "active":
             issues.append(f"{name}: 64 KiB swap or boot memory service is not active")
-        if any("64 KiB THP" in x or "64 KiB swap" in x for x in issues):
-            fixes.append(f"{name}: inspect journalctl -u spark3-kernel-memory.service; after correcting its inputs, sudo systemctl restart spark3-kernel-memory.service")
+        elif data.get("memory_service_unit") == "spark3-kernel-memory.service":
+            issues.append(
+                f"{name}: boot memory service is still spark3-kernel-memory.service; "
+                "the policy is the same, rename it with "
+                "sudo scripts/configure-swap"
+            )
+        if any("64 KiB THP" in x or "64 KiB swap" in x or "spark3-kernel-memory" in x for x in issues):
+            unit = data.get("memory_service_unit") or "spark-ds41f-kernel-memory.service"
+            fixes.append(
+                f"{name}: inspect journalctl -u {unit}; after correcting its inputs, "
+                f"sudo systemctl restart {unit}"
+            )
     saver_issues = memory_saver_problems(name, data, policy)
     issues.extend(saver_issues)
     if saver_issues:
@@ -227,24 +278,25 @@ def memory_saver_problems(name, data, policy):
 
 
 def profile_problems(name, data, profile, policy):
-    """Hard launch requirements for a memory budget tied to a particular kernel."""
+    """Recommendations for a memory budget tied to a particular kernel."""
     if not profile:
         return []
     issues = []
-    if data.get("kernel") != profile["release"] or data.get("page_size") != profile["page_size"]:
-        issues.append(f"{name}: serving profile requires {profile['release']} / {profile['page_size']}-byte pages; "
+    release = profile.get("release")
+    if (release and data.get("kernel") != release) or data.get("page_size") != profile["page_size"]:
+        issues.append(f"{name}: serving profile recommends {release} / {profile['page_size']}-byte pages; "
                       f"running {data.get('kernel')!r} / {data.get('page_size')!r}")
     if policy.get("rm_build_note") and data.get("rm_build_note") != policy["rm_build_note"]:
-        issues.append(f"{name}: serving profile requires the qualified NVIDIA RM build")
+        issues.append(f"{name}: serving profile recommends the qualified NVIDIA RM build")
     if policy.get("rm_system_memory_pools") is not None and data.get("rm_system_memory_pools") != str(policy["rm_system_memory_pools"]):
         issues.append(f"{name}: NVIDIA system memory pool setting differs from the serving profile")
     if profile.get("memory_saver_required"):
         if not policy.get("memory_saver"):
-            issues.append(f"{name}: serving profile requires a pinned memory-saver policy")
+            issues.append(f"{name}: serving profile recommends a pinned memory-saver policy")
         else:
             issues.extend(memory_saver_problems(name, data, policy))
         if data.get("driver") != policy["driver"]:
-            issues.append(f"{name}: serving profile requires NVIDIA {policy['driver']}")
+            issues.append(f"{name}: serving profile recommends NVIDIA {policy['driver']}")
     return issues
 
 

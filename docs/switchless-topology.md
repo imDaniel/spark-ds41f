@@ -1,15 +1,11 @@
-# Three- and four-node switchless deployments
+# Single-node and switchless deployments (one to four Sparks)
 
-The deployment tools accept three or four Sparks, with one GPU and one TP rank
-per node. Both layouts are shapes of one recipe,
-[config/cluster.json](../config/cluster.json): `tp3-triangle` for the
-three-node triangle and `tp4-ring` for the four-node ring (the full 1M context
-with 16 sequences), each with the TileLang kernel family and sparknet's
+The deployment tools accept one to four Sparks without a switch (`one GPU and one TP rank per node`), all as shapes of one recipe,
+[config/cluster.json](../config/cluster.json): `tp1` (single-node `local` executor, `262,144` context, `4` sequences, `8.00 GiB` KV), `tp2-direct` (two Sparks cabled directly over ConnectX-7, `262,144` context, `4` sequences, `8.00 GiB` KV, using the zero-copy `io_uring` expert slot cache and RM carve-out), `tp3-triangle-4k` (stock `4 KiB` pages without Memory Saver, `262,144` context, `8` sequences, `2.20 GiB` KV), `tp3-triangle` (`1,048,576` context, `8` sequences, `4.90625 GiB` KV), and `tp4-ring` for the four-node ring (`1,048,576` context, `32` sequences, `16.50 GiB` KV), each with the TileLang kernel family and sparknet's
 one-shot collectives ([r6 record](../experiments/2026-10-05-tilelang-r6/README.md)).
 The site names its cabling with `bin/spark site shape NAME --apply`. The
-`tp4-ring` shape reads the site's ring map from the git-ignored
-`config/nodes-ring4.local.json`; start from
-[config/examples/nodes-ring4.json](../config/examples/nodes-ring4.json).
+`tp4-ring` shape reads the site's ring map from `config/nodes-ring4.local.json`
+([config/examples/nodes-ring4.json](../config/examples/nodes-ring4.json)); `tp2-direct` reads `config/nodes-direct2.local.json` ([config/examples/nodes-direct2.json](../config/examples/nodes-direct2.json)), and `tp1` reads `config/nodes-tp1.local.json` ([config/examples/nodes-tp1.json](../config/examples/nodes-tp1.json)).
 
 The history of the four-node path, measured with B12X: NCCL ring, RoCEnante CPU
 relay and NIC forwarding pass the hardware collective probe on four connected
@@ -20,6 +16,9 @@ Sustained-load cooling and full-context qualification remain open; see the
 [hardware results](../experiments/2026-10-02-rocenante-mesh4/README.md),
 [queue-capacity investigation](../experiments/2026-10-02-mesh4-queue-depth/README.md) and
 [four-path comparison](../experiments/2026-10-02-mesh4-fourpaths/README.md).
+RoCEnante's transports (`rocenante-direct`, `rocenante-ring4` and
+`rocenante-mesh4`) are retired, with the mesh4 NIC tooling and `bin/spark
+tuning` (B12X's transport profiles); those records keep the commands they ran.
 
 The [matched TP3–TP4 workload comparison](../experiments/2026-10-03-tp3-tp4-comparison/README.md)
 measures the four-node candidate against the historical three-node control.
@@ -31,19 +30,16 @@ sequence-parallel and compact MoE tail handling.
 | --- | --- | --- |
 | Three-node triangle, promoted (TileLang) | sparknet one-shot small collectives (`oneshot-direct`) plus NCCL | Both other ranks |
 | Four-node ring, promoted (TileLang) | sparknet ring4 one-shot small collectives (`oneshot-ring4`) plus NCCL ring | Previous and next ranks only |
-| Three-node triangle, B12X | RoCEnante small collectives plus NCCL | Both other ranks |
-| Four-node ring | NCCL ring for TP collectives | Previous and next ranks only |
-| Four-node ring, experimental relay image | RoCEnante ring4 small collectives plus NCCL ring | Previous and next ranks only |
-| Four-node ring, experimental NIC forwarding | RoCEnante mesh4 small collectives plus NCCL ring | Physical neighbours; opposite paths derived |
+| Four-node ring, NCCL only (`nccl-ring`) | NCCL ring for TP collectives | Previous and next ranks only |
 
 Ranks follow cable order: `0—1—2—3—0`. The three-node triangle already connects
-every pair. A four-node ring has no direct link to the opposite rank. The B12X
-peer-HCA map chooses an interface; it does not relay through another host.
-The generated NCCL profile therefore disables RoCEnante. The separate
-[RoCEnante ring4 candidate](../experiments/2026-10-02-rocenante-ring4/README.md)
-adds host forwarding and requires its own image. It preserves the GPU allocator
-and kernels. This candidate selects its isolated build lock with
-`upstreams_config`; omitting that key preserves `upstreams.lock.json`.
+every pair. A four-node ring has no direct link to the opposite rank, and the
+peer-HCA map only chooses an interface for each neighbour; it does not relay
+through another host.
+
+Every configuration names its transport in `fabric.transport`. Configurations
+recorded before r6 have none: they ran B12X's `rocenante-direct`, which is
+retired, and doctor refuses them.
 
 ## Configuration
 
@@ -68,8 +64,11 @@ For each node:
 - `roce_subnets` records the IPv4 `/24` network for each local HCA. Each
   cable/stripe has its own subnet, present at exactly its two endpoints.
   Two PCIe-root interfaces on one cable use two separate subnets.
-- `roce_gid_index`, when supplied, selects that node's IPv4 RoCEv2 GID slot
-  for both B12X and NCCL. It may differ between nodes.
+- No GID slot is needed. NCCL with `NCCL_IB_GID_INDEX` unset and sparknet
+  0.5.0 take each HCA's one IPv4 RoCE v2 GID in its `roce_subnets` network,
+  wherever the kernel filed it (`cluster start` renders the subnets as
+  `SPARKNET_ROCE_SUBNETS`). A configuration that pins a slot may move one
+  node's slot with `roce_gid_index`; elsewhere the field is refused.
 
 Create a complete candidate from a base profile:
 
@@ -93,9 +92,10 @@ allocated to KV before measurement.
 
 The generator updates target TP, draft TP and `--nnodes` together. For four
 nodes it selects `fabric.transport=nccl-ring` and the required transport policy
-from `scripts/topology.py`. `doctor` rejects contradictory settings, non-neighbour
+from `scripts/topology.py`, and drops the base's `SPARKNET_ROCE_*` settings. `doctor` rejects contradictory settings, non-neighbour
 routes, duplicate ranks, asymmetric links and ambiguous subnets. Live doctor
-and launch preflight also compare each selected GID with its declared subnet.
+and launch preflight also check that each port carries exactly one IPv4 RoCE v2
+GID, in its declared subnet, and that any pinned slot holds it.
 These checks report configuration/address mismatches; they do not prove that a
 cable actually delivers RDMA packets. The collective probe checks communication.
 
@@ -118,8 +118,8 @@ The pinned NCCL source is
   must be verified on-device; setting the variable cannot create missing CUDA
   virtual-memory capability.
 - PAT, NVLS, CollNet, MNNVL, RMA and GIN are disabled. Custom vLLM all-reduce is
-  disabled in the NCCL-only profile. The RoCEnante relay profile enables it
-  with `B12X_ROCE_TOPOLOGY=ring4` and requires the patched image.
+  disabled in the NCCL-only profile. `oneshot-ring4` keeps it enabled for
+  sparknet's one-shot collectives and requires an image with them.
 - NIC merging and subnet-aware routing are enabled. NCCL can select the local
   interface matching the neighbour's advertised subnet. The renderer supplies
   an exact per-node HCA list from the cable map.
@@ -154,7 +154,7 @@ bin/spark --cluster-config experiments/2026-10-02-switchless-ring4/cluster.json 
 These commands **print plans** and do not start containers. Each printed command
 uses the selected serving image, a separate container and IPC namespace, a
 12 GiB memory limit, a different rendezvous port and a 600-second timeout.
-The limit covers both NCCL communicators and cold RoCEnante compilation. It
+The limit covers both NCCL communicators and cold compilation. It
 mounts only the probe script, loads no weights and does not use serving caches.
 
 The probe initializes vLLM's distributed groups and tests torch NCCL plus the
@@ -172,19 +172,15 @@ floating-point reduction order, and neither this profile nor NCCL promises
 bitwise equality with TP3 or batch-invariant output.
 
 The fourth GPU reduces some per-rank weight work and adds memory, while the ring
-adds communication hops and uses NCCL for small messages. Performance is not
-assumed equal to the three-node RoCEnante baseline. The measured relay candidate
-retains RoCEnante for small messages; the NCCL-only profile does not. Record a new baseline only
+adds communication hops. Performance is not assumed equal to the three-node
+baseline. The promoted ring (`oneshot-ring4`) keeps one-shot collectives for
+small messages; the NCCL-only profile does not. Record a new baseline only
 after four-node serving and measurements pass and the owner accepts promotion.
 
-## NIC-forwarded RoCEnante candidate
+## When to use `PP=2` vs `TP`
 
-The isolated [mesh4 experiment](../experiments/2026-10-02-rocenante-mesh4/README.md)
-adds endpoint QPs between opposite ranks through ConnectX-7 hardware forwarding.
-It retains the physical two-neighbour map and derives the logical peer map.
-Its bounded collective runner owns temporary NIC markers, routes and TC rules;
-NIC doctor reports settings and correction commands separately. The CPU relay
-remains a comparison candidate. Hardware collective correctness now passes.
-Larger forwarded payloads show retransmissions and poorer latency than the CPU
-relay; resolve that behavior and qualify persistent serving supervision before
-launch or promotion.
+| Cluster size | Recommended default | When `PP=2` wins |
+| --- | --- | --- |
+| 4 Sparks (switchless ring or switched) | **`tp4-ring` / `tp4-switched`** (`~1.8×` faster decode, `~1.55×` faster prefill, batch-invariant) | When you need more than `20M` tokens of KV capacity (`pp2-tp2-*` supports `24 GiB` KV ≈ `30M` tokens) or are qualifying `PP=2` locally on four nodes. |
+| 6 Sparks (switched) | **`tp6-switched`** for lowest `C1` latency and prefill; **`pp2-tp3-switched`** for larger KV (`24 GiB` KV/node) and host RAM headroom | `pp2-tp3-switched` keeps TP inside `sparknet.oneshot` (`TP=3`) and cuts per-node weight residency so each Spark can dedicate `24 GiB` to KV cache. |
+| 8 Sparks (switched) | **`tp8-switched`** for lowest `C1` latency and fastest prefill; **`pp2-tp4-switched`** for large KV (`36 GiB` KV/node ≈ `68M` tokens, `2.4×` `tp8`), host RAM headroom, or high concurrency (`C16–C32`) | Both `tp8-switched` (with the empty-index-slice decode RoPE fix) and `pp2-tp4-switched` are batch-invariant; `pp2-tp4-switched` keeps TP inside `sparknet.oneshot` (`TP=4`) and leaves `24–29 GiB` free host RAM at `36 GiB` KV vs `12–14 GiB` on `tp8-switched` at `25.5 GiB` KV. |

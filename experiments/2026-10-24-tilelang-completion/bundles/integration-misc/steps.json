@@ -1,0 +1,156 @@
+[
+ [
+  "embedding, confidence, ranks and verification tests",
+  [
+   "-m",
+   "pytest",
+   "-q",
+   "-rfEs",
+   "-p",
+   "no:cacheprovider",
+   "--noconftest",
+   "-p",
+   "prepare_fixtures",
+   "--basetemp",
+   "/c/pytest-integration-misc",
+   "tests/kernels/test_deepseek_v41_tilelang_embedding.py",
+   "tests/kernels/test_deepseek_v41_tilelang_confidence.py",
+   "tests/v1/worker/test_gpu_logprob_ranks.py",
+   "tests/v1/spec_decode/test_rejection_sampler_utils.py",
+   "tests/kernels/quantization/test_deepseek_v41_tilelang_linear.py::test_rmsnorm",
+   "tests/kernels/quantization/test_deepseek_v41_tilelang_linear.py::test_rmsnorm_of_a_fused_projections_half",
+   "tests/kernels/test_deepseek_v41_tilelang_dspark_context.py"
+  ],
+  3600
+ ],
+ [
+  "logprob tests",
+  [
+   "-m",
+   "pytest",
+   "-q",
+   "-rfEs",
+   "-p",
+   "no:cacheprovider",
+   "--noconftest",
+   "-p",
+   "prepare_fixtures",
+   "--basetemp",
+   "/c/pytest-integration-logprob",
+   "tests/v1/worker/test_gpu_tilelang_logprob_softmax.py",
+   "tests/v1/worker/test_gpu_tilelang_topk_ids.py",
+   "tests/v1/worker/test_gpu_verified_logprob_token_ids.py"
+  ],
+  3600
+ ],
+ [
+  "logprob softmax benchmark",
+  [
+   "benchmarks/kernels/benchmark_tilelang_logprob_softmax.py",
+   "--gate"
+  ],
+  1800
+ ],
+ [
+  "logprob top-k ids benchmark",
+  [
+   "benchmarks/kernels/benchmark_tilelang_topk_ids.py",
+   "--gate"
+  ],
+  1800
+ ],
+ [
+  "rejection-sampler tests",
+  [
+   "-m",
+   "pytest",
+   "-q",
+   "-rfEs",
+   "-p",
+   "no:cacheprovider",
+   "--noconftest",
+   "-p",
+   "prepare_fixtures",
+   "--basetemp",
+   "/c/pytest-integration-rejection",
+   "tests/v1/spec_decode/test_tilelang_rejection.py"
+  ],
+  3600
+ ],
+ [
+  "vocabulary-parallel drafting tests",
+  [
+   "-m",
+   "pytest",
+   "-q",
+   "-rfEs",
+   "-p",
+   "no:cacheprovider",
+   "--noconftest",
+   "-p",
+   "prepare_fixtures",
+   "--basetemp",
+   "/c/pytest-integration-vocab-parallel",
+   "tests/v1/spec_decode/test_vocab_parallel_drafting.py"
+  ],
+  1800
+ ],
+ [
+  "embedding and confidence benchmark",
+  [
+   "benchmarks/kernels/benchmark_deepseek_v41_tilelang_misc.py",
+   "--gate"
+  ],
+  3600
+ ],
+ [
+  "logprob-rank benchmark",
+  [
+   "benchmarks/kernels/benchmark_logprob_ranks.py",
+   "--gate",
+   "--seed",
+   "40391"
+  ],
+  1200
+ ],
+ [
+  "resampled-token benchmark",
+  [
+   "benchmarks/kernels/benchmark_resampled_token.py",
+   "--gate",
+   "--seed",
+   "52807"
+  ],
+  600
+ ],
+ [
+  "resampled-token benchmark, mixed temperatures",
+  [
+   "benchmarks/kernels/benchmark_resampled_token.py",
+   "--gate",
+   "--seed",
+   "18443",
+   "--mixed"
+  ],
+  600
+ ],
+ [
+  "resampled-token benchmark, dead rows",
+  [
+   "benchmarks/kernels/benchmark_resampled_token.py",
+   "--gate",
+   "--seed",
+   "52809",
+   "--dead-rows"
+  ],
+  600
+ ],
+ [
+  "rejection-sampler benchmark",
+  [
+   "benchmarks/kernels/benchmark_tilelang_rejection.py",
+   "--gate"
+  ],
+  1800
+ ]
+]

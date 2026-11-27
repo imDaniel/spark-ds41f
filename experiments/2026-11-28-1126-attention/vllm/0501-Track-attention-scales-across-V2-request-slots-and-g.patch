@@ -1,0 +1,692 @@
+From 1b37206bf8441cc1f4612f4060db902e8ab264fc Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 00:27:37 +0900
+Subject: [PATCH 501/505] Track attention scales across V2 request slots and
+ graph variants
+
+Upstream base: spark-ds41f-1126 vLLM d8784b841c360f523ec20e44bf8fb0898f36d3e4.
+
+Map the final query offsets into target rows. Keep GLP state separate. Capture distinct stock and active graphs, zero padding, and retain stock routing for dummy batches. Covered by the steering rows, state and consume suites.
+
+Upstream status: downstream integration.
+---
+ .../deepseek_v4_1/nvidia/model_state.py       |  57 ++++++
+ .../deepseek_v4_1/steering/row_kernel.py      |  89 +++++++++
+ vllm/models/deepseek_v4_1/steering/rows.py    |  35 ++++
+ vllm/models/deepseek_v4_1/steering/runtime.py | 186 ++++++++++++++++++
+ vllm/v1/worker/gpu/cudagraph_utils.py         |  56 +++++-
+ vllm/v1/worker/gpu/input_batch.py             |   2 +
+ vllm/v1/worker/gpu/model_input_variant.py     |  51 +++++
+ vllm/v1/worker/gpu/model_runner.py            |  13 ++
+ 8 files changed, 480 insertions(+), 9 deletions(-)
+ create mode 100644 vllm/models/deepseek_v4_1/steering/row_kernel.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/rows.py
+ create mode 100644 vllm/models/deepseek_v4_1/steering/runtime.py
+ create mode 100644 vllm/v1/worker/gpu/model_input_variant.py
+
+diff --git a/vllm/models/deepseek_v4_1/nvidia/model_state.py b/vllm/models/deepseek_v4_1/nvidia/model_state.py
+index cd05fe7d63..556fa98ead 100644
+--- a/vllm/models/deepseek_v4_1/nvidia/model_state.py
++++ b/vllm/models/deepseek_v4_1/nvidia/model_state.py
+@@ -44,6 +44,7 @@ class DeepseekV41ModelState(DefaultModelState):
+     GPU samples are hashed on the GPU as before; one step can hold both.
+     """
+ 
++    attention_steering = None
+     _ced_streaming_prefix_start: tuple[str, int] | None = None
+     supports_captured_full_attn_metadata: bool = True
+ 
+@@ -55,6 +56,28 @@ class DeepseekV41ModelState(DefaultModelState):
+         device: torch.device,
+     ):
+         super().__init__(vllm_config, model, encoder_cache, device)
++        from ..steering.runtime import SteeringRuntime
++
++        profiles = [
++            m.steering_profile
++            for m in model.modules()
++            if getattr(m, "steering_profile", None) is not None
++        ]
++        if len(profiles) > 1:
++            raise ValueError("Multiple target steering profiles in one model")
++        self.attention_steering = (
++            SteeringRuntime(
++                profiles[0],
++                self.max_num_reqs,
++                self.max_num_tokens,
++                device,
++                sp_scratch=any(
++                    getattr(m, "prefill_sp_unreduced", False) for m in model.modules()
++                ),
++            )
++            if profiles
++            else None
++        )
+         self.ced_state: CEDState | None = None
+         self._ced_prompt_logprobs: set[str] = set()
+         self._ced_prefix_start: dict[str, int] = {}
+@@ -173,6 +196,8 @@ class DeepseekV41ModelState(DefaultModelState):
+ 
+     def prepare_streaming_update(self, req_id: str) -> None:
+         """Keep decoder history when the runner refreshes a live request."""
++        if self.attention_steering is not None:
++            self.attention_steering.prepare_streaming_update(req_id)
+         self._ced_streaming_prefix_start = (
+             req_id,
+             self._ced_prefix_start.get(req_id, 0),
+@@ -235,6 +260,13 @@ class DeepseekV41ModelState(DefaultModelState):
+             engram_0.embed_tokens.disk_rows.prefetch(ids_0)
+ 
+     def add_request(self, req_index: int, new_req_data: NewRequestData) -> None:
++        if self.attention_steering is not None:
++            sampling = new_req_data.sampling_params
++            self.attention_steering.add_request(
++                req_index,
++                new_req_data.req_id,
++                sampling.extra_args if sampling is not None else None,
++            )
+         super().add_request(req_index, new_req_data)
+         if self.disk_engram_models and new_req_data.prefill_token_ids is not None:
+             tokens = np.asarray(new_req_data.prefill_token_ids, dtype=np.int32)
+@@ -272,6 +304,8 @@ class DeepseekV41ModelState(DefaultModelState):
+             self._ced_recovery_prompt_end.pop(new_req_data.req_id, None)
+ 
+     def remove_request(self, req_id: str) -> None:
++        if self.attention_steering is not None:
++            self.attention_steering.remove_request(req_id)
+         super().remove_request(req_id)
+         self._prefill_tokens.pop(req_id, None)
+         cached = getattr(self, "_prefetched_engram_ids", None)
+@@ -440,6 +474,25 @@ class DeepseekV41ModelState(DefaultModelState):
+                         value.decoder.routing_mask = routing_mask
+         return metadata
+ 
++    @property
++    def cudagraph_input_variants(self):
++        return (0, 1) if self.attention_steering is not None else (0,)
++
++    def get_model_input_variant(self, req_ids, *, dummy=False):
++        return (
++            self.attention_steering.input_variant(req_ids, dummy=dummy)
++            if self.attention_steering is not None
++            else 0
++        )
++
++    def prepare_dummy_inputs_for_variant(self, num_reqs, num_tokens, variant):
++        inputs = self.prepare_dummy_inputs(num_reqs, num_tokens)
++        if self.attention_steering is not None:
++            inputs.update(self.attention_steering.dummy_inputs(num_tokens, variant))
++        elif variant:
++            raise ValueError("Non-stock graph without a loaded steering profile")
++        return inputs
++
+     def prepare_inputs(
+         self, input_batch: InputBatch, req_states: RequestState
+     ) -> dict[str, torch.Tensor | None]:
+@@ -466,6 +519,8 @@ class DeepseekV41ModelState(DefaultModelState):
+                     model, input_batch
+                 )
+         model_inputs = super().prepare_inputs(input_batch, req_states)
++        if self.attention_steering is not None:
++            model_inputs.update(self.attention_steering.model_inputs(input_batch))
+         if self.ced_state is not None:
+             if self._ced_batch is not input_batch:
+                 self._stage_ced(input_batch)
+@@ -696,6 +751,8 @@ class DeepseekV41ModelState(DefaultModelState):
+ 
+     def prepare_dummy_inputs(self, num_reqs: int, num_tokens: int) -> dict[str, Any]:
+         model_inputs = super().prepare_dummy_inputs(num_reqs, num_tokens)
++        if self.attention_steering is not None:
++            model_inputs.update(self.attention_steering.dummy_inputs(num_tokens, 0))
+         if self.ced_state is not None:
+             # FULL descriptors may pad a short request far beyond128 rows.
+             # Capture their noncompact branch, regardless of dummy split;
+diff --git a/vllm/models/deepseek_v4_1/steering/row_kernel.py b/vllm/models/deepseek_v4_1/steering/row_kernel.py
+new file mode 100644
+index 0000000000..7cbc99ea68
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/row_kernel.py
+@@ -0,0 +1,89 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Expand scales using the runner's actual GPU offsets after adaptive verification."""
++
++import torch
++
++from vllm.model_executor.warmup.jit_warmup_triton_helper import (
++    TritonWarmupTensor,
++    triton_kernel_dispatcher_with_warmup,
++    triton_warmup_inputs,
++)
++from vllm.triton_utils import tl, triton
++
++
++@triton.jit(do_not_specialize=["num_reqs", "num_rows"])
++def _row_scales_kernel(
++    request_scales,
++    slots,
++    offsets,
++    padding,
++    out,
++    num_reqs,
++    num_rows,
++    BLOCK: tl.constexpr,
++):
++    row = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
++    valid = row < num_rows
++    lo = tl.full((BLOCK,), 0, tl.int32)
++    hi = tl.full((BLOCK,), num_reqs, tl.int32)
++    while tl.sum((lo < hi).to(tl.int32), 0) > 0:
++        mid = (lo + hi) // 2
++        boundary = tl.load(
++            offsets + mid + 1, mask=(mid < num_reqs) & valid, other=0x7FFFFFFF
++        )
++        right = row >= boundary
++        searching = lo < hi
++        lo = tl.where(searching & right, mid + 1, lo)
++        hi = tl.where(searching & ~right, mid, hi)
++    end = tl.load(offsets + num_reqs)
++    live = valid & (row < end) & (lo < num_reqs)
++    dead = tl.load(padding + row, mask=valid, other=1)
++    slot = tl.load(slots + lo, mask=live & ~dead, other=0)
++    scale = tl.load(request_scales + slot, mask=live & ~dead, other=0.0)
++    tl.store(out + row, scale, mask=valid)
++
++
++def _warmup_inputs():
++    return triton_warmup_inputs(
++        _row_scales_kernel,
++        TritonWarmupTensor(torch.float32),
++        TritonWarmupTensor(torch.int64),
++        TritonWarmupTensor(torch.int32),
++        TritonWarmupTensor(torch.bool),
++        TritonWarmupTensor(torch.float32),
++        1,
++        128,
++        grid=(1,),
++        BLOCK=128,
++        num_warps=4,
++    )
++
++
++_launcher = triton_kernel_dispatcher_with_warmup(warmup_inputs=_warmup_inputs)(
++    _row_scales_kernel
++)
++
++
++def register_row_warmup():
++    _launcher.register_warmup()
++    from ..tilelang import ced, prepare
++
++    prepare.declare(lambda: [
++        prepare.call(ced.copy_rows_kernel, *ced.packed_copy_rows_key("float32", (), False))
++    ])
++
++
++def fill_row_scales(request_scales, slots, offsets, padding, out, num_reqs, num_rows):
++    if num_rows:
++        _launcher[(triton.cdiv(num_rows, 128),)](
++            request_scales,
++            slots,
++            offsets,
++            padding,
++            out,
++            num_reqs,
++            num_rows,
++            BLOCK=128,
++            num_warps=4,
++        )
+diff --git a/vllm/models/deepseek_v4_1/steering/rows.py b/vllm/models/deepseek_v4_1/steering/rows.py
+new file mode 100644
+index 0000000000..2b8e613ccc
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/rows.py
+@@ -0,0 +1,35 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Row-layout reference, including CED gather and sequence-parallel padding."""
++
++
++def expand_rows(request_scales, idx_mapping, query_start_loc, num_rows, is_padding):
++    if len(query_start_loc) != len(idx_mapping) + 1 or query_start_loc[0] != 0:
++        raise ValueError("Invalid steering query offsets")
++    if any(a > b or a < 0 for a, b in zip(query_start_loc, query_start_loc[1:])):
++        raise ValueError("Steering query offsets must be monotone")
++    if query_start_loc[-1] > num_rows or len(is_padding) != num_rows:
++        raise ValueError("Steering query offsets exceed the batch")
++    result = [0.0] * num_rows
++    for batch_idx, slot in enumerate(idx_mapping):
++        if not 0 <= slot < len(request_scales):
++            raise ValueError("Invalid steering request slot")
++        for row in range(query_start_loc[batch_idx], query_start_loc[batch_idx + 1]):
++            if not is_padding[row]:
++                result[row] = request_scales[slot]
++    return result
++
++
++def gather_ced_rows(scales, indices):
++    if any(index < -1 or index >= len(scales) for index in indices):
++        raise ValueError("Invalid CED steering index")
++    return [0.0 if index == -1 else scales[index] for index in indices]
++
++
++def local_sp_rows(scales, world_size, rank):
++    if world_size < 1 or not 0 <= rank < world_size:
++        raise ValueError("Invalid steering SP layout")
++    local = -(-len(scales) // world_size)
++    start = rank * local
++    real = scales[start : start + local]
++    return [*real, *([0.0] * (local - len(real)))]
+diff --git a/vllm/models/deepseek_v4_1/steering/runtime.py b/vllm/models/deepseek_v4_1/steering/runtime.py
+new file mode 100644
+index 0000000000..3908c5b25f
+--- /dev/null
++++ b/vllm/models/deepseek_v4_1/steering/runtime.py
+@@ -0,0 +1,186 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Worker-local lifecycle and fixed-capacity control tensors."""
++
++import torch
++
++from .request import parse_selection
++from .rows import expand_rows
++
++
++def validate_model_inputs(profile, active, scales, dots, num_tokens, *, scratch=None):
++    if type(active) is not bool:
++        raise ValueError("Steering topology must be explicit")
++    if not active:
++        if scales is not None or dots is not None or scratch is not None:
++            raise ValueError("Stock steering topology cannot carry active controls")
++        return
++    if (
++        profile is None
++        or scales is None
++        or dots is None
++        or scales.shape != (num_tokens,)
++        or dots.ndim != 2
++        or dots.shape[0] < num_tokens
++        or dots.shape[1] != 2
++        or scales.dtype != torch.float32
++        or dots.dtype != torch.float32
++        or not scales.is_contiguous()
++        or not dots.is_contiguous()
++        or dots.device != scales.device
++        or (
++            scratch is not None
++            and (
++                scratch.ndim != 2
++                or scratch.shape[0] < num_tokens
++                or scratch.shape[1:] != (profile.hidden_size,)
++                or scratch.dtype != torch.bfloat16
++                or not scratch.is_contiguous()
++                or scratch.device != scales.device
++            )
++        )
++    ):
++        raise ValueError("Active steering topology requires explicit FP32 row controls")
++
++
++class SteeringRuntime:
++    def __init__(self, profile, max_reqs, max_tokens, device, *, sp_scratch=True):
++        self.profile = profile
++        self.device = torch.device(device)
++        self.request_scales = torch.zeros(max_reqs, dtype=torch.float32, device=device)
++        self.row_scales = torch.zeros(max_tokens, dtype=torch.float32, device=device)
++        # Ordinary writers need only the compensated dot. Keep the legacy SP
++        # workspace: re-reading four parts would increase large-prefill traffic.
++        self.dots = torch.empty((max_tokens, 2), dtype=torch.float32, device=device)
++        self.scratch = (
++            torch.empty(
++                (max_tokens, profile.hidden_size), dtype=torch.bfloat16, device=device
++            )
++            if sp_scratch
++            else None
++        )
++        self.requests = {}
++        self.slots = {}
++        self.pending_update = None
++        if self.device.type == "cuda":
++            from .row_kernel import register_row_warmup
++
++            register_row_warmup()
++
++    def prepare_streaming_update(self, req_id):
++        self.pending_update = (req_id, self.requests[req_id][1])
++
++    def add_request(self, slot, req_id, extra_args):
++        selection = parse_selection(extra_args, self.profile)
++        if self.pending_update is not None:
++            old_id, old = self.pending_update
++            self.pending_update = None
++            if old_id != req_id or old != selection:
++                raise ValueError("A live request cannot change its steering identity")
++        if (
++            not 0 <= slot < self.request_scales.numel()
++            or slot in self.slots
++            or req_id in self.requests
++        ):
++            raise ValueError("Steering request/slot is already owned or out of range")
++        self.requests[req_id] = (slot, selection)
++        self.slots[slot] = req_id
++        # Lifecycle-only update, queued on the runner's current stream. There is
++        # no per-step CPU->GPU copy, pinned-host reuse race, or scale bank growth.
++        if selection.active:
++            self.request_scales[slot].fill_(selection.scale)
++
++    def remove_request(self, req_id):
++        old = self.requests.pop(req_id, None)
++        if old is not None:
++            slot, selection = old
++            self.slots.pop(slot)
++            if selection.active:
++                self.request_scales[slot].zero_()
++
++    def input_variant(self, req_ids, *, dummy=False):
++        """Choose topology from the scheduled CPU identities, before SP slicing."""
++        if dummy:
++            return 0
++        selections = []
++        for req in req_ids:
++            if req not in self.requests:
++                raise ValueError("Steering batch contains an unregistered request")
++            selections.append(self.requests[req][1])
++        return int(any(selection.active for selection in selections))
++
++    def model_inputs(self, batch):
++        n = batch.num_tokens_after_padding
++        if getattr(batch, "is_dummy", False):
++            return self.dummy_inputs(n, 0)
++        self._validate_batch(batch)
++        if not self.input_variant(batch.req_ids):
++            return {"steering_active": False}
++        return {
++            "steering_active": True,
++            "steering_scales": self.prepare(batch),
++            "steering_dots": self.dots,
++            "steering_scratch": self.scratch,
++        }
++
++    def dummy_inputs(self, num_tokens, variant):
++        if variant not in (0, 1):
++            raise ValueError("Unknown steering model input variant")
++        if not 0 <= num_tokens <= self.row_scales.numel():
++            raise ValueError("Steering dummy batch exceeds controls")
++        if variant == 0:
++            return {"steering_active": False}
++        return {
++            "steering_active": True,
++            "steering_scales": self.dummy(num_tokens),
++            "steering_dots": self.dots,
++            "steering_scratch": self.scratch,
++        }
++
++    def _validate_batch(self, batch):
++        n = batch.num_tokens_after_padding
++        self.input_variant(batch.req_ids)
++        if not 0 <= n <= self.row_scales.numel() or not (
++            batch.num_reqs == len(batch.req_ids) == len(batch.idx_mapping_np)
++            and batch.num_reqs <= self.request_scales.numel()
++        ):
++            raise ValueError("Steering batch exceeds preallocated controls")
++        for req, slot in zip(batch.req_ids, batch.idx_mapping_np):
++            if self.requests[req][0] != int(slot):
++                raise ValueError(
++                    "Steering request layout and runner slot mapping differ"
++                )
++
++    def prepare(self, batch):
++        n = batch.num_tokens_after_padding
++        if getattr(batch, "is_dummy", False):
++            return self.dummy(n)
++        self._validate_batch(batch)
++        if self.device.type == "cuda":
++            from .row_kernel import fill_row_scales
++
++            fill_row_scales(
++                self.request_scales,
++                batch.idx_mapping,
++                batch.query_start_loc,
++                batch.is_padding,
++                self.row_scales,
++                batch.num_reqs,
++                n,
++            )
++        else:
++            values = expand_rows(
++                self.request_scales.tolist(),
++                batch.idx_mapping_np.tolist(),
++                batch.query_start_loc.tolist(),
++                n,
++                batch.is_padding.tolist(),
++            )
++            self.row_scales[:n].copy_(torch.tensor(values, dtype=torch.float32))
++        return self.row_scales[:n]
++
++    def dummy(self, num_tokens):
++        if not 0 <= num_tokens <= self.row_scales.numel():
++            raise ValueError("Steering dummy batch exceeds controls")
++        self.row_scales.zero_()
++        return self.row_scales[:num_tokens]
+diff --git a/vllm/v1/worker/gpu/cudagraph_utils.py b/vllm/v1/worker/gpu/cudagraph_utils.py
+index b2f71b3257..e4c2c55992 100644
+--- a/vllm/v1/worker/gpu/cudagraph_utils.py
++++ b/vllm/v1/worker/gpu/cudagraph_utils.py
+@@ -386,6 +386,8 @@ class BatchExecutionDescriptor:
+     exact_num_tokens: bool = False
+     # Number of microbatches the batch is split into (DBO). 1 means no splitting.
+     num_ubatches: int = 1
++    # Optional-input topology; strength values stay in persistent tensors.
++    model_input_variant: int = 0
+ 
+ 
+ def make_cudagraph_stats(
+@@ -1021,7 +1023,9 @@ class ModelCudaGraphManager(CudaGraphManager):
+         ubatch_runner: "UBatchRunner | None" = None,
+         specialize_full_decode: bool = False,
+         single_request_prefill_tokens: int = 0,
++        model_input_variants: tuple[int, ...] = (0,),
+     ):
++        self.model_input_variants = model_input_variants
+         super().__init__(
+             vllm_config,
+             device,
+@@ -1065,6 +1069,24 @@ class ModelCudaGraphManager(CudaGraphManager):
+                     return False
+         return has_groups
+ 
++    def _init_candidates(self):
++        super()._init_candidates()
++        from .model_input_variant import expand_capture_variants
++
++        # Dispatch shapes stay stock. Only FULL graph capture/replay has the
++        # extra key; non-stock PIECEWISE requests deliberately execute eager.
++        if CUDAGraphMode.FULL in self._capture_descs:
++            self._capture_descs[CUDAGraphMode.FULL] = expand_capture_variants(
++                self._capture_descs[CUDAGraphMode.FULL], self.model_input_variants
++            )
++
++    def with_input_variant(self, desc, variant):
++        from .model_input_variant import select_input_variant
++
++        if variant not in self.model_input_variants:
++            raise ValueError("Model input variant was not declared before capture")
++        return select_input_variant(desc, variant)
++
+     def capture(
+         self,
+         model: nn.Module,
+@@ -1154,10 +1176,18 @@ class ModelCudaGraphManager(CudaGraphManager):
+                 else None
+             )
+ 
++            prepare_variant = getattr(
++                model_state, "prepare_dummy_inputs_for_variant", None
++            )
++            dummy_inputs = (
++                prepare_variant(num_reqs, num_tokens, desc.model_input_variant)
++                if prepare_variant is not None
++                else model_state.prepare_dummy_inputs(num_reqs, num_tokens)
++            )
+             model_inputs = {
+                 "input_ids": input_buffers.input_ids[:num_tokens],
+                 "positions": input_buffers.positions[:num_tokens],
+-                **model_state.prepare_dummy_inputs(num_reqs, num_tokens),
++                **dummy_inputs,
+             }
+             normalize_model_token_inputs(model, model_inputs)
+             if not self.is_first_pp_rank:
+@@ -1463,15 +1493,15 @@ def _measure_full_graph_memory(
+ def _profiling_full_descs(
+     descs: Sequence[BatchExecutionDescriptor],
+ ) -> list[BatchExecutionDescriptor]:
+-    """Select the FULL graphs captured while profiling, largest first.
++    """Select FULL profiling graphs per input variant, largest first.
+ 
+     The first sample also covers activations that smaller graphs reuse from
+     the pool. The next largest and the smallest graph then bound the
+     per-graph cost at both ends of the token range.
+     """
+-    if len(descs) <= _FULL_GRAPH_PROFILING_SAMPLES:
+-        return list(descs)
+-    return [*descs[: _FULL_GRAPH_PROFILING_SAMPLES - 1], descs[-1]]
++    from .model_input_variant import sample_capture_variants
++
++    return sample_capture_variants(descs, _FULL_GRAPH_PROFILING_SAMPLES)
+ 
+ 
+ def _profiling_cudagraph_managers(runner: "GPUModelRunner") -> list[CudaGraphManager]:
+@@ -1672,12 +1702,20 @@ def _extrapolate_full_graph_memory(
+     if not unsampled:
+         return estimate
+ 
+-    reference: dict[int, int] = {}
+-    for sample in mem_samples[1:]:
++    reference: dict[int, dict[int, int]] = {}
++    seen_variants: set[int] = set()
++    for sample in mem_samples:
++        variant = sample.desc.model_input_variant
++        if variant not in seen_variants:
++            seen_variants.add(variant)
++            continue
++        points_for_variant = reference.setdefault(variant, {})
+         num_tokens = sample.desc.num_tokens
+-        reference[num_tokens] = max(sample.cost, reference.get(num_tokens, 0))
+-    points = sorted(reference.items())
++        points_for_variant[num_tokens] = max(
++            sample.cost, points_for_variant.get(num_tokens, 0)
++        )
+     for desc in unsampled:
++        points = sorted(reference.get(desc.model_input_variant, {}).items())
+         cost = _interpolate_graph_cost(points, desc.num_tokens)
+         estimate += max(cost, _MIN_PER_GRAPH_BYTES)
+     return estimate
+diff --git a/vllm/v1/worker/gpu/input_batch.py b/vllm/v1/worker/gpu/input_batch.py
+index d85cc7a094..ec3926d8f6 100644
+--- a/vllm/v1/worker/gpu/input_batch.py
++++ b/vllm/v1/worker/gpu/input_batch.py
+@@ -144,6 +144,7 @@ class InputBatch:
+     # recorded inside a PIECEWISE graph must size their metadata for every
+     # replay, not for the dummy sequence lengths.
+     cudagraph_capture: bool = False
++    is_dummy: bool = False
+ 
+     # The input ids and positions at the logits rows (logits_rows()), gathered
+     # once a step. Not an init field: a replaced batch gathers its own.
+@@ -270,6 +271,7 @@ class InputBatch:
+         seq_lens_cpu_upper_bound_np[:num_reqs] = num_scheduled_tokens
+         seq_lens_cpu_upper_bound = torch.from_numpy(seq_lens_cpu_upper_bound_np)
+         return cls(
++            is_dummy=True,
+             req_ids=req_ids,
+             num_reqs=num_reqs,
+             num_reqs_after_padding=padded_reqs,
+diff --git a/vllm/v1/worker/gpu/model_input_variant.py b/vllm/v1/worker/gpu/model_input_variant.py
+new file mode 100644
+index 0000000000..799f2409eb
+--- /dev/null
++++ b/vllm/v1/worker/gpu/model_input_variant.py
+@@ -0,0 +1,51 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""CPU-only helpers for model optional-input CUDA graph topologies."""
++
++from __future__ import annotations
++
++from collections.abc import Sequence
++from dataclasses import replace
++from typing import TYPE_CHECKING
++
++if TYPE_CHECKING:
++    from .cudagraph_utils import BatchExecutionDescriptor
++
++
++def expand_capture_variants(
++    descs: Sequence[BatchExecutionDescriptor], variants: tuple[int, ...]
++) -> list[BatchExecutionDescriptor]:
++    if not variants or variants[0] != 0 or len(set(variants)) != len(variants):
++        raise ValueError("Model input variants must be unique, starting with stock (0)")
++    return [replace(desc, model_input_variant=v) for desc in descs for v in variants]
++
++
++def select_input_variant(
++    desc: BatchExecutionDescriptor, variant: int
++) -> BatchExecutionDescriptor:
++    if variant == desc.model_input_variant:
++        return desc
++    # Piecewise caches also key off optional arguments. Until their wrappers
++    # support this dimension, non-stock inputs run eager, never a stock graph.
++    mode = type(desc.cg_mode)
++    return replace(
++        desc,
++        model_input_variant=variant,
++        cg_mode=mode.NONE
++        if variant and desc.cg_mode == mode.PIECEWISE
++        else desc.cg_mode,
++    )
++
++
++def sample_capture_variants(
++    descs: Sequence[BatchExecutionDescriptor], count: int
++) -> list[BatchExecutionDescriptor]:
++    groups: dict[int, list[BatchExecutionDescriptor]] = {}
++    for desc in descs:
++        groups.setdefault(desc.model_input_variant, []).append(desc)
++    sampled: list[BatchExecutionDescriptor] = []
++    for group in groups.values():
++        sampled.extend(
++            group if len(group) <= count else [*group[: count - 1], group[-1]]
++        )
++    return sampled
+diff --git a/vllm/v1/worker/gpu/model_runner.py b/vllm/v1/worker/gpu/model_runner.py
+index 508da3d860..84729c205c 100644
+--- a/vllm/v1/worker/gpu/model_runner.py
++++ b/vllm/v1/worker/gpu/model_runner.py
+@@ -998,6 +998,9 @@ class GPUModelRunner(LoRAModelRunnerMixin):
+             single_request_prefill_tokens=(
+                 self.model_state.single_request_prefill_cudagraph_tokens
+             ),
++            model_input_variants=getattr(
++                self.model_state, "cudagraph_input_variants", (0,)
++            ),
+         )
+         if self.cache_config.kv_sharing_fast_prefill and self.pcp_manager is None:
+             self.fast_prefill = FastPrefillHelper(
+@@ -4279,6 +4282,16 @@ class GPUModelRunner(LoRAModelRunnerMixin):
+             allow_skip_drafts=getattr(scheduler_output, "skip_drafts", False),
+         )
+ 
++        input_variant = getattr(self.model_state, "get_model_input_variant", None)
++        # Initial memory profiling runs before initialize_kv_cache creates the
++        # manager. dispatch_cg_and_sync_dp already requires eager in that phase;
++        # keep its stock descriptor and do not select a graph on a None manager.
++        if input_variant is not None and self.cudagraph_manager is not None:
++            batch_desc = self.cudagraph_manager.with_input_variant(
++                batch_desc,
++                input_variant(scheduler_output.num_scheduled_tokens, dummy=dummy_run),
++            )
++
+         if batch_desc.num_tokens == 0:
+             # All DP ranks have zero tokens to run.
+             empty_output = self.kv_connector.no_forward(scheduler_output)

@@ -5,12 +5,15 @@ import importlib.util
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
 def load(name, path):
@@ -22,7 +25,7 @@ def load(name, path):
 
 
 probe = load("weight_fragmentation", ROOT / "scripts/weight_fragmentation.py")
-spark = load("spark", ROOT / "bin/spark")
+import spark_ds41f as spark
 
 
 class FragmentationTest(unittest.TestCase):
@@ -79,6 +82,15 @@ class FragmentationTest(unittest.TestCase):
             self.assertNotIn("-v", command)
             self.assertEqual(len(report["shards"]), 1)
             self.assertEqual(report["shards"][0]["current"], 2)
+
+    def test_actionable_best_accepts_full_128mib_extents_and_flags_smaller_fragments(self):
+        # 6.88 GiB shard: e4defrag is a no-op at 5 extents, and defragments 120 extents.
+        shard_bytes = 7_389_759_032
+        self.assertEqual(probe.actionable_best(5, 4, shard_bytes), 5)
+        self.assertEqual(probe.actionable_best(120, 4, shard_bytes), 4)
+        # 94.56 GiB Engram shard: e4defrag -c reports best=48, physical minimum is 51-53.
+        engram_bytes = 101_535_150_936
+        self.assertEqual(probe.actionable_best(53, 48, engram_bytes), 53)
 
 
 if __name__ == "__main__":
