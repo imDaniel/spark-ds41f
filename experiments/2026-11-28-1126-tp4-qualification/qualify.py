@@ -8,6 +8,8 @@ import shlex
 import sys
 
 from window import HERE, OP, ROOT, cmd, owned, site
+sys.path.insert(0, str(ROOT))
+from spark_ds41f import sonar
 
 sys.path.insert(0, str(HERE.parent / "2026-10-24-1022-matched-performance"))
 import benchmark
@@ -51,8 +53,22 @@ def qualify(stage, window, image_id, output):
         run(output)
     elif stage == "capacity":
         capacity_requests.client.BASE = benchmark.BASE
-        capacity_requests.run(output)
+        original_cases = capacity_requests.CASES
+        capacity_requests.CASES = [
+            (length, [1], 32) for length in (32768, 131072, 262144, 524288, 1000000)
+        ] + original_cases
+        try:
+            capacity_requests.run(output)
+        finally:
+            capacity_requests.CASES = original_cases
     elif stage == "performance":
+        # Retain the historical workload and thermal gate while using the
+        # deployment's pinned measurement client for every new timing run.
+        identity = sonar.revision()
+        if not identity["pinned"] or identity["dirty"]:
+            raise ValueError("Sonar checkout differs from the deployment pin")
+        for name in ("client", "load", "prom", "prompts", "report"):
+            setattr(benchmark, name, sonar.module(name))
         expected = json.loads((benchmark.HERE / "external-inputs.json").read_text())["files"]
         if {str(p) for p in benchmark.prompts.standard_library_sources()} != set(expected):
             raise ValueError("Host document source inventory differs from 1022")
@@ -61,6 +77,7 @@ def qualify(stage, window, image_id, output):
                 raise ValueError(f"Host document source differs: {path}")
         benchmark.require_window = verify
         benchmark.run(output)
+        (output / "sonar.json").write_text(json.dumps(identity, indent=2) + "\n")
     verify()
 
 

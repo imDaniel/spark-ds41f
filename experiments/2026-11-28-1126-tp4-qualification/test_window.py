@@ -10,6 +10,8 @@ from unittest.mock import patch
 
 import window
 
+CHECK_PEERS = window.check_peer_reservations
+
 
 class LeaseTest(unittest.TestCase):
     def setUp(self):
@@ -18,6 +20,7 @@ class LeaseTest(unittest.TestCase):
         self.enterContext(patch.object(window, "OP", self.root))
         self.enterContext(patch.object(window, "HOLD", self.root / "hold"))
         self.enterContext(patch.object(window, "boot", return_value="boot"))
+        self.peers = self.enterContext(patch.object(window, "check_peer_reservations"))
         self.set_hold(window.OWNER)
 
     def set_hold(self, holder):
@@ -31,6 +34,25 @@ class LeaseTest(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             window.restore("mine")
         self.assertEqual(window.stored()["holder"], "different")
+
+    def test_peer_reservation_prevents_ingress_drain(self):
+        self.peers.side_effect = RuntimeError("Spark02 has a reservation")
+        with patch.object(window.site, "block") as drain:
+            with self.assertRaisesRegex(RuntimeError, "Spark02"):
+                window.block_ingress("mine")
+        drain.assert_not_called()
+
+    def test_peer_inventory_checks_all_workers_and_rejects_reservations(self):
+        def answer(args, **kwargs):
+            return subprocess.CompletedProcess(args, 0, stdout="[]")
+        with patch.object(window, "cmd", side_effect=answer) as remote:
+            CHECK_PEERS()
+        self.assertEqual({call.args[0][-2] for call in remote.call_args_list},
+                         {"admin@10.42.0.2", "admin@10.42.0.3", "admin@10.42.0.4"})
+        with patch.object(window, "cmd", return_value=subprocess.CompletedProcess(
+                [], 0, stdout='["spark-hold.json"]')):
+            with self.assertRaisesRegex(RuntimeError, "reservation"):
+                CHECK_PEERS()
 
     def test_watchdog_rechecks_after_refresh(self):
         window.heartbeat("mine", "build")

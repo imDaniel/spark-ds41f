@@ -75,6 +75,24 @@ def spark(root, cfg, *args, timeout=3600):
                cwd=root, timeout=timeout)
 
 
+def check_peer_reservations():
+    code = (
+        "import json; from pathlib import Path; "
+        "print(json.dumps([n for n in "
+        "('spark-hold.json','spark3-hold.json','spark-request.json','spark3-request.json') "
+        "if (Path.home()/n).exists()]))"
+    )
+    def check(node):
+        files = json.loads(cmd([
+            "ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5",
+            "admin@10.42.0." + str(node), shlex.join(["python3", "-c", code]),
+        ], capture=True, timeout=30).stdout)
+        if files:
+            raise RuntimeError(f"Spark{node:02} has a reservation: {files}")
+    with concurrent.futures.ThreadPoolExecutor(3) as pool:
+        list(pool.map(check, range(2, 5)))
+
+
 def acquire(window):
     uuid.UUID(window)
     if cmd(["git", "-C", str(OLD), "rev-parse", "HEAD"], capture=True).stdout.strip() != OLD_REV:
@@ -84,6 +102,7 @@ def acquire(window):
         for f in [HOLD, *(Path.home() / name for name in ("spark3-hold.json", "spark-request.json", "spark3-request.json"))]:
             if f.exists():
                 raise RuntimeError(f"Cluster in use: {f}")
+        check_peer_reservations()
         atomic_json(HOLD, {"holder": OWNER, "window_id": window, "since": now(),
                     "since_epoch": int(time.time()), "heartbeat": now(), "expected_end": None,
                     "boot_id": boot(), "beat_monotonic": time.monotonic(),
@@ -190,6 +209,7 @@ def require_watchdog(window):
 def block_ingress(window):
     with lock():
         h = active(window)
+        check_peer_reservations()
         require_watchdog(window)
         initial_stage = site.ingress_stage(h)
         site.block(h)
