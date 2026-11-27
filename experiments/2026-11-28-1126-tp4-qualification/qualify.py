@@ -8,7 +8,7 @@ from pathlib import Path
 import shlex
 import sys
 
-from window import HERE, OP, ROOT, cmd, owned, site
+from window import HERE, OP, ROOT, active, cmd, site
 sys.path.insert(0, str(ROOT))
 from spark_ds41f import sonar
 
@@ -24,7 +24,7 @@ PROFILE = "81ca5d96cf78a1c0193ab80071efab43d666b5a57e8633ced71b227031bde1f2"
 
 def qualify(stage, window, image_id, output):
     def verify():
-        hold = owned(window)
+        hold = active(window)
         if hold["phase"] != "testing" or site.ingress_stage(hold) != "blocked":
             raise RuntimeError("The owned, isolated test window is not active")
         revision = cmd(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture=True).stdout.strip()
