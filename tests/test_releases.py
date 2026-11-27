@@ -1,4 +1,4 @@
-"""Each release's frozen recipe is what it qualified, and production is the newest release.
+"""Each release's frozen recipe is what it qualified; production follows the site's releases.
 
 A promotion adds ``releases/<name>/`` (the recipe and its lock, never edited afterwards) and a
 baseline manifest naming them, the arm each shape qualified on, and any change made to the
@@ -80,10 +80,13 @@ class ReleaseTest(unittest.TestCase):
             self.assertIn(manifest["benchmark_reference"], references, name)
 
     def test_production_is_the_newest_release(self):
-        """The newest release's copies plus explicitly recorded image-admission and reporting defaults."""
-        production = load("releases/spark-ds41f-1126/cluster.json")
+        """Site production follows its own qualified release, independent of imported upstream releases."""
+        production = load("config/cluster.json")
         manifest = self.releases[production["promoted_baseline"]]
-        self.assertEqual(max(self.releases, key=lambda n: self.releases[n]["captured_at"]),
+        site_releases = {name: release for name, release in self.releases.items()
+                         if release.get("site_release") is True}
+        self.assertIn(production["promoted_baseline"], site_releases)
+        self.assertEqual(max(site_releases, key=lambda n: site_releases[n]["captured_at"]),
                          production["promoted_baseline"])
         frozen = load(manifest["recipe"])
         for path in sorted((ROOT / "manifests/runtime-defaults").glob("*.json")):
@@ -120,7 +123,23 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual({k: v for k, v in production.items() if k != "upstreams_config"},
                          {k: v for k, v in frozen.items() if k != "upstreams_config"})
         self.assertEqual(production["upstreams_config"], frozen["upstreams_config"])
-        self.assertEqual(load("releases/spark-ds41f-1126/upstreams.lock.json"), load(frozen["upstreams_config"]))
+        self.assertEqual(load("upstreams.lock.json"), load(frozen["upstreams_config"]))
+
+    def test_imported_release_date_does_not_choose_site_production(self):
+        for release in self.releases.values():
+            if release.get("site_release") is not True:
+                release["captured_at"] = "99991231T235959Z"
+        self.test_production_is_the_newest_release()
+
+    def test_imported_arms_keep_the_upstream_recipe(self):
+        from spark_ds41f.config import IMPORTED_RECIPE_PROFILES
+
+        for path in sorted(IMPORTED_RECIPE_PROFILES):
+            with self.subTest(profile=path):
+                arm = load(path)
+                base = self.spark.read_cluster("releases/spark-ds41f-1126/cluster.json",
+                                               arm["extends"]["shape"])
+                self.assertEqual(self.spark.read_cluster(path), recipe.overlay(arm, base))
 
     def test_each_release_follows_the_one_it_names(self):
         for name, manifest in self.releases.items():
@@ -129,8 +148,7 @@ class ReleaseTest(unittest.TestCase):
                 self.assertLess(self.releases[previous]["captured_at"], manifest["captured_at"], name)
 
     def test_generated_docs_and_pages_match_manifests(self):
-        """README.md, docs/current-state.md, TODO.md, and docs/index.html stay in sync with
-        config/cluster.json, upstreams.lock.json, and manifests/."""
+        """The generated upstream reference sections retain the imported release's evidence."""
         self.assertEqual(render_docs.main(["--check"]), 0)
 
         data = render_docs.collect_manifest_data()

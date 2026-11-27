@@ -1,0 +1,3959 @@
+{
+  "status": "failed",
+  "rows": [
+    {
+      "kind": "tool-smoke",
+      "scale": 1,
+      "answer": {
+        "id": "chatcmpl-a3f08c787211ea8d",
+        "object": "chat.completion",
+        "created": 1795815195,
+        "model": "deepseek-v4.1-flash",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "",
+              "refusal": null,
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [
+                {
+                  "id": "chatcmpl-tool-b4e47955203fc6f6",
+                  "type": "function",
+                  "function": {
+                    "name": "record_value",
+                    "arguments": "{\"role\": \"literal user value\", \"type\": \"literal string value\", \"nested\": {\"quote\\\"key\": \"<｜end▁of▁sentence｜>\"}}"
+                  }
+                }
+              ],
+              "reasoning": null
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "stop_reason": null,
+            "token_ids": [
+              271,
+              30,
+              128825,
+              10699,
+              1018,
+              30,
+              128825,
+              34756,
+              2329,
+              1281,
+              37074,
+              23028,
+              3816,
+              30,
+              128825,
+              10767,
+              2329,
+              1281,
+              17722,
+              4,
+              3418,
+              1281,
+              11476,
+              3320,
+              119734,
+              3967,
+              1990,
+              1718,
+              128825,
+              10767,
+              1018,
+              30,
+              128825,
+              10767,
+              2329,
+              1281,
+              4611,
+              4,
+              3418,
+              1281,
+              11476,
+              3320,
+              119734,
+              3418,
+              1990,
+              1718,
+              128825,
+              10767,
+              1018,
+              30,
+              128825,
+              10767,
+              2329,
+              1281,
+              80,
+              12904,
+              4,
+              3418,
+              1281,
+              19836,
+              3320,
+              24313,
+              54016,
+              28609,
+              4989,
+              3362,
+              38322,
+              28217,
+              523,
+              5487,
+              226,
+              2154,
+              5487,
+              226,
+              85,
+              51015,
+              28217,
+              48902,
+              24568,
+              128825,
+              10767,
+              1018,
+              1718,
+              128825,
+              34756,
+              1018,
+              1718,
+              128825,
+              10699,
+              32,
+              1
+            ],
+            "routed_experts": null
+          }
+        ],
+        "service_tier": null,
+        "system_fingerprint": "vllm-0.29.1rc1.dev187+gaf1c01499-tp4-f870989a",
+        "usage": {
+          "prompt_tokens": 373,
+          "total_tokens": 464,
+          "completion_tokens": 91,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "created_cache_tokens": 256,
+            "multimodal_tokens": null
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "sink_rejection": {
+            "flagged_rows": 0,
+            "flagged_draft_zero": 0,
+            "flagged_drafter": 0,
+            "flagged_prompt": 0,
+            "draft_zero_rejections": 0,
+            "draft_cuts": 0,
+            "fallthroughs": 0
+          }
+        },
+        "prompt_logprobs": null,
+        "prompt_token_ids": [
+          0,
+          128799,
+          271,
+          372,
+          27193,
+          271,
+          3476,
+          611,
+          3278,
+          304,
+          260,
+          1341,
+          294,
+          6704,
+          304,
+          1694,
+          3287,
+          270,
+          3967,
+          734,
+          3417,
+          16,
+          2042,
+          588,
+          34756,
+          6704,
+          513,
+          4985,
+          260,
+          38322,
+          128825,
+          10699,
+          48902,
+          5603,
+          1277,
+          270,
+          2502,
+          979,
+          30,
+          128825,
+          10699,
+          1018,
+          30,
+          128825,
+          34756,
+          2329,
+          84476,
+          6792,
+          5896,
+          35044,
+          3816,
+          30,
+          128825,
+          10767,
+          2329,
+          84476,
+          46630,
+          4130,
+          61729,
+          35044,
+          4,
+          3418,
+          1281,
+          11476,
+          94,
+          19836,
+          3320,
+          6,
+          46630,
+          4130,
+          61729,
+          56909,
+          1718,
+          128825,
+          10767,
+          1018,
+          7835,
+          1718,
+          128825,
+          34756,
+          1018,
+          30,
+          128825,
+          34756,
+          2329,
+          84476,
+          6792,
+          5896,
+          35044,
+          20,
+          3816,
+          7835,
+          1718,
+          128825,
+          34756,
+          1018,
+          1718,
+          128825,
+          10699,
+          4697,
+          3524,
+          8252,
+          1531,
+          366,
+          12038,
+          412,
+          344,
+          305,
+          1341,
+          3608,
+          4463,
+          1281,
+          11476,
+          4,
+          37419,
+          1884,
+          710,
+          915,
+          4815,
+          343,
+          62896,
+          14,
+          2631,
+          2065,
+          634,
+          14,
+          31939,
+          14,
+          8435,
+          754,
+          2281,
+          270,
+          1990,
+          295,
+          26639,
+          8786,
+          305,
+          1341,
+          3608,
+          4463,
+          1281,
+          19836,
+          4,
+          108526,
+          3575,
+          6892,
+          71144,
+          344,
+          22104,
+          343,
+          89944,
+          284,
+          513,
+          223,
+          128821,
+          754,
+          440,
+          74366,
+          5238,
+          782,
+          5553,
+          22805,
+          6352,
+          223,
+          128821,
+          1613,
+          128822,
+          119907,
+          1117,
+          4105,
+          10699,
+          469,
+          4087,
+          4256,
+          339,
+          13079,
+          6922,
+          14,
+          5238,
+          6578,
+          1561,
+          223,
+          128822,
+          418,
+          4105,
+          10699,
+          469,
+          4087,
+          4256,
+          339,
+          795,
+          17829,
+          28249,
+          13178,
+          8380,
+          271,
+          24313,
+          2852,
+          3362,
+          582,
+          37074,
+          23028,
+          1760,
+          582,
+          20855,
+          3362,
+          582,
+          24694,
+          270,
+          6319,
+          39248,
+          7855,
+          23296,
+          513,
+          270,
+          3967,
+          66910,
+          582,
+          46172,
+          3362,
+          28612,
+          4611,
+          3362,
+          582,
+          10325,
+          1760,
+          582,
+          68838,
+          3362,
+          28612,
+          17722,
+          3362,
+          28612,
+          4611,
+          3362,
+          582,
+          4463,
+          87928,
+          582,
+          4611,
+          3362,
+          28612,
+          4611,
+          3362,
+          582,
+          4463,
+          87928,
+          582,
+          80,
+          12904,
+          3362,
+          28612,
+          4611,
+          3362,
+          582,
+          10325,
+          1760,
+          582,
+          68838,
+          3362,
+          28612,
+          54016,
+          28609,
+          4989,
+          3362,
+          28612,
+          4611,
+          3362,
+          582,
+          4463,
+          4,
+          55695,
+          582,
+          24486,
+          3362,
+          20584,
+          54016,
+          28609,
+          4989,
+          45390,
+          582,
+          102970,
+          34520,
+          3362,
+          5062,
+          55695,
+          582,
+          24486,
+          3362,
+          20584,
+          17722,
+          1760,
+          582,
+          4611,
+          1760,
+          582,
+          80,
+          12904,
+          45390,
+          582,
+          102970,
+          34520,
+          3362,
+          5062,
+          33236,
+          3476,
+          74366,
+          29851,
+          1605,
+          270,
+          3554,
+          6428,
+          4105,
+          2329,
+          305,
+          10767,
+          5815,
+          8380,
+          304,
+          34756,
+          4105,
+          10699,
+          603,
+          128803,
+          18520,
+          3676,
+          23028,
+          418,
+          9045,
+          566,
+          26639,
+          1990,
+          28,
+          28612,
+          17722,
+          3362,
+          582,
+          119734,
+          3967,
+          1990,
+          1760,
+          582,
+          4611,
+          3362,
+          582,
+          119734,
+          3418,
+          1990,
+          1760,
+          582,
+          80,
+          12904,
+          3362,
+          28612,
+          54016,
+          28609,
+          4989,
+          3362,
+          38322,
+          28217,
+          523,
+          5487,
+          226,
+          2154,
+          5487,
+          226,
+          85,
+          51015,
+          28217,
+          48902,
+          3831,
+          128804,
+          128822
+        ],
+        "prompt_text": null,
+        "kv_transfer_params": null,
+        "ec_transfer_params": null,
+        "metrics": {
+          "time_to_first_token_ms": 257.8246807679534,
+          "generation_time_ms": 505.9207482263446,
+          "queue_time_ms": 0.015984289348125458,
+          "mean_itl_ms": 5.621341646959385,
+          "tokens_per_second": 119.14964927492797,
+          "speculative_decoding": null
+        }
+      }
+    },
+    {
+      "kind": "capacity",
+      "input_tokens": 32768,
+      "output_tokens": 32,
+      "concurrency": 1,
+      "samples": [
+        {
+          "at": 1795815196.4016085,
+          "num_requests_running": 0.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0
+        },
+        {
+          "at": 1795815196.9074054,
+          "num_requests_running": 0.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0
+        },
+        {
+          "at": 1795815197.414534,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.039852875793217724
+        },
+        {
+          "at": 1795815197.9214597,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.039852875793217724
+        },
+        {
+          "at": 1795815198.4269714,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.040782506770138616
+        },
+        {
+          "at": 1795815198.9327931,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04173234711612306
+        },
+        {
+          "at": 1795815199.4397547,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04173234711612306
+        }
+      ],
+      "metric_errors": [],
+      "peak_running": 1.0,
+      "batch_seconds": 3.3377699027769268,
+      "results": [
+        {
+          "scale": 1,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "39d9095657e46e7fc2f758dfaddc07ec409a116028dcc0f541908dc6cd664823",
+          "ttft": 3.2473219372332096,
+          "duration": 3.336551765911281,
+          "usage": {
+            "prompt_tokens": 32768,
+            "total_tokens": 32800,
+            "completion_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815196.390314,
+          "finished_at": 1795815199.7268877,
+          "first_visible_at": 1795815199.637636,
+          "decode_tps": 347.31450937398944
+        }
+      ]
+    },
+    {
+      "kind": "capacity",
+      "input_tokens": 131072,
+      "output_tokens": 32,
+      "concurrency": 1,
+      "samples": [
+        {
+          "at": 1795815199.753218,
+          "num_requests_running": 0.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0
+        },
+        {
+          "at": 1795815200.260573,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.020108322218180374
+        },
+        {
+          "at": 1795815200.7686238,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.039852875793217724
+        },
+        {
+          "at": 1795815201.2767777,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.039852875793217724
+        },
+        {
+          "at": 1795815201.784582,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.040782506770138616
+        },
+        {
+          "at": 1795815202.2918756,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04173234711612306
+        },
+        {
+          "at": 1795815202.799738,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04173234711612306
+        },
+        {
+          "at": 1795815203.3068686,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04237904692615502
+        },
+        {
+          "at": 1795815203.8152113,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04270239683117094
+        },
+        {
+          "at": 1795815204.323947,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04270239683117094
+        },
+        {
+          "at": 1795815204.83054,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0433490966412029
+        },
+        {
+          "at": 1795815205.3384144,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04429893698718723
+        },
+        {
+          "at": 1795815205.846619,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04429893698718723
+        },
+        {
+          "at": 1795815206.3546479,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04492542742815564
+        },
+        {
+          "at": 1795815206.862595,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045268986702235114
+        },
+        {
+          "at": 1795815207.3695183,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045268986702235114
+        },
+        {
+          "at": 1795815207.876531,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045895477143203633
+        },
+        {
+          "at": 1795815208.3845289,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.046845317489187965
+        },
+        {
+          "at": 1795815208.8919861,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.046845317489187965
+        },
+        {
+          "at": 1795815209.3995495,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.047492017299219924
+        },
+        {
+          "at": 1795815209.9065273,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04781536720423585
+        },
+        {
+          "at": 1795815210.4156833,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04781536720423585
+        },
+        {
+          "at": 1795815210.9225154,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04846206701426781
+        },
+        {
+          "at": 1795815211.429591,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04941190736025225
+        },
+        {
+          "at": 1795815211.937728,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04941190736025225
+        },
+        {
+          "at": 1795815212.447755,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.011034315508669845
+        }
+      ],
+      "metric_errors": [],
+      "peak_running": 1.0,
+      "batch_seconds": 12.751866683829576,
+      "results": [
+        {
+          "scale": 1,
+          "text": " sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification",
+          "text_sha256": "4fafa879fb5d5450a21439decf4ef7de43ae5afe28c0e77bcf34b95a0085e0e8",
+          "ttft": 12.658207545988262,
+          "duration": 12.749465003143996,
+          "usage": {
+            "prompt_tokens": 131072,
+            "total_tokens": 131104,
+            "completion_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815199.730719,
+          "finished_at": 1795815212.4802148,
+          "first_visible_at": 1795815212.3889267,
+          "decode_tps": 339.57288156159103
+        }
+      ]
+    },
+    {
+      "kind": "capacity",
+      "input_tokens": 262144,
+      "output_tokens": 32,
+      "concurrency": 1,
+      "samples": [
+        {
+          "at": 1795815212.503635,
+          "num_requests_running": 0.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0
+        },
+        {
+          "at": 1795815213.0115938,
+          "num_requests_running": 0.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0
+        },
+        {
+          "at": 1795815213.5184772,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.039852875793217724
+        },
+        {
+          "at": 1795815214.0255618,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.039852875793217724
+        },
+        {
+          "at": 1795815214.5334597,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.040782506770138616
+        },
+        {
+          "at": 1795815215.0402281,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04173234711612306
+        },
+        {
+          "at": 1795815215.5478406,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04173234711612306
+        },
+        {
+          "at": 1795815216.0554848,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04237904692615502
+        },
+        {
+          "at": 1795815216.5625334,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04270239683117094
+        },
+        {
+          "at": 1795815217.0709622,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04270239683117094
+        },
+        {
+          "at": 1795815217.5791824,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0433490966412029
+        },
+        {
+          "at": 1795815218.0877337,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04429893698718723
+        },
+        {
+          "at": 1795815218.5944753,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04429893698718723
+        },
+        {
+          "at": 1795815219.1023686,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04492542742815564
+        },
+        {
+          "at": 1795815219.6105313,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045268986702235114
+        },
+        {
+          "at": 1795815220.1189315,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045268986702235114
+        },
+        {
+          "at": 1795815220.6265187,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045895477143203633
+        },
+        {
+          "at": 1795815221.1340535,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.046845317489187965
+        },
+        {
+          "at": 1795815221.6430175,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.046845317489187965
+        },
+        {
+          "at": 1795815222.1502976,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.047492017299219924
+        },
+        {
+          "at": 1795815222.6573572,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04781536720423585
+        },
+        {
+          "at": 1795815223.1647584,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04781536720423585
+        },
+        {
+          "at": 1795815223.6714633,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04846206701426781
+        },
+        {
+          "at": 1795815224.1785371,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04941190736025225
+        },
+        {
+          "at": 1795815224.6854906,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04941190736025225
+        },
+        {
+          "at": 1795815225.1923819,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05003839780122066
+        },
+        {
+          "at": 1795815225.7003696,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05003839780122066
+        },
+        {
+          "at": 1795815226.207194,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05038195707530013
+        },
+        {
+          "at": 1795815226.7141163,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05100844751626854
+        },
+        {
+          "at": 1795815227.2217739,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05100844751626854
+        },
+        {
+          "at": 1795815227.7285645,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05195828786225298
+        },
+        {
+          "at": 1795815228.2342997,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05260498767228483
+        },
+        {
+          "at": 1795815228.7396882,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05260498767228483
+        },
+        {
+          "at": 1795815229.2450175,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.052928337577300866
+        },
+        {
+          "at": 1795815229.7525997,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.053575037387332713
+        },
+        {
+          "at": 1795815230.2603762,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.053575037387332713
+        },
+        {
+          "at": 1795815230.7672014,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.054524877733317156
+        },
+        {
+          "at": 1795815231.2726982,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.055151368174285564
+        },
+        {
+          "at": 1795815231.77985,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.055151368174285564
+        },
+        {
+          "at": 1795815232.2865305,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05549492744836504
+        },
+        {
+          "at": 1795815232.794659,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05549492744836504
+        },
+        {
+          "at": 1795815233.301896,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05612141788933345
+        },
+        {
+          "at": 1795815233.8092966,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05707125823531789
+        },
+        {
+          "at": 1795815234.3165429,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05707125823531789
+        },
+        {
+          "at": 1795815234.8235152,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05771795804534985
+        },
+        {
+          "at": 1795815235.330539,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05804130795036577
+        },
+        {
+          "at": 1795815235.839119,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05804130795036577
+        },
+        {
+          "at": 1795815236.3464198,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05868800776039773
+        },
+        {
+          "at": 1795815236.8533204,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.059637848106382174
+        },
+        {
+          "at": 1795815237.3611884,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.059637848106382174
+        },
+        {
+          "at": 1795815237.868522,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0480578796329979
+        }
+      ],
+      "metric_errors": [],
+      "peak_running": 1.0,
+      "batch_seconds": 25.638566559180617,
+      "results": [
+        {
+          "scale": 1,
+          "text": " neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a",
+          "text_sha256": "2a891eac723026e823c98f7bae8c33a163c4bae18aeaf1ddcf40cd6b81713dfd",
+          "ttft": 25.53440642496571,
+          "duration": 25.635814970824867,
+          "usage": {
+            "prompt_tokens": 262144,
+            "total_tokens": 262176,
+            "completion_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815212.4848874,
+          "finished_at": 1795815238.1207147,
+          "first_visible_at": 1795815238.0192938,
+          "decode_tps": 305.65152673715613
+        }
+      ]
+    },
+    {
+      "kind": "capacity",
+      "input_tokens": 524288,
+      "output_tokens": 32,
+      "concurrency": 1,
+      "samples": [
+        {
+          "at": 1795815238.1488242,
+          "num_requests_running": 0.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0
+        },
+        {
+          "at": 1795815238.6546564,
+          "num_requests_running": 0.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0
+        },
+        {
+          "at": 1795815239.1606367,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.039852875793217724
+        },
+        {
+          "at": 1795815239.666669,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.039852875793217724
+        },
+        {
+          "at": 1795815240.1730688,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.040782506770138616
+        },
+        {
+          "at": 1795815240.6800866,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04173234711612306
+        },
+        {
+          "at": 1795815241.1853359,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04173234711612306
+        },
+        {
+          "at": 1795815241.6930134,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04237904692615502
+        },
+        {
+          "at": 1795815242.1990626,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04270239683117094
+        },
+        {
+          "at": 1795815242.7041252,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04270239683117094
+        },
+        {
+          "at": 1795815243.2110243,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0433490966412029
+        },
+        {
+          "at": 1795815243.7189758,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04429893698718723
+        },
+        {
+          "at": 1795815244.2262256,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04429893698718723
+        },
+        {
+          "at": 1795815244.7335324,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04492542742815564
+        },
+        {
+          "at": 1795815245.2392738,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045268986702235114
+        },
+        {
+          "at": 1795815245.7471786,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045268986702235114
+        },
+        {
+          "at": 1795815246.2524815,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045895477143203633
+        },
+        {
+          "at": 1795815246.7597306,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.046845317489187965
+        },
+        {
+          "at": 1795815247.265471,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.046845317489187965
+        },
+        {
+          "at": 1795815247.7725356,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.047492017299219924
+        },
+        {
+          "at": 1795815248.279284,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.047492017299219924
+        },
+        {
+          "at": 1795815248.7850127,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04781536720423585
+        },
+        {
+          "at": 1795815249.2917292,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04846206701426781
+        },
+        {
+          "at": 1795815249.797673,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04846206701426781
+        },
+        {
+          "at": 1795815250.303717,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04941190736025225
+        },
+        {
+          "at": 1795815250.809723,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05003839780122066
+        },
+        {
+          "at": 1795815251.315221,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05003839780122066
+        },
+        {
+          "at": 1795815251.8206925,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05038195707530013
+        },
+        {
+          "at": 1795815252.3292897,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05100844751626854
+        },
+        {
+          "at": 1795815252.8364546,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05100844751626854
+        },
+        {
+          "at": 1795815253.342838,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05195828786225298
+        },
+        {
+          "at": 1795815253.8495584,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05260498767228483
+        },
+        {
+          "at": 1795815254.356525,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05260498767228483
+        },
+        {
+          "at": 1795815254.8634384,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.052928337577300866
+        },
+        {
+          "at": 1795815255.3701036,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.053575037387332713
+        },
+        {
+          "at": 1795815255.8759422,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.053575037387332713
+        },
+        {
+          "at": 1795815256.3831646,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.054524877733317156
+        },
+        {
+          "at": 1795815256.8906827,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.054524877733317156
+        },
+        {
+          "at": 1795815257.3967562,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.055151368174285564
+        },
+        {
+          "at": 1795815257.902563,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05549492744836504
+        },
+        {
+          "at": 1795815258.408145,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05549492744836504
+        },
+        {
+          "at": 1795815258.914794,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05612141788933345
+        },
+        {
+          "at": 1795815259.4207296,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05707125823531789
+        },
+        {
+          "at": 1795815259.9273636,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05707125823531789
+        },
+        {
+          "at": 1795815260.4328594,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05771795804534985
+        },
+        {
+          "at": 1795815260.9392028,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05804130795036577
+        },
+        {
+          "at": 1795815261.44531,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05804130795036577
+        },
+        {
+          "at": 1795815261.9511693,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05868800776039773
+        },
+        {
+          "at": 1795815262.4591556,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05868800776039773
+        },
+        {
+          "at": 1795815262.9648788,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.059637848106382174
+        },
+        {
+          "at": 1795815263.470919,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06026433854735058
+        },
+        {
+          "at": 1795815263.978214,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06026433854735058
+        },
+        {
+          "at": 1795815264.484005,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06060789782143006
+        },
+        {
+          "at": 1795815264.9897168,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.061234388262398465
+        },
+        {
+          "at": 1795815265.4954333,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.061234388262398465
+        },
+        {
+          "at": 1795815266.0011432,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0621842286083828
+        },
+        {
+          "at": 1795815266.5069127,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0621842286083828
+        },
+        {
+          "at": 1795815267.013262,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06283092841841476
+        },
+        {
+          "at": 1795815267.5202832,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06315427832343079
+        },
+        {
+          "at": 1795815268.0268703,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06315427832343079
+        },
+        {
+          "at": 1795815268.5351627,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06380097813346264
+        },
+        {
+          "at": 1795815269.0406923,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06475081847944708
+        },
+        {
+          "at": 1795815269.547785,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06475081847944708
+        },
+        {
+          "at": 1795815270.0532422,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06537730892041549
+        },
+        {
+          "at": 1795815270.560586,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06537730892041549
+        },
+        {
+          "at": 1795815271.066211,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06572086819449496
+        },
+        {
+          "at": 1795815271.573615,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06634735863546337
+        },
+        {
+          "at": 1795815272.0803113,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06634735863546337
+        },
+        {
+          "at": 1795815272.5883403,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06729719898144781
+        },
+        {
+          "at": 1795815273.0938272,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06794389879147977
+        },
+        {
+          "at": 1795815273.5992796,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06794389879147977
+        },
+        {
+          "at": 1795815274.1054635,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0682672486964957
+        },
+        {
+          "at": 1795815274.611662,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0682672486964957
+        },
+        {
+          "at": 1795815275.1179564,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06891394850652766
+        },
+        {
+          "at": 1795815275.6242602,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06986378885251199
+        },
+        {
+          "at": 1795815276.131635,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06986378885251199
+        },
+        {
+          "at": 1795815276.6386194,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0704902792934805
+        },
+        {
+          "at": 1795815277.1451232,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07083383856755987
+        },
+        {
+          "at": 1795815277.653552,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07083383856755987
+        },
+        {
+          "at": 1795815278.1598268,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07146032900852839
+        },
+        {
+          "at": 1795815278.6657143,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07146032900852839
+        },
+        {
+          "at": 1795815279.1713831,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07241016935451272
+        },
+        {
+          "at": 1795815279.6804812,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07305686916454468
+        },
+        {
+          "at": 1795815280.1871665,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07305686916454468
+        },
+        {
+          "at": 1795815280.6940753,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0733802190695606
+        },
+        {
+          "at": 1795815281.2000887,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0733802190695606
+        },
+        {
+          "at": 1795815281.7056973,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07402691887959256
+        },
+        {
+          "at": 1795815282.2117288,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.074976759225577
+        },
+        {
+          "at": 1795815282.7172244,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.074976759225577
+        },
+        {
+          "at": 1795815283.2229135,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07560324966654541
+        },
+        {
+          "at": 1795815283.7290807,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07560324966654541
+        },
+        {
+          "at": 1795815284.2371266,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07594680894062489
+        },
+        {
+          "at": 1795815284.7444828,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0765732993815933
+        },
+        {
+          "at": 1795815285.2516994,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0765732993815933
+        },
+        {
+          "at": 1795815285.757807,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07752313972757774
+        },
+        {
+          "at": 1795815286.263084,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07752313972757774
+        },
+        {
+          "at": 1795815286.7701397,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07816983953760959
+        },
+        {
+          "at": 1795815287.2766628,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07849318944262562
+        },
+        {
+          "at": 1795815287.7827663,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07849318944262562
+        },
+        {
+          "at": 1795815288.288164,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07913988925265758
+        },
+        {
+          "at": 1795815288.7962954,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08008972959864191
+        },
+        {
+          "at": 1795815289.3035805,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08008972959864191
+        },
+        {
+          "at": 1795815289.8105516,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07602764641687887
+        },
+        {
+          "at": 1795815290.3181064,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07602764641687887
+        }
+      ],
+      "metric_errors": [],
+      "peak_running": 1.0,
+      "batch_seconds": 52.421713892836124,
+      "results": [
+        {
+          "scale": 1,
+          "text": " sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification",
+          "text_sha256": "4fafa879fb5d5450a21439decf4ef7de43ae5afe28c0e77bcf34b95a0085e0e8",
+          "ttft": 52.30150858592242,
+          "duration": 52.418756352737546,
+          "usage": {
+            "prompt_tokens": 524288,
+            "total_tokens": 524320,
+            "completion_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815238.1259978,
+          "finished_at": 1795815290.5447667,
+          "first_visible_at": 1795815290.4275062,
+          "decode_tps": 264.3649993237391
+        }
+      ]
+    },
+    {
+      "kind": "capacity",
+      "input_tokens": 1000000,
+      "output_tokens": 32,
+      "concurrency": 1,
+      "samples": [
+        {
+          "at": 1795815290.6000745,
+          "num_requests_running": 0.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0
+        },
+        {
+          "at": 1795815291.1181667,
+          "num_requests_running": 0.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0
+        },
+        {
+          "at": 1795815291.6255884,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.039852875793217724
+        },
+        {
+          "at": 1795815292.1320379,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.039852875793217724
+        },
+        {
+          "at": 1795815292.6396112,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.040782506770138616
+        },
+        {
+          "at": 1795815293.1467938,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04173234711612306
+        },
+        {
+          "at": 1795815293.6538358,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04173234711612306
+        },
+        {
+          "at": 1795815294.1610382,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04237904692615502
+        },
+        {
+          "at": 1795815294.6685455,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04270239683117094
+        },
+        {
+          "at": 1795815295.1739225,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04270239683117094
+        },
+        {
+          "at": 1795815295.6823883,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0433490966412029
+        },
+        {
+          "at": 1795815296.1886947,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04429893698718723
+        },
+        {
+          "at": 1795815296.694202,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04429893698718723
+        },
+        {
+          "at": 1795815297.2009668,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04492542742815564
+        },
+        {
+          "at": 1795815297.708019,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045268986702235114
+        },
+        {
+          "at": 1795815298.2157123,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045268986702235114
+        },
+        {
+          "at": 1795815298.7229586,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045895477143203633
+        },
+        {
+          "at": 1795815299.2298036,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.045895477143203633
+        },
+        {
+          "at": 1795815299.7350464,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.046845317489187965
+        },
+        {
+          "at": 1795815300.2416246,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.047492017299219924
+        },
+        {
+          "at": 1795815300.7487493,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.047492017299219924
+        },
+        {
+          "at": 1795815301.2553477,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04781536720423585
+        },
+        {
+          "at": 1795815301.7626953,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04846206701426781
+        },
+        {
+          "at": 1795815302.27005,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04846206701426781
+        },
+        {
+          "at": 1795815302.7783222,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.04941190736025225
+        },
+        {
+          "at": 1795815303.285259,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05003839780122066
+        },
+        {
+          "at": 1795815303.7933273,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05003839780122066
+        },
+        {
+          "at": 1795815304.301457,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05038195707530013
+        },
+        {
+          "at": 1795815304.8075993,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05100844751626854
+        },
+        {
+          "at": 1795815305.3135686,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05100844751626854
+        },
+        {
+          "at": 1795815305.8194745,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05195828786225298
+        },
+        {
+          "at": 1795815306.3263555,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05260498767228483
+        },
+        {
+          "at": 1795815306.8339915,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05260498767228483
+        },
+        {
+          "at": 1795815307.3407512,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.052928337577300866
+        },
+        {
+          "at": 1795815307.846867,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.052928337577300866
+        },
+        {
+          "at": 1795815308.3530562,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.053575037387332713
+        },
+        {
+          "at": 1795815308.8597484,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.054524877733317156
+        },
+        {
+          "at": 1795815309.3670151,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.054524877733317156
+        },
+        {
+          "at": 1795815309.872781,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.055151368174285564
+        },
+        {
+          "at": 1795815310.37818,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05549492744836504
+        },
+        {
+          "at": 1795815310.8841743,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05549492744836504
+        },
+        {
+          "at": 1795815311.38981,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05612141788933345
+        },
+        {
+          "at": 1795815311.8963275,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05707125823531789
+        },
+        {
+          "at": 1795815312.4023197,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05707125823531789
+        },
+        {
+          "at": 1795815312.9091725,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05771795804534985
+        },
+        {
+          "at": 1795815313.416656,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05771795804534985
+        },
+        {
+          "at": 1795815313.9226737,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05804130795036577
+        },
+        {
+          "at": 1795815314.4302194,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05868800776039773
+        },
+        {
+          "at": 1795815314.9361334,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.05868800776039773
+        },
+        {
+          "at": 1795815315.4418178,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.059637848106382174
+        },
+        {
+          "at": 1795815315.9493284,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06026433854735058
+        },
+        {
+          "at": 1795815316.455213,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06026433854735058
+        },
+        {
+          "at": 1795815316.962285,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06060789782143006
+        },
+        {
+          "at": 1795815317.4679997,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06060789782143006
+        },
+        {
+          "at": 1795815317.9738219,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.061234388262398465
+        },
+        {
+          "at": 1795815318.479771,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0621842286083828
+        },
+        {
+          "at": 1795815318.9857697,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0621842286083828
+        },
+        {
+          "at": 1795815319.491414,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06283092841841476
+        },
+        {
+          "at": 1795815319.9971106,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06315427832343079
+        },
+        {
+          "at": 1795815320.503129,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06315427832343079
+        },
+        {
+          "at": 1795815321.0098317,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06380097813346264
+        },
+        {
+          "at": 1795815321.5158844,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06380097813346264
+        },
+        {
+          "at": 1795815322.0219064,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06475081847944708
+        },
+        {
+          "at": 1795815322.5285163,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06537730892041549
+        },
+        {
+          "at": 1795815323.0358965,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06537730892041549
+        },
+        {
+          "at": 1795815323.5427804,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06572086819449496
+        },
+        {
+          "at": 1795815324.0504189,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06634735863546337
+        },
+        {
+          "at": 1795815324.5569606,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06634735863546337
+        },
+        {
+          "at": 1795815325.0633833,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06729719898144781
+        },
+        {
+          "at": 1795815325.5705042,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06729719898144781
+        },
+        {
+          "at": 1795815326.0769858,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06794389879147977
+        },
+        {
+          "at": 1795815326.5841687,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0682672486964957
+        },
+        {
+          "at": 1795815327.08976,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0682672486964957
+        },
+        {
+          "at": 1795815327.5955281,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06891394850652766
+        },
+        {
+          "at": 1795815328.1021695,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06986378885251199
+        },
+        {
+          "at": 1795815328.6093283,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.06986378885251199
+        },
+        {
+          "at": 1795815329.1169977,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0704902792934805
+        },
+        {
+          "at": 1795815329.6225815,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0704902792934805
+        },
+        {
+          "at": 1795815330.129484,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07083383856755987
+        },
+        {
+          "at": 1795815330.636652,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07146032900852839
+        },
+        {
+          "at": 1795815331.1430225,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07146032900852839
+        },
+        {
+          "at": 1795815331.6491947,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07241016935451272
+        },
+        {
+          "at": 1795815332.1557257,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07241016935451272
+        },
+        {
+          "at": 1795815332.6617408,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07305686916454468
+        },
+        {
+          "at": 1795815333.1674094,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0733802190695606
+        },
+        {
+          "at": 1795815333.6750307,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0733802190695606
+        },
+        {
+          "at": 1795815334.1813834,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07402691887959256
+        },
+        {
+          "at": 1795815334.6869276,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.074976759225577
+        },
+        {
+          "at": 1795815335.1927035,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.074976759225577
+        },
+        {
+          "at": 1795815335.6995566,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07560324966654541
+        },
+        {
+          "at": 1795815336.2051764,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07560324966654541
+        },
+        {
+          "at": 1795815336.7114549,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07594680894062489
+        },
+        {
+          "at": 1795815337.2172992,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0765732993815933
+        },
+        {
+          "at": 1795815337.7235684,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0765732993815933
+        },
+        {
+          "at": 1795815338.2305799,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07752313972757774
+        },
+        {
+          "at": 1795815338.7381177,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07752313972757774
+        },
+        {
+          "at": 1795815339.2448356,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07816983953760959
+        },
+        {
+          "at": 1795815339.7503273,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07849318944262562
+        },
+        {
+          "at": 1795815340.2563083,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07849318944262562
+        },
+        {
+          "at": 1795815340.7619886,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07913988925265758
+        },
+        {
+          "at": 1795815341.2684805,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.07913988925265758
+        },
+        {
+          "at": 1795815341.7754447,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08008972959864191
+        },
+        {
+          "at": 1795815342.2809916,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08071622003961032
+        },
+        {
+          "at": 1795815342.7870455,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08071622003961032
+        },
+        {
+          "at": 1795815343.2933588,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0810597793136898
+        },
+        {
+          "at": 1795815343.8008006,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0810597793136898
+        },
+        {
+          "at": 1795815344.3060682,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08168626975465831
+        },
+        {
+          "at": 1795815344.8120184,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08168626975465831
+        },
+        {
+          "at": 1795815345.3178566,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08263611010064265
+        },
+        {
+          "at": 1795815345.8252623,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0832828099106746
+        },
+        {
+          "at": 1795815346.3307407,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0832828099106746
+        },
+        {
+          "at": 1795815346.836764,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08360615981569053
+        },
+        {
+          "at": 1795815347.3439064,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08360615981569053
+        },
+        {
+          "at": 1795815347.8508286,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08425285962572249
+        },
+        {
+          "at": 1795815348.3576348,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08520269997170693
+        },
+        {
+          "at": 1795815348.8659532,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08520269997170693
+        },
+        {
+          "at": 1795815349.3729947,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08582919041267534
+        },
+        {
+          "at": 1795815349.8806968,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08582919041267534
+        },
+        {
+          "at": 1795815350.3885844,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08617274968675481
+        },
+        {
+          "at": 1795815350.8964453,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08679924012772322
+        },
+        {
+          "at": 1795815351.402283,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08679924012772322
+        },
+        {
+          "at": 1795815351.9079573,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08774908047370766
+        },
+        {
+          "at": 1795815352.4149337,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08774908047370766
+        },
+        {
+          "at": 1795815352.9203718,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08839578028373951
+        },
+        {
+          "at": 1795815353.425987,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08871913018875555
+        },
+        {
+          "at": 1795815353.931708,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08871913018875555
+        },
+        {
+          "at": 1795815354.438749,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0893658299987874
+        },
+        {
+          "at": 1795815354.9450624,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0893658299987874
+        },
+        {
+          "at": 1795815355.4508805,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09031567034477184
+        },
+        {
+          "at": 1795815355.9577868,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09094216078574024
+        },
+        {
+          "at": 1795815356.4638042,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09094216078574024
+        },
+        {
+          "at": 1795815356.9705477,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09128572005981972
+        },
+        {
+          "at": 1795815357.477165,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09128572005981972
+        },
+        {
+          "at": 1795815357.9837654,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09191221050078813
+        },
+        {
+          "at": 1795815358.4897735,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09286205084677257
+        },
+        {
+          "at": 1795815358.9963443,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09286205084677257
+        },
+        {
+          "at": 1795815359.5033555,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09350875065680453
+        },
+        {
+          "at": 1795815360.0097544,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09350875065680453
+        },
+        {
+          "at": 1795815360.517205,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09383210056182045
+        },
+        {
+          "at": 1795815361.0226889,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09383210056182045
+        },
+        {
+          "at": 1795815361.5287251,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09447880037185241
+        },
+        {
+          "at": 1795815362.0342605,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09542864071783674
+        },
+        {
+          "at": 1795815362.5397236,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09542864071783674
+        },
+        {
+          "at": 1795815363.0468187,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09605513115880526
+        },
+        {
+          "at": 1795815363.5532808,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09605513115880526
+        },
+        {
+          "at": 1795815364.0602677,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09639869043288474
+        },
+        {
+          "at": 1795815364.5669901,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09702518087385315
+        },
+        {
+          "at": 1795815365.074036,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09702518087385315
+        },
+        {
+          "at": 1795815365.5796657,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09797502121983748
+        },
+        {
+          "at": 1795815366.0854661,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09797502121983748
+        },
+        {
+          "at": 1795815366.5908713,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09862172102986944
+        },
+        {
+          "at": 1795815367.0968988,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09862172102986944
+        },
+        {
+          "at": 1795815367.602703,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09894507093488536
+        },
+        {
+          "at": 1795815368.1120718,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09959177074491732
+        },
+        {
+          "at": 1795815368.6182382,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.09959177074491732
+        },
+        {
+          "at": 1795815369.125275,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10054161109090176
+        },
+        {
+          "at": 1795815369.6321654,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10054161109090176
+        },
+        {
+          "at": 1795815370.1386993,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10116810153187017
+        },
+        {
+          "at": 1795815370.6451886,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10151166080594964
+        },
+        {
+          "at": 1795815371.151314,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10151166080594964
+        },
+        {
+          "at": 1795815371.6578746,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10213815124691805
+        },
+        {
+          "at": 1795815372.164562,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10213815124691805
+        },
+        {
+          "at": 1795815372.6701534,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.1030879915929025
+        },
+        {
+          "at": 1795815373.1769583,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.1030879915929025
+        },
+        {
+          "at": 1795815373.6827762,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10373469140293445
+        },
+        {
+          "at": 1795815374.1902432,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10405804130795038
+        },
+        {
+          "at": 1795815374.6973634,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10405804130795038
+        },
+        {
+          "at": 1795815375.2050471,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10470474111798234
+        },
+        {
+          "at": 1795815375.7117097,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10470474111798234
+        },
+        {
+          "at": 1795815376.2187252,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10565458146396667
+        },
+        {
+          "at": 1795815376.725359,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10565458146396667
+        },
+        {
+          "at": 1795815377.2309473,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10628107190493508
+        },
+        {
+          "at": 1795815377.7372224,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10662463117901455
+        },
+        {
+          "at": 1795815378.2428234,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10662463117901455
+        },
+        {
+          "at": 1795815378.7482893,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10725112161998307
+        },
+        {
+          "at": 1795815379.255054,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10725112161998307
+        },
+        {
+          "at": 1795815379.7613957,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.1082009619659674
+        },
+        {
+          "at": 1795815380.2672002,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.1082009619659674
+        },
+        {
+          "at": 1795815380.7727225,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10884766177599936
+        },
+        {
+          "at": 1795815381.2802606,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10917101168101528
+        },
+        {
+          "at": 1795815381.785729,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10917101168101528
+        },
+        {
+          "at": 1795815382.2913508,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10981771149104724
+        },
+        {
+          "at": 1795815382.7970564,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10981771149104724
+        },
+        {
+          "at": 1795815383.303735,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11076755183703169
+        },
+        {
+          "at": 1795815383.8097234,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11076755183703169
+        },
+        {
+          "at": 1795815384.3155057,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.1113940422780001
+        },
+        {
+          "at": 1795815384.821967,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11173760155207957
+        },
+        {
+          "at": 1795815385.3278122,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11173760155207957
+        },
+        {
+          "at": 1795815385.8347332,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11236409199304798
+        },
+        {
+          "at": 1795815386.3402948,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11236409199304798
+        },
+        {
+          "at": 1795815386.8456986,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11331393233903242
+        },
+        {
+          "at": 1795815387.3511832,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11331393233903242
+        },
+        {
+          "at": 1795815387.8568363,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11396063214906427
+        },
+        {
+          "at": 1795815388.3627315,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11396063214906427
+        },
+        {
+          "at": 1795815388.8681433,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.1142839820540803
+        },
+        {
+          "at": 1795815389.375176,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11493068186411215
+        },
+        {
+          "at": 1795815389.8803914,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11493068186411215
+        },
+        {
+          "at": 1795815390.3872638,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11588052221009659
+        },
+        {
+          "at": 1795815390.8928058,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11588052221009659
+        },
+        {
+          "at": 1795815391.3988447,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.116507012651065
+        },
+        {
+          "at": 1795815391.9043074,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.116507012651065
+        },
+        {
+          "at": 1795815392.4097455,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11685057192514448
+        },
+        {
+          "at": 1795815392.9175706,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11685057192514448
+        },
+        {
+          "at": 1795815393.4232109,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.11747706236611288
+        },
+        {
+          "at": 1795815393.9296384,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.10872640556161839
+        },
+        {
+          "at": 1795815394.4390671,
+          "num_requests_running": 1.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.08962855179661289
+        }
+      ],
+      "metric_errors": [],
+      "peak_running": 1.0,
+      "batch_seconds": 104.08808765932918,
+      "results": [
+        {
+          "scale": 1,
+          "text": " capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral",
+          "text_sha256": "6c1b82bcf6f0977509c66421ddbbf79fe75348c22a1d69ed10e41a158fe1a9db",
+          "ttft": 103.9388084942475,
+          "duration": 104.08528384799138,
+          "usage": {
+            "prompt_tokens": 1000000,
+            "total_tokens": 1000032,
+            "completion_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815290.5490148,
+          "finished_at": 1795815394.6343112,
+          "first_visible_at": 1795815394.4878232,
+          "decode_tps": 211.6191967914544
+        }
+      ]
+    },
+    {
+      "kind": "capacity",
+      "input_tokens": 8192,
+      "output_tokens": 256,
+      "concurrency": 16,
+      "samples": [
+        {
+          "at": 1795815394.6506484,
+          "num_requests_running": 0.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0
+        },
+        {
+          "at": 1795815395.1589193,
+          "num_requests_running": 0.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.0
+        },
+        {
+          "at": 1795815395.6644795,
+          "num_requests_running": 2.0,
+          "num_requests_waiting": 2.0,
+          "kv_cache_usage_perc": 0.04053999434137667
+        },
+        {
+          "at": 1795815396.171026,
+          "num_requests_running": 2.0,
+          "num_requests_waiting": 2.0,
+          "kv_cache_usage_perc": 0.04053999434137667
+        },
+        {
+          "at": 1795815396.6782272,
+          "num_requests_running": 3.0,
+          "num_requests_waiting": 13.0,
+          "kv_cache_usage_perc": 0.02277595893456208
+        },
+        {
+          "at": 1795815397.1855237,
+          "num_requests_running": 3.0,
+          "num_requests_waiting": 13.0,
+          "kv_cache_usage_perc": 0.02277595893456208
+        },
+        {
+          "at": 1795815397.692668,
+          "num_requests_running": 4.0,
+          "num_requests_waiting": 12.0,
+          "kv_cache_usage_perc": 0.024109777292752876
+        },
+        {
+          "at": 1795815398.1979172,
+          "num_requests_running": 4.0,
+          "num_requests_waiting": 12.0,
+          "kv_cache_usage_perc": 0.024109777292752876
+        },
+        {
+          "at": 1795815398.705641,
+          "num_requests_running": 4.0,
+          "num_requests_waiting": 12.0,
+          "kv_cache_usage_perc": 0.005638413968715894
+        },
+        {
+          "at": 1795815399.2123046,
+          "num_requests_running": 5.0,
+          "num_requests_waiting": 11.0,
+          "kv_cache_usage_perc": 0.02574673618689627
+        },
+        {
+          "at": 1795815399.7195246,
+          "num_requests_running": 5.0,
+          "num_requests_waiting": 11.0,
+          "kv_cache_usage_perc": 0.02574673618689627
+        },
+        {
+          "at": 1795815400.2265923,
+          "num_requests_running": 6.0,
+          "num_requests_waiting": 10.0,
+          "kv_cache_usage_perc": 0.02677741400913458
+        },
+        {
+          "at": 1795815400.7322698,
+          "num_requests_running": 6.0,
+          "num_requests_waiting": 10.0,
+          "kv_cache_usage_perc": 0.02677741400913458
+        },
+        {
+          "at": 1795815401.237354,
+          "num_requests_running": 7.0,
+          "num_requests_waiting": 9.0,
+          "kv_cache_usage_perc": 0.028414372903277973
+        },
+        {
+          "at": 1795815401.744102,
+          "num_requests_running": 7.0,
+          "num_requests_waiting": 9.0,
+          "kv_cache_usage_perc": 0.028414372903277973
+        },
+        {
+          "at": 1795815402.2546134,
+          "num_requests_running": 6.0,
+          "num_requests_waiting": 9.0,
+          "kv_cache_usage_perc": 0.008609191221050083
+        },
+        {
+          "at": 1795815402.7620177,
+          "num_requests_running": 7.0,
+          "num_requests_waiting": 8.0,
+          "kv_cache_usage_perc": 0.028414372903277973
+        },
+        {
+          "at": 1795815403.2701666,
+          "num_requests_running": 7.0,
+          "num_requests_waiting": 8.0,
+          "kv_cache_usage_perc": 0.02811123236732549
+        },
+        {
+          "at": 1795815403.7757583,
+          "num_requests_running": 8.0,
+          "num_requests_waiting": 7.0,
+          "kv_cache_usage_perc": 0.02974819126146877
+        },
+        {
+          "at": 1795815404.2819266,
+          "num_requests_running": 8.0,
+          "num_requests_waiting": 7.0,
+          "kv_cache_usage_perc": 0.02974819126146877
+        },
+        {
+          "at": 1795815404.7889144,
+          "num_requests_running": 8.0,
+          "num_requests_waiting": 6.0,
+          "kv_cache_usage_perc": 0.02974819126146877
+        },
+        {
+          "at": 1795815405.294806,
+          "num_requests_running": 8.0,
+          "num_requests_waiting": 6.0,
+          "kv_cache_usage_perc": 0.02974819126146877
+        },
+        {
+          "at": 1795815405.8018603,
+          "num_requests_running": 8.0,
+          "num_requests_waiting": 6.0,
+          "kv_cache_usage_perc": 0.011297037306495339
+        },
+        {
+          "at": 1795815406.308638,
+          "num_requests_running": 8.0,
+          "num_requests_waiting": 5.0,
+          "kv_cache_usage_perc": 0.030051331797421255
+        },
+        {
+          "at": 1795815406.8153458,
+          "num_requests_running": 8.0,
+          "num_requests_waiting": 5.0,
+          "kv_cache_usage_perc": 0.02974819126146877
+        },
+        {
+          "at": 1795815407.323438,
+          "num_requests_running": 9.0,
+          "num_requests_waiting": 4.0,
+          "kv_cache_usage_perc": 0.03108200961965968
+        },
+        {
+          "at": 1795815407.8315063,
+          "num_requests_running": 9.0,
+          "num_requests_waiting": 4.0,
+          "kv_cache_usage_perc": 0.03108200961965968
+        },
+        {
+          "at": 1795815408.339321,
+          "num_requests_running": 9.0,
+          "num_requests_waiting": 3.0,
+          "kv_cache_usage_perc": 0.03108200961965968
+        },
+        {
+          "at": 1795815408.8460572,
+          "num_requests_running": 9.0,
+          "num_requests_waiting": 3.0,
+          "kv_cache_usage_perc": 0.03108200961965968
+        },
+        {
+          "at": 1795815409.3545957,
+          "num_requests_running": 10.0,
+          "num_requests_waiting": 2.0,
+          "kv_cache_usage_perc": 0.03273917788286651
+        },
+        {
+          "at": 1795815409.860759,
+          "num_requests_running": 10.0,
+          "num_requests_waiting": 2.0,
+          "kv_cache_usage_perc": 0.03273917788286651
+        },
+        {
+          "at": 1795815410.368966,
+          "num_requests_running": 9.0,
+          "num_requests_waiting": 2.0,
+          "kv_cache_usage_perc": 0.012610646295622696
+        },
+        {
+          "at": 1795815410.8756716,
+          "num_requests_running": 10.0,
+          "num_requests_waiting": 1.0,
+          "kv_cache_usage_perc": 0.033042318418818994
+        },
+        {
+          "at": 1795815411.3844743,
+          "num_requests_running": 9.0,
+          "num_requests_waiting": 1.0,
+          "kv_cache_usage_perc": 0.030778869083707194
+        },
+        {
+          "at": 1795815411.8923965,
+          "num_requests_running": 10.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.033042318418818994
+        },
+        {
+          "at": 1795815412.3996925,
+          "num_requests_running": 10.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.033042318418818994
+        },
+        {
+          "at": 1795815412.9079368,
+          "num_requests_running": 8.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.010973687401479304
+        },
+        {
+          "at": 1795815413.4165142,
+          "num_requests_running": 6.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.008629400590113523
+        },
+        {
+          "at": 1795815413.9244826,
+          "num_requests_running": 3.0,
+          "num_requests_waiting": 0.0,
+          "kv_cache_usage_perc": 0.004324804979588537
+        }
+      ],
+      "metric_errors": [],
+      "peak_running": 10.0,
+      "batch_seconds": 19.591253804042935,
+      "results": [
+        {
+          "scale": 0,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 1.8469364889897406,
+          "duration": 7.497701469808817,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6473515,
+          "finished_at": 1795815402.1450663,
+          "first_visible_at": 1795815396.494288,
+          "decode_tps": 45.12651513088829
+        },
+        {
+          "scale": 1,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 1.9039954650215805,
+          "duration": 10.07351082097739,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6482334,
+          "finished_at": 1795815404.7217581,
+          "first_visible_at": 1795815396.552229,
+          "decode_tps": 31.213542170620524
+        },
+        {
+          "scale": 1,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 3.013000251725316,
+          "duration": 11.216465295758098,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6455367,
+          "finished_at": 1795815405.8620174,
+          "first_visible_at": 1795815397.658537,
+          "decode_tps": 31.08436153958243
+        },
+        {
+          "scale": 4,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 4.1496114963665605,
+          "duration": 13.353877118322998,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6516232,
+          "finished_at": 1795815408.0055149,
+          "first_visible_at": 1795815398.8012347,
+          "decode_tps": 27.704495928722185
+        },
+        {
+          "scale": 0,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 5.289300373289734,
+          "duration": 15.509343597106636,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.645913,
+          "finished_at": 1795815410.1552732,
+          "first_visible_at": 1795815399.935213,
+          "decode_tps": 24.950926889653093
+        },
+        {
+          "scale": 0,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 6.457570834085345,
+          "duration": 16.655790663789958,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6438925,
+          "finished_at": 1795815411.2997067,
+          "first_visible_at": 1795815401.1014633,
+          "decode_tps": 25.00429778300309
+        },
+        {
+          "scale": 1,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 7.674408497754484,
+          "duration": 17.807122896891087,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6432207,
+          "finished_at": 1795815412.4503572,
+          "first_visible_at": 1795815402.317629,
+          "decode_tps": 25.16597098152969
+        },
+        {
+          "scale": 1,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 8.86874628206715,
+          "duration": 18.155444657430053,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6445675,
+          "finished_at": 1795815412.800027,
+          "first_visible_at": 1795815403.5133138,
+          "decode_tps": 27.458577996798613
+        },
+        {
+          "scale": 1,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 10.06923184916377,
+          "duration": 18.422949347179383,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6521575,
+          "finished_at": 1795815413.0751324,
+          "first_visible_at": 1795815404.7213893,
+          "decode_tps": 30.52523254283333
+        },
+        {
+          "scale": 4,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 12.098084063269198,
+          "duration": 18.60734735103324,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6465807,
+          "finished_at": 1795815413.253947,
+          "first_visible_at": 1795815406.7446647,
+          "decode_tps": 39.17481250862255
+        },
+        {
+          "scale": 0,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 13.211069262586534,
+          "duration": 18.785013646818697,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6487339,
+          "finished_at": 1795815413.4337747,
+          "first_visible_at": 1795815407.8598032,
+          "decode_tps": 45.74831913894401
+        },
+        {
+          "scale": 1,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 14.36877227993682,
+          "duration": 18.951909484807402,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6507702,
+          "finished_at": 1795815413.6026933,
+          "first_visible_at": 1795815409.0195427,
+          "decode_tps": 55.63855454563953
+        },
+        {
+          "scale": 4,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 15.506235945038497,
+          "duration": 19.18427176401019,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6478784,
+          "finished_at": 1795815413.832164,
+          "first_visible_at": 1795815410.1541142,
+          "decode_tps": 69.33017572695074
+        },
+        {
+          "scale": 1,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 16.645912741310894,
+          "duration": 19.30959244305268,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6537104,
+          "finished_at": 1795815413.9633136,
+          "first_visible_at": 1795815411.2996233,
+          "decode_tps": 95.73179147654625
+        },
+        {
+          "scale": 1,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 17.793884376995265,
+          "duration": 19.482961957808584,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6561806,
+          "finished_at": 1795815414.1391559,
+          "first_visible_at": 1795815412.4500651,
+          "decode_tps": 150.96863494020295
+        },
+        {
+          "scale": 4,
+          "text": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+          "text_sha256": "91614dbff8c13eb148bb621cb41469bc7e684b5f5d4d886fb6cdb375b6861655",
+          "ttft": 18.154766029212624,
+          "duration": 19.58302651718259,
+          "usage": {
+            "prompt_tokens": 8192,
+            "total_tokens": 8448,
+            "completion_tokens": 256,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "sink_rejection": {
+              "flagged_rows": 0,
+              "flagged_draft_zero": 0,
+              "flagged_drafter": 0,
+              "flagged_prompt": 0,
+              "draft_zero_rejections": 0,
+              "draft_cuts": 0,
+              "fallthroughs": 0
+            }
+          },
+          "finish_reason": "length",
+          "message": {
+            "role": "assistant",
+            "content": " This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence. This is a neutral capacity qualification sentence.",
+            "reasoning": ""
+          },
+          "token_ids": [],
+          "started_at": 1795815394.6452167,
+          "finished_at": 1795815414.2282698,
+          "first_visible_at": 1795815412.7999828,
+          "decode_tps": 178.5352344441385
+        }
+      ]
+    }
+  ],
+  "error": "ValueError: Requested concurrency was not observed"
+}

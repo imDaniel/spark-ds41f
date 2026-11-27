@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "baseline": "2026-11-28-homelab-1126-attention",
+  "status": "promoted-baseline",
+  "site_release": true,
+  "captured_at": "20261127T230659Z",
+  "accepted_date": "2026-11-28",
+  "acceptance": "Owner preauthorized autonomous site promotion after functional, capacity, performance and release validation.",
+  "shape": "tp4-ring",
+  "configuration": "config/cluster.json",
+  "configuration_sha256": "02a7a2d16ce358bd1d2793f9428ebeaa3cc2285e2d8e49697558aa69d69aa643",
+  "recipe": "releases/homelab-1126-attention/cluster.json",
+  "source_manifest": "manifests/sources/2026-11-28-homelab-1126-attention-source.json",
+  "source_lock": "releases/homelab-1126-attention/upstreams.lock.json",
+  "source_lock_sha256": "913d1df6c57ffe476c26da80259c46021cdb729458c78da305bf923e4ce3e332",
+  "tested_deployment_commit": "678e74b22fe128d053152e2592d848b1a9eb9468",
+  "tested_deployment_commits": [
+    "43223adaf5443390154f2374ae6fa9b354866fff",
+    "8f254013d510e35bcd30f712ba62915c6661c59c",
+    "678e74b22fe128d053152e2592d848b1a9eb9468"
+  ],
+  "image_id": "sha256:3e28171ec18fcb05dac837a12c680c321fa41f9a862e230d3b966668d3792157",
+  "image_tag": "ds41f-1126-attention:vllm-7c445f265a7b",
+  "container_name": "ds41f-1126-attention",
+  "build": {
+    "image": "ds41f-1126-attention:vllm-7c445f265a7b",
+    "built_as": "ds41f-1126-attention:vllm-7c445f265a7b",
+    "image_id": "sha256:3e28171ec18fcb05dac837a12c680c321fa41f9a862e230d3b966668d3792157",
+    "deployment_commit": "8c89f1c0e5f0bbc20b48e77fa3051dc0e2b2f68b",
+    "built_utc": "2026-11-28T04:36:51.213221252+08:00",
+    "build_host": "spark01",
+    "architecture": "linux/arm64",
+    "duration_seconds": 456,
+    "minimum_mem_available_gib": 80.8,
+    "size_bytes": 27248413587,
+    "receipt": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/native-build-3.log"
+  },
+  "vllm": {
+    "base_revision": "19f2c20ed4d64ae22bd009ceacadd85e2a81e354",
+    "patch_series": "experiments/2026-11-28-1126-attention-rc3/vllm/series",
+    "patchset_sha256": "4db4c0bdffb7de3a8d98287f78811ab58f00d75c688e08ccda9bea77660ab2d8",
+    "patch_head": "9a71ded060b015e40f721a9caf506e43bd1f3fa0",
+    "expected_tree": "7c445f265a7bf21b4860735cd972b326968150c3"
+  },
+  "profile": {
+    "id": "heretic-1017-attn-v1",
+    "sha256": "81ca5d96cf78a1c0193ab80071efab43d666b5a57e8633ced71b227031bde1f2",
+    "alpha": 2.5,
+    "layers": [
+      2,
+      39
+    ],
+    "scale_range": [
+      0,
+      4
+    ],
+    "operator_version": "attn-writer-project-bf16-rank-order-v1",
+    "direction_payload_sha256": "f11e3762252448f547183d4b2daaf5b58c2d9023cd5b23365bc026a402c1a8e6",
+    "tensor_layout_identical_to_1022": true
+  },
+  "model_identity": "b35c43fda128481f17b7ee878df2c2f93fd6db416df451b080cc8d00e166f7d0",
+  "capacity": {
+    "max_model_len": 1048576,
+    "max_num_seqs": 16,
+    "max_num_batched_tokens": 8192,
+    "kv_bytes_per_rank": 11274289152,
+    "qualified_cold_concurrency": {
+      "8K": 16,
+      "262K": 4,
+      "1M": 4
+    },
+    "qualified_output_tokens": {
+      "8K-C16": 1024,
+      "262K-C4": 4096,
+      "1M-C4": 16384
+    },
+    "cold_c1_input_tokens": [
+      32768,
+      131072,
+      262144,
+      524288,
+      1000000
+    ],
+    "requested_batched_tokens": 8192,
+    "effective_copy_draft_batched_tokens": 8203,
+    "requested_graph_rows": 96,
+    "effective_copy_draft_graph_rows": 107
+  },
+  "multimodal": {
+    "image_limit_per_prompt": 999,
+    "processor_cache_gb": 1,
+    "max_input_pixels": 16777216,
+    "scope": "Two solid-colour image API requests passed; no full image quality evaluation is claimed."
+  },
+  "qualified_arms": {
+    "tp4-ring": "experiments/2026-11-28-1126-tp4-qualification/cluster.json"
+  },
+  "changed_after_release": [
+    {
+      "why": "Promote the measured flat arm as one site recipe: add the unchanged model catalogue and sampling defaults and select homelab/main. These are deployment metadata changes; resolved command, environment and mounts remain identical.",
+      "shapes": [
+        "tp4-ring"
+      ],
+      "overlay": {
+        "set": {
+          "models": {
+            "v41-flash": {
+              "snapshot": "{home}/.cache/huggingface/hub/models--deepseek-ai--DeepSeek-V4.1-Flash/snapshots/dba1be0a40aa45a94ad051997016db3960a90277",
+              "blobs": "{home}/.cache/huggingface/hub/models--deepseek-ai--DeepSeek-V4.1-Flash/blobs",
+              "notes": "DeepSeek-V4.1-Flash, revision dba1be0a (2026-09-10)."
+            },
+            "v41-flash-1017": {
+              "snapshot": "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1",
+              "notes": "Materialized, unchanged official 1017 checkpoint, model identity b35c43fda128481f17b7ee878df2c2f93fd6db416df451b080cc8d00e166f7d0; steering is a separate read-only sidecar."
+            },
+            "v41-flash-1017-hub": {
+              "hub": "{home}/.cache/huggingface/hub",
+              "snapshot": "models--deepseek-ai--DeepSeek-V4.1-Flash-1017/snapshots/1bae0e1088993b9b82de08f59de5be5a34e42170",
+              "notes": "DeepSeek-V4.1-Flash-1017, revision 1bae0e10 (2026-10-17): new weights; config, tokenizer and tensor layout unchanged. Its blobs link on into the hub's shared store, so the hub is mounted."
+            }
+          },
+          "model": "v41-flash-1017",
+          "generation_defaults": {
+            "temperature": 1.0,
+            "top_p": 1.0
+          },
+          "deployment": {
+            "branch": "homelab/main"
+          }
+        }
+      }
+    }
+  ],
+  "benchmark_reference": "manifests/benchmarks/2026-11-28-homelab-1126-attention-tp4.json",
+  "evidence": {
+    "results": "experiments/2026-11-28-1126-tp4-qualification/RESULTS.md",
+    "native_gate": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/component-run-5-audit.json",
+    "encoder_and_recorded_output": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/exact-image-encoder-parser-3.log",
+    "parser_provenance": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/exact-image-parser-provenance-3.log",
+    "functional": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/functional-boot2/requests.json",
+    "cache": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/functional-boot2/cache.json",
+    "capacity_cold_c1": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/capacity-boot2/requests.json",
+    "capacity_c16": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/capacity-overlap-boot2/requests.json",
+    "capacity_long_and_stability": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/capacity-sustained-boot2/requests.json",
+    "performance": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/performance-comparison.json",
+    "direction_payload": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/profile-payload-review.json",
+    "thermal_clock_diagnosis": "experiments/2026-11-28-1126-tp4-qualification/runs/native-rc3/thermal-clock-skew-review.json"
+  },
+  "limits": [
+    "The archived 1022 reference is not rerun or contemporaneously paired.",
+    "Candidate boots are two engine starts with retained JIT caches, not host reboots.",
+    "Per-run intervals use six subwindows; the separate boot-mean interval has only two observations.",
+    "Latency percentiles pool actual requests admitted during measured windows, never run percentiles.",
+    "SSE event intervals are observed stream-chunk gaps, not within-chunk token timestamps.",
+    "The reference used the frozen legacy client; candidates use pinned Sonar with its text-chunks collector.",
+    "One scale1/C4 SSE chunk interval reached 457.2 ms versus the historical maximum 341.6 ms. The P99 improves; the comparison contains 35,342 candidate intervals versus 15,788 reference intervals.",
+    "The short C16/256 and 262K/C4/768 requests all completed, but did not prove the intended overlap. Capacity acceptance uses the explicitly longer 1024/4096/16384-output cases and the retained cold C1 receipts.",
+    "The first RC3 warm start recorded 12 64-KiB pages swapped out on the head (0.75 MiB) despite rounded 0.0 GiB swap growth; the second start and both complete performance cohorts recorded zero swap pages in or out. An earlier RC2 cold preparation start recorded 0.13 GiB growth.",
+    "The 46-request functional gate, 13 cache/cancellation scenarios and benign stability requests are not a broad model-quality evaluation or a multi-day soak.",
+    "GLP and TP3 variants are not qualified by this site promotion."
+  ],
+  "previous_baseline": "2026-10-24-homelab-1022-attention",
+  "rollback": {
+    "branch": "archive/1022-attention-20261128",
+    "commit": "3e5eb7693f4b83c6232448270615e61e8e5520b2",
+    "repository": "/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f",
+    "config": "config/cluster.json",
+    "configuration_sha256": "690888a24a4025b0d48cffd3ff7fc512768f4e12f549e1e60f99de9cd613d927",
+    "image_id": "sha256:14d5bb2c49aad6ad5b09c93beb70379c4088c128162e24bb418d593e5e7853f5",
+    "profile_sha256": "e06b8cb60f3f382157ef6632a93efdd90185beafa2251a8c29575f09c45cd45b",
+    "preserve_assets": true
+  },
+  "activation": {
+    "method": "Adopt the qualified running fleet after coordinated clean Git synchronization to homelab/main and journaled physical service-control installation; no rebuild or engine restart is required when runtime identities match.",
+    "receipt_directory": "/srv/ai-cluster/operations/1126-attention-20261128",
+    "window_id": "67e78433-1bdb-4ff8-a0c9-6549ee37a8e6"
+  }
+}

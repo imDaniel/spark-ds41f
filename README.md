@@ -1,6 +1,6 @@
 # spark-ds41f
 
-This fork deploys from `homelab/main`. The accepted site runtime is the 1022 TP4 attention-steering baseline. See [site service controls](docs/site-service.md) and [the 1126 integration](experiments/2026-11-28-1126-attention/README.md). The upstream release information below describes the integration source.
+This fork deploys from `homelab/main`. The site recipe selects **1126 + Attention steering** on the four-node TP4 ring, preserving the official 1017 weights, original direction payload and scale 0–4. See the [site baseline](manifests/baselines/2026-11-28-homelab-1126-attention.json), [qualification and matched performance](experiments/2026-11-28-1126-tp4-qualification/RESULTS.md) and [service controls](docs/site-service.md). The upstream release information below describes the integration source and retains its own measurements.
 
 
 **DeepSeek V4.1 Flash on DGX Sparks. No switch required.\***

@@ -1,0 +1,10 @@
+test_gate_keeps_temperature_threshold_and_records_every_poll (test_site_thermal.SiteThermalTests.test_gate_keeps_temperature_threshold_and_records_every_poll) ... ok
+test_gate_keeps_ten_minute_timeout (test_site_thermal.SiteThermalTests.test_gate_keeps_ten_minute_timeout) ... ok
+test_query_records_local_bounds_and_keeps_ssh_timeout (test_site_thermal.SiteThermalTests.test_query_records_local_bounds_and_keeps_ssh_timeout) ... ok
+test_remote_wall_clock_skew_does_not_change_freshness (test_site_thermal.SiteThermalTests.test_remote_wall_clock_skew_does_not_change_freshness) ... ok
+test_stale_hot_future_missing_and_duplicate_samples_refuse (test_site_thermal.SiteThermalTests.test_stale_hot_future_missing_and_duplicate_samples_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.002s
+
+OK

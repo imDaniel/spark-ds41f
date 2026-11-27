@@ -198,15 +198,46 @@ def configuration(
     return cluster, nodes, json.loads(upstreams_path.read_text(encoding="utf-8"))
 
 
+# Imported arms retain the upstream recipe they resolved against at integration.
+# The site root advances independently; keep the published arm files unchanged.
+IMPORTED_RECIPE_PROFILES = frozenset([
+    'experiments/2026-10-25-agentx/production-agentx.json',
+    'experiments/2026-10-25-final-names/loader/b12x-tp3.json',
+    'experiments/2026-10-25-final-names/loader/b12x-tp4.json',
+    'experiments/2026-10-25-final-names/loader/direct-tp3.json',
+    'experiments/2026-10-25-final-names/loader/direct-tp4.json',
+    'experiments/2026-10-25-final-names/loader/safetensors-tp3.json',
+    'experiments/2026-10-25-final-names/loader/safetensors-tp4.json',
+    'experiments/2026-10-26-c1-100tps/arm-1025.json',
+    'experiments/2026-10-26-cluster-program/arm-1025.json',
+    'experiments/2026-10-26-spark-ds41f-candidate/candidate-74/tp3-1126-dev.json',
+    'experiments/2026-10-26-suffix-drafter/arm-1025.json',
+    'experiments/2026-10-27-no-flashinfer-kernels/1025-tp4.json',
+    'experiments/2026-10-31-glp-specv3-fold-steering/glp27-tp3.json',
+    'experiments/2026-10-31-glp-specv3-fold-steering/glp27-tp4.json',
+    'experiments/2026-11-01-direct-exchange-switched/candidate-36/runs/c36-direct-1/arm.json',
+    'experiments/2026-11-01-direct-exchange-switched/candidate-36/runs/c36-direct-2/arm.json',
+    'experiments/2026-11-01-switched-nccl-profile/tp4-switched.json',
+    'experiments/2026-11-03-site-tp4-1030-1017/candidate-arm-4k.json',
+    'experiments/2026-11-03-site-tp4-1030-1017/candidate-arm-64k.json',
+    'experiments/2026-11-04-clustered-indexer/serving/restore.json',
+    'experiments/2026-11-06-ced-local-projection/sp567-image.json',
+    'experiments/2026-11-20-pp2-tp2/pp2-tp2-ring.json',
+    'experiments/2026-11-20-pp2-tp2/pp2-tp2-socket.json',
+    'experiments/2026-11-20-pp2-tp2/pp2-tp2-switched.json',
+    'experiments/2026-11-20-pp2-tp2/pp2-tp3-switched.json',
+    'experiments/2026-11-20-pp2-tp2/pp2-tp4-switched.json',
+    'experiments/2026-11-23-decode-rope-empty-index-slice/tp8-switched-fix.json',
+])
+
+
 def read_cluster(relative: str, shape: str | None = None) -> dict:
     """A cluster configuration file as concrete settings: a recipe resolves to
     ``shape``, else to the site's; an arm overlay resolves its base first."""
     cluster = read_json(relative)
     if cluster_recipe.is_overlay(cluster):
         base = cluster["extends"]
-        if base["config"] == "config/cluster.json" and relative.startswith((
-            "experiments/2026-10-25-agentx/", "experiments/2026-11-20-pp2-tp2/",
-        )):
+        if base["config"] == "config/cluster.json" and relative in IMPORTED_RECIPE_PROFILES:
             base = {**base, "config": "releases/spark-ds41f-1126/cluster.json"}
         if cluster_recipe.is_recipe(read_json(base["config"])) and not base.get("shape"):
             raise SystemExit(f"{relative} extends the recipe {base['config']}: name its shape, an arm must not "

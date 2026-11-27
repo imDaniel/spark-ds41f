@@ -1,0 +1,6 @@
+live: running: 4 nodes, TP4, context 1,048,576, KV 10.5 GiB, image ds41f-1126-attention:vllm-7c445f265a7b, started from experiments/2026-11-28-1126-tp4-qualification/cluster.json
+spark01: stop exact container ds41f-1126-attention and stop its memguard
+spark02: stop exact container ds41f-1126-attention and stop its memguard
+spark03: stop exact container ds41f-1126-attention and stop its memguard
+spark04: stop exact container ds41f-1126-attention and stop its memguard
+plan only; pass --apply to stop the cluster

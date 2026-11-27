@@ -1,0 +1,7 @@
+{
+  "revision": "d430736ed3af6821bf131b711add441b155a8d68",
+  "pinned": true,
+  "dirty": false,
+  "stream_collector": "text-chunks",
+  "thermal_freshness": "controller-monotonic-query-v1"
+}

@@ -1,0 +1,7 @@
+{
+  "at": 1795819556.2162466,
+  "reason": "The legacy thermal freshness check rejects cool, current samples when a worker clock leads the controller. Repeat the complete second-boot cohort using controller-monotonic freshness.",
+  "completed_runs": 4,
+  "source_revision": "8f254013d510e35bcd30f712ba62915c6661c59c",
+  "action": "Benchmark had already exited; preserve its exit receipt."
+}

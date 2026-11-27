@@ -1,0 +1,40 @@
+{
+  "status": "passed",
+  "source_revision": "678e74b22fe128d053152e2592d848b1a9eb9468",
+  "polls": 1,
+  "samples": [
+    {
+      "node": "spark01",
+      "at": 1795819676.1573627,
+      "hottest_c": 42.0,
+      "query_started_monotonic": 3100575.800492132,
+      "received_monotonic": 3100576.163540996,
+      "received_at": 1795819676.162758
+    },
+    {
+      "node": "spark02",
+      "at": 1795819676.5100236,
+      "hottest_c": 41.8,
+      "query_started_monotonic": 3100575.80065597,
+      "received_monotonic": 3100576.490852631,
+      "received_at": 1795819676.4900596
+    },
+    {
+      "node": "spark03",
+      "at": 1795819676.6137807,
+      "hottest_c": 40.8,
+      "query_started_monotonic": 3100575.80081704,
+      "received_monotonic": 3100576.524488124,
+      "received_at": 1795819676.5236976
+    },
+    {
+      "node": "spark04",
+      "at": 1795819676.4992375,
+      "hottest_c": 41.8,
+      "query_started_monotonic": 3100575.801718998,
+      "received_monotonic": 3100576.470036658,
+      "received_at": 1795819676.4692516
+    }
+  ],
+  "observed_monotonic": 3100576.525382434
+}

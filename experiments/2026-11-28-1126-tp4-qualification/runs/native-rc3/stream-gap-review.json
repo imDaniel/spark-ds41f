@@ -1,0 +1,23 @@
+[
+  {
+    "directory": "/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f/experiments/2026-10-24-1022-matched-performance/runs/attempt-2/state/performance",
+    "intervals": 15788,
+    "max_ms": 341.5660749960807,
+    "above_old_max": 0,
+    "above_400ms": 0
+  },
+  {
+    "directory": "/srv/ai-cluster/operations/1126-attention-20261128/performance-boot1",
+    "intervals": 17667,
+    "max_ms": 300.6940591149032,
+    "above_old_max": 0,
+    "above_400ms": 0
+  },
+  {
+    "directory": "/srv/ai-cluster/operations/1126-attention-20261128/performance-boot2-retry",
+    "intervals": 17675,
+    "max_ms": 457.1676757186651,
+    "above_old_max": 1,
+    "above_400ms": 1
+  }
+]

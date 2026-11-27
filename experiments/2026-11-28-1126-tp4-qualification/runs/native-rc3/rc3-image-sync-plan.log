@@ -1,0 +1,6 @@
+spark01: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8c89f1c0e5f0bbc20b48e77fa3051dc0e2b2f68b
+spark02: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8c89f1c0e5f0bbc20b48e77fa3051dc0e2b2f68b
+spark03: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8c89f1c0e5f0bbc20b48e77fa3051dc0e2b2f68b
+spark04: fetch origin and detach /srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f at 8c89f1c0e5f0bbc20b48e77fa3051dc0e2b2f68b
+image: copy ds41f-1126-attention:vllm-7c445f265a7b from this host to spark02, spark03, spark04
+plan only; pass --apply to synchronize

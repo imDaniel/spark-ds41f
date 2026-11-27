@@ -1,0 +1,151 @@
+{
+  "command": [
+    "python3",
+    "experiments/2026-11-28-1126-tp4-qualification/qualify.py",
+    "functional",
+    "67e78433-1bdb-4ff8-a0c9-6549ee37a8e6",
+    "sha256:3e28171ec18fcb05dac837a12c680c321fa41f9a862e230d3b966668d3792157",
+    "/srv/ai-cluster/operations/1126-attention-20261128/functional-boot2"
+  ],
+  "started_at": 1795815133.8160543,
+  "status": "passed",
+  "monitor": "spark_ds41f.bench.MemoryWatch",
+  "sample_seconds": 1,
+  "thermal_sample_seconds": 15,
+  "vm_before": {
+    "spark01": {
+      "pagesize": 65536,
+      "swappiness": 60,
+      "pswpin": 14021,
+      "pswpout": 132622,
+      "pgmajfault": 2866064
+    },
+    "spark02": {
+      "pagesize": 65536,
+      "swappiness": 60,
+      "pswpin": 17125,
+      "pswpout": 455807,
+      "pgmajfault": 6201340
+    },
+    "spark03": {
+      "pagesize": 65536,
+      "swappiness": 60,
+      "pswpin": 11132,
+      "pswpout": 292960,
+      "pgmajfault": 4740727
+    },
+    "spark04": {
+      "pagesize": 65536,
+      "swappiness": 60,
+      "pswpin": 456,
+      "pswpout": 2630,
+      "pgmajfault": 1223853
+    }
+  },
+  "exit_code": 0,
+  "thermal": {
+    "spark01": {
+      "max_gpu_c": 57.0,
+      "min_headroom_c": 35.0,
+      "max_system_c": 62.6,
+      "max_power_w": 60.22,
+      "thermal_slowdown_ms": 0.0,
+      "power_cap_ms": 0.0
+    },
+    "spark02": {
+      "max_gpu_c": 57.0,
+      "min_headroom_c": 39.0,
+      "max_system_c": 59.8,
+      "max_power_w": 65.54,
+      "thermal_slowdown_ms": 0.0,
+      "power_cap_ms": 0.0
+    },
+    "spark03": {
+      "max_gpu_c": 56.0,
+      "min_headroom_c": 36.0,
+      "max_system_c": 60.4,
+      "max_power_w": 62.65,
+      "thermal_slowdown_ms": 0.0,
+      "power_cap_ms": 0.0
+    },
+    "spark04": {
+      "max_gpu_c": 58.0,
+      "min_headroom_c": 33.0,
+      "max_system_c": 59.7,
+      "max_power_w": 62.99,
+      "thermal_slowdown_ms": 0.0,
+      "power_cap_ms": 0.0
+    }
+  },
+  "memory": {
+    "spark01": {
+      "min_available_gib": 20.81,
+      "swap_growth_gib": 0.0
+    },
+    "spark02": {
+      "min_available_gib": 19.76,
+      "swap_growth_gib": 0.0
+    },
+    "spark03": {
+      "min_available_gib": 22.56,
+      "swap_growth_gib": 0.0
+    },
+    "spark04": {
+      "min_available_gib": 21.83,
+      "swap_growth_gib": 0.0
+    }
+  },
+  "vm_after": {
+    "spark01": {
+      "pagesize": 65536,
+      "swappiness": 60,
+      "pswpin": 14021,
+      "pswpout": 132622,
+      "pgmajfault": 2866114
+    },
+    "spark02": {
+      "pagesize": 65536,
+      "swappiness": 60,
+      "pswpin": 17125,
+      "pswpout": 455807,
+      "pgmajfault": 6201359
+    },
+    "spark03": {
+      "pagesize": 65536,
+      "swappiness": 60,
+      "pswpin": 11132,
+      "pswpout": 292960,
+      "pgmajfault": 4740729
+    },
+    "spark04": {
+      "pagesize": 65536,
+      "swappiness": 60,
+      "pswpin": 456,
+      "pswpout": 2630,
+      "pgmajfault": 1223855
+    }
+  },
+  "vm_delta": {
+    "spark01": {
+      "pswpin": 0,
+      "pswpout": 0,
+      "pgmajfault": 50
+    },
+    "spark02": {
+      "pswpin": 0,
+      "pswpout": 0,
+      "pgmajfault": 19
+    },
+    "spark03": {
+      "pswpin": 0,
+      "pswpout": 0,
+      "pgmajfault": 2
+    },
+    "spark04": {
+      "pswpin": 0,
+      "pswpout": 0,
+      "pgmajfault": 2
+    }
+  },
+  "finished_at": 1795815171.1140559
+}
