@@ -1,0 +1,64 @@
+From 50854eedb9f12d723e3a39aabaf6155e6bd7620b Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 04:10:04 +0800
+Subject: [PATCH] Use real capture descriptors in graph-profiling fixtures
+
+Base: 1126 Attention RC2 vLLM 46f15c3ba4dabeebfb6cc4aaa510d3ec96e5c758.
+
+The downstream optional-input topology added model_input_variant to the real batch descriptor. The profiling stand-in omitted it and broke seven orchestration checks. Use the actual descriptor, with its default stock variant, and add an independent two-variant memory interpolation example.
+
+Quality: test-only changes; production source and numerical assertions are unchanged. The new oracle separates a 180 MiB stock estimate from a 260 MiB steered estimate.
+
+Tests: the complete profiling file passed 37 tests on the native RC2 image with this file mounted read-only. Final-image release qualification remains separate.
+Upstream status: downstream test adaptation; no upstream submission.
+---
+ ...gpu_model_runner_v2_cudagraph_profiling.py | 26 ++++++++++++++++++-
+ 1 file changed, 25 insertions(+), 1 deletion(-)
+
+diff --git a/tests/v1/worker/test_gpu_model_runner_v2_cudagraph_profiling.py b/tests/v1/worker/test_gpu_model_runner_v2_cudagraph_profiling.py
+index cefb8aab5d761954083563bce3e242e580316c8c..7ed68c804e0d427b193ce6185cd21463e32152a8 100644
+--- a/tests/v1/worker/test_gpu_model_runner_v2_cudagraph_profiling.py
++++ b/tests/v1/worker/test_gpu_model_runner_v2_cudagraph_profiling.py
+@@ -37,7 +37,11 @@ class _FakeCudaGraphManager(cgu.CudaGraphManager):
+         self._needs_capture = needs_capture
+         self.pool: Any = GLOBAL_POOL
+         descs = [
+-            SimpleNamespace(num_tokens=num_tokens)
++            cgu.BatchExecutionDescriptor(
++                CUDAGraphMode.PIECEWISE if piecewise_only else CUDAGraphMode.FULL,
++                num_tokens,
++                None if piecewise_only else num_tokens,
++            )
+             for num_tokens in range(num_full_descs, 0, -1)
+         ]
+         if piecewise_only:
+@@ -430,6 +434,26 @@ def test_extrapolate_full_graph_memory():
+     )
+ 
+ 
++def test_extrapolate_full_graph_memory_keeps_input_variants_separate():
++    from dataclasses import replace
++
++    mib = 1 << 20
++    base = _full_descs(40, 32, 24, 16, 8)
++    steered = [replace(desc, model_input_variant=1) for desc in base]
++    samples = [
++        cgu._FullGraphMemorySample(base[0], 100 * mib, 100 * mib),
++        cgu._FullGraphMemorySample(steered[0], 100 * mib, 100 * mib),
++        cgu._FullGraphMemorySample(base[1], 32 * mib, 32 * mib),
++        cgu._FullGraphMemorySample(steered[1], 64 * mib, 64 * mib),
++        cgu._FullGraphMemorySample(base[4], 8 * mib, 8 * mib),
++        cgu._FullGraphMemorySample(steered[4], 16 * mib, 16 * mib),
++    ]
++    # Unmeasured 24/16-token graphs cost 24/16 MiB in the stock variant
++    # and 48/32 MiB in the steered one. Peak-pool growth is measured once
++    # for each variant and does not become its per-graph reference.
++    assert cgu._extrapolate_full_graph_memory(samples, base + steered) == 440 * mib
++
++
+ _MIB = 1 << 20
+ # Decode page metadata that a buggy attention backend retains in every FULL
+ # graph (the DeepSeek-V4.1 per-graph copy fixed in vLLM #918).
+-- 
+2.43.0
+

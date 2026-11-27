@@ -1,0 +1,56 @@
+[
+  {
+    "field": "steering_scale",
+    "value": 5,
+    "transport": "http",
+    "status": 400,
+    "stream": false
+  },
+  {
+    "field": "steering_scale",
+    "value": 5,
+    "transport": "sse",
+    "status": 400,
+    "stream": true,
+    "error": {
+      "message": "steering_scale must be finite and in [0, 4] (parameter=steering_scale)",
+      "type": "BadRequestError",
+      "param": "steering_scale",
+      "code": 400
+    }
+  },
+  {
+    "field": "steering_scale",
+    "value": true,
+    "transport": "http",
+    "status": 400,
+    "stream": false
+  },
+  {
+    "field": "steering_scale",
+    "value": true,
+    "transport": "http",
+    "status": 400,
+    "stream": true
+  },
+  {
+    "field": "steering_profile",
+    "value": "missing-profile",
+    "transport": "http",
+    "status": 400,
+    "stream": false
+  },
+  {
+    "field": "steering_profile",
+    "value": "missing-profile",
+    "transport": "sse",
+    "status": 400,
+    "stream": true,
+    "error": {
+      "message": "unknown steering_profile (parameter=steering_profile)",
+      "type": "BadRequestError",
+      "param": "steering_profile",
+      "code": 400
+    }
+  }
+]

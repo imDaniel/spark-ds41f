@@ -1,0 +1,24 @@
+{
+  "base": "46f15c3ba4dabeebfb6cc4aaa510d3ec96e5c758",
+  "head": "9a71ded060b015e40f721a9caf506e43bd1f3fa0",
+  "tree": "7c445f265a7bf21b4860735cd972b326968150c3",
+  "changed_files": [
+    "tests/v1/worker/test_gpu_model_runner_v2_cudagraph_profiling.py"
+  ],
+  "production_source_identical": true,
+  "fixture_probe_passed": 37,
+  "fixture_probe_log": "graph-profile-fixture-probe.log",
+  "fixture_probe_xml": "graph-profile-fixture-probe.xml",
+  "parent_series": "experiments/2026-11-28-1126-attention-rc2/vllm/series",
+  "new_series": "experiments/2026-11-28-1126-attention-rc3/vllm/series",
+  "patch_count": 750,
+  "retained_patches": 749,
+  "added_patches": [
+    "vllm/0500-real-capture-descriptors-and-variant-memory.patch"
+  ],
+  "patchset_sha256": "4db4c0bdffb7de3a8d98287f78811ab58f00d75c688e08ccda9bea77660ab2d8",
+  "profile_reuse": {
+    "sha256": "81ca5d96cf78a1c0193ab80071efab43d666b5a57e8633ced71b227031bde1f2",
+    "reason": "Only the graph-profiling test file changed. Production source, model, template, operator, directions and schedule are unchanged from RC2."
+  }
+}

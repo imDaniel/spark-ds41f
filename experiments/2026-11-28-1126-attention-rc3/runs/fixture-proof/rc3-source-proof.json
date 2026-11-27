@@ -1,0 +1,12 @@
+{
+  "base": "46f15c3ba4dabeebfb6cc4aaa510d3ec96e5c758",
+  "head": "9a71ded060b015e40f721a9caf506e43bd1f3fa0",
+  "tree": "7c445f265a7bf21b4860735cd972b326968150c3",
+  "changed_files": [
+    "tests/v1/worker/test_gpu_model_runner_v2_cudagraph_profiling.py"
+  ],
+  "production_source_identical": true,
+  "fixture_probe_passed": 37,
+  "fixture_probe_log": "graph-profile-fixture-probe.log",
+  "fixture_probe_xml": "graph-profile-fixture-probe.xml"
+}

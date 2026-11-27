@@ -1,0 +1,70 @@
+{
+  "command": [
+    "python3",
+    "experiments/2026-11-28-1126-tp4-qualification/qualify.py",
+    "functional",
+    "67e78433-1bdb-4ff8-a0c9-6549ee37a8e6",
+    "sha256:38dab89e937a9ebd3f73e38555513cc607c1f3431e9c95cd286c594c2f5c3a6a",
+    "/srv/ai-cluster/operations/1126-attention-20261128/functional-boot1"
+  ],
+  "started_at": 1795806274.6386602,
+  "status": "failed",
+  "monitor": "spark_ds41f.bench.MemoryWatch",
+  "sample_seconds": 1,
+  "thermal_sample_seconds": 15,
+  "exit_code": 1,
+  "error": "Qualification command failed",
+  "thermal": {
+    "spark01": {
+      "max_gpu_c": 56.0,
+      "min_headroom_c": 33.0,
+      "max_system_c": 63.0,
+      "max_power_w": 61.44,
+      "thermal_slowdown_ms": 0.0,
+      "power_cap_ms": 0.0
+    },
+    "spark02": {
+      "max_gpu_c": 55.0,
+      "min_headroom_c": 39.0,
+      "max_system_c": 61.8,
+      "max_power_w": 65.68,
+      "thermal_slowdown_ms": 0.0,
+      "power_cap_ms": 0.0
+    },
+    "spark03": {
+      "max_gpu_c": 56.0,
+      "min_headroom_c": 38.0,
+      "max_system_c": 61.3,
+      "max_power_w": 62.25,
+      "thermal_slowdown_ms": 0.0,
+      "power_cap_ms": 0.0
+    },
+    "spark04": {
+      "max_gpu_c": 54.0,
+      "min_headroom_c": 39.0,
+      "max_system_c": 61.1,
+      "max_power_w": 63.82,
+      "thermal_slowdown_ms": 0.0,
+      "power_cap_ms": 0.0
+    }
+  },
+  "memory": {
+    "spark01": {
+      "min_available_gib": 20.79,
+      "swap_growth_gib": 0.0
+    },
+    "spark02": {
+      "min_available_gib": 23.09,
+      "swap_growth_gib": 0.0
+    },
+    "spark03": {
+      "min_available_gib": 23.08,
+      "swap_growth_gib": 0.0
+    },
+    "spark04": {
+      "min_available_gib": 22.96,
+      "swap_growth_gib": 0.0
+    }
+  },
+  "finished_at": 1795806313.6512172
+}

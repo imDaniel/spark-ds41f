@@ -1,0 +1,26 @@
+[
+  {
+    "scale": 5,
+    "status": 400,
+    "body": {
+      "error": {
+        "message": "steering_scale must be finite and in [0, 4] (parameter=steering_scale)",
+        "type": "BadRequestError",
+        "param": "steering_scale",
+        "code": 400
+      }
+    }
+  },
+  {
+    "scale": true,
+    "status": 400,
+    "body": {
+      "error": {
+        "message": "2 validation errors:\n  {'type': 'int_type', 'loc': 'body.steering_scale', 'msg': 'Input should be a valid integer', 'input': 'True'}\n  {'type': 'float_type', 'loc': 'body.steering_scale', 'msg': 'Input should be a valid number', 'input': 'True'}",
+        "type": "Bad Request",
+        "param": "body.steering_scale",
+        "code": 400
+      }
+    }
+  }
+]

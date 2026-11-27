@@ -1,6 +1,6 @@
 {
   "extends": {
-    "config": "experiments/2026-11-28-1126-attention-rc2/cluster.json"
+    "config": "experiments/2026-11-28-1126-attention-rc3/cluster.json"
   },
   "set": {
     "deployment": {

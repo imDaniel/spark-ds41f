@@ -18,7 +18,7 @@ sys.path.insert(0, str(HERE.parent / "2026-10-23-1022-capacity-validation"))
 import capacity_requests
 
 NODES = {f"spark{i:02}": f"10.42.0.{i}" for i in range(1, 5)}
-TREE = "b87c425f0ec0301a8a1b509f4a5158c5e817a4a0"
+TREE = "7c445f265a7bf21b4860735cd972b326968150c3"
 PROFILE = "81ca5d96cf78a1c0193ab80071efab43d666b5a57e8633ced71b227031bde1f2"
 
 
