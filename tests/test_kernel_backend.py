@@ -140,7 +140,7 @@ class KernelBackendTest(unittest.TestCase):
         for shape in ("tp3-triangle", "tp3-triangle-4k"):
             with self.subTest(shape=shape):
                 cluster = spark.read_cluster("config/cluster.json", shape)
-                self.assertNotIn("upstreams_config", cluster)
+                self.assertEqual(spark.read_json(cluster.get("upstreams_config", "upstreams.lock.json")), lock)
                 self.assertEqual(cluster["promoted_baseline"], lock["generated_from_baseline"])
                 cluster["distributed"]["master_addr"] = self.base["distributed"]["master_addr"]
                 self.assertEqual(cluster["kernel_backend"], "tilelang")
@@ -161,7 +161,7 @@ class KernelBackendTest(unittest.TestCase):
         nodes = spark.read_json("config/examples/nodes-ring4.json")
         cluster = spark.read_cluster("config/cluster.json", "tp4-ring")
         self.assertEqual(cluster["nodes_config"], "config/nodes-1022-attention.local.json")
-        self.assertNotIn("upstreams_config", cluster)
+        self.assertEqual(spark.read_json(cluster.get("upstreams_config", "upstreams.lock.json")), lock)
         self.assertEqual(cluster["promoted_baseline"], lock["generated_from_baseline"])
         cluster["distributed"]["master_addr"] = next(n for n in nodes["nodes"] if n.get("head"))["management_ip"]
         self.assertEqual(cluster["kernel_backend"], "tilelang")

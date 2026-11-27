@@ -43,7 +43,8 @@ class ExampleSiteTest(unittest.TestCase):
             selected = json.loads((root / "config/cluster.json").read_text())["shapes"]["tp4-ring"]["nodes_config"]
             ring = json.loads((root / selected).read_text())
             self.assertEqual([node["management_ip"] for node in ring["nodes"] if node.get("head")], [address])
-            gid = int(json.loads((root / "config/cluster.json").read_text())["environment"]["SPARKNET_ROCE_GID_INDEX"])
+            cluster = json.loads((root / "config/cluster.json").read_text())
+            gid = int(example_site.recipe.shape_entry(cluster, "tp4-ring")["environment"]["NCCL_IB_GID_INDEX"])
             self.assertTrue(all(node["roce_gid_index"] == gid for node in ring["nodes"]))
             old = json.loads((root / "config/nodes-ring4.local.json").read_text())
             previous_head = json.loads((root / frozen).read_text())["distributed"]["master_addr"]

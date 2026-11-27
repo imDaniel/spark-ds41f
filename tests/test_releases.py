@@ -152,6 +152,16 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(render_docs.main(["--check"]), 0)
 
         data = render_docs.collect_manifest_data()
+        site_baselines = {name for name, manifest in self.releases.items()
+                          if manifest.get("site_release") is True}
+        self.assertTrue(site_baselines)
+        self.assertTrue(site_baselines.isdisjoint(row["stem"] for row in data["timeline"]))
+        for name in site_baselines:
+            reference = load(self.releases[name]["benchmark_reference"])
+            self.assertEqual(reference["baseline"], name)
+            self.assertEqual(reference["schema"], "accepted-matched-performance-reference/1")
+            self.assertNotIn(self.releases[name]["benchmark_reference"],
+                             {row["path"] for row in data["benchmarks"]})
         production = load("releases/spark-ds41f-1126/cluster.json")
         upstreams_lock = load("releases/spark-ds41f-1126/upstreams.lock.json")
         self.assertEqual(data["promoted_baseline"], production["promoted_baseline"])

@@ -572,8 +572,15 @@ def collect_manifest_data() -> dict[str, Any]:
     kv_rows = kv_capacity.report(cluster, model_cfg.get("text_config", model_cfg), [])
 
     baselines_by_stem: dict[str, dict[str, Any]] = {}
+    site_baselines: set[str] = set()
     for path in sorted((ROOT / "manifests/baselines").glob("*.json")):
-        baselines_by_stem[path.stem] = json.loads(path.read_text())
+        baseline = json.loads(path.read_text())
+        if baseline.get("site_release") is True:
+            # Site Attention's matched workload has its own report, rather than
+            # empty or incomparable rows in the imported upstream bench page.
+            site_baselines.add(path.stem)
+            continue
+        baselines_by_stem[path.stem] = baseline
 
     sources_by_stem: dict[str, dict[str, Any]] = {}
     for path in sorted((ROOT / "manifests/sources").glob("*.json")):
@@ -591,6 +598,8 @@ def collect_manifest_data() -> dict[str, Any]:
     benchmarks: list[dict[str, Any]] = []
     benchmarks_by_path: dict[str, dict[str, Any]] = {}
     for bench_path in sorted((ROOT / "manifests/benchmarks").glob("*.json")):
+        if json.loads(bench_path.read_text()).get("baseline") in site_baselines:
+            continue
         parsed_bench = load_benchmark_file(bench_path)
         benchmarks.append(parsed_bench)
         benchmarks_by_path[parsed_bench["path"]] = parsed_bench
