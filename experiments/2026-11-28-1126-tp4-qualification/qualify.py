@@ -3,6 +3,7 @@ import argparse
 import concurrent.futures
 import hashlib
 import json
+import os
 from pathlib import Path
 import shlex
 import sys
@@ -76,9 +77,16 @@ def qualify(stage, window, image_id, output):
             if hashlib.sha256(Path(path).read_bytes()).hexdigest() != digest:
                 raise ValueError(f"Host document source differs: {path}")
         benchmark.require_window = verify
+        previous_policy = os.environ.get("SONAR_STREAM_COLLECTOR")
+        os.environ["SONAR_STREAM_COLLECTOR"] = "text-chunks"
+        identity["stream_collector"] = "text-chunks"
         try:
             benchmark.run(output)
         finally:
+            if previous_policy is None:
+                os.environ.pop("SONAR_STREAM_COLLECTOR", None)
+            else:
+                os.environ["SONAR_STREAM_COLLECTOR"] = previous_policy
             if output.is_dir():
                 (output / "sonar.json").write_text(json.dumps(identity, indent=2) + "\n")
     verify()
