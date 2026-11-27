@@ -52,12 +52,20 @@ def qualify(stage, window, image_id, output):
     if stage == "functional":
         from functional import run
         run(output)
-    elif stage == "capacity":
+    elif stage in ("capacity", "capacity-overlap"):
         capacity_requests.client.BASE = benchmark.BASE
         original_cases = capacity_requests.CASES
-        capacity_requests.CASES = [
-            (length, [1], 32) for length in (32768, 131072, 262144, 524288, 1000000)
-        ] + original_cases
+        if stage == "capacity-overlap":
+            # Keep the original C16/256 receipt, whose early completions only
+            # overlapped ten admitted requests. Sustain the same mixed scales
+            # for longer without relaxing the sixteen-running admission gate.
+            capacity_requests.CASES = [
+                (*original_cases[0][:2], 1024), *original_cases[1:]
+            ]
+        else:
+            capacity_requests.CASES = [
+                (length, [1], 32) for length in (32768, 131072, 262144, 524288, 1000000)
+            ] + original_cases
         try:
             capacity_requests.run(output)
         finally:
@@ -94,7 +102,7 @@ def qualify(stage, window, image_id, output):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("stage", choices=["functional", "capacity", "performance"])
+    p.add_argument("stage", choices=["functional", "capacity", "capacity-overlap", "performance"])
     p.add_argument("window")
     p.add_argument("image_id")
     p.add_argument("output", type=Path)

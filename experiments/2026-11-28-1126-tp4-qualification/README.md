@@ -18,6 +18,8 @@ The initial [component test manifest](component-tests.json) selects 97 files fro
 
 Passing offline checks does not qualify this candidate for promotion. Native image build, four-rank execution, functional and capacity acceptance, the required performance measurements and physical service-control adoption all remain pending.
 
+The final RC3 image's first capacity attempt passed the five cold C1 lengths through 1,000,000 input tokens. Its 8K/C16/256 batch returned all sixteen complete, uncached responses, but the observed running peak was ten: early responses finished while later requests were still being prefetched. This attempt remains a failed capacity proof. The separate `capacity-overlap` stage increases only C16 output to 1,024 tokens and retains the C16 admission requirement, mixed scales, uncached inputs, the two C4 long-context cases and the stability loop. It reuses the first attempt's five C1 receipts. This stronger capacity workload does not change the six historical performance cases or their 256-token outputs.
+
 ## Offline review receipt
 
 The [review receipt](runs/offline-review-05a0a5a1/result.json) records 1,048 repository tests, 13 window tests and 45 recovery fault tests passing on Spark01 at `05a0a5a11a7f241569542f7b092f7f0db4e15a7e`. Three shape doctors and the generated documentation check passed. Tests ran in a detached worktree with example site maps. Timings printed by fake test services are fixture output.
