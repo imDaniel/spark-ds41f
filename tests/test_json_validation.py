@@ -1,9 +1,11 @@
 import hashlib
 import json
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scripts.check_json import check
 
 
@@ -47,3 +49,7 @@ class JsonValidationTest(unittest.TestCase):
         self.assertEqual(check(self.root, self.exceptions), ([], 2))
         path.write_text("{")
         self.assertIn("config/cluster.json", check(self.root, self.exceptions)[0][0])
+
+
+if __name__ == "__main__":
+    unittest.main()
