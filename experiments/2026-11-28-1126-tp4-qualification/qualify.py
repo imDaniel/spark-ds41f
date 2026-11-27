@@ -97,9 +97,14 @@ def qualify(stage, window, image_id, output):
         previous_policy = os.environ.get("SONAR_STREAM_COLLECTOR")
         os.environ["SONAR_STREAM_COLLECTOR"] = "text-chunks"
         identity["stream_collector"] = "text-chunks"
+        from thermal import gate
+        previous_thermal = benchmark.thermal_gate
+        benchmark.thermal_gate = gate
+        identity["thermal_freshness"] = "controller-monotonic-query-v1"
         try:
             benchmark.run(output)
         finally:
+            benchmark.thermal_gate = previous_thermal
             if previous_policy is None:
                 os.environ.pop("SONAR_STREAM_COLLECTOR", None)
             else:
