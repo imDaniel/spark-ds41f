@@ -76,8 +76,11 @@ def qualify(stage, window, image_id, output):
             if hashlib.sha256(Path(path).read_bytes()).hexdigest() != digest:
                 raise ValueError(f"Host document source differs: {path}")
         benchmark.require_window = verify
-        benchmark.run(output)
-        (output / "sonar.json").write_text(json.dumps(identity, indent=2) + "\n")
+        try:
+            benchmark.run(output)
+        finally:
+            if output.is_dir():
+                (output / "sonar.json").write_text(json.dumps(identity, indent=2) + "\n")
     verify()
 
 
