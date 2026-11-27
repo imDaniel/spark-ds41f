@@ -175,6 +175,7 @@ class LeaseTest(unittest.TestCase):
         commands = []
         with contextlib.ExitStack() as ctx:
             ctx.enter_context(patch.object(window.subprocess, "run", return_value=type("State", (), {"stdout":"inactive"})()))
+            ctx.enter_context(patch.object(window, "stop_owned_component"))
             ctx.enter_context(patch.object(window, "four_inspect", side_effect=lambda n: ["ds41f-1126-attention"] if n == 2 else []))
             ctx.enter_context(patch.object(window, "spark", side_effect=lambda *args, **kwargs: commands.append(args)))
             ctx.enter_context(patch.object(window.site, "restore_ingress"))
@@ -187,10 +188,34 @@ class LeaseTest(unittest.TestCase):
     def test_gpu_or_remote_failure_preserves_hold(self):
         with patch.object(window.subprocess, "run", return_value=type("State", (), {"stdout":"inactive"})()), \
              patch.object(window, "four_inspect", side_effect=RuntimeError("GPU fault")), \
+             patch.object(window, "stop_owned_component"), \
              patch.object(window, "spark") as spark, self.assertRaises(RuntimeError):
             window.restore("mine")
         spark.assert_not_called()
         self.assertTrue(window.HOLD.exists())
+
+    def test_component_cleanup_requires_window_and_image_identity(self):
+        (self.root / "candidate-image.txt").write_text("sha256:tested 1234\n")
+        c = {"State": {"Running": True}, "Image": "sha256:tested", "Config": {"Labels": {
+            "local.spark-ds41f.qualification.window": "mine"}}}
+        import json
+        with patch.object(window.subprocess, "run", return_value=subprocess.CompletedProcess(
+                [], 0, stdout=json.dumps([c]), stderr="")), patch.object(window, "cmd") as stop:
+            window.stop_owned_component({"window_id": "mine"})
+            self.assertEqual(stop.call_args.args[0],
+                             ["docker", "stop", "--timeout", "30", "ds41f-1126-component-check"])
+        for change in ("image", "window"):
+            with self.subTest(change=change):
+                other = json.loads(json.dumps(c))
+                if change == "image":
+                    other["Image"] = "sha256:other"
+                else:
+                    other["Config"]["Labels"]["local.spark-ds41f.qualification.window"] = "other"
+                with patch.object(window.subprocess, "run", return_value=subprocess.CompletedProcess(
+                        [], 0, stdout=json.dumps([other]), stderr="")), \
+                     patch.object(window, "cmd") as stop, self.assertRaises(RuntimeError):
+                    window.stop_owned_component({"window_id": "mine"})
+                stop.assert_not_called()
 
 
 if __name__ == "__main__":

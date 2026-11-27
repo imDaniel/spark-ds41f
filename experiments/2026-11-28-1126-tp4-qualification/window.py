@@ -175,6 +175,7 @@ def restore_service(h):
         active = subprocess.run(["systemctl", "--user", "is-active", unit], capture_output=True, text=True)
         if active.stdout.strip() in ("activating", "active", "deactivating"):
             cmd(["systemctl", "--user", "stop", unit], timeout=180)
+    stop_owned_component(h)
     with concurrent.futures.ThreadPoolExecutor(4) as pool:
         rows = list(pool.map(four_inspect, range(1, 5)))
     if any("ds41f-1126-attention" in r for r in rows):
@@ -186,6 +187,24 @@ def restore_service(h):
         spark(OLD, "config/cluster.json", "cluster", "start", "--replace", "--apply")
     spark(OLD, "config/cluster.json", "doctor", "--live")
     site.restore_ingress(h)
+
+
+def stop_owned_component(h):
+    name = "ds41f-1126-component-check"
+    result = subprocess.run(["docker", "inspect", name], capture_output=True, text=True)
+    if result.returncode:
+        if "No such object" in result.stderr or "No such container" in result.stderr:
+            return
+        raise RuntimeError("Cannot inspect the component test container: " + result.stderr)
+    container = json.loads(result.stdout)[0]
+    if not container["State"]["Running"]:
+        return
+    expected = (OP / "candidate-image.txt").read_text().split()[0]
+    labels = container["Config"].get("Labels") or {}
+    if (labels.get("local.spark-ds41f.qualification.window") != h["window_id"]
+            or container["Image"] != expected):
+        raise RuntimeError("The component container belongs to another window or image")
+    cmd(["docker", "stop", "--timeout", "30", name], timeout=60)
 
 
 def require_watchdog(window):
