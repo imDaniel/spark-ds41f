@@ -2,8 +2,6 @@
 import base64
 import json
 import struct
-import urllib.error
-import urllib.request
 import zlib
 
 from qualification_requests import QUALITY, cache_screen, check_quality, client, previous, request
@@ -96,16 +94,9 @@ def run(output):
         for field, value in (("steering_scale", 5), ("steering_scale", True), ("steering_profile", "missing-profile")):
             body = client.body("Return only 42.", 1)
             body[field] = value
-            req = urllib.request.Request(client.BASE + "/v1/chat/completions", data=json.dumps(body).encode(),
-                                         headers={"Content-Type":"application/json"})
-            try:
-                with urllib.request.urlopen(req, timeout=45) as response:
-                    raise ValueError(f"Invalid {field} was admitted: {response.status}")
-            except urllib.error.HTTPError as exc:
-                detail = json.loads(exc.read())
-                record("invalid-request", field=field, value=value, status=exc.code, detail=detail)
-                if exc.code not in (400, 422):
-                    raise
+            for streaming in (False, True):
+                rejection = client.expect_rejection(body, streaming)
+                record("invalid-request", field=field, value=value, **rejection)
         report["status"] = "passed"
     except BaseException as exc:
         report.update(status="failed", error=str(exc))

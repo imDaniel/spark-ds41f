@@ -240,8 +240,8 @@ jobs:
           .work/steering-1022-cpu-venv/bin/python -m pip install --require-hashes -r requirements/steering-1022-cpu.txt
       - name: Execute the complete pinned CPU collection
         run: .work/steering-1022-cpu-venv/bin/python scripts/check_steering_cpu.py --upstreams experiments/$STEERING_EXPERIMENT/upstreams.lock.json --cases experiments/$STEERING_EXPERIMENT/cpu-cases.json --report .work/steering-1022-cpu.xml
-      - name: Classify all serving tests in the output-parser candidate
-        if: matrix.experiment == '2026-10-23-1022-output-parser' || matrix.experiment == '2026-10-23-1022-release-fixtures' || matrix.experiment == '2026-10-23-1022-parser-byte-alignment'
+      - name: Classify all serving tests in the candidate
+        if: matrix.experiment == '2026-10-23-1022-output-parser' || matrix.experiment == '2026-10-23-1022-release-fixtures' || matrix.experiment == '2026-10-23-1022-parser-byte-alignment' || matrix.experiment == '2026-11-28-1126-attention' || matrix.experiment == '2026-11-28-1126-attention-rc2'
         run: |
           python3 - <<'PY'
           import json, os, runpy, subprocess
@@ -251,9 +251,11 @@ jobs:
           lock = json.loads((root / "upstreams.lock.json").read_text())
           inputs = spark["build_inputs"](lock)
           source = spark["build_directory"](inputs) / "src/vllm"
+          classification = (Path("config/release-tests.json") if root.name.startswith("2026-11-28-1126-attention")
+                            else root / "release-tests.json")
           subprocess.run(["python3", "scripts/release_tests.py", "check", str(source),
                           inputs["vllm"]["revision"], inputs["vllm"]["patch_head"],
-                          str(root / "release-tests.json")], check=True)
+                          str(classification)], check=True)
           PY
       - name: Check rendered JSON controls with the byte tokenizer fixture
         if: matrix.experiment == '2026-10-23-1022-attention-review' || matrix.experiment == '2026-11-28-1126-attention' || matrix.experiment == '2026-11-28-1126-attention-rc2'
