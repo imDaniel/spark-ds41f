@@ -18,7 +18,7 @@ ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE.parent / "2026-10-23-1022-window"))
 import site_adapter as site
 sys.path.insert(0, str(HERE.parent / "2026-10-23-1022-recovery-executor"))
-from window_executor import atomic_json
+from window_executor import atomic_json, stamp
 
 OP = Path("/srv/ai-cluster/operations/1126-attention-20261128")
 OLD = Path("/srv/ai-cluster/runtimes/1022-screen-20261023/source/spark-ds41f")
@@ -28,6 +28,7 @@ HOLD = Path.home() / "spark-hold.json"
 OWNER = "1126-attention-site-qualification"
 PREFIX = "ds41f-1126-qualification"
 UNITS = tuple(PREFIX + "-" + name for name in ("build", "kernel", "start", "test", "sync"))
+WATCHDOG_INTERVAL = 15
 
 
 def now():
@@ -51,6 +52,14 @@ def owned(window):
     h = stored()
     if h.get("holder") != OWNER or h.get("window_id") != window:
         raise RuntimeError("Another holder owns the cluster")
+    return h
+
+
+def active(window):
+    h = owned(window)
+    if (h["phase"] in ("recovering", "recovery_failed") or h["boot_id"] != boot()
+            or time.monotonic() - h["beat_monotonic"] >= 900):
+        raise RuntimeError("Window recovery has priority")
     return h
 
 
@@ -83,10 +92,10 @@ def acquire(window):
 
 
 def heartbeat(window, phase=None):
+    if phase in ("recovering", "recovery_failed"):
+        raise ValueError("Only the recovery executor can set a recovery phase")
     with lock():
-        h = owned(window)
-        if h["boot_id"] != boot() or h["phase"] == "recovering":
-            raise RuntimeError("Window recovery has priority")
+        h = active(window)
         h.update(heartbeat=now(), beat_monotonic=time.monotonic())
         if phase:
             h["phase"] = phase
@@ -120,14 +129,29 @@ print(json.dumps(names))
 
 
 def restore(window, *, stale=False):
+    # Keep one restorer in charge of cluster and ingress mutations. A killed
+    # process releases flock; a reported hardware/command failure needs review.
     with lock():
-        h = owned(window)
-        if stale and h["boot_id"] == boot() and time.monotonic()-h["beat_monotonic"] < 900:
+        if stale and not HOLD.exists():
             return
-        if h["phase"] == "recovering" and stale:
+        h = owned(window)
+        if stale and (h["phase"] == "recovery_failed" or (
+                h["phase"] != "recovering" and h["boot_id"] == boot()
+                and time.monotonic() - h["beat_monotonic"] < 900)):
             return
         h["phase"] = "recovering"
         atomic_json(HOLD, h)
+        try:
+            restore_service(h)
+        except Exception as error:
+            h.update(phase="recovery_failed", recovery_error=str(error))
+            atomic_json(HOLD, h)
+            raise
+        atomic_json(OP / ("recovered-" + window + ".json"), {"at": now(), "restored": OLD_REV})
+        HOLD.unlink()
+
+
+def restore_service(h):
     for unit in UNITS:
         active = subprocess.run(["systemctl", "--user", "is-active", unit], capture_output=True, text=True)
         if active.stdout.strip() in ("activating", "active", "deactivating"):
@@ -143,23 +167,66 @@ def restore(window, *, stale=False):
         spark(OLD, "config/cluster.json", "cluster", "start", "--replace", "--apply")
     spark(OLD, "config/cluster.json", "doctor", "--live")
     site.restore_ingress(h)
+
+
+def require_watchdog(window):
+    receipt = OP / ("watchdog-" + window + ".json")
+    try:
+        ready = json.loads(receipt.read_text())
+        pid = ready["pid"]
+        age = time.monotonic() - ready["beat_monotonic"]
+        healthy = (
+            ready["window_id"] == window and ready["boot_id"] == boot()
+            and 0 <= age < 3 * WATCHDOG_INTERVAL
+            and type(pid) is int and pid > 0 and pid != os.getpid()
+            and bool(ready["birth"]) and stamp(pid) == ready["birth"]
+        )
+    except (OSError, KeyError, TypeError, ValueError, subprocess.SubprocessError):
+        healthy = False
+    if not healthy:
+        raise RuntimeError("No live independent recovery watchdog for this window")
+
+
+def block_ingress(window):
     with lock():
-        owned(window)
-        atomic_json(OP / ("recovered-" + window + ".json"), {"at": now(), "restored": OLD_REV})
-        HOLD.unlink()
+        h = active(window)
+        require_watchdog(window)
+        initial_stage = site.ingress_stage(h)
+        site.block(h)
+        try:
+            require_watchdog(window)
+        except RuntimeError:
+            # The current service is still running during drain.
+            if initial_stage == "open":
+                site.restore_ingress(h)
+            raise
+        if site.ingress_stage(h) != "blocked":
+            raise RuntimeError("Ingress is open")
 
 
 def watchdog(window):
     owned(window)
-    atomic_json(OP / ("watchdog-" + window + ".json"), {"ready": now(), "pid": os.getpid()})
-    while HOLD.exists():
-        h = stored()
+    pid = os.getpid()
+    identity = {"window_id": window, "pid": pid, "birth": stamp(pid), "boot_id": boot()}
+    if not identity["birth"]:
+        raise RuntimeError("Cannot establish watchdog process identity")
+    while True:
+        try:
+            h = stored()
+        except FileNotFoundError:
+            return
         if h.get("window_id") != window:
             return
-        if h.get("phase") != "recovering" and (h["boot_id"] != boot() or time.monotonic()-h["beat_monotonic"] >= 900):
+        if h["phase"] == "recovery_failed":
+            raise RuntimeError("Previous recovery failed; see the retained hold")
+        atomic_json(OP / ("watchdog-" + window + ".json"),
+                    {**identity, "beat_monotonic": time.monotonic()})
+        if (h["phase"] == "recovering" or h["boot_id"] != boot()
+                or time.monotonic() - h["beat_monotonic"] >= 900):
             restore(window, stale=True)
-            return
-        time.sleep(15)
+            # Recovery rechecks the heartbeat under the lock. If it raced with
+            # a refresh, the lease is still live and still needs a watchdog.
+        time.sleep(WATCHDOG_INTERVAL)
 
 
 def main():
@@ -171,7 +238,6 @@ def main():
     if args.action == "open":
         acquire(args.window)
         return
-    h = owned(args.window)
     if args.action == "watchdog":
         watchdog(args.window)
     elif args.action == "recover":
@@ -179,16 +245,13 @@ def main():
     elif args.action == "beat":
         heartbeat(args.window, args.phase)
     elif args.action == "block":
-        if not (OP / ("watchdog-" + args.window + ".json")).is_file():
-            raise RuntimeError("Recovery watchdog has not reported ready")
-        site.block(h)
-        if site.ingress_stage(h) != "blocked":
-            raise RuntimeError("Ingress is open")
+        block_ingress(args.window)
     elif args.action == "reopen":
-        site.restore_ingress(h)
+        with lock():
+            site.restore_ingress(active(args.window))
     elif args.action == "finish":
         with lock():
-            owned(args.window)
+            h = active(args.window)
             if site.ingress_stage(h) != "open":
                 raise RuntimeError("Ingress remains blocked")
             spark(ROOT, CFG, "doctor", "--live")

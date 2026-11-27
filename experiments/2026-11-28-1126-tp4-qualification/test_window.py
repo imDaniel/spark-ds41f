@@ -1,4 +1,7 @@
 import contextlib
+import os
+import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -35,12 +38,116 @@ class LeaseTest(unittest.TestCase):
             window.restore("mine", stale=True)
         self.assertEqual(window.stored()["phase"], "build")
 
+    def test_dead_watchdog_receipt_cannot_drain(self):
+        receipt = self.root / "watchdog-mine.json"
+        script = (
+            "import sys,window; from pathlib import Path; "
+            "window.OP=Path(sys.argv[1]); window.HOLD=window.OP/'hold'; "
+            "window.boot=lambda:'boot'; window.watchdog('mine')"
+        )
+        with subprocess.Popen([sys.executable, "-c", script, str(self.root)], cwd=window.HERE) as child:
+            try:
+                deadline = time.monotonic() + 5
+                while not receipt.exists() and child.poll() is None and time.monotonic() < deadline:
+                    time.sleep(0.02)
+                window.require_watchdog("mine")
+            finally:
+                child.kill()
+        with patch.object(window.site, "block") as drain, self.assertRaisesRegex(RuntimeError, "watchdog"):
+            window.block_ingress("mine")
+        drain.assert_not_called()
+
+    def test_watchdog_rejects_wrong_owner_or_expired_identity(self):
+        ready = {"window_id": "mine", "pid": 424242, "birth": "birth", "boot_id": "boot",
+                 "beat_monotonic": time.monotonic()}
+        cases = ({"window_id": "other"}, {"boot_id": "old"}, {"pid": os.getpid()},
+                 {"birth": "reused-pid"}, {"birth": None}, {"beat_monotonic": time.monotonic() - 60})
+        with patch.object(window, "stamp", return_value="birth"):
+            for change in cases:
+                with self.subTest(change=change):
+                    window.atomic_json(self.root / "watchdog-mine.json", {**ready, **change})
+                    with self.assertRaisesRegex(RuntimeError, "watchdog"):
+                        window.require_watchdog("mine")
+
+    def test_watchdog_loss_during_drain_only_undoes_new_gate(self):
+        for stage in ("open", "blocked"):
+            with self.subTest(stage=stage), contextlib.ExitStack() as ctx:
+                ctx.enter_context(patch.object(window, "require_watchdog",
+                                              side_effect=[None, RuntimeError("watchdog stopped")]))
+                ctx.enter_context(patch.object(window.site, "ingress_stage", return_value=stage))
+                drain = ctx.enter_context(patch.object(window.site, "block"))
+                reopen = ctx.enter_context(patch.object(window.site, "restore_ingress"))
+                with self.assertRaisesRegex(RuntimeError, "watchdog stopped"):
+                    window.block_ingress("mine")
+                drain.assert_called_once()
+                self.assertEqual(reopen.call_count, int(stage == "open"))
+
+    def test_refresh_race_keeps_watchdog_polling(self):
+        hold = window.stored()
+        hold["beat_monotonic"] -= 901
+        window.atomic_json(window.HOLD, hold)
+        def refresh(*args, **kwargs):
+            # A healthy refresh had committed before the restorer obtained
+            # the lock; the watchdog's original read was the older snapshot.
+            self.set_hold(window.OWNER)
+        with patch.object(window, "restore", side_effect=refresh) as recovery, \
+             patch.object(window.time, "sleep", side_effect=[None, StopIteration]) as sleep:
+            with self.assertRaises(StopIteration):
+                window.watchdog("mine")
+        recovery.assert_called_once_with("mine", stale=True)
+        self.assertEqual(sleep.call_count, 2)
+
     def test_recovering_window_cannot_be_revived(self):
         h = window.stored()
         h["phase"] = "recovering"
         window.atomic_json(window.HOLD, h)
         with self.assertRaises(RuntimeError):
             window.heartbeat("mine", "testing")
+
+    def test_expired_heartbeat_does_not_revive_lease(self):
+        h = window.stored()
+        h["beat_monotonic"] -= 901
+        window.atomic_json(window.HOLD, h)
+        with self.assertRaisesRegex(RuntimeError, "priority"):
+            window.heartbeat("mine")
+        self.assertEqual(h, window.stored())
+
+    def test_abandoned_recovery_resumes_but_recorded_failure_requires_manual_retry(self):
+        h = window.stored()
+        h["phase"] = "recovering"
+        window.atomic_json(window.HOLD, h)
+        with patch.object(window, "restore_service", side_effect=RuntimeError("fault")) as service:
+            with self.assertRaisesRegex(RuntimeError, "fault"):
+                window.restore("mine", stale=True)
+            self.assertEqual(window.stored()["phase"], "recovery_failed")
+            window.restore("mine", stale=True)
+            service.assert_called_once()
+        with patch.object(window, "restore_service") as service:
+            window.restore("mine")
+            service.assert_called_once()
+        self.assertFalse(window.HOLD.exists())
+
+    def test_recovery_actions_are_under_one_exclusive_lock(self):
+        def check_lock(hold):
+            with (self.root / "window.lock").open("a") as other:
+                with self.assertRaises(BlockingIOError):
+                    window.fcntl.flock(other, window.fcntl.LOCK_EX | window.fcntl.LOCK_NB)
+            self.assertEqual(window.stored()["phase"], "recovering")
+        with patch.object(window, "restore_service", side_effect=check_lock):
+            window.restore("mine")
+
+    def test_reopen_and_finish_cannot_interrupt_failed_recovery(self):
+        h = window.stored()
+        h["phase"] = "recovery_failed"
+        window.atomic_json(window.HOLD, h)
+        for action in ("reopen", "finish"):
+            with self.subTest(action=action), contextlib.ExitStack() as ctx:
+                ctx.enter_context(patch.object(sys, "argv", ["window.py", action, "mine"]))
+                reopen = ctx.enter_context(patch.object(window.site, "restore_ingress"))
+                with self.assertRaisesRegex(RuntimeError, "priority"):
+                    window.main()
+                reopen.assert_not_called()
+        self.assertEqual(h, window.stored())
 
     def test_partial_launch_stopped_before_retained_start(self):
         commands = []
