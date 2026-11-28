@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "captured_at": "2026-11-25",
-  "generated_from_baseline": "2026-11-28-homelab-1126-attention",
+  "generated_from_baseline": "2026-11-28-homelab-1126-attention-fixes-rc3",
   "sources": {
     "vllm": {
       "kind": "git",
@@ -11,15 +11,15 @@
       "revision": "19f2c20ed4d64ae22bd009ceacadd85e2a81e354",
       "revision_url": "https://github.com/local-inference-lab/vllm/commit/19f2c20ed4d64ae22bd009ceacadd85e2a81e354",
       "role": "serving source: Local Inference Lab's DS4.1 integration branch, used unchanged; canonical vllm-project/vllm main is parked",
-      "patch_series": "experiments/2026-11-28-1126-attention-rc3/vllm/series",
+      "patch_series": "experiments/2026-11-28-1126-attention-fixes-rc3/vllm/series",
       "canonical_base": {
         "upstream": "https://github.com/vllm-project/vllm.git",
         "revision": "0f8fa53acf43a9a6a7a1f7e6b196950c78cd6d7a"
       },
-      "patch_count": 750,
-      "patch_head": "9a71ded060b015e40f721a9caf506e43bd1f3fa0",
-      "expected_tree": "7c445f265a7bf21b4860735cd972b326968150c3",
-      "patchset_sha256": "4db4c0bdffb7de3a8d98287f78811ab58f00d75c688e08ccda9bea77660ab2d8"
+      "patch_count": 757,
+      "patch_head": "f54bee45a79182ca0de85aeddff6697e7659f626",
+      "expected_tree": "50402286dbe6d2f5975211809be8ecada25c8f69",
+      "patchset_sha256": "84bb68f89b2a973c66b0a4dc2027678adc9e5c35f278d52422b9b71f83f28ace"
     },
     "vllm_base_image": {
       "kind": "oci",
@@ -420,6 +420,6 @@
       "role": "NVIDIA's CuTe DSL MegaMoE (also in FlashInfer moe_ep, NVFP4/MXFP8 expert-parallel MoE with communication fused) and TRT-LLM sparse attention; design reference only"
     }
   },
-  "source_manifest": "manifests/sources/2026-11-28-homelab-1126-attention-source.json",
+  "source_manifest": "manifests/sources/2026-11-28-homelab-1126-attention-fixes-rc3-source.json",
   "updated_at": "2026-11-28"
 }

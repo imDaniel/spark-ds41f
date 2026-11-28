@@ -1,36 +1,33 @@
 # Current state
 
-The site's selected production baseline is **2026-11-28-homelab-1126-attention**:
-[manifest](../manifests/baselines/2026-11-28-homelab-1126-attention.json),
-[qualification results](../experiments/2026-11-28-1126-tp4-qualification/RESULTS.md).
-The single recipe in `config/cluster.json` selects RC3 image `3e28171e…`, vLLM tree
-`7c445f26…`, profile `81ca5d96…`, TP4 ring, context 1,048,576, 16 sequences,
-8,192 requested batched tokens and 10.5 GiB KV per rank. Copy drafts internally
-reserve batch/graph rows 8,203/107. The model weights, direction payload, alpha
-2.5, layers 2–39 and request scale 0–4 are unchanged. The profile only rebinds
-its chat-template identity and conversion provenance.
+The site selects **2026-11-28-homelab-1126-attention-fixes-rc3** for its four-node TP4 ring.
+The qualified image ID begins with `5d6e6aa4`, the vLLM source tree with `50402286`,
+and the Attention profile SHA-256 with `c9c7663d`. The official 1017 model uses
+the original direction payload, alpha 2.5, layers 2–39 and request scales 0–4.
+The recipe provides 1,048,576 context tokens, 16 sequences, 8,192 requested
+batched tokens and 10.5 GiB KV per rank. Image admission is 999, with a 1 GiB
+processor cache and a 16,777,216-pixel input limit.
+[Release manifest](../manifests/baselines/2026-11-28-homelab-1126-attention-fixes-rc3.json) ·
+[Frozen recipe](../releases/homelab-1126-attention-fixes-rc3/cluster.json)
 
-The native 195-file gate passes 16,196 cases, with 357 explained skips and no
-failures/errors. The service functional, cache, strengthened C16/C4 capacity and
-stability gates pass. Two complete cohorts on independent engine starts show
-aggregate throughput +10.24–16.67%, mean TTFT −7.18–9.75%, and request P99
-−6.59–17.56% versus the archived 1022 reference, which was not rerun. A single
-maximum stream gap regresses to 457.2 ms from 341.6 ms while its P99 improves;
-all raw runs, unsuccessful attempts, confidence intervals and limits are retained.
-These are engine starts with JIT caches retained, not host reboots.
+The native GPU suite passed 16,232 cases across 195 files, with 357 skips.
+The real API preserved tool argument types, separated KV entries by scale and
+caller salt, and passed the established 46 functional requests and 13 cache
+scenarios. CUDA Graph capture and replay passed for both input variants.
+Capacity reached four simultaneous requests of 1,000,000 input and 16,384
+output tokens each. The functional image checks covered two image requests.
+[Hardware qualification](../experiments/2026-11-28-pr60-tp4/RESULTS.md)
 
-Image admission remains 999, processor cache 1 GiB and maximum input pixels
-16,777,216; two image API requests pass, without a broad image-quality claim.
-TP3 variants and GLP have no qualifying site benchmark in this promotion.
-The source recipe and lock are frozen under `releases/homelab-1126-attention/`.
-Imported upstream arms remain bound to the frozen upstream recipe.
+Compared with the two archived 1126 engine starts, the two RC3 starts measured
+0.27–0.46% lower aggregate output TPS. Throughput, average first-token latency
+and end-to-end P99 showed no directional change under the qualification rule.
+At scale 4 and concurrency 4 median decode time rose 0.441 ms per token. At
+scale 1 and concurrency 1 the longest visible stream gap rose 0.451 ms.
+[Matched performance](../experiments/2026-11-28-pr60-tp4/runs/performance-comparison.json)
 
-Activation adopts the qualified running fleet after clean coordinated Git
-synchronization and journaled service-control installation. Runtime commands,
-environment, mounts and all four start times must remain unchanged. Operational
-receipts live in `/srv/ai-cluster/operations/1126-attention-20261128`.
-The prior site release is retained on `archive/1022-attention-20261128` at
-`3e5eb7693f4b83c6232448270615e61e8e5520b2` with its physical recovery assets.
+Activation coordinates all four checkouts at the exact merged revision. The former 1126 release at `63b0c0d31e43` retains its own frozen
+recipe, image and profile for recovery. [Service controls](site-service.md) ·
+[Previous 1126 release](../releases/homelab-1126-attention/cluster.json)
 
 ## Upstream release reference
 

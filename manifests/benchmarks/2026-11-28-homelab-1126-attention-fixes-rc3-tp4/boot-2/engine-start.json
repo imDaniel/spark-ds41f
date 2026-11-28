@@ -1,0 +1,26 @@
+{
+  "window_id": "9025c649-3f78-4949-a3b0-62c44787337e",
+  "stage": "performance",
+  "deployment_commit": "67b23d5f0abb6eeeb99b92432b17d3092e192643",
+  "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394",
+  "profile_sha256": "c9c7663dade8685f5d7932b65a7476a58647981b4cfc3c59f008c6dcf080b3f6",
+  "ranks": {
+    "spark01": {
+      "container_id": "40c151192d70b3aa57066450afd1a8ab4c2a9332446556fe78259fc200e4d997",
+      "started_at": "2026-11-28T07:59:40.59360817Z"
+    },
+    "spark02": {
+      "container_id": "0a27b6b90d086835070d3a08a81bb66c35c096ba7b2e5d3e49cee2e11732065f",
+      "started_at": "2026-11-28T07:59:40.171126691Z"
+    },
+    "spark03": {
+      "container_id": "5a47d56ef0cfc9a6a5ee3adf30c3a71b0ee675d62c343e69bdc8e86cf0b47e39",
+      "started_at": "2026-11-28T07:59:40.165187754Z"
+    },
+    "spark04": {
+      "container_id": "8368e6e8da079b806c2d62ae3085789f793c557c90036ccb35e6b5f0ca51e726",
+      "started_at": "2026-11-28T07:59:40.1729555Z"
+    }
+  },
+  "vllm_tree": "50402286dbe6d2f5975211809be8ecada25c8f69"
+}

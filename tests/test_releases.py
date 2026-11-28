@@ -4,11 +4,15 @@ A promotion adds ``releases/<name>/`` (the recipe and its lock, never edited aft
 baseline manifest naming them, the arm each shape qualified on, and any change made to the
 recipe after the release. No test names a release: these checks read the manifests."""
 
+import gzip
+import hashlib
 import json
 import re
+import statistics
 import sys
 import tempfile
 import unittest
+from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -146,6 +150,41 @@ class ReleaseTest(unittest.TestCase):
             previous = manifest.get("previous_baseline")
             if previous in self.releases:
                 self.assertLess(self.releases[previous]["captured_at"], manifest["captured_at"], name)
+
+    def test_site_performance_reference_replays_the_accepted_raw_runs(self):
+        for name, release in self.releases.items():
+            if not release.get("site_release"):
+                continue
+            with self.subTest(release=name):
+                ref = load(release["benchmark_reference"])
+                self.assertEqual(ref["identity"]["image_id"], release["image_id"])
+                self.assertEqual(ref["identity"]["profile_sha256"], release["profile"]["sha256"])
+                cases = ref["workload"]["cases_scale_concurrency"]
+                inputs = ref["comparison"]["candidate_inputs"]
+                directories = ref["native_receipts"]
+                self.assertEqual(len(set(directories)), len(directories))
+                self.assertGreaterEqual(len(directories), 2)
+                runs = defaultdict(list)
+                digests = set()
+                for directory, boot in zip(directories, inputs, strict=True):
+                    for case, receipt in zip(cases, boot, strict=True):
+                        raw = (ROOT / directory / Path(receipt["path"]).name).read_bytes()
+                        digest = hashlib.sha256(raw).hexdigest()
+                        self.assertEqual((len(raw), digest), (receipt["bytes"], receipt["sha256"]))
+                        self.assertNotIn(digest, digests)
+                        digests.add(digest)
+                        run = json.loads(gzip.decompress(raw))
+                        load_case = run["workload"]
+                        self.assertEqual([load_case["extra_body"]["steering_scale"], load_case["concurrency"]], case)
+                        runs[tuple(case)].append(run["summary"])
+                rows = ref["comparison"]["comparisons"]
+                self.assertCountEqual([(r["scale"], r["concurrency"]) for r in rows], list(runs))
+                for row in rows:
+                    measured = runs[row["scale"], row["concurrency"]]
+                    pooled = row["candidate"]
+                    self.assertEqual(pooled["requests"], sum(s["requests"]["started_in_window"] for s in measured))
+                    self.assertAlmostEqual(pooled["metrics"]["output_tps"],
+                                           statistics.mean(s["output_tps"]["mean"] for s in measured))
 
     def test_generated_docs_and_pages_match_manifests(self):
         """The generated upstream reference sections retain the imported release's evidence."""
