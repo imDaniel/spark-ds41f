@@ -14,6 +14,8 @@ MODEL = "deepseek-v4.1-flash"
 PROFILE = "heretic-1017-attn-v1"
 CONTROL = "<｜User｜>"
 JSON_STRING = '{ "a": 1 }'
+PROBE_TOKENS = 16
+MIXED_TOKENS = 512
 
 
 def check(condition, message):
@@ -130,7 +132,7 @@ def check_tools(base, record):
             check(ids == reference, "Parallel result arrival order or transport changed engine prompt IDs")
 
 
-def completion(tokens, scale, salt, length=16):
+def completion(tokens, scale, salt, length=PROBE_TOKENS):
     body = {"model": MODEL, "prompt": tokens, "temperature": 0, "seed": 1022,
             "min_tokens": length, "max_tokens": length, "ignore_eos": True, "return_token_ids": True}
     if scale is not None:
@@ -140,8 +142,8 @@ def completion(tokens, scale, salt, length=16):
     return body
 
 
-def complete(base, tokens, scale, salt, barrier=None):
-    body = completion(tokens, scale, salt)
+def complete(base, tokens, scale, salt, barrier=None, length=PROBE_TOKENS):
+    body = completion(tokens, scale, salt, length)
     if barrier is not None:
         barrier.wait(timeout=10)
     start = time.monotonic()
@@ -156,17 +158,23 @@ def complete(base, tokens, scale, salt, barrier=None):
             "started": start, "ended": time.monotonic()}
 
 
-def wait_requests(base, running, seconds):
+def request_counts(base):
+    with urllib.request.urlopen(base + "/metrics", timeout=5) as response:
+        text = response.read().decode()
+    counts = {}
+    for name in ("num_requests_running", "num_requests_waiting"):
+        values = re.findall(r"^vllm:" + name + r"(?:\{[^\n]*\})? ([\d.e+-]+)$", text, re.MULTILINE)
+        check(values, f"Missing {name} metric")
+        counts[name] = sum(map(float, values))
+    return counts
+
+
+def wait_requests(base, minimum_running, seconds):
     deadline = time.monotonic() + seconds
     while True:
-        with urllib.request.urlopen(base + "/metrics", timeout=5) as response:
-            text = response.read().decode()
-        counts = {}
-        for name in ("num_requests_running", "num_requests_waiting"):
-            values = re.findall(r"^vllm:" + name + r"(?:\{[^\n]*\})? ([\d.e+-]+)$", text, re.MULTILINE)
-            check(values, f"Missing {name} metric")
-            counts[name] = sum(map(float, values))
-        if running and counts["num_requests_running"] >= 1 or not running and not any(counts.values()):
+        counts = request_counts(base)
+        if (minimum_running > 0 and counts["num_requests_running"] >= minimum_running
+                or minimum_running == 0 and not any(counts.values())):
             return counts
         check(time.monotonic() < deadline, f"Engine did not reach expected request count: {counts}")
         time.sleep(0.25)
@@ -178,18 +186,18 @@ def cancel_and_drain(base, tokens, salt, record):
     # its scheduler slot disappears before any subsequent request is sent.
     body = completion(tokens, 1, salt, length=16384)
     body.update(stream=True, stream_options={"include_usage": True})
-    wait_requests(base, False, 20)
+    wait_requests(base, 0, 20)
     with open_request(base, "/v1/completions", body) as response:
         for item in events(response):
             first = next((c for c in item["choices"] if c.get("token_ids")), None)
             if first:
                 check(not first.get("finish_reason"), "Generation ended before cancellation")
                 record("cancelling", id=item["id"], first_ids=first["token_ids"],
-                       counts=wait_requests(base, True, 12))
+                       counts=wait_requests(base, 1, 12))
                 break
         else:
             raise ValueError("Cancellation stream produced no token IDs")
-    record("cancel-drained", counts=wait_requests(base, False, 30))
+    record("cancel-drained", counts=wait_requests(base, 0, 30))
 
 
 def check_cache(base, record):
@@ -207,8 +215,9 @@ def check_cache(base, record):
         # Changing caller salt partitions physical KV reuse, while the model
         # sees the same inputs. Stock and explicit scale zero share the key.
         canonical = row["scale"] or 0
-        expected = reference.setdefault(canonical, row["token_ids"])
-        check(row["token_ids"] == expected, f"Generated IDs changed for scale {canonical}: {row}")
+        ids = row["token_ids"][:PROBE_TOKENS]
+        expected = reference.setdefault(canonical, ids)
+        check(ids == expected, f"Generated IDs changed for scale {canonical}: {row}")
 
     for salt in (None, salt_a, salt_b):
         for scale in (0, 1, 4):
@@ -221,15 +230,28 @@ def check_cache(base, record):
     row = complete(base, tokens, None, salt_a)
     record("default-stock", **row)
     verify(row, False)
+    wait_requests(base, 0, 20)
     barrier = threading.Barrier(4)
+    observations = []
     with concurrent.futures.ThreadPoolExecutor(4) as pool:
-        futures = [pool.submit(complete, base, tokens, scale, salt, barrier)
+        futures = [pool.submit(complete, base, tokens, scale, salt, barrier, MIXED_TOKENS)
                    for scale, salt in ((0, None), (1, salt_a), (4, salt_b), (1, salt_b))]
+        # Longer decode keeps the admitted requests resident across scheduler
+        # metric updates. The same first 16 token IDs have a sequential oracle.
+        while True:
+            observations.append({"at": time.monotonic(), **request_counts(base)})
+            _, pending = concurrent.futures.wait(futures, timeout=0.25)
+            if not pending:
+                break
         rows = [future.result() for future in futures]
+    peak = max(r["num_requests_running"] for r in observations)
+    record("mixed-engine-running", peak=peak, observations=observations,
+           input_tokens=len(tokens), output_tokens_per_request=MIXED_TOKENS)
     for row in rows:
         record("mixed-concurrency", **row)
         verify(row, False)
     check(max(r["started"] for r in rows) < min(r["ended"] for r in rows), "Four requests did not overlap")
+    check(peak == 4, f"Mixed scale/salt probes expected four running, observed {peak}")
     cancel_and_drain(base, tokens, salt_a, record)
     for scale, salt in ((1, salt_a), (0, salt_a), (4, salt_b)):
         row = complete(base, tokens, scale, salt)
