@@ -280,7 +280,9 @@ def stop_jobs(h):
     name = "ds41f-pr60-component-check"
     proc = subprocess.run(["docker", "inspect", name], capture_output=True, text=True, timeout=30)
     if proc.returncode:
-        if "No such object" in proc.stderr or "No such container" in proc.stderr:
+        inventory = subprocess.run(["docker", "ps", "-a", "--filter", f"name=^/{name}$",
+                                    "--format", "{{.Names}}"], capture_output=True, text=True, timeout=30)
+        if inventory.returncode == 0 and not inventory.stdout.strip():
             return
         raise RuntimeError("Cannot inspect component container: " + proc.stderr)
     c = json.loads(proc.stdout)[0]

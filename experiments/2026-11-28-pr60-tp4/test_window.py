@@ -184,6 +184,22 @@ class QualificationWindowTest(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "Cannot inspect"):
                     window.site.ingress_stage(self.h)
 
+    def test_missing_component_requires_successful_docker_inventory(self):
+        for rc, listed in ((0, ""), (1, ""), (0, "ds41f-pr60-component-check")):
+            def status(args, **kwargs):
+                if args[0] == "systemctl":
+                    return subprocess.CompletedProcess(args, 3, "inactive\n", "")
+                if args[1] == "inspect":
+                    return subprocess.CompletedProcess(args, 1, "", "error: no such object")
+                self.assertIn("name=^/ds41f-pr60-component-check$", args)
+                return subprocess.CompletedProcess(args, rc, listed, "")
+            with self.subTest(rc=rc, listed=listed), patch.object(window.subprocess, "run", side_effect=status):
+                if rc == 0 and not listed:
+                    window.stop_jobs(self.h)
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "Cannot inspect"):
+                        window.stop_jobs(self.h)
+
     def test_component_process_cleanup_is_uuid_and_image_bound(self):
         (self.op / "candidate-image.txt").write_text("sha256:tested 1024\n")
         component = dict(State={"Running": True}, Config={"Labels": {"local.spark-ds41f.qualification.window": self.window}},
