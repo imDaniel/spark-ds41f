@@ -91,9 +91,11 @@ class ServingContainerTest(unittest.TestCase):
 
     def test_docker_filters_name_every_serving_container(self) -> None:
         self.assertEqual(spark.serving_filters(self.NEW),
-                         ["--filter", "name=^spark-ds41f$", "--filter", "name=^dsv41-"])
+                         ["--filter", "name=^spark-ds41f$", "--filter", "name=^ds41f-1126-attention$",
+                          "--filter", "name=^ds41f-1126-attention-fixes$", "--filter", "name=^dsv41-"])
         self.assertEqual(spark.serving_filters(self.OLD),
                          ["--filter", "name=^dsv41-karmic-kraken$", "--filter", "name=^spark-ds41f$",
+                          "--filter", "name=^ds41f-1126-attention$", "--filter", "name=^ds41f-1126-attention-fixes$",
                           "--filter", "name=^dsv41-"])
 
     def test_a_build_refuses_either_service(self) -> None:

@@ -1,0 +1,149 @@
+{
+  "component_head": "f32ecc918435920d2b22301406b5b4ee5d162e1c",
+  "component_tree": "2f003a3cd5fcb135b3dbfdd3f67556052956a9c0",
+  "source_patchset_sha256": "b59f84782cdc5c71b7239b8fe0c54003f5817d7ba3fa684a677fc85ec6155dc1",
+  "parent_deployment": "ca24a728aede48613b106db37665eee77942a7cb",
+  "dependency_image": "sha256:3e28171ec18fcb05dac837a12c680c321fa41f9a862e230d3b966668d3792157",
+  "container_runtime": "runc",
+  "container_network": "none",
+  "visible_gpu_devices": 0,
+  "combined_candidate": {
+    "encoder": {
+      "tests": 87,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "bdba124445bdd9fedf0a99a8f8d38445df2a3238f5891f7d36367c4e0f80e4fe",
+      "log_sha256": "ffc656b8d964b3baaa55596e2a4c7a123a319fabf5aa62c4ed1871ae853aacaa",
+      "real_tokenizer_cases": 37
+    },
+    "tokenizer": {
+      "tests": 161,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "ba9dce0bb213fba8c354b88397c5e2c1466764e4d83ca3e345e3aaecfb178479",
+      "log_sha256": "fbe6fc4d746e48059db4f54675892d30d2f5ec2289380f1b8addcea0e8733795"
+    },
+    "parser": {
+      "tests": 104,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "3f975bbf19d26066559350bdeac13ab1f16c90364fc1866a3c86fb2b9760edeb",
+      "log_sha256": "345a84bdb046fc8636665d066bbacab6f828261f8273a7f125e2dab8be14f4e2"
+    },
+    "cache": {
+      "tests": 37,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "6d60fcec764a57f3415bca9316a87f99a7e7c3096e71e314b6a7068db1e59c84",
+      "log_sha256": "8a8fe295777b736aa4f84109c2421e5551114045e5d54a5ab48424a0c716c71a"
+    },
+    "steering": {
+      "tests": 129,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "83631e946c7518d4cfc9329289a30ed6895da2ba5a69f769b879bf42df4fa26f",
+      "log_sha256": "29e0012eeba4194e291f14bf8251f0280310de0f7cc8d43cacffe9b965de31b7"
+    },
+    "graph": {
+      "tests": 44,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "00c184c445b02824b9fd1e1f65f4784c0f489abfe4a85c9f991d23aa30d285a5",
+      "log_sha256": "49997c4eb86f12b68fa99094555af33629752014995762b54b05b932fb24c15d"
+    }
+  },
+  "graph_hardware_cases_deselected": 2,
+  "steering_cpu_cases_exact": true,
+  "profile_rebind_repeated": true,
+  "review_comparisons": {
+    "original_candidate": "44f3ee2ea2acd7aa70b12053c7f11d4d3d37c90c",
+    "cache_admission": {
+      "original_failed": 13,
+      "original_passed": 1,
+      "original_log_sha256": "0c166cecea4c5fc4848b0e70e8927fc53878f5a471931f4dbf54d883552ac358",
+      "fixed_passed": 37,
+      "fixed_log_sha256": "99ee1a367f0084e66d91a68842fd207b51f15b410d217fc1370426ec2e708813"
+    },
+    "serving_guard": {
+      "original_failed": 2,
+      "original_log_sha256": "3cf1e58e34d9621d9383c59eae8db1378dcd3418b67c16893d3b3e57ce53ee77",
+      "fixed_passed": 3,
+      "fixed_log_sha256": "6865a52d0eb5a95c5d7a513a1316ecc52d1298900da006b60386e6728f54e5f9"
+    },
+    "profile_output": {
+      "original_failed": 2,
+      "original_passed": 4,
+      "original_log_sha256": "ca12c513846e44f89f249687ccb96c0d4433eeccf51b388da5fc9184e3fbe042",
+      "fixed_passed": 6,
+      "fixed_log_sha256": "2d68630425e952dd78b78a7245e035f9979682a46480d40ec2703b5aecd57397"
+    },
+    "deep_tool_arguments": {
+      "original_failed_backends": [
+        "byte",
+        "1017"
+      ],
+      "original_real_log_sha256": "b2dfeb9d1d4a760cc930632cabcbdedc5ad482f82b8af08daeeea5a2c664f3ec",
+      "original_byte_log_sha256": "dcc64f58b3a1515fc978023a1cafad42c36b382849463ce51cd7e80d8be79003",
+      "final_real_regression_log_sha256": "40c50072938b7d8ef5222fcccbcba82d238cd9b4a5c0849da414f92ee4c292b7",
+      "real_regression_before_log_sha256": "416ad8d2cb94fab911638988f750fe0fbdf7f2201d7ecb913107422b7ed0a497"
+    },
+    "tool_call_id_order": {
+      "promoted_1126_log_sha256": "e775e0e6642c3eab434fb3b2c0ccd4b66b5136c06e9c1fcce24846fd42921b79",
+      "original_candidate_log_sha256": "1ce65273b78fdc796804b4e5d4adfb3d9a55cfb6e04566578b55febcdbd251ab",
+      "input": "Three parallel calls and results presented out of call order",
+      "original_order_with_control_spelling": [
+        0,
+        2,
+        1
+      ],
+      "original_order_with_two_image_spellings": [
+        1,
+        0,
+        2
+      ],
+      "expected_order": [
+        0,
+        1,
+        2
+      ],
+      "api_before_log_sha256": "d0b5ba3ccbdd219f3ffbbba0cecaf90272c0ab9731326088c5ca63ef4f0cd9c4",
+      "api_after_log_sha256": "1bd189fead690792e34624cbb6dbc739098684ca64bc50dc3f7fddf5ba8ebc28",
+      "real_test_before_log_sha256": "8cbdecc948bf50d54ee4a61ea3fd175b969d0896adf9780c69b3147f8332d9d8",
+      "real_test_after_log_sha256": "547bfa73b4b84245495c6319e51d3a5a11e2e54fe1ac8ac2274b77e469030069"
+    },
+    "verification_notes": [
+      "The first repository run caught a missing unittest.main entry point in the new container-guard test. The test module was corrected before the full rerun."
+    ]
+  },
+  "repository_verification": {
+    "unittest_passed": 1072,
+    "unittest_log_sha256": "3f7a269f568818c824a1ac4374b51fac301b0ca09f9281474dff2fed0144ce3f",
+    "unittest_initial_log_sha256": "a218b6e61ed90f517183fa8a7d32541d3f94f5579866af304c840840312dc3ee",
+    "candidate_doctor": "passed",
+    "fresh_replay_patches": 756,
+    "full_build_prepare": "passed",
+    "build_check": "passed",
+    "prepare_log_sha256": "42f4514e6fc8d33ef96e1a2f90f4bea24fdc1fef5965fbc0696ce9f81c4fd025",
+    "release_classification": {
+      "gate": 181,
+      "excluded": 61
+    },
+    "classification_log_sha256": "a4e8550025cd10009866c56301331db52840dfa0f111cf862ef531cadf3e0ed0",
+    "json_validation": "passed",
+    "json_log_sha256": "ee7ea142b5e56b02d66e9149bdb05ca8283cb99f8bbc5d2d570082117a8a0db4",
+    "generated_docs": "passed"
+  },
+  "profile_publication_tests": {
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0,
+    "log_sha256": "6b3d1f0242a91d3f2a4c4ae7e79027a393c4643c11eb038779122863bbd61ae0",
+    "junit_sha256": "2be37c5d52890147b1a6b57986acaa28c1236ca1368614df0f4670126a7660bd"
+  }
+}

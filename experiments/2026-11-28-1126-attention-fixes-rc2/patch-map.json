@@ -1,0 +1,26 @@
+{
+  "parent_deployment": "ca24a728aede48613b106db37665eee77942a7cb",
+  "parent_head": "44f3ee2ea2acd7aa70b12053c7f11d4d3d37c90c",
+  "parent_tree": "4d6258642732812b83af5ce8be482f00e575fec5",
+  "retained_parent_series": "experiments/2026-11-28-1126-attention-fixes/vllm/series",
+  "retained_patch_count": 753,
+  "added": [
+    {
+      "patch": "0503-preserve-tool-argument-json-depth.patch",
+      "commit": "3251142badd64d5838e90340888c844ba136878b"
+    },
+    {
+      "patch": "0504-validate-cache-salt-and-snapshot-attention-requests.patch",
+      "commit": "5508cdf8501e3fa4c20b07fe9a0f8e0ee5593ae6"
+    },
+    {
+      "patch": "0505-preserve-tool-result-identity.patch",
+      "commit": "f32ecc918435920d2b22301406b5b4ee5d162e1c"
+    }
+  ],
+  "patch_count": 756,
+  "patch_head": "f32ecc918435920d2b22301406b5b4ee5d162e1c",
+  "expected_tree": "2f003a3cd5fcb135b3dbfdd3f67556052956a9c0",
+  "patch_series": "experiments/2026-11-28-1126-attention-fixes-rc2/vllm/series",
+  "patchset_sha256": "b59f84782cdc5c71b7239b8fe0c54003f5817d7ba3fa684a677fc85ec6155dc1"
+}

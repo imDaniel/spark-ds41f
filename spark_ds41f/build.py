@@ -1518,17 +1518,18 @@ def run_memory_guarded(command: list[str], reserve_gib: float) -> float:
 # GPU from serving, and a start that must not run beside another engine, recognise every such
 # name, whatever the profile at hand calls its own.
 SERVING_CONTAINER = "spark-ds41f"
+SERVING_NAMES = (SERVING_CONTAINER, "ds41f-1126-attention", "ds41f-1126-attention-fixes")
 LEGACY_SERVING_PREFIX = "dsv41-"
 
 
 def serving_container(name: str, cluster: dict) -> bool:
-    return name in (cluster["container"]["name"], SERVING_CONTAINER) or name.startswith(LEGACY_SERVING_PREFIX)
+    return name == cluster["container"]["name"] or name in SERVING_NAMES or name.startswith(LEGACY_SERVING_PREFIX)
 
 
 def serving_filters(cluster: dict) -> list[str]:
     """``docker ps`` filters matching every serving container's name (filters on one key are ORed)."""
-    patterns = dict.fromkeys((f"^{cluster['container']['name']}$", f"^{SERVING_CONTAINER}$",
-                              f"^{LEGACY_SERVING_PREFIX}"))
+    names = dict.fromkeys((cluster["container"]["name"], *SERVING_NAMES))
+    patterns = [f"^{name}$" for name in names] + [f"^{LEGACY_SERVING_PREFIX}"]
     return [part for pattern in patterns for part in ("--filter", f"name={pattern}")]
 
 

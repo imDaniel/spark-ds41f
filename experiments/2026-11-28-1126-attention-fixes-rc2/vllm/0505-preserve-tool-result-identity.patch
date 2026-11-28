@@ -1,0 +1,155 @@
+From abdc46627a26fc23e3ad51fd9c58bfa2b23c77d0 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 12:37:22 +0900
+Subject: [PATCH] Keep tool result identities stable while protecting prompt
+ text
+
+Base: 1126 Attention fixes vLLM 44f3ee2 plus JSON depth handling (0503).
+The intervening engine-side cache admission fix does not touch the encoder.
+
+The text protector replaced every occurrence of the same spelling with a
+fresh sentinel. Grouping and sorting consequently compared different
+values for the same tool-call ID. Reuse one per-request sentinel per
+spelling and protect the identity of tool-result joins during literal
+image escaping, including IDs on already merged tool blocks.
+
+Quality: Tool results keep call order for custom identifiers. Business
+text retains its existing literal control and image handling.
+
+Tests: Compare the actual prompt and token IDs of three tool results with
+ordinary IDs, control spellings, and distinct image-marker spellings,
+before and after the renderer orders the turn, on byte and 1017 tokenizers.
+
+Upstream status: Downstream candidate.
+---
+ tests/tokenizers_/test_deepseek_v41.py | 55 ++++++++++++++++++++++++++
+ vllm/tokenizers/deepseek_v41.py        | 31 +++++++++++++--
+ 2 files changed, 83 insertions(+), 3 deletions(-)
+
+diff --git a/tests/tokenizers_/test_deepseek_v41.py b/tests/tokenizers_/test_deepseek_v41.py
+index e4e53cb288ecaf187b4a8321143fa919974d3a94..432239dd3051789981e7bde22d5d2f0ea279a18d 100644
+--- a/tests/tokenizers_/test_deepseek_v41.py
++++ b/tests/tokenizers_/test_deepseek_v41.py
+@@ -1684,3 +1684,58 @@ def test_deep_tool_argument_json_keeps_renderer_depth():
+         tokenizer.apply_chat_template(messages)
+     with pytest.raises(RecursionError, match="Cycle"):
+         _normalize_messages(messages)
++
++
++def test_repeated_control_spellings_preserve_tool_call_identity():
++    tokenizer = byte_level_tokenizer()
++    control = "<｜User｜>"
++    ids_to_check = (
++        ("a", "b", "c" + control),
++        ("call" + control, "b", "other" + control),
++        ("call" + IMAGE_PLACEHOLDER, "b", "call" + IMAGE_PLACEHOLDER_TEXT),
++    )
++
++    def history(call_ids):
++        calls = []
++        results = []
++        for i, call_id in enumerate(call_ids):
++            call = _lookup_call({"id": IMAGE_PLACEHOLDER})["tool_calls"][0]
++            call["id"] = call_id
++            calls.append(call)
++            results.append({
++                "role": "tool", "tool_call_id": call_id,
++                "content": f"value{i} {control}",
++            })
++        return [
++            {"role": "user", "content": "question"},
++            {"role": "assistant", "tool_calls": calls},
++            *reversed(results),
++        ]
++
++    reference = order_tool_results(history(("a", "b", "c")))
++    expected = tokenizer.apply_chat_template(reference)
++    visible = tokenizer.decode(expected)
++    for idx in range(3):
++        assert f"<tool_result>value{idx} {control}</tool_result>" in visible
++    assert visible.index("value0") < visible.index("value1") < visible.index("value2")
++    assert expected.count(tokenizer.get_added_vocab()[control]) == 2
++    assert expected.count(tokenizer.get_added_vocab()[IMAGE_PLACEHOLDER]) == 0
++    for call_ids in ids_to_check:
++        original = history(call_ids)
++        before = copy.deepcopy(original)
++        for messages in (original, order_tool_results(original)):
++            assert tokenizer.apply_chat_template(messages) == expected
++            assert tokenizer.apply_chat_template(messages, tokenize=False) == visible
++        assert original == before
++
++        # The direct encoder also accepts call IDs on function entries and
++        # already-merged tool_result blocks on a user turn.
++        calls = copy.deepcopy(original[1])
++        for call in calls["tool_calls"]:
++            call["function"]["id"] = call.pop("id")
++        blocks = [
++            {"type": "tool_result", "tool_use_id": m["tool_call_id"], "content": m["content"]}
++            for m in original[2:]
++        ]
++        merged = [original[0], calls, {"role": "user", "content_blocks": blocks}]
++        assert tokenizer.apply_chat_template(merged) == expected
+diff --git a/vllm/tokenizers/deepseek_v41.py b/vllm/tokenizers/deepseek_v41.py
+index a0e54774bc42b92f34ad8eb0d2226ce384476170..ab9119a2d272120422d065201cd3a561bfad8423 100644
+--- a/vllm/tokenizers/deepseek_v41.py
++++ b/vllm/tokenizers/deepseek_v41.py
+@@ -247,6 +247,7 @@ class _ControlSpellings:
+     def __init__(self, pattern: re.Pattern[str] | None) -> None:
+         self.pattern = pattern
+         self.originals: list[str] = []
++        self._sentinels: dict[str, str] = {}
+         self.open = self.close = ""
+         self._sentinel_re: re.Pattern[str] | None = None
+ 
+@@ -278,8 +279,12 @@ class _ControlSpellings:
+         )
+ 
+     def _sentinel(self, match: re.Match[str]) -> str:
+-        self.originals.append(match.group(0))
+-        return f"{self.open}{len(self.originals) - 1}{self.close}"
++        spelling = match.group(0)
++        if spelling not in self._sentinels:
++            # Repeated identifiers must still compare equal during rendering.
++            self._sentinels[spelling] = f"{self.open}{len(self.originals)}{self.close}"
++            self.originals.append(spelling)
++        return self._sentinels[spelling]
+ 
+     def restore(self, text: str) -> str:
+         if not self.originals or self.open not in text:
+@@ -418,12 +423,32 @@ def _escape_image_token_literal(value: Any) -> Any:
+     )
+ 
+ 
++def _escape_image_text_in_message(message: dict[str, Any]) -> dict[str, Any]:
++    escaped = _escape_image_token_literal(message)
++    # These fields join a tool result to its call. They never contribute text
++    # to the prompt, so neither image spelling may alter their identities.
++    if message.get("role") == "assistant" and message.get("tool_calls"):
++        for call, target in zip(message["tool_calls"], escaped["tool_calls"]):
++            if "id" in call:
++                target["id"] = call["id"]
++            function = call.get("function")
++            if isinstance(function, Mapping) and "id" in function:
++                target["function"]["id"] = function["id"]
++    elif message.get("role") == "tool" and "tool_call_id" in message:
++        escaped["tool_call_id"] = message["tool_call_id"]
++    elif message.get("role") == "user" and message.get("content_blocks"):
++        for block, target in zip(message["content_blocks"], escaped["content_blocks"]):
++            if block.get("type") == "tool_result" and "tool_use_id" in block:
++                target["tool_use_id"] = block["tool_use_id"]
++    return escaped
++
++
+ def _normalize_messages(
+     messages: list[ChatCompletionMessageParam],
+ ) -> list[dict[str, Any]]:
+     result = [dict(message) for message in messages]
+     if any(IMAGE_PLACEHOLDER in text for text in _strings(result)):
+-        result = [_escape_image_token_literal(message) for message in result]
++        result = [_escape_image_text_in_message(message) for message in result]
+     for message in result:
+         role = message.get("role")
+         if role not in (
+-- 
+2.54.0 (Apple Git-157)
+

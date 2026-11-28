@@ -107,7 +107,7 @@ jobs:
             echo patches=false >> "$GITHUB_OUTPUT"
           fi
           if [ "$EVENT" != pull_request ] || git diff --name-only HEAD^1 HEAD | grep -qE \
-              '^(experiments/(2026-10-18-request-steering|2026-10-18-steering-consume|2026-10-19-r6x-steering|2026-10-19-r6x-steering-gpu|2026-10-23-1022-attention-steering|2026-10-23-1022-attention-review|2026-10-23-1022-output-parser|2026-10-23-1022-release-fixtures|2026-10-23-1022-parser-byte-alignment|2026-11-28-1126-attention(-rc[0-9]+|-fixes)?)/|bin/spark$|spark_ds41f/|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
+              '^(experiments/(2026-10-18-request-steering|2026-10-18-steering-consume|2026-10-19-r6x-steering|2026-10-19-r6x-steering-gpu|2026-10-23-1022-attention-steering|2026-10-23-1022-attention-review|2026-10-23-1022-output-parser|2026-10-23-1022-release-fixtures|2026-10-23-1022-parser-byte-alignment|2026-11-28-1126-attention(-rc[0-9]+|-fixes(-rc[0-9]+)?)?)/|bin/spark$|spark_ds41f/|scripts/|requirements/|\.github/workflows/validate\.yml$)'; then
             echo steering=true >> "$GITHUB_OUTPUT"
           else
             echo steering=false >> "$GITHUB_OUTPUT"
@@ -200,7 +200,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review, 2026-10-23-1022-output-parser, 2026-10-23-1022-release-fixtures, 2026-10-23-1022-parser-byte-alignment, 2026-11-28-1126-attention, 2026-11-28-1126-attention-rc2, 2026-11-28-1126-attention-rc3, 2026-11-28-1126-attention-fixes]
+        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review, 2026-10-23-1022-output-parser, 2026-10-23-1022-release-fixtures, 2026-10-23-1022-parser-byte-alignment, 2026-11-28-1126-attention, 2026-11-28-1126-attention-rc2, 2026-11-28-1126-attention-rc3, 2026-11-28-1126-attention-fixes, 2026-11-28-1126-attention-fixes-rc2]
     env:
       STEERING_EXPERIMENT: ${{ matrix.experiment }}
     steps:
@@ -241,7 +241,7 @@ jobs:
           .work/steering-1022-cpu-venv/bin/python -m pip install --require-hashes -r requirements/steering-1022-cpu.txt
       - name: Execute the complete pinned CPU collection
         env:
-          CASES_EXPERIMENT: ${{ matrix.experiment == '2026-11-28-1126-attention-fixes' && '2026-11-28-1126-attention-rc3' || matrix.experiment }}
+          CASES_EXPERIMENT: ${{ startsWith(matrix.experiment, '2026-11-28-1126-attention-fixes') && '2026-11-28-1126-attention-rc3' || matrix.experiment }}
         run: .work/steering-1022-cpu-venv/bin/python scripts/check_steering_cpu.py --upstreams experiments/$STEERING_EXPERIMENT/upstreams.lock.json --cases experiments/$CASES_EXPERIMENT/cpu-cases.json --report .work/steering-1022-cpu.xml
       - name: Classify all serving tests in the candidate
         if: matrix.experiment == '2026-10-23-1022-output-parser' || matrix.experiment == '2026-10-23-1022-release-fixtures' || matrix.experiment == '2026-10-23-1022-parser-byte-alignment' || startsWith(matrix.experiment, '2026-11-28-1126-attention')
@@ -271,7 +271,7 @@ jobs:
           # are validated locally and intentionally deselected in this job.
           STEERING_MODEL_IDENTITY: .work/unused-checkpoint
           STEERING_ENCODER_EXPERIMENT: ${{ startsWith(matrix.experiment, '2026-11-28-1126-attention-rc') && '2026-11-28-1126-attention' || matrix.experiment }}
-          EXPECTED_ENCODER_CASES: ${{ matrix.experiment == '2026-11-28-1126-attention-fixes' && '48' || '38' }}
+          EXPECTED_ENCODER_CASES: ${{ fromJSON('{"2026-11-28-1126-attention-fixes":48,"2026-11-28-1126-attention-fixes-rc2":50}')[matrix.experiment] || 38 }}
         run: |
           export STEERING_VLLM_SOURCE=$(PYTHONPATH=scripts .work/steering-1022-cpu-venv/bin/python - <<'PY'
           import os
