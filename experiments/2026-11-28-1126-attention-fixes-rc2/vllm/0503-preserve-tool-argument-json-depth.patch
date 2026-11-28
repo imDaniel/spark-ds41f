@@ -1,0 +1,222 @@
+From 510177aec3bf53f27b8ccabc4f0a65b3a32f6450 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 12:33:49 +0900
+Subject: [PATCH] Preserve JSON renderer depth in prompt text protection
+
+Base: 1126 Attention fixes vLLM 44f3ee2ea2acd7aa70b12053c7f11d4d3d37c90c.
+
+The tool protocol exposes decoded JSON before checking text for control
+and image spellings. Recursing over the object can fail on a valid wire
+argument the JSON codec and DSML renderer previously handled. Scan
+strings lazily on an explicit stack. When a marker is present, rebuild
+the request iteratively with its existing field, type and key semantics.
+
+Quality: Ordinary deep JSON retains the release prompt and token IDs.
+Known control and image spellings continue to use the text-only path.
+
+Tests: CPU byte and real 1017 tokenizers exercise deep objects and arrays
+with plain, control and literal image text through apply_chat_template.
+
+Upstream status: Downstream candidate.
+---
+ tests/tokenizers_/test_deepseek_v41.py |  37 ++++++++-
+ vllm/tokenizers/deepseek_v41.py        | 106 ++++++++++++++++++-------
+ 2 files changed, 115 insertions(+), 28 deletions(-)
+
+diff --git a/tests/tokenizers_/test_deepseek_v41.py b/tests/tokenizers_/test_deepseek_v41.py
+index 381b07d78dd6dfbba020587d4002c4fc60e97729..e4e53cb288ecaf187b4a8321143fa919974d3a94 100644
+--- a/tests/tokenizers_/test_deepseek_v41.py
++++ b/tests/tokenizers_/test_deepseek_v41.py
+@@ -10,10 +10,11 @@ import pytest
+ 
+ from tests.tokenizers_.test_deepseek_v4 import FakeHfTokenizer
+ from vllm.entrypoints.openai.chat_completion.protocol import ChatCompletionRequest
+-from vllm.tokenizers.deepseek_v41 import get_deepseek_v41_tokenizer
++from vllm.tokenizers.deepseek_v41 import _normalize_messages, get_deepseek_v41_tokenizer
+ from vllm.tokenizers.deepseek_v41_encoding import (
+     IMAGE_PLACEHOLDER,
+     IMAGE_PLACEHOLDER_TEXT,
++    encode_arguments_to_dsml,
+     encode_messages,
+     order_tool_results,
+ )
+@@ -1649,3 +1650,37 @@ def test_literal_image_preserves_json_argument_strings():
+ def test_non_object_tool_arguments_keep_raw_string(raw):
+     messages = [{"role": "user", "content": INJECTED}, _lookup_call(raw)]
+     assert f'name="arguments" string="true">{raw}</' in render(messages)
++
++
++def test_deep_tool_argument_json_keeps_renderer_depth():
++    tokenizer = byte_level_tokenizer()
++    image_id = tokenizer.get_added_vocab()[IMAGE_PLACEHOLDER]
++    for opening, closing in (("[", "]"), ('{"layer":', "}")):
++        for marker in ("ordinary", "<｜User｜>", IMAGE_PLACEHOLDER):
++            value = opening * 1024 + json.dumps(marker) + closing * 1024
++            wire = '{"levels":' + value + "}"
++            messages = [
++                {"role": "user", "content": marker}, _lookup_call(wire),
++            ]
++            # The DSML renderer determines whether this Python JSON codec can
++            # decode the value or preserves the original wire string.
++            expected = encode_arguments_to_dsml({"arguments": wire})
++            text = tokenizer.apply_chat_template(messages, tokenize=False)
++            ids = tokenizer.apply_chat_template(messages)
++            assert expected in text
++            assert tokenizer.decode(ids) == text
++            assert ids.count(image_id) == 0
++
++    # Direct Python callers can use shared acyclic data or pass a cycle.
++    shared = ["<｜User｜>"]
++    calls = _lookup_call({"left": shared, "right": shared})
++    text = tokenizer.apply_chat_template([calls], tokenize=False)
++    assert 'name="left" string="false">["<｜User｜>"]' in text
++    assert 'name="right" string="false">["<｜User｜>"]' in text
++    loop = {"image": IMAGE_PLACEHOLDER}
++    loop["again"] = [loop]
++    messages = [_lookup_call(loop)]
++    with pytest.raises(RecursionError, match="Cycle"):
++        tokenizer.apply_chat_template(messages)
++    with pytest.raises(RecursionError, match="Cycle"):
++        _normalize_messages(messages)
+diff --git a/vllm/tokenizers/deepseek_v41.py b/vllm/tokenizers/deepseek_v41.py
+index 7c61c974ee502942a026dd29638b4052260d29d9..a0e54774bc42b92f34ad8eb0d2226ce384476170 100644
+--- a/vllm/tokenizers/deepseek_v41.py
++++ b/vllm/tokenizers/deepseek_v41.py
+@@ -7,6 +7,7 @@ import re
+ import threading
+ from collections import OrderedDict
+ from collections.abc import Callable, Mapping
++from itertools import chain
+ from typing import Any
+ 
+ from transformers import BatchEncoding, TokenizersBackend
+@@ -271,14 +272,10 @@ class _ControlSpellings:
+         return bool(self.originals)
+ 
+     def _protect(self, value: Any) -> Any:
+-        if isinstance(value, str):
+-            assert self.pattern is not None
+-            return self.pattern.sub(self._sentinel, value)
+-        if isinstance(value, Mapping):
+-            return {self._protect(k): self._protect(item) for k, item in value.items()}
+-        if isinstance(value, (list, tuple)):
+-            return type(value)(self._protect(item) for item in value)
+-        return value
++        assert self.pattern is not None
++        return _map_request_text(
++            value, lambda text: self.pattern.sub(self._sentinel, text)
++        )
+ 
+     def _sentinel(self, match: re.Match[str]) -> str:
+         self.originals.append(match.group(0))
+@@ -305,16 +302,76 @@ def _decode_message_tool_calls(message: ChatCompletionMessageParam):
+     return {**message, "tool_calls": decoded_calls}
+ 
+ 
++def _enter_request_container(node: Any, ancestors: set[int]) -> int:
++    identity = id(node)
++    if identity in ancestors:
++        raise RecursionError("Cycle in request containers")
++    ancestors.add(identity)
++    return identity
++
++
+ def _strings(value: Any):
+-    if isinstance(value, str):
+-        yield value
+-    elif isinstance(value, Mapping):
+-        for k, item in value.items():
+-            yield from _strings(k)
+-            yield from _strings(item)
+-    elif isinstance(value, (list, tuple)):
+-        for item in value:
+-            yield from _strings(item)
++    # A wire-format tool argument can be deeper than Python's call stack.
++    # Stay lazy so a match at the start of a large request can short-circuit.
++    ancestors: set[int] = set()
++    pending: list[tuple[int | None, Any]] = [(None, iter((value,)))]
++    while pending:
++        for item in pending[-1][1]:
++            if isinstance(item, str):
++                yield item
++            elif isinstance(item, Mapping):
++                identity = _enter_request_container(item, ancestors)
++                pending.append((identity, chain.from_iterable(item.items())))
++                break
++            elif isinstance(item, (list, tuple)):
++                identity = _enter_request_container(item, ancestors)
++                pending.append((identity, iter(item)))
++                break
++        else:
++            identity, _ = pending.pop()
++            if identity is not None:
++                ancestors.remove(identity)
++
++
++def _map_request_text(
++    value: Any, replace: Callable[[str], str], *, images: bool = False
++) -> Any:
++    """Copy a request tree without requiring a Python frame per JSON level.
++
++    Rebuild each container after its children. Image escaping keeps mapping
++    keys and protocol identifiers verbatim; control protection rewrites both.
++    """
++    # Nonnegative stages hold an output offset for a container to rebuild.
++    visit, keep = -1, -2
++    output: list[Any] = []
++    ancestors: set[int] = set()
++    pending = [(value, visit)]
++    while pending:
++        node, stage = pending.pop()
++        if stage == keep:
++            output.append(node)
++        elif stage >= 0:
++            ancestors.remove(id(node))
++            children = output[stage:]
++            if isinstance(node, Mapping):
++                items = iter(children)
++                output[stage:] = [dict(zip(items, items))]
++            else:
++                output[stage:] = [type(node)(children)]
++        elif isinstance(node, Mapping):
++            _enter_request_container(node, ancestors)
++            pending.append((node, len(output)))
++            for key, item in reversed(list(node.items())):
++                item_stage = keep if images and key in _PROTOCOL_KEYS else visit
++                pending.append((item, item_stage))
++                pending.append((key, keep if images else visit))
++        elif isinstance(node, (tuple, list)):
++            _enter_request_container(node, ancestors)
++            pending.append((node, len(output)))
++            pending.extend((item, visit) for item in reversed(node))
++        else:
++            output.append(replace(node) if isinstance(node, str) else node)
++    return output[0]
+ 
+ 
+ def _unused_private_pair(values: tuple[Any, ...]) -> tuple[str, str]:
+@@ -354,16 +411,11 @@ def _escape_image_token_literal(value: Any) -> Any:
+     ordinary-text spelling, which is in no added-token vocabulary, so the
+     encoder cannot mistake it for an image reference (spark-ds41f issue #1031).
+     """
+-    if isinstance(value, str):
+-        return value.replace(IMAGE_PLACEHOLDER, IMAGE_PLACEHOLDER_TEXT)
+-    if isinstance(value, Mapping):
+-        return {
+-            k: item if k in _PROTOCOL_KEYS else _escape_image_token_literal(item)
+-            for k, item in value.items()
+-        }
+-    if isinstance(value, (list, tuple)):
+-        return type(value)(_escape_image_token_literal(item) for item in value)
+-    return value
++    return _map_request_text(
++        value,
++        lambda text: text.replace(IMAGE_PLACEHOLDER, IMAGE_PLACEHOLDER_TEXT),
++        images=True,
++    )
+ 
+ 
+ def _normalize_messages(
+-- 
+2.54.0 (Apple Git-157)
+

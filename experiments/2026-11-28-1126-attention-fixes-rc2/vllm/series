@@ -1,0 +1,4 @@
+include ../../2026-11-28-1126-attention-fixes/vllm/series
+0503-preserve-tool-argument-json-depth.patch
+0504-validate-cache-salt-and-snapshot-attention-requests.patch
+0505-preserve-tool-result-identity.patch

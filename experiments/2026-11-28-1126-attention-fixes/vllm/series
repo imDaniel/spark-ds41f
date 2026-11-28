@@ -1,0 +1,4 @@
+include ../../2026-11-28-1126-attention-rc3/vllm/series
+0500-preserve-tool-argument-types.patch
+0501-isolate-attention-prefix-cache-keys.patch
+0502-warm-each-graph-input-variant.patch

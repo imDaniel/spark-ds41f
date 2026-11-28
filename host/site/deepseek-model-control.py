@@ -1,6 +1,6 @@
 #!/usr/bin/python3 -I
 """Fixed promoted four-rank backend. No command overrides or automatic recovery."""
-import concurrent.futures,hashlib,importlib.util,json,os,signal,subprocess,sys,time,uuid,urllib.request
+import concurrent.futures,hashlib,importlib.util,json,os,re,signal,subprocess,sys,time,uuid,urllib.request
 from pathlib import Path
 POLICY=Path('/etc/ai-cluster/services/deepseek-1017-attention-1022.json')
 HOLD=Path('/home/admin/spark-hold.json')
@@ -15,7 +15,10 @@ def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 def load():
  trusted(__file__);trusted(POLICY);p=json.loads(POLICY.read_text())
- if p['schema_version']!=1 or p['container']!='ds41f-1126-attention' or p['api_port']!=8000:raise RuntimeError('Invalid fixed production policy')
+ name=re.fullmatch(r'ds41f-([a-z0-9]+(?:-[a-z0-9]+)*)',p['container'])
+ if (p['schema_version']!=1 or p['api_port']!=8000 or not name or p['cluster_config']!='config/cluster.json'
+     or Path(p['repository'])!=Path('/srv/ai-cluster/runtimes')/name[1]/'source/spark-ds41f'):
+  raise RuntimeError('Invalid fixed production policy')
  spec=importlib.util.spec_from_file_location('deepseek_legacy','/usr/local/libexec/ai-cluster/model-control.py');ds=importlib.util.module_from_spec(spec);spec.loader.exec_module(ds);ds.validate()
  return p,ds,ds.Executor()
 

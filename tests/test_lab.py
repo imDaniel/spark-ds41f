@@ -336,7 +336,8 @@ def fake_configuration(args=None):
     """The TP4 profile's node map is a site file (git-ignored); stand in for it with a ring of four."""
     config = getattr(args, "cluster_config", lab.spark.DEFAULT_CLUSTER_CONFIG)
     nodes = RING4 if "tp4" in config else lab.spark.site_nodes()
-    return {"host": {"home": "/home/x"}, "deployment": {"path": "{home}/projects/spark-ds41f"}}, nodes, {}
+    return {"host": {"home": "/home/x"},
+            "deployment": {"path": "{home}/projects/spark-ds41f", "launch_enabled": True}}, nodes, {}
 
 
 def no_subprocesses(*args, **kwargs):
@@ -505,7 +506,7 @@ class ProductionProfileTest(unittest.TestCase):
     def test_watchdog_restores_the_recorded_profile(self) -> None:
         self.hold(TP4, heartbeat_at=1_000_000.0)  # stale
         with mock.patch.object(lab, "spark_cli", return_value=0) as cli, \
-                mock.patch.object(lab, "other_engines", return_value=[]), \
+                mock.patch.object(lab, "serving_engine_profiles", return_value={}), \
                 mock.patch.object(lab, "production_live", side_effect=[False, True]), \
                 mock.patch.object(lab.subprocess, "run", side_effect=no_subprocesses), \
                 mock.patch.object(lab.subprocess, "Popen", side_effect=no_subprocesses):
@@ -1378,7 +1379,7 @@ class StepFailureTest(unittest.TestCase):
                 mock.patch.object(lab, "window_should_close", return_value=None), \
                 mock.patch.object(lab, "beat"), \
                 mock.patch.object(lab, "production_configuration", return_value=({"host": {"home": "/h"}}, {}, {})), \
-                mock.patch.object(lab, "container_running", return_value=False), \
+                mock.patch.object(lab, "stop_cluster", return_value=True), \
                 mock.patch.object(lab, "run_kernel_bundles", side_effect=RuntimeError("cannot read dgx3")), \
                 mock.patch.object(lab, "window_close", return_value=True) as close, \
                 contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
@@ -1672,6 +1673,7 @@ class ServingNameTest(unittest.TestCase):
 
     PREVIOUS = "experiments/2026-10-22-spark-ds41f-1022/spark-ds41f-1022-tp4-dev.json"
     HEAD = {"ssh_user": "u", "nodes": [{"name": "dgx1", "head": True, "rank": 0}]}
+    ENABLED = {"deployment": {"launch_enabled": True}}
 
     def setUp(self) -> None:
         lab.PRODUCTION_CONFIG = lab.spark.DEFAULT_CLUSTER_CONFIG
@@ -1700,10 +1702,16 @@ class ServingNameTest(unittest.TestCase):
     def ps(self, output: str):
         return mock.patch.object(lab.spark, "run_ssh", return_value=subprocess.CompletedProcess([], 0, output, ""))
 
+    def configuration(self, nodes):
+        def resolve(args):
+            cluster = lab.spark.read_cluster(args.cluster_config)
+            return {**cluster, **self.ENABLED}, nodes, {}
+        return mock.patch.object(lab.spark, "configuration", side_effect=resolve)
+
     def test_a_boot_stops_an_engine_under_the_other_name_with_its_own_profile(self) -> None:
         with self.ps(f"dsv41-karmic-kraken\t{self.PREVIOUS}\n"), \
                 mock.patch.object(lab, "nodes_config", return_value=self.HEAD), \
-                mock.patch.object(lab.spark, "configuration", return_value=({}, self.HEAD, {})), \
+                self.configuration(self.HEAD), \
                 mock.patch.object(lab, "spark_cli", return_value=0) as cli, \
                 contextlib.redirect_stdout(io.StringIO()):
             self.assertTrue(lab.boot("renamed.json"))
@@ -1714,7 +1722,7 @@ class ServingNameTest(unittest.TestCase):
     def test_its_own_name_is_left_to_replace(self) -> None:
         with self.ps(f"dsv41-karmic-kraken\t{self.PREVIOUS}\n"), \
                 mock.patch.object(lab, "nodes_config", return_value=self.HEAD), \
-                mock.patch.object(lab.spark, "configuration", return_value=({}, self.HEAD, {})), \
+                self.configuration(self.HEAD), \
                 mock.patch.object(lab, "spark_cli", return_value=0) as cli, \
                 contextlib.redirect_stdout(io.StringIO()):
             self.assertTrue(lab.boot(self.PREVIOUS))
@@ -1723,7 +1731,7 @@ class ServingNameTest(unittest.TestCase):
     def test_an_engine_that_records_no_profile_stops_the_boot(self) -> None:
         with self.ps("dsv41-karmic-kraken\t\n"), \
                 mock.patch.object(lab, "nodes_config", return_value=self.HEAD), \
-                mock.patch.object(lab.spark, "configuration", return_value=({}, self.HEAD, {})), \
+                self.configuration(self.HEAD), \
                 mock.patch.object(lab, "spark_cli", return_value=0) as cli, \
                 contextlib.redirect_stdout(io.StringIO()) as out:
             self.assertFalse(lab.boot("renamed.json"))
@@ -1744,7 +1752,7 @@ class ServingNameTest(unittest.TestCase):
     def test_a_dead_arms_ranks_are_stopped_before_production_starts(self) -> None:
         with self.ranks(f"dsv41-karmic-kraken\t{self.PREVIOUS}\n"), \
                 mock.patch.object(lab, "nodes_config", return_value=self.RING), \
-                mock.patch.object(lab.spark, "configuration", return_value=({}, self.RING, {})), \
+                self.configuration(self.RING), \
                 mock.patch.object(lab, "spark_cli", return_value=0) as cli, \
                 contextlib.redirect_stdout(io.StringIO()) as out:
             self.assertTrue(lab.boot(lab.spark.DEFAULT_CLUSTER_CONFIG))
@@ -1757,7 +1765,7 @@ class ServingNameTest(unittest.TestCase):
     def test_a_rank_that_records_no_profile_still_stops_the_boot(self) -> None:
         with self.ranks("dsv41-karmic-kraken\t\n"), \
                 mock.patch.object(lab, "nodes_config", return_value=self.RING), \
-                mock.patch.object(lab.spark, "configuration", return_value=({}, self.RING, {})), \
+                self.configuration(self.RING), \
                 mock.patch.object(lab, "spark_cli", return_value=0) as cli, \
                 contextlib.redirect_stdout(io.StringIO()) as out:
             self.assertFalse(lab.boot(lab.spark.DEFAULT_CLUSTER_CONFIG))
@@ -1768,6 +1776,7 @@ class ServingNameTest(unittest.TestCase):
         lab.PRODUCTION_CONFIG = "renamed.json"
         with self.ps(f"dsv41-karmic-kraken\t{self.PREVIOUS}\n"), \
                 mock.patch.object(lab, "nodes_config", return_value=self.HEAD), \
+                self.configuration(self.HEAD), \
                 mock.patch.object(lab, "spark_cli", return_value=0) as cli, \
                 contextlib.redirect_stdout(io.StringIO()):
             self.assertTrue(lab.stop_cluster(remove=True))
@@ -2007,10 +2016,7 @@ class WindowCloseConcurrencyTest(unittest.TestCase):
         with mock.patch.object(lab, "plan", return_value=[step]), \
                 mock.patch.object(lab, "window_should_close", return_value=None), \
                 mock.patch.object(lab, "plan_problems", return_value=[]), \
-                mock.patch.object(
-                    lab, "container_running", side_effect=lambda: not beating_started.wait(timeout=2.0)
-                ), \
-                mock.patch.object(lab, "stop_cluster", return_value=True), \
+                mock.patch.object(lab, "stop_cluster", side_effect=lambda **_: beating_started.wait(timeout=2.0)), \
                 mock.patch.object(lab, "beat", side_effect=fake_beat), \
                 mock.patch.object(lab, "window_close", side_effect=check_close), \
                 mock.patch.object(lab, "log"), \

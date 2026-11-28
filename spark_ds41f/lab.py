@@ -524,15 +524,24 @@ def describe_boot_probe(config: str, probe: dict) -> str | None:
     return text
 
 
+def boot_problem(cluster: dict) -> str | None:
+    if not cluster["deployment"]["launch_enabled"]:
+        return "this cluster configuration is not authorized for launch"
+    return None
+
+
 def boot(config: str, dry: bool = False) -> bool:
     # A lab window restores the promoted physical fabric. It cannot undo
     # recabling or safely clean up a candidate with a different node set.
-    candidate_nodes = spark.configuration(argparse.Namespace(cluster_config=config))[1]
+    cluster, candidate_nodes, _ = spark.configuration(argparse.Namespace(cluster_config=config))
     if candidate_nodes != nodes_config():
         log(f"lab windows require the promoted node topology ({PRODUCTION_CONFIG}); qualify a new fabric "
             "with explicit cluster commands before using it in lab runs")
         return False
-    if not stop_other_engine(config, dry=dry):
+    if problem := boot_problem(cluster):
+        log(f"{config}: {problem}")
+        return False
+    if not stop_engines(config, dry=dry):
         return False
     log(f"start {config}")
     started, lines = time.time(), []
@@ -679,17 +688,15 @@ def memory_series(text: str) -> dict:
     return summary
 
 
-def stop_arguments(remove: bool = False) -> list[str]:
-    """Stop the production profile's containers; they are kept (stopped) unless removal is asked for."""
-    return ["--cluster-config", PRODUCTION_CONFIG, "cluster", "stop", *(["--remove"] if remove else []),
+def stop_arguments(remove: bool = False, *, config: str | None = None) -> list[str]:
+    """Stop the named profile's containers, defaulting to production."""
+    return ["--cluster-config", config or PRODUCTION_CONFIG, "cluster", "stop", *(["--remove"] if remove else []),
             "--apply", "--parallel"]
 
 
-def stop_cluster(dry: bool = False, remove: bool = False) -> bool:
+def stop_cluster(dry: bool = False, remove: bool = False, *, skip_idle: bool = False) -> bool:
     log("stop")
-    ok = spark_cli(*stop_arguments(remove), dry=dry) == 0
-    # An arm serving under another container name than production's stops with its own profile.
-    return stop_other_engine(PRODUCTION_CONFIG, remove=remove, dry=dry) and ok
+    return stop_engines(PRODUCTION_CONFIG, include_current=True, remove=remove, dry=dry, skip_idle=skip_idle)
 
 
 def production_live(problems: list | None = None) -> bool:
@@ -966,42 +973,68 @@ def container_running(node: dict | None = None) -> bool:
     return bool(output.strip())
 
 
-def other_engines(config: str) -> list[tuple[str, str | None]]:
-    """Every serving container on any node running under another name than ``config``'s, with
-    the profile that started it (None if it records none), each pair once. Every node is asked:
-    when an arm's engine dies its head container exits, but the ranks' keep serving."""
+def serving_engine_profiles(config: str) -> dict[str, list[str]] | None:
+    """Map profiles to serving names across all ranks. None means a complete stop plan is unavailable."""
     cluster = spark.read_cluster(config)
     nodes = nodes_config()
-    found: list[tuple[str, str | None]] = []
+    found: dict[str, list[str]] = {}
     for node in nodes["nodes"]:
         result = spark.run_ssh(nodes, node, "docker", "ps", *spark.serving_filters(cluster),
                                "--format", f'{{{{.Names}}}}\t{{{{.Label "{spark.PROFILE_LABEL}"}}}}')
+        if result.returncode:
+            detail = spark.docker_error_detail(node["name"], result.stderr) or f"docker ps exited {result.returncode}"
+            log(f"{node['name']}: cannot list serving containers: {detail}")
+            return None
         for line in result.stdout.splitlines():
             name, _, profile = line.partition("\t")
-            engine = (name, profile or None)
-            if name and name != cluster["container"]["name"] and engine not in found:
-                found.append(engine)
+            if not name:
+                continue
+            if name == cluster["container"]["name"]:
+                profile = config
+            elif not profile:
+                log(f"{name} is serving and records no profile; stop it before using {config}")
+                return None
+            elif profile == config:
+                log(f"{name} records {config}, whose container name is {cluster['container']['name']}; "
+                    f"stop {name} with its matching profile before using {config}")
+                return None
+            names = found.setdefault(profile, [])
+            if name not in names:
+                names.append(name)
+    for profile, names in found.items():
+        if profile == config:
+            continue
+        try:
+            peer, peer_nodes, _ = spark.configuration(argparse.Namespace(cluster_config=profile))
+            target = peer["container"]["name"]
+        except (OSError, ValueError, TypeError, KeyError, SystemExit) as error:
+            log(f"cannot resolve serving profile {profile} for {', '.join(names)}: {error}")
+            return None
+        if names != [target]:
+            log(f"{', '.join(names)} is serving with label {profile}, whose container name is {target}")
+            return None
+        if peer_nodes != nodes:
+            log(f"{profile} for {target} selects a different node topology from {PRODUCTION_CONFIG}")
+            return None
     return found
 
 
-def stop_other_engine(config: str, remove: bool = False, dry: bool = False) -> bool:
-    """``cluster start --replace`` and ``cluster stop`` act on their profile's container name
-    only, so engines serving under another name (the previous release's arm beside a renamed
-    candidate, or the ranks a dead arm left behind) are stopped first, each with the profile
-    that started it."""
-    if dry:
+def stop_engines(config: str, *, include_current: bool = False, remove: bool = False,
+                 dry: bool = False, skip_idle: bool = False) -> bool:
+    """Survey every rank before stopping any engine, using each engine's own profile."""
+    profiles = {} if dry else serving_engine_profiles(config)
+    if profiles is None:
+        return False
+    if skip_idle and not (profiles or remove or dry):
         return True
-    found = other_engines(config)
-    for name, profile in found:
-        if profile is None:
-            log(f"{name} is serving and records no profile; stop it before using {config}")
-            return False
     ok = True
-    for profile in dict.fromkeys(profile for _, profile in found):
-        names = ", ".join(dict.fromkeys(name for name, started in found if started == profile))
-        log(f"{names} is serving (started from {profile}); stopping it with that profile")
-        ok = spark_cli("--cluster-config", profile, "cluster", "stop", *(["--remove"] if remove else []),
-                       "--apply", "--parallel") == 0 and ok
+    if include_current:
+        ok = spark_cli(*stop_arguments(remove, config=config), dry=dry) == 0
+    for profile, names in profiles.items():
+        if profile == config:
+            continue
+        log(f"{', '.join(names)} is serving (started from {profile}); stopping it with that profile")
+        ok = spark_cli(*stop_arguments(remove, config=profile)) == 0 and ok
     return ok
 
 
@@ -1632,6 +1665,14 @@ def sonar_parse(command: str, args: list[str]):
     return parsed
 
 
+def steps_before_sync(steps: list[dict]) -> list[dict]:
+    """The part of a plan whose configuration is known on this checkout."""
+    for index, step in enumerate(steps):
+        if step["kind"] == "sync":
+            return steps[:index]
+    return steps
+
+
 def plan_problems(steps: list[dict]) -> list[str]:
     """What would fail only after a boot: a missing arm configuration or script, or
     Sonar arguments its parser rejects."""
@@ -1641,7 +1682,8 @@ def plan_problems(steps: list[dict]) -> list[str]:
             if not (ROOT / step["config"]).is_file():
                 problems.append(f"arm configuration {step['config']} does not exist")
             else:
-                problems.extend(f"{step['config']}: {problem}" for problem in arm_problems(step["config"]))
+                problems.extend(f"{step['config']}: {problem}" for problem in
+                                arm_problems(step["config"], boot=step["kind"] == "boot"))
         if step["kind"] == "cli" and step.get("suite"):
             problems.extend(suite_problems(step))
         if step["kind"] == "table" and "reference" in step:
@@ -1677,11 +1719,13 @@ def plan_problems(steps: list[dict]) -> list[str]:
     return list(dict.fromkeys(problems))
 
 
-def arm_problems(config: str) -> list[str]:
+def arm_problems(config: str, *, boot: bool = False) -> list[str]:
     """The checks cluster start --apply makes on the arm before it touches a node (its
     locks, kernel backend, topology and benchmark reference), so a refusal shows before
     the window stops serving."""
     cluster, nodes, upstreams = spark.configuration(argparse.Namespace(cluster_config=config))
+    if boot and (problem := boot_problem(cluster)):
+        return [problem]
     return spark.local_doctor(cluster, nodes, upstreams)
 
 
@@ -2259,6 +2303,16 @@ def execute(spec: dict, dry: bool, keep_open: bool, close_on_failure: bool = Tru
         for problem in plan_problems(steps):
             print(f"  problem: {problem}")
         return 0
+    # Reject an invalid boot before opening or restoring a window, including a
+    # boot that requests a memory snapshot (which first stops the live engine).
+    # A leading sync can supply new recipes; check those on the resulting revision.
+    initial = steps_before_sync(steps)
+    validated = any(step["kind"] == "boot" for step in initial)
+    if validated:
+        problems = plan_problems(initial)
+        if problems:
+            log("invalid spec: " + "; ".join(problems))
+            return 1
     hold = read_hold()
     if not hold_is_ours(hold):
         window_open(spec.get("minutes", DEFAULT_MINUTES), f"run {spec['run']}")
@@ -2284,11 +2338,10 @@ def execute(spec: dict, dry: bool, keep_open: bool, close_on_failure: bool = Tru
 
     beater = threading.Thread(target=heartbeat, daemon=True)
     beater.start()
-    validated = False
     restart = False
     booted = None  # the arm serving now: its container is the one sampled and whose logs are kept
     failed_points = []  # agentx points that failed; the job goes on to the next point's boot
-    for step in steps:
+    for index, step in enumerate(steps):
         hold = read_hold()
         if not hold_is_ours(hold):
             failed = window_ending = "hold file lost"
@@ -2306,7 +2359,7 @@ def execute(spec: dict, dry: bool, keep_open: bool, close_on_failure: bool = Tru
             # After any sync, before the first boot: every file and Sonar argument
             # the run needs, so a mistake costs seconds rather than a boot.
             validated = True
-            problems = plan_problems(steps)
+            problems = plan_problems(steps_before_sync(steps[index:]))
             if problems:
                 failed = "invalid spec: " + "; ".join(problems)
                 break
@@ -2376,7 +2429,7 @@ def execute(spec: dict, dry: bool, keep_open: bool, close_on_failure: bool = Tru
                 if agentx_prepared(step):
                     log(f"{step['dataset']} seed {step['seed']} already rebuilt on this host")
                 else:
-                    if container_running() and not stop_cluster():
+                    if not stop_cluster(skip_idle=True):
                         failed = "stop before the AgentX rebuild failed"
                         break
                     code = run_logged(agentx_prepare_command(step), step["out"])
@@ -2403,6 +2456,8 @@ def execute(spec: dict, dry: bool, keep_open: bool, close_on_failure: bool = Tru
                 if not sync_checkouts():
                     failed = "sync failed"
                     break
+                validated = False
+                checked.clear()
                 if keep_open and checkout_commit() != COMMIT_AT_START:
                     # The rest of the job must not run on the code this process loaded.
                     restart = True
@@ -2435,7 +2490,7 @@ def execute(spec: dict, dry: bool, keep_open: bool, close_on_failure: bool = Tru
             elif step["kind"] == "fresh_inventory":
                 fresh_inventory(step.get("config"))
             elif step["kind"] == "stop":
-                if (step.get("remove") or container_running()) and not stop_cluster(remove=step.get("remove", False)):
+                if not stop_cluster(remove=step.get("remove", False), skip_idle=True):
                     failed = "stop failed"
                     break
             elif step["kind"] == "analyze":
@@ -2488,10 +2543,12 @@ def queue_add(spec_path: str) -> Path:
     # Reject a malformed spec now, not when its turn comes after a boot. A spec that syncs
     # first may name files this checkout does not have yet: warn, and the run checks again
     # after its sync, before the first boot.
-    problems = plan_problems(plan(spec))
-    if problems and not any(job["kind"] == "sync" for job in spec["jobs"]):
+    steps = plan(spec)
+    initial = steps_before_sync(steps)
+    problems = plan_problems(initial)
+    if problems:
         raise SystemExit("not queued:\n  " + "\n  ".join(problems))
-    for problem in problems:
+    for problem in plan_problems(steps[len(initial) + 1:]):
         print(f"warning (checked again after the run's sync): {problem}", file=sys.stderr)
     QUEUE.mkdir(parents=True, exist_ok=True)
     target = QUEUE / f"{time.strftime('%Y%m%dT%H%M%S', time.gmtime())}-{Path(spec_path).name}"

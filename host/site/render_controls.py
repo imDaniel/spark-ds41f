@@ -77,6 +77,7 @@ def render(existing, output):
         path = "/usr/local/libexec/ai-cluster/" + name
         power["pinned_files"][path] = digest((existing / path.lstrip("/")).read_bytes())
     power["pinned_files"][power_path] = rendered[power_path]["sha256"]
+    power["pinned_files"][POLICY] = rendered[POLICY]["sha256"]
     power["purpose"] = "Stop registered TP4 services and verify every rank before worker-then-head poweroff"
     put("/etc/ai-cluster/cluster-power.json", power)
     registry = read("/etc/ai-cluster/engine-control.json")

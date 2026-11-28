@@ -34,7 +34,7 @@ class SiteServiceRenderTests(unittest.TestCase):
                        deployment={"path": "/fixed/deployment"},
                        host={"home": "/home/admin", "kernel_policy": "config/kernel.json"},
                        serve_args=["--additional-config", json.dumps({"ds41_steering": steering})],
-                       container={"name": "ds41f-1126-attention", "mounts": [["/profiles", "/steering", "ro"]],
+                       container={"name": "ds41f-1126-attention-fixes", "mounts": [["/profiles", "/steering", "ro"]],
                                   "docker_run_args": []})
         put(source, "config/cluster.json", cluster)
         put(source, "config/nodes.local.json", {"nodes": [{"rank": n} for n in range(4)]})
@@ -84,7 +84,9 @@ class SiteServiceRenderTests(unittest.TestCase):
             self.assertNotIn("previous", updated["modes"])
         policy = read(RENDERER["POLICY"])
         self.assertEqual(policy["image_id"], "sha256:qualified")
-        self.assertEqual(policy["container"], "ds41f-1126-attention")
+        self.assertEqual(policy["container"], "ds41f-1126-attention-fixes")
+        power = read("/etc/ai-cluster/cluster-power.json")
+        self.assertEqual(power["pinned_files"][RENDERER["POLICY"]], manifest["files"][RENDERER["POLICY"]]["sha256"])
         for name in ["spark_ds41f/cluster.py", "spark_ds41f/nested/module.py",
                      "releases/test-promoted/upstreams.lock.json"]:
             self.assertEqual(policy["repository_files"][name], hashlib.sha256((source / name).read_bytes()).hexdigest())

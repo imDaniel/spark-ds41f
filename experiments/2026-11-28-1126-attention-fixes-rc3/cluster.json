@@ -1,0 +1,41 @@
+{
+  "extends": {
+    "config": "releases/homelab-1126-attention/cluster.json",
+    "shape": "tp4-ring"
+  },
+  "set": {
+    "container": {
+      "name": "ds41f-1126-attention-fixes",
+      "image": "ds41f-1126-attention:vllm-50402286dbe6",
+      "expected_labels": {
+        "local.spark-ds41f.vllm.tree": "50402286dbe6d2f5975211809be8ecada25c8f69"
+      },
+      "mounts": [
+        [
+          "/srv/ai-cluster/models/deepseek-v4.1-flash-1017-heretic-test/official-1bae0e10-steering-v1",
+          "/models",
+          "ro"
+        ],
+        [
+          "/srv/ai-cluster/cache/1126-attention-fixes",
+          "/cache",
+          "rw"
+        ],
+        [
+          "/srv/ai-cluster/profiles/deepseek-1017-attention-1126/releases/c9c7663dade8",
+          "/steering-1126",
+          "ro"
+        ]
+      ]
+    },
+    "deployment": {
+      "launch_enabled": false,
+      "branch": "candidate/1126-attention-fixes",
+      "path": "/srv/ai-cluster/runtimes/1126-attention-fixes/source/spark-ds41f"
+    },
+    "upstreams_config": "experiments/2026-11-28-1126-attention-fixes-rc3/upstreams.lock.json"
+  },
+  "serve_options": {
+    "--additional-config": "{\"ds41_steering\":{\"schema_version\":1,\"operator_version\":\"attn-writer-project-bf16-rank-order-v1\",\"profile_path\":\"/steering-1126/steering/heretic-1017-attn-v1.safetensors\",\"profile_sha256\":\"c9c7663dade8685f5d7932b65a7476a58647981b4cfc3c59f008c6dcf080b3f6\"}}"
+  }
+}

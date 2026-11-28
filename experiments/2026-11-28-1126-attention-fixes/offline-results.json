@@ -1,0 +1,110 @@
+{
+  "component_head": "44f3ee2ea2acd7aa70b12053c7f11d4d3d37c90c",
+  "component_tree": "4d6258642732812b83af5ce8be482f00e575fec5",
+  "dependency_image": "sha256:3e28171ec18fcb05dac837a12c680c321fa41f9a862e230d3b966668d3792157",
+  "container_runtime": "runc",
+  "container_network": "none",
+  "visible_gpu_devices": 0,
+  "source_checkout_mode": "read-only",
+  "parent_regressions": {
+    "tool": {
+      "summary": "14 failed, 3 passed, 66 deselected in 4.67s",
+      "log_sha256": "aa295ef9e5aa6d99fbee4ef8476fef8ce8b339174a5d0d18516cd11d31c17504"
+    },
+    "cache": {
+      "summary": "4 failed, 15 warnings in 4.91s",
+      "log_sha256": "8ef8139f9f47f590c7ba58f7ef15c6fd81ad4f7fa0d2e1c2f4fc845ecefbc9c0"
+    },
+    "graph": {
+      "summary": "2 failed, 1 passed, 36 deselected, 14 warnings in 6.90s",
+      "log_sha256": "0e5738a48df3f74b4edd055345a327882b50ff89c3e38fafdcd4599199083542"
+    }
+  },
+  "combined_candidate": {
+    "encoder": {
+      "tests": 83,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "eff8d1877e9b28c3073e55b49e379b8a30430f557ace5c4969d58a6045d4bd98",
+      "log_sha256": "c5053c54e01647a61abfe61563330b7b9a683ee9b85380109aedd4c7a76e259e",
+      "real_tokenizer_cases": 35,
+      "new_real_tokenizer_cases": 7
+    },
+    "tokenizer": {
+      "tests": 159,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "21e5ea3830323df114ecf2c723e637c937e7cf4a8d6ef659971c603bc21a5cca",
+      "log_sha256": "2a95ceb9c4453100977e278b6460fddc4829ed84478d2cc2cd0c824d62fcadfb"
+    },
+    "parser": {
+      "tests": 104,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "9f4cf4d9d93748deab43661fe61b561f2f45f09aeac3f8c494e20de9dc35466b",
+      "log_sha256": "ccc8f915f51793dc1ae737e78e1fba9607bffc5703322282a6cae08c59b7f8a6"
+    },
+    "cache": {
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "16324d36af1ac4cb0994b3d2ec66b0c7289fa419822d38709c93c117288e5f92",
+      "log_sha256": "ed074e47bc64d9ceabff48b89da6b18a16238140e9dcacef3238d0fc36d65f34"
+    },
+    "steering": {
+      "tests": 129,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "411c2ecfe122e12965036df97146bd85d1f753785cfb22be65cdb41e88665b93",
+      "log_sha256": "63a52cc018716da6eb19269a7cfd2b6fdfdac7f47327d8c9f2d3f63d718a0026"
+    },
+    "graph": {
+      "tests": 37,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "da340c5fece3699ba79d16b365d8b9320b3a0773d1bead3a63e7c82372c368d4",
+      "log_sha256": "e48e6ab6bb6c86f7bed68c93bf9a5821d1aa5897435d690909ffec3e81b1ac12"
+    }
+  },
+  "steering_cpu_cases_exact": true,
+  "graph_hardware_cases_deselected": 2,
+  "profile_rebind_repeated": true,
+  "repository_verification": {
+    "unittest_passed": 1067,
+    "candidate_doctor": "passed",
+    "full_build_prepare": "passed",
+    "build_check": "passed",
+    "fresh_replay_patches": 753,
+    "release_classification": {
+      "gate": 181,
+      "excluded": 61
+    },
+    "prepare_log_sha256": "00aab6e7e3c0ff120b0f2db88d546facae1d53559b5fc9ecfc32ff68a27d6670",
+    "classification_log_sha256": "032c63036e39c9f4c6a8e758dacc2a598d7e21177123701217be861a33e798ee",
+    "unittest_log_sha256": "0b66300b312dff5009a45e53d13c7c1fadd6948d4c4364cbbb394f88e30bd0ef",
+    "json_validation": "passed",
+    "generated_docs": "passed"
+  },
+  "setup_notes": [
+    "The repository suite initially found three JSON decoding errors in macOS file-transfer sidecars in the scratch checkout. Removing those transfer files and rerunning the suite passed.",
+    "The isolated dependency image needed its TileLang import helper before collecting graph tests on a host with no visible GPU, and a read-only Git binary for profile rebinding.",
+    "A pre-publication review found an image-placeholder regression in the first tool-argument change. The final source escapes literal placeholders while rendering DSML parameters and preserves both parameter values when their escaped key spellings coincide."
+  ],
+  "review_regression": {
+    "case": "Literal image spellings in tool data, escaped keys with both spellings, and a genuine image content part",
+    "superseded_0500": {
+      "byte_tokenizer_failed": true,
+      "byte_log_sha256": "5fb1ab7f4b3a5c19e545abae7639983520d10888b8f6fb1121a1dc47e81afebe",
+      "checkpoint_tokenizer_failed": true,
+      "checkpoint_log_sha256": "1af51cc8782d9570cbed1ab28c3c569bbe4875ad782b7f9b2786be765019bb3c"
+    },
+    "final_native_checkpoint_tokenizer_passed": true,
+    "final_native_checkpoint_log_sha256": "c80f7f2c16f15ab518049789ccaf02ceb33ca803913e4e3c5ff261347a1ae8d2"
+  }
+}

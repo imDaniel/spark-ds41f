@@ -91,9 +91,11 @@ class ServingContainerTest(unittest.TestCase):
 
     def test_docker_filters_name_every_serving_container(self) -> None:
         self.assertEqual(spark.serving_filters(self.NEW),
-                         ["--filter", "name=^spark-ds41f$", "--filter", "name=^dsv41-"])
+                         ["--filter", "name=^spark-ds41f$", "--filter", "name=^ds41f-1126-attention$",
+                          "--filter", "name=^ds41f-1126-attention-fixes$", "--filter", "name=^dsv41-"])
         self.assertEqual(spark.serving_filters(self.OLD),
                          ["--filter", "name=^dsv41-karmic-kraken$", "--filter", "name=^spark-ds41f$",
+                          "--filter", "name=^ds41f-1126-attention$", "--filter", "name=^ds41f-1126-attention-fixes$",
                           "--filter", "name=^dsv41-"])
 
     def test_a_build_refuses_either_service(self) -> None:
@@ -108,7 +110,8 @@ class ServingContainerTest(unittest.TestCase):
             spark.require_idle_build_host(self.NEW)
 
 
-def start_problems(cluster: dict, ps: str, image_labels: dict | None = None) -> list[str]:
+def start_problems(cluster: dict, ps: str, image_labels: dict | None = None, *,
+                   ps_exit: int = 0, ps_stderr: str = "") -> list[str]:
     """A start's preflight on one node: ``ps`` is what ``docker ps`` lists (name, tab, profile)
     and the image carries ``image_labels`` (default: the profile's expected labels)."""
     labels = json.dumps([{"Config": {"Labels": cluster["container"]["expected_labels"]
@@ -116,7 +119,7 @@ def start_problems(cluster: dict, ps: str, image_labels: dict | None = None) -> 
 
     def run_ssh(nodes, node, *command):
         if command[:2] == ("docker", "ps"):
-            return subprocess.CompletedProcess(command, 0, ps, "")
+            return subprocess.CompletedProcess(command, ps_exit, ps, ps_stderr)
         if command[:3] == ("docker", "image", "inspect"):
             return subprocess.CompletedProcess(command, 0, labels, "")
         if command[:2] == ("docker", "inspect"):
@@ -160,6 +163,15 @@ class StartBesideAnotherEngineTest(unittest.TestCase):
         self.assertEqual(start_problems(self.new, "spark-ds41f\tconfig/cluster.json\n"), [])
         self.assertEqual(start_problems(self.old, "dsv41-karmic-kraken\tconfig/cluster.json\n"), [])
         self.assertEqual(start_problems(self.new, ""), [])
+
+    def test_a_failed_inventory_blocks_start_even_with_partial_output(self) -> None:
+        for stdout, stderr, status, detail in (
+            ("", "", 1, "docker ps exited 1"),
+            ("dsv41-karmic-kraken\tarm.json\n", "SSH connection lost\n", 255, "SSH connection lost"),
+        ):
+            with self.subTest(status=status):
+                problems = start_problems(self.new, stdout, ps_exit=status, ps_stderr=stderr)
+                self.assertEqual(problems, [f"dgx1: cannot list running serving containers: {detail}"])
 
 
 class RenamedRecipeTest(unittest.TestCase):

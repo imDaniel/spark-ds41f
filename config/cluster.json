@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "promoted_baseline": "2026-11-28-homelab-1126-attention",
+  "promoted_baseline": "2026-11-28-homelab-1126-attention-fixes-rc3",
   "container": {
-    "name": "ds41f-1126-attention",
-    "image": "ds41f-1126-attention:vllm-7c445f265a7b",
+    "name": "ds41f-1126-attention-fixes",
+    "image": "ds41f-1126-attention:vllm-50402286dbe6",
     "expected_labels": {
-      "local.spark-ds41f.vllm.tree": "7c445f265a7bf21b4860735cd972b326968150c3",
+      "local.spark-ds41f.vllm.tree": "50402286dbe6d2f5975211809be8ecada25c8f69",
       "local.spark-ds41f.nccl.tree": "6af10aa730a64fcee8781d62340a9c9184e79469",
       "local.spark-ds41f.tilelang.tree": "741806c7357102130a149cdcae2a5f22678eab67",
       "local.spark-ds41f.tile_kernels.tree": "cb2fa41c8af290204c81c547ed678ebf957cca53",
@@ -29,12 +29,12 @@
     ],
     "mounts": [
       [
-        "/srv/ai-cluster/cache/1126-attention",
+        "/srv/ai-cluster/cache/1126-attention-fixes",
         "/cache",
         "rw"
       ],
       [
-        "/srv/ai-cluster/profiles/deepseek-1017-attention-1126/releases/81ca5d96cf78",
+        "/srv/ai-cluster/profiles/deepseek-1017-attention-1126/releases/c9c7663dade8",
         "/steering-1126",
         "ro"
       ]
@@ -185,7 +185,7 @@
     "--renderer-num-workers",
     "8",
     "--additional-config",
-    "{\"ds41_steering\":{\"schema_version\":1,\"operator_version\":\"attn-writer-project-bf16-rank-order-v1\",\"profile_path\":\"/steering-1126/steering/heretic-1017-attn-v1.safetensors\",\"profile_sha256\":\"81ca5d96cf78a1c0193ab80071efab43d666b5a57e8633ced71b227031bde1f2\"}}"
+    "{\"ds41_steering\":{\"schema_version\":1,\"operator_version\":\"attn-writer-project-bf16-rank-order-v1\",\"profile_path\":\"/steering-1126/steering/heretic-1017-attn-v1.safetensors\",\"profile_sha256\":\"c9c7663dade8685f5d7932b65a7476a58647981b4cfc3c59f008c6dcf080b3f6\"}}"
   ],
   "distributed": {
     "master_addr": "10.42.0.1",
@@ -195,12 +195,12 @@
     "launch_enabled": true,
     "repository": "https://github.com/imDaniel/spark-ds41f.git",
     "branch": "homelab/main",
-    "path": "/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f",
+    "path": "/srv/ai-cluster/runtimes/1126-attention-fixes/source/spark-ds41f",
     "ready_url": "http://127.0.0.1:8000/v1/models",
     "ready_timeout_seconds": 3600
   },
   "kernel_backend": "tilelang",
-  "upstreams_config": "releases/homelab-1126-attention/upstreams.lock.json",
+  "upstreams_config": "releases/homelab-1126-attention-fixes-rc3/upstreams.lock.json",
   "models": {
     "v41-flash": {
       "snapshot": "{home}/.cache/huggingface/hub/models--deepseek-ai--DeepSeek-V4.1-Flash/snapshots/dba1be0a40aa45a94ad051997016db3960a90277",
@@ -226,7 +226,7 @@
   "default_shape": "tp4-ring",
   "shapes": {
     "tp4-ring": {
-      "notes": "Site TP4 ring; qualification evidence is the 1126 Attention candidate. See the immutable site baseline for scope and limitations.",
+      "notes": "Qualified site TP4 ring for the 1126 Attention RC3 tool argument, cache isolation and graph warmup fixes.",
       "nodes": 4,
       "nodes_config": "config/nodes-1022-attention.local.json",
       "fabric": {
@@ -280,10 +280,10 @@
         "VLLM_DISABLE_PYNCCL": "0",
         "SPARKNET_ROCE_GID_INDEX": "5"
       },
-      "benchmark_reference": "manifests/benchmarks/2026-11-28-homelab-1126-attention-tp4.json"
+      "benchmark_reference": "manifests/benchmarks/2026-11-28-homelab-1126-attention-fixes-rc3-tp4.json"
     },
     "tp3-triangle": {
-      "notes": "Unqualified on the 1126 Attention image. This site promotion qualifies TP4 ring only.",
+      "notes": "Unqualified on this site RC3 Attention release. The hardware qualification covers the four-node TP4 ring.",
       "nodes": 3,
       "nodes_config": "config/nodes.json",
       "fabric": {
@@ -323,7 +323,7 @@
       }
     },
     "tp3-triangle-4k": {
-      "notes": "Unqualified on the 1126 Attention image. This site promotion qualifies TP4 ring only.",
+      "notes": "Unqualified on this site RC3 Attention release. The hardware qualification covers the four-node TP4 ring.",
       "extends": "tp3-triangle",
       "host": {
         "kernel": {

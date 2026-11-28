@@ -1,0 +1,353 @@
+From 00675ed0e1eb09b9a48a47ace2b73ea15ceed6d4 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 12:33:25 +0900
+Subject: [PATCH] Validate cache salts before transport and snapshot Attention
+ requests
+
+Base: 1126 Attention fixes vLLM 44f3ee2ea2acd7aa70b12053c7f11d4d3d37c90c.
+This change is independent of the tool encoder follow-up in this series.
+
+Enforce the declared caller salt type when Python creates a wire request.
+Recheck this mutable field in each multiprocess ADD entrypoint before
+changing client state or encoding. The in-process path rechecks during
+core preprocessing. Preserve valid empty salts.
+
+Snapshot the sampling object and its steering arguments at admission on
+Attention-enabled engines. In-process callers can reuse params while a
+request is queued. Canonicalizing the shared object had modified caller
+state, and a later edit could decouple the worker scale from its KV key.
+The stock path on a server without Attention keeps its usual behavior.
+
+Quality: Accepted scale values, operation, wire layout and block hashes
+retain their existing semantics for unchanged inputs.
+
+Tests: CPU-only input processor and direct wire construction, mutable
+in-process request ownership with and without prefix caching, SHA-256
+pickle/CBOR and existing multimodal/LoRA hash contracts. A mocked
+transport exercises sync, async and DP dispatch after a caller edit.
+
+Upstream status: downstream Attention maintenance.
+---
+ tests/v1/core/test_kv_cache_utils.py | 135 ++++++++++++++++++++++++---
+ vllm/v1/engine/__init__.py           |   9 ++
+ vllm/v1/engine/core_client.py        |   4 +
+ vllm/v1/request.py                   |  45 +++++----
+ 4 files changed, 165 insertions(+), 28 deletions(-)
+
+diff --git a/tests/v1/core/test_kv_cache_utils.py b/tests/v1/core/test_kv_cache_utils.py
+index 2a583812ec3c3e371a8d610538a2b8a1e0174b99..8b428c4820cbc4f713be4af2d7518ed1e754267b 100644
+--- a/tests/v1/core/test_kv_cache_utils.py
++++ b/tests/v1/core/test_kv_cache_utils.py
+@@ -950,24 +950,15 @@ def test_generate_block_hash_extra_keys_lora():
+     assert extra_keys is None
+ 
+ 
+-@pytest.mark.parametrize("hash_fn", [sha256, sha256_cbor])
+-@pytest.mark.parametrize("via_frontend", [False, True], ids=["prebuilt", "frontend"])
+-def test_attention_cache_namespace(hash_fn, via_frontend):
++@pytest.fixture
++def attention_wire():
+     from unittest.mock import Mock
+ 
+-    from vllm import weightless
+-    from vllm.exceptions import VLLMValidationError
+     from vllm.inputs.engine import tokens_input
+     from vllm.v1.engine import EngineCoreRequest
+-    from vllm.v1.engine.core import EngineCore
+     from vllm.v1.engine.input_processor import InputProcessor
+ 
+     profile = SimpleNamespace(profile_id="test-profile", identity="a" * 64)
+-    core = SimpleNamespace(
+-        mm_receiver_cache=None,
+-        _steering_profile=profile,
+-        request_block_hasher=get_request_block_hasher(3, hash_fn),
+-    )
+     processor = Mock(spec=InputProcessor)
+     processor._steering_profile = profile
+     processor.vllm_config = SimpleNamespace(
+@@ -980,7 +971,7 @@ def test_attention_cache_namespace(hash_fn, via_frontend):
+     processor.renderer.get_eos_token_id.return_value = None
+     processor.generation_config_fields = {}
+ 
+-    def submit(extra=None, salt=None, **kwargs):
++    def make_wire(via_frontend, extra=None, salt=None, **kwargs):
+         params = SamplingParams(max_tokens=1, extra_args=extra)
+         tokens = list(range(6))
+         if via_frontend:
+@@ -1002,6 +993,27 @@ def test_attention_cache_namespace(hash_fn, via_frontend):
+                 **kwargs,
+             )
+         assert wire.cache_salt == salt
++        return wire
++
++    return profile, make_wire
++
++
++@pytest.mark.parametrize("hash_fn", [sha256, sha256_cbor])
++@pytest.mark.parametrize("via_frontend", [False, True], ids=["prebuilt", "frontend"])
++def test_attention_cache_namespace(hash_fn, via_frontend, attention_wire):
++    from vllm import weightless
++    from vllm.exceptions import VLLMValidationError
++    from vllm.v1.engine.core import EngineCore
++
++    profile, make_wire = attention_wire
++    core = SimpleNamespace(
++        mm_receiver_cache=None,
++        _steering_profile=profile,
++        request_block_hasher=get_request_block_hasher(3, hash_fn),
++    )
++
++    def submit(extra=None, salt=None, **kwargs):
++        wire = make_wire(via_frontend, extra, salt, **kwargs)
+         req, _ = EngineCore.preprocess_add_request(core, wire)
+         assert req.cache_salt == salt
+         return req
+@@ -1040,6 +1052,105 @@ def test_attention_cache_namespace(hash_fn, via_frontend):
+         submit(args, session_id="session")
+ 
+ 
++@pytest.mark.parametrize("via_frontend", [False, True], ids=["prebuilt", "frontend"])
++def test_attention_cache_namespace_validates_wire_salt(via_frontend, attention_wire):
++    profile, make_wire = attention_wire
++    # Assert the frontend boundary alone, before core admission or transport.
++    with pytest.raises(ValueError, match="cache_salt must be a string or absent"):
++        make_wire(via_frontend, {"steering_profile": profile.profile_id}, salt=42)
++
++
++@pytest.mark.parametrize("client_kind", ["inproc", "sync", "async", "dp_async"])
++def test_attention_cache_namespace_rechecks_salt_at_dispatch(client_kind, attention_wire):
++    import asyncio
++    from functools import partial
++    from unittest.mock import AsyncMock, Mock
++
++    from vllm.v1.engine.core import EngineCore
++    from vllm.v1.engine.core_client import (
++        AsyncMPClient,
++        DPAsyncMPClient,
++        InprocClient,
++        SyncMPClient,
++    )
++
++    profile, make_wire = attention_wire
++    wire = make_wire(False, {"steering_profile": profile.profile_id}, "original")
++    if client_kind == "inproc":
++        core = SimpleNamespace(
++            mm_receiver_cache=None, _steering_profile=profile, request_block_hasher=None
++        )
++        core.preprocess_add_request = partial(EngineCore.preprocess_add_request, core)
++        core.add_request = Mock()
++        client = SimpleNamespace(engine_core=core)
++        dispatch = partial(InprocClient.add_request, client)
++        send = core.add_request
++    else:
++        send = Mock() if client_kind == "sync" else AsyncMock()
++        client = SimpleNamespace(
++            is_dp=True, engines_running=False, client_index=1, current_wave=0,
++            _send_input=send, _ensure_stats_update_task=Mock(),
++            _ensure_output_queue_task=Mock(), get_core_engine_for_request=Mock(),
++            first_req_send_socket=SimpleNamespace(send=AsyncMock()),
++        )
++        client.get_core_engine_for_request.return_value = b"core"
++        if client_kind == "sync":
++            dispatch = partial(SyncMPClient.add_request, client)
++        else:
++            cls = AsyncMPClient if client_kind == "async" else DPAsyncMPClient
++
++            def dispatch(req):
++                asyncio.run(cls.add_request_async(client, req))
++
++    # A public prebuilt request can be edited after its constructor returns.
++    wire.cache_salt = 42
++    with pytest.raises(ValueError, match="cache_salt must be a string or absent"):
++        dispatch(wire)
++    send.assert_not_called()
++    if client_kind != "inproc":
++        assert not client.engines_running
++        client._ensure_stats_update_task.assert_not_called()
++        client.get_core_engine_for_request.assert_not_called()
++
++    wire.cache_salt = ""
++    dispatch(wire)
++    send.assert_called_once()
++
++
++@pytest.mark.parametrize("caching", [False, True])
++@pytest.mark.parametrize(
++    "extra",
++    [None, {}, {"other": 5}, {"steering_profile": "test-profile"}],
++    ids=["stock", "empty", "unrelated", "active"],
++)
++def test_attention_cache_namespace_snapshots_prebuilt(caching, extra, attention_wire):
++    from vllm.models.deepseek_v4_1.steering.request import parse_selection
++    from vllm.v1.engine.core import EngineCore
++
++    profile, make_wire = attention_wire
++    wire = make_wire(False, None if extra is None else dict(extra))
++    params = wire.sampling_params
++    submitted = params.extra_args
++    expected = parse_selection(submitted, profile)
++    core = SimpleNamespace(
++        mm_receiver_cache=None,
++        _steering_profile=profile,
++        request_block_hasher=get_request_block_hasher(3, sha256) if caching else None,
++    )
++    req, _ = EngineCore.preprocess_add_request(core, wire)
++    assert params.extra_args is submitted and submitted == extra
++    assert req.attention_cache_key == expected.cache_key
++    assert len(req.block_hashes) == (2 if caching else 0)
++    # The runner reads req.sampling_params.extra_args when the scheduler sends
++    # the request. Reusing either the caller's dict or its params is harmless.
++    next_selection = {"steering_profile": profile.profile_id, "steering_scale": 2}
++    if submitted is not None:
++        submitted.update(next_selection)
++        assert parse_selection(req.sampling_params.extra_args, profile) == expected
++    params.extra_args = next_selection
++    assert parse_selection(req.sampling_params.extra_args, profile) == expected
++
++
+ @pytest.mark.parametrize("hash_fn", [sha256, sha256_cbor])
+ def test_hash_block_tokens(hash_fn):
+     parent_block_hash = BlockHash(b"123")
+diff --git a/vllm/v1/engine/__init__.py b/vllm/v1/engine/__init__.py
+index 39cf07ebd95bd64c7f08b97bb3a6fbb7b8049fd9..07bb1859eaf39c33f4ad4fbb9bb02830bd3d553c 100644
+--- a/vllm/v1/engine/__init__.py
++++ b/vllm/v1/engine/__init__.py
+@@ -105,6 +105,11 @@ class EngineCoreReadyResponse:
+     supports_draft_weight_updates: bool = False
+ 
+ 
++def validate_cache_salt(cache_salt: str | None) -> None:
++    if cache_salt is not None and not isinstance(cache_salt, str):
++        raise ValueError("cache_salt must be a string or absent")
++
++
+ class EngineCoreRequest(
+     msgspec.Struct,
+     array_like=True,  # type: ignore[call-arg]
+@@ -164,6 +169,10 @@ class EngineCoreRequest(
+     # direct token requests leave it unset.
+     recurrent_instruction_boundary: int | None = None
+ 
++    def __post_init__(self) -> None:
++        # Direct Python construction does not enforce msgspec field annotations.
++        validate_cache_salt(self.cache_salt)
++
+     @property
+     def params(self) -> SamplingParams | PoolingParams:
+         """Return the processed params (sampling or pooling)."""
+diff --git a/vllm/v1/engine/core_client.py b/vllm/v1/engine/core_client.py
+index 422fb8cfd9dc931c08b329384d31ba53c3177e3d..7ff559b687a2cb2170c575ac14065b701b449891 100644
+--- a/vllm/v1/engine/core_client.py
++++ b/vllm/v1/engine/core_client.py
+@@ -47,6 +47,7 @@ from vllm.v1.engine import (
+     ReconfigureDistributedRequest,
+     ReconfigureRankType,
+     UtilityOutput,
++    validate_cache_salt,
+ )
+ from vllm.v1.engine.coordinator import DPCoordinator
+ from vllm.v1.engine.core import EngineCore, EngineCoreProc
+@@ -1014,6 +1015,7 @@ class SyncMPClient(MPClient):
+         return self.call_utility("get_supported_tasks")
+ 
+     def add_request(self, request: EngineCoreRequest) -> None:
++        validate_cache_salt(request.cache_salt)
+         if self.is_dp:
+             self.engines_running = True
+         self._send_input(EngineCoreRequestType.ADD, request)
+@@ -1271,6 +1273,7 @@ class AsyncMPClient(MPClient):
+         return await self.call_utility_async("get_supported_tasks")
+ 
+     async def add_request_async(self, request: EngineCoreRequest) -> None:
++        validate_cache_salt(request.cache_salt)
+         request.client_index = self.client_index
+         await self._send_input(EngineCoreRequestType.ADD, request)
+         self._ensure_output_queue_task()
+@@ -1546,6 +1549,7 @@ class DPAsyncMPClient(AsyncMPClient):
+         )
+ 
+     async def add_request_async(self, request: EngineCoreRequest) -> None:
++        validate_cache_salt(request.cache_salt)
+         self._ensure_stats_update_task()
+ 
+         request.current_wave = self.current_wave
+diff --git a/vllm/v1/request.py b/vllm/v1/request.py
+index cb70d3c4a3067648233af03757a92fadaa0d4075..5a885865cbe8cf0e77fc89b80af70f4b708a2aff 100644
+--- a/vllm/v1/request.py
++++ b/vllm/v1/request.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
+ import array
++import copy
+ import enum
+ import time
+ from collections import deque
+@@ -20,6 +21,7 @@ from vllm.v1.engine import (
+     EngineCoreEventType,
+     EngineCoreRequest,
+     FinishReason,
++    validate_cache_salt,
+ )
+ from vllm.v1.metrics.stats import (
+     PrefillStats,
+@@ -89,6 +91,33 @@ class Request:
+         recurrent_instruction_boundary: int | None = None,
+         steering_profile: "SteeringProfile | None" = None,
+     ) -> None:
++        validate_cache_salt(cache_salt)
++        self.cache_salt = cache_salt
++        self.attention_cache_key: tuple[str, str, int] | None = None
++        extra = sampling_params.extra_args if sampling_params is not None else None
++        has_selection = extra is not None and (
++            "steering_profile" in extra or "steering_scale" in extra
++        )
++        if sampling_params is not None and (
++            steering_profile is not None or has_selection
++        ):
++            # In-process clients can reuse the input params while this request
++            # is queued. The worker must see the same selection as the hasher,
++            # including when the submitted request selected stock.
++            sampling_params = copy.copy(sampling_params)
++            if has_selection:
++                from vllm.models.deepseek_v4_1.steering.config import admit
++
++                selection = admit(
++                    sampling_params,
++                    steering_profile,
++                    resumable=resumable,
++                    session_id=session_id,
++                )
++                self.attention_cache_key = selection.cache_key
++            elif extra is not None:
++                sampling_params.extra_args = dict(extra)
++
+         self.request_id = request_id
+         self.client_index = client_index
+         self.priority = priority
+@@ -208,22 +237,6 @@ class Request:
+ 
+         self.spec_token_ids: list[int] = []
+         self.num_computed_tokens = 0
+-        if cache_salt is not None and not isinstance(cache_salt, str):
+-            raise ValueError("cache_salt must be a string or absent")
+-        self.cache_salt = cache_salt
+-        self.attention_cache_key: tuple[str, str, int] | None = None
+-        extra = sampling_params.extra_args if sampling_params is not None else None
+-        if extra and ("steering_profile" in extra or "steering_scale" in extra):
+-            from vllm.models.deepseek_v4_1.steering.config import admit
+-
+-            selection = admit(
+-                sampling_params,
+-                steering_profile,
+-                resumable=resumable,
+-                session_id=session_id,
+-            )
+-            self.attention_cache_key = selection.cache_key
+-
+         # Multi-modal related
+         self.mm_features = mm_features or []
+ 
+-- 
+2.54.0 (Apple Git-157)
+

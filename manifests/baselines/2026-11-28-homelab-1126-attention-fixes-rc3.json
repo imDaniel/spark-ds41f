@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "baseline": "2026-11-28-homelab-1126-attention-fixes-rc3",
+  "status": "promoted-baseline",
+  "site_release": true,
+  "captured_at": "20261128T081742Z",
+  "accepted_date": "2026-11-28",
+  "acceptance": "The owner selected PR #60 RC3 for four-rank production after hardware qualification and accepted the archived matched performance results.",
+  "shape": "tp4-ring",
+  "configuration": "config/cluster.json",
+  "configuration_sha256": "480d1ac7f409f091d4050a1b345df12b978bf44a27df21c1a0e07248257bb7ce",
+  "recipe": "releases/homelab-1126-attention-fixes-rc3/cluster.json",
+  "source_manifest": "manifests/sources/2026-11-28-homelab-1126-attention-fixes-rc3-source.json",
+  "source_lock": "releases/homelab-1126-attention-fixes-rc3/upstreams.lock.json",
+  "source_lock_sha256": "c7aff63a3c823ef7958537b4756e5162296c3ceae3490095a5f6106547d58688",
+  "tested_deployment_commit": "67b23d5f0abb6eeeb99b92432b17d3092e192643",
+  "tested_deployment_commits": [
+    "67b23d5f0abb6eeeb99b92432b17d3092e192643"
+  ],
+  "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394",
+  "image_tag": "ds41f-1126-attention:vllm-50402286dbe6",
+  "container_name": "ds41f-1126-attention-fixes",
+  "build": {
+    "image": "ds41f-1126-attention:vllm-50402286dbe6",
+    "built_as": "ds41f-1126-attention:vllm-50402286dbe6",
+    "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394",
+    "deployment_commit": "67b23d5f0abb6eeeb99b92432b17d3092e192643",
+    "build_host": "spark01",
+    "architecture": "linux/arm64",
+    "duration_seconds": 452,
+    "receipt_archive": "experiments/2026-11-28-pr60-tp4/runs/qualification.tar.gz",
+    "receipt_member": "run-1d6d2564-08f8-470e-a9b5-a76d82b58ab7/image.json"
+  },
+  "vllm": {
+    "base_revision": "19f2c20ed4d64ae22bd009ceacadd85e2a81e354",
+    "patch_series": "experiments/2026-11-28-1126-attention-fixes-rc3/vllm/series",
+    "patch_count": 757,
+    "patchset_sha256": "84bb68f89b2a973c66b0a4dc2027678adc9e5c35f278d52422b9b71f83f28ace",
+    "patch_head": "f54bee45a79182ca0de85aeddff6697e7659f626",
+    "expected_tree": "50402286dbe6d2f5975211809be8ecada25c8f69"
+  },
+  "profile": {
+    "id": "heretic-1017-attn-v1",
+    "sha256": "c9c7663dade8685f5d7932b65a7476a58647981b4cfc3c59f008c6dcf080b3f6",
+    "alpha": 2.5,
+    "layers": [
+      2,
+      39
+    ],
+    "scale_range": [
+      0,
+      4
+    ],
+    "operator_version": "attn-writer-project-bf16-rank-order-v1",
+    "direction_payload_sha256": "f11e3762252448f547183d4b2daaf5b58c2d9023cd5b23365bc026a402c1a8e6",
+    "direction_payload_bytes": 778240
+  },
+  "model_identity": "b35c43fda128481f17b7ee878df2c2f93fd6db416df451b080cc8d00e166f7d0",
+  "capacity": {
+    "max_model_len": 1048576,
+    "max_num_seqs": 16,
+    "max_num_batched_tokens": 8192,
+    "kv_bytes_per_rank": 11274289152,
+    "qualified_cold_concurrency": {
+      "8K": 16,
+      "262K": 4,
+      "1M": 4
+    },
+    "qualified_output_tokens": {
+      "8K-C16": 1024,
+      "262K-C4": 4096,
+      "1M-C4": 16384
+    },
+    "cold_c1_input_tokens": [
+      32768,
+      131072,
+      262144,
+      524288,
+      1000000
+    ],
+    "requested_batched_tokens": 8192,
+    "effective_copy_draft_batched_tokens": 8203,
+    "requested_graph_rows": 96,
+    "effective_copy_draft_graph_rows": 107
+  },
+  "multimodal": {
+    "image_limit_per_prompt": 999,
+    "processor_cache_gb": 1,
+    "max_input_pixels": 16777216,
+    "scope": "Two solid-colour image API requests passed; no full image quality evaluation is claimed."
+  },
+  "qualified_arms": {
+    "tp4-ring": "experiments/2026-11-28-pr60-tp4/cluster.json"
+  },
+  "changed_after_release": [
+    {
+      "why": "Select the published site branch for the qualified TP4 runtime checkout.",
+      "shapes": [
+        "tp4-ring"
+      ],
+      "overlay": {
+        "set": {
+          "deployment": {
+            "branch": "homelab/main"
+          }
+        }
+      }
+    }
+  ],
+  "benchmark_reference": "manifests/benchmarks/2026-11-28-homelab-1126-attention-fixes-rc3-tp4.json",
+  "evidence": {
+    "results": "experiments/2026-11-28-pr60-tp4/RESULTS.md",
+    "qualification_archive": "experiments/2026-11-28-pr60-tp4/runs/qualification.tar.gz",
+    "qualification_archive_sha256": "f39534af841fc9a6a7cc9516fbbee8226208c51fc104481c180aa01b0abdf99c",
+    "archive_members": {
+      "native_gate": "1d6d2564-08f8-470e-a9b5-a76d82b58ab7-native/audit.json",
+      "typed_tool_arguments_and_kv_isolation": "1d6d2564-08f8-470e-a9b5-a76d82b58ab7-targeted-1/targeted.json",
+      "functional": "1d6d2564-08f8-470e-a9b5-a76d82b58ab7-functional-1/requests.json",
+      "cache": "1d6d2564-08f8-470e-a9b5-a76d82b58ab7-functional-1/cache.json",
+      "capacity": "1d6d2564-08f8-470e-a9b5-a76d82b58ab7-capacity-1/requests.json",
+      "pair_audit": "pair-audit.json"
+    },
+    "operations": "experiments/2026-11-28-pr60-tp4/runs/operations.json",
+    "matched_performance": "experiments/2026-11-28-pr60-tp4/runs/performance-comparison.json",
+    "direction_payload": "experiments/2026-11-28-1126-attention-fixes-rc3/profile-rebind.json"
+  },
+  "limits": [
+    "Each arm has two independent engine starts with retained JIT caches.",
+    "Throughput averages six-subwindow run means; latency percentiles pool requests rather than percentiles.",
+    "Boot contrasts use each start's metric, including its own tail percentile. All four cross-boot pairs and two-boot Welch intervals are descriptive of these starts.",
+    "Directional verdicts require all four contrasts beyond both observed repeat margins and the two-boot Welch interval excluding zero.",
+    "SSE event gaps time visible chunks; individual token emission times inside a chunk are unavailable.",
+    "At scale 4 and concurrency 4, median time per output token increased by 0.441 ms per token. At scale 1 and concurrency 1, the maximum observed SSE chunk gap increased by 0.451 ms.",
+    "The first cold start swapped in 2.75 MiB and swapped out 19.125 MiB on Spark01. The capacity stage and both performance starts recorded zero swap I/O during measurement.",
+    "Functional and capacity coverage applies to Attention on this site TP4 ring. Two solid-colour requests exercised the image API."
+  ],
+  "previous_baseline": "2026-11-28-homelab-1126-attention",
+  "rollback": {
+    "commit": "63b0c0d31e4378888951295325179211d00cbde6",
+    "repository": "/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f",
+    "config": "config/cluster.json",
+    "configuration_sha256": "b384f40da4756c4df3fd22440833f9a4c599327796d754fa78719740ca4286a5",
+    "image_id": "sha256:3e28171ec18fcb05dac837a12c680c321fa41f9a862e230d3b966668d3792157",
+    "profile_sha256": "81ca5d96cf78a1c0193ab80071efab43d666b5a57e8633ced71b227031bde1f2",
+    "preserve_assets": true
+  },
+  "activation": {
+    "method": "Coordinate the four-rank transition under the site lease at the exact merged deployment revision. Validate the installed service controls and one live completion for each of the existing gateway aliases.",
+    "receipt_directory": "/srv/ai-cluster/operations/pr60-tp4-promotion/0086dc06-c4b9-4da5-9a4e-a9bc32903ed6",
+    "window_id": "0086dc06-c4b9-4da5-9a4e-a9bc32903ed6"
+  }
+}

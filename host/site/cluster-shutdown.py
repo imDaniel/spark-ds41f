@@ -24,7 +24,7 @@ import uuid
 POLICY = Path('/etc/ai-cluster/cluster-power.json')
 STATE = Path('/var/lib/ai-cluster/cluster-power')
 HOME = Path('/home/admin')
-REPO = Path('/srv/ai-cluster/runtimes/1126-attention/source/spark-ds41f')
+SERVICE_POLICY = Path('/etc/ai-cluster/services/deepseek-1017-attention-1022.json')
 PROFILE = 'config/cluster.json'
 NODES = (1, 2, 3, 4)
 WORKERS = (2, 3, 4)
@@ -35,13 +35,14 @@ HEAD_DELAY = 120
 ENV = {'HOME': str(HOME), 'USER': 'admin', 'LOGNAME': 'admin',
        'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8'}
 
-SNAPSHOT = r'''import json,os,subprocess
+SNAPSHOT = r'''import json,os,subprocess,sys
+name=sys.argv[1]
 r={'hostname':os.uname().nodename}
-p=subprocess.run(['/usr/bin/docker','inspect','ds41f-1126-attention'],text=True,capture_output=True)
+p=subprocess.run(['/usr/bin/docker','inspect',name],text=True,capture_output=True)
 if p.returncode:raise SystemExit('Expected deepseek-1126 container is missing')
 d=json.loads(p.stdout)[0]
-r.update(state=d['State'],id=d['Id'],command=d['Config']['Cmd'],restart_count=d['RestartCount'])
-p=subprocess.run(['/usr/bin/systemctl','is-active','ds41f-1126-attention-memguard.service'],text=True,capture_output=True)
+r.update(state=d['State'],id=d['Id'],image=d['Image'],command=d['Config']['Cmd'],restart_count=d['RestartCount'])
+p=subprocess.run(['/usr/bin/systemctl','is-active',name+'-memguard.service'],text=True,capture_output=True)
 r['memguard']=p.stdout.strip()
 p=subprocess.run(['/usr/bin/sudo','-n','-l','/usr/bin/systemctl','poweroff'],text=True,capture_output=True)
 r['admin_poweroff_authorized']=p.returncode==0
@@ -74,6 +75,15 @@ def trusted_file(path):
 
 class Executor:
     """All effects are behind this boundary; tests supply an inert executor."""
+    def __init__(self, service=None):
+        # The installed service and power coordinators construct this class
+        # (or a subclass) without arguments.
+        if service is None:
+            service = validate_installation()
+        self.repository = Path(service['repository'])
+        self.container = service['container']
+        self.image = service['image_id']
+
     def run(self, node, args, timeout=25):
         if node == 1:
             command = list(args)
@@ -83,13 +93,13 @@ class Executor:
                        '-o', 'UserKnownHostsFile=' + str(HOME / '.ssh/known_hosts'),
                        '-o', 'ConnectTimeout=5', '-o', 'ConnectionAttempts=1',
                        '-o', 'ClearAllForwardings=yes', 'admin@10.42.0.' + str(node), shlex.join(args)]
-        p = subprocess.run(command, env=ENV, cwd=REPO, text=True, capture_output=True, timeout=timeout)
+        p = subprocess.run(command, env=ENV, cwd=self.repository, text=True, capture_output=True, timeout=timeout)
         if p.returncode:
             raise RuntimeError(f'Spark0{node} command failed ({p.returncode}): {(p.stderr or p.stdout).strip()[-1800:]}')
         return p.stdout
 
     def snapshot(self, node):
-        return json.loads(self.run(node, ['/usr/bin/python3', '-I', '-c', SNAPSHOT]))
+        return json.loads(self.run(node, ['/usr/bin/python3', '-I', '-c', SNAPSHOT, self.container]))
 
     def queue(self, node, unit, delay):
         self.run(node, ['/usr/bin/sudo', '-n', '/usr/bin/systemd-run', '--unit=' + unit,
@@ -103,7 +113,9 @@ class Executor:
         self.run(node, ['/usr/bin/sudo', '-n', '/usr/bin/systemctl', 'stop', unit + '.timer', unit + '.service'], timeout=8)
 
 
-def validate_snapshot(node, row, stopped=False):
+def validate_snapshot(node, row, image, stopped=False):
+    if row['image'] != image:
+        raise RuntimeError('Unexpected serving image on Spark0' + str(node))
     if row['hostname'] != EXPECTED_HOSTS[node]:
         raise RuntimeError('Wrong host identity for Spark0' + str(node))
     if not row['admin_poweroff_authorized']:
@@ -122,22 +134,23 @@ def inspect_fleet(executor, stopped=False):
     with concurrent.futures.ThreadPoolExecutor(4) as pool:
         rows = dict(zip(NODES, pool.map(executor.snapshot, NODES)))
     for n, row in rows.items():
-        validate_snapshot(n, row, stopped)
+        validate_snapshot(n, row, executor.image, stopped)
     return rows
 
 
-def stop_args(apply=False):
-    args = [str(REPO / 'bin/spark'), '--cluster-config', PROFILE, 'cluster', 'stop', '--parallel']
+def stop_args(executor, apply=False):
+    args = [str(executor.repository / 'bin/spark'), '--cluster-config', PROFILE, 'cluster', 'stop', '--parallel']
     return args + (['--apply'] if apply else [])
 
 
 def plan(executor):
     rows = inspect_fleet(executor)
-    text = executor.run(1, stop_args(), timeout=40)
+    text = executor.run(1, stop_args(executor), timeout=40)
     if '--apply would refuse:' in text:
         raise RuntimeError('Original 1126 coordinator refused this stop plan')
+    lines = {line.strip() for line in text.splitlines()}
     for n in NODES:
-        if f'spark0{n}: stop exact container ds41f-1126-attention' not in text:
+        if f'spark0{n}: stop exact container {executor.container} and stop its memguard' not in lines:
             raise RuntimeError('Stop plan does not cover all four configured nodes')
     return {'passed': True, 'phase': 'checked', 'nodes': rows, 'stop_plan': text,
             'shutdown_order': ['spark02', 'spark03', 'spark04', 'spark01'],
@@ -149,7 +162,7 @@ def execute(executor, report):
     unit = 'ai-cluster-poweroff-' + uuid.uuid4().hex
     report.update(unit=unit, phase='stopping-1126', started_utc=utc(), queued=[], rollback_errors=[])
     try:
-        report['stop_output'] = executor.run(1, stop_args(apply=True), timeout=160)
+        report['stop_output'] = executor.run(1, stop_args(executor, apply=True), timeout=160)
         report['stopped_fleet'] = inspect_fleet(executor, stopped=True)
         report['phase'] = 'syncing-disks'
         with concurrent.futures.ThreadPoolExecutor(4) as pool:
@@ -232,9 +245,16 @@ def validate_installation():
         file = Path(path)
         if file.is_symlink() or not file.is_file() or hashlib.sha256(file.read_bytes()).hexdigest() != expected:
             raise RuntimeError('Pinned cluster shutdown input changed; review policy: ' + path)
+    trusted_file(SERVICE_POLICY)
+    if str(SERVICE_POLICY) not in policy['pinned_files']:
+        raise RuntimeError('Cluster power policy does not pin the serving policy')
+    service = json.loads(SERVICE_POLICY.read_text())
+    if service['cluster_config'] != PROFILE or str(Path(service['repository']) / PROFILE) not in policy['pinned_files']:
+        raise RuntimeError('Cluster power policy does not pin the selected service recipe')
     key = HOME / '.ssh/ai-cluster_ed25519'
     if not key.is_file() or key.stat().st_mode & 0o077:
         raise RuntimeError('Admin cluster SSH identity missing or too permissive')
+    return service
 
 
 def main(argv=None):
@@ -246,8 +266,7 @@ def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     if argv not in (['--check'], ['--dry-run'], ['--execute']):
         raise ValueError('Only --check, --dry-run or --execute is accepted; no overrides')
-    validate_installation()
-    executor = Executor()
+    executor = Executor(validate_installation())
     # A maintenance owner takes precedence; dry-run refuses too, without mutation.
     hold = HOME / 'spark-hold.json'
     if hold.exists() or (HOME / 'spark3-hold.json').exists():

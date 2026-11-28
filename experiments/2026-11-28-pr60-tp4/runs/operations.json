@@ -1,0 +1,235 @@
+{
+  "schema": "pr60-rc3-operations-projections/1",
+  "receipts": {
+    "run-1d6d2564-08f8-470e-a9b5-a76d82b58ab7/recovery-retry-receipt.json": {
+      "source_bytes": 1063,
+      "source_sha256": "de1be8c26360a824eb6ef4dbfa13ddbc951d2d17073c0f8e0f0b71237810d649",
+      "fields": {
+        "window_id": "1d6d2564-08f8-470e-a9b5-a76d82b58ab7",
+        "retry_commit": "05d20947b7f08c63c5c9dbedd8dea855337f48ef",
+        "restored": "63b0c0d31e4378888951295325179211d00cbde6",
+        "retry_log_bytes": 5535,
+        "retry_log_sha256": "78445309a6b63d91dcddc6ae51232c8130b12c740cf8e73fe7d9ddc5f985fda0",
+        "backend_success_before": 1,
+        "backend_success_after": 3,
+        "first_controller": {
+          "Result": "exit-code",
+          "ExecMainStartTimestamp": "Sat 2026-11-28 12:58:25 CST",
+          "ExecMainExitTimestamp": "Sat 2026-11-28 15:53:18 CST",
+          "ExecMainStatus": "1",
+          "ActiveState": "failed",
+          "SubState": "failed"
+        },
+        "retry_unit": {
+          "Result": "success",
+          "ExecMainStartTimestamp": "Sat 2026-11-28 15:55:17 CST",
+          "ExecMainExitTimestamp": "Sat 2026-11-28 15:57:27 CST",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "exited"
+        },
+        "recovery_error": [
+          {
+            "realtime_us": "1795852398610535",
+            "message": "RuntimeError: Cannot inspect component container: error: no such object: ds41f-pr60-component-check"
+          }
+        ]
+      }
+    },
+    "run-1d6d2564-08f8-470e-a9b5-a76d82b58ab7/hardware-environment.json": {
+      "source_bytes": 2460,
+      "source_sha256": "417a4d4078de91234e85443a1715bc538f7496354a0c4c3743135115f0464d50",
+      "fields": {
+        "window_id": "1d6d2564-08f8-470e-a9b5-a76d82b58ab7",
+        "stage": "native",
+        "ranks": {
+          "spark01": {
+            "sampled_epoch": 1795845063.0716379,
+            "boot_id": "2830fbb4-e3e6-484b-8f08-6c1a4fd58131",
+            "gpu": "GPU-9ac83e39-e29b-fc1f-915b-55108821dcdd, NVIDIA GB10, 12.1, 580.178.04",
+            "kernel": "7.0.0-1019-nvidia-64k",
+            "driver_module": "NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.178.04  Release Build  (dvs-builder@U22-I3-G08-04-4)  Tue Jul  7 13:36:23 UTC 2026",
+            "docker_server": "29.9.2",
+            "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394"
+          },
+          "spark02": {
+            "sampled_epoch": 1795845063.3904047,
+            "boot_id": "eae87273-a467-4db6-a916-f945af9f5ec3",
+            "gpu": "GPU-e2d88ae5-7b06-5de4-de81-ce148618ad2c, NVIDIA GB10, 12.1, 580.178.04",
+            "kernel": "7.0.0-1019-nvidia-64k",
+            "driver_module": "NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.178.04  Release Build  (dvs-builder@U22-I3-G08-04-4)  Tue Jul  7 13:36:23 UTC 2026",
+            "docker_server": "29.9.2",
+            "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394"
+          },
+          "spark03": {
+            "sampled_epoch": 1795845063.3684785,
+            "boot_id": "7d9f698d-8b7a-4187-be8f-cf71b6948323",
+            "gpu": "GPU-5271f8ff-e279-d0da-bdd1-594a39ff216c, NVIDIA GB10, 12.1, 580.178.04",
+            "kernel": "7.0.0-1019-nvidia-64k",
+            "driver_module": "NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.178.04  Release Build  (dvs-builder@U22-I3-G08-04-4)  Tue Jul  7 13:36:23 UTC 2026",
+            "docker_server": "29.9.2",
+            "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394"
+          },
+          "spark04": {
+            "sampled_epoch": 1795845063.3339524,
+            "boot_id": "ecb02b88-373d-4127-b993-42146fc7731f",
+            "gpu": "GPU-655fb68c-fd2f-cb6c-655e-1bfa6c9bf5eb, NVIDIA GB10, 12.1, 580.178.04",
+            "kernel": "7.0.0-1019-nvidia-64k",
+            "driver_module": "NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.178.04  Release Build  (dvs-builder@U22-I3-G08-04-4)  Tue Jul  7 13:36:23 UTC 2026",
+            "docker_server": "29.9.2",
+            "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394"
+          }
+        }
+      }
+    },
+    "run-9025c649-3f78-4949-a3b0-62c44787337e/hardware-environment.json": {
+      "source_bytes": 2552,
+      "source_sha256": "60fed46f94d7f34b0c9b2a7c8706217b93cabaf19ae8dffd4c93d73732a25092",
+      "fields": {
+        "window_id": "9025c649-3f78-4949-a3b0-62c44787337e",
+        "stage": "preparing",
+        "tokenizer_sha256": "c90dfa01249db1be4245780a052ede752e1361c612ac6d08e2bdada7d599476b",
+        "ranks": {
+          "spark01": {
+            "sampled_epoch": 1795852674.8041356,
+            "boot_id": "2830fbb4-e3e6-484b-8f08-6c1a4fd58131",
+            "gpu": "GPU-9ac83e39-e29b-fc1f-915b-55108821dcdd, NVIDIA GB10, 12.1, 580.178.04",
+            "kernel": "7.0.0-1019-nvidia-64k",
+            "driver_module": "NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.178.04  Release Build  (dvs-builder@U22-I3-G08-04-4)  Tue Jul  7 13:36:23 UTC 2026",
+            "docker_server": "29.9.2",
+            "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394"
+          },
+          "spark02": {
+            "sampled_epoch": 1795852674.8062444,
+            "boot_id": "eae87273-a467-4db6-a916-f945af9f5ec3",
+            "gpu": "GPU-e2d88ae5-7b06-5de4-de81-ce148618ad2c, NVIDIA GB10, 12.1, 580.178.04",
+            "kernel": "7.0.0-1019-nvidia-64k",
+            "driver_module": "NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.178.04  Release Build  (dvs-builder@U22-I3-G08-04-4)  Tue Jul  7 13:36:23 UTC 2026",
+            "docker_server": "29.9.2",
+            "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394"
+          },
+          "spark03": {
+            "sampled_epoch": 1795852674.785224,
+            "boot_id": "7d9f698d-8b7a-4187-be8f-cf71b6948323",
+            "gpu": "GPU-5271f8ff-e279-d0da-bdd1-594a39ff216c, NVIDIA GB10, 12.1, 580.178.04",
+            "kernel": "7.0.0-1019-nvidia-64k",
+            "driver_module": "NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.178.04  Release Build  (dvs-builder@U22-I3-G08-04-4)  Tue Jul  7 13:36:23 UTC 2026",
+            "docker_server": "29.9.2",
+            "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394"
+          },
+          "spark04": {
+            "sampled_epoch": 1795852674.7809315,
+            "boot_id": "ecb02b88-373d-4127-b993-42146fc7731f",
+            "gpu": "GPU-655fb68c-fd2f-cb6c-655e-1bfa6c9bf5eb, NVIDIA GB10, 12.1, 580.178.04",
+            "kernel": "7.0.0-1019-nvidia-64k",
+            "driver_module": "NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.178.04  Release Build  (dvs-builder@U22-I3-G08-04-4)  Tue Jul  7 13:36:23 UTC 2026",
+            "docker_server": "29.9.2",
+            "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394"
+          }
+        }
+      }
+    },
+    "run-9025c649-3f78-4949-a3b0-62c44787337e/continued-evidence.json": {
+      "source_bytes": 4063,
+      "source_sha256": "133b5c7d2edd66da4f048f2a03dfb3748a6d18a8c4e602509361d34786ca7a8c",
+      "fields": {
+        "original_window": "1d6d2564-08f8-470e-a9b5-a76d82b58ab7",
+        "new_window": "9025c649-3f78-4949-a3b0-62c44787337e",
+        "runtime_commit": "67b23d5f0abb6eeeb99b92432b17d3092e192643",
+        "source_head": "f54bee45a79182ca0de85aeddff6697e7659f626",
+        "source_tree": "50402286dbe6d2f5975211809be8ecada25c8f69",
+        "profile_sha256": "c9c7663dade8685f5d7932b65a7476a58647981b4cfc3c59f008c6dcf080b3f6",
+        "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394",
+        "hardware_evidence_digest": "92ae95932c819769b2fdbabd674ff2cb5a5ccfa7e349526cce12991d5cd39fad",
+        "environment_digest": "88034740bacd1c2d2b24e9f8e206d0f58efe577194bbf045f37489b31c68129f",
+        "next_engine_starts": [
+          {
+            "boot": 2,
+            "stages": [
+              "performance"
+            ]
+          }
+        ],
+        "previous_serving": {
+          "window": "1d6d2564-08f8-470e-a9b5-a76d82b58ab7",
+          "deployment": "67b23d5f0abb6eeeb99b92432b17d3092e192643",
+          "image_id": "sha256:5d6e6aa4747baa66fb5f691758087df9a4c482a2914d093fe3d24acea5a31394",
+          "profile_sha256": "c9c7663dade8685f5d7932b65a7476a58647981b4cfc3c59f008c6dcf080b3f6",
+          "source": "f54bee45a79182ca0de85aeddff6697e7659f626",
+          "tree": "50402286dbe6d2f5975211809be8ecada25c8f69",
+          "reusable_stages": [
+            "targeted-1",
+            "functional-1",
+            "capacity-1",
+            "performance-1"
+          ],
+          "details": {
+            "targeted-1": {
+              "output_sha256": "9c094982563f0a4490726914b479676f79840e46a8ccb0449b45ecbab564efbb",
+              "counts": {
+                "tool-history": 4,
+                "cache-input": 1,
+                "sequential": 18,
+                "default-stock": 1,
+                "mixed-engine-running": 1,
+                "mixed-concurrency": 4,
+                "cancelling": 1,
+                "cancel-drained": 1,
+                "after-cancel": 3
+              }
+            },
+            "functional-1": {
+              "output_sha256": "165ff2ef826752a37a567f6f3052952a2cb83204797a9d0d2ef0ff35214c5149",
+              "counts": {
+                "tool": 12,
+                "tool-followup": 2,
+                "quality": 20,
+                "dose": 4,
+                "vision": 2,
+                "invalid-request": 6
+              }
+            },
+            "capacity-1": {
+              "output_sha256": "2b32fafe2ebc8fe5ff7b63a0187729d9a3019351dae62c5131c97f782054b86c",
+              "counts": {
+                "tool-smoke": 1,
+                "capacity": 8,
+                "stability": 545
+              }
+            },
+            "performance-1": {
+              "raw_sha256": [
+                "f6759d38c6fe6c5cdf1125ca4239efdab06a41ec65009ad6f955f39c570c362c",
+                "990a2d400ec84fcd03317e582e93c93ffa6d067f9306efa5945892f91886ccce",
+                "1e1c6d593958b5b0572aee5eb4e642fbc56b76e5418bc7719519ff1ece26d941",
+                "b3044d09a7f0db4176a3239a232156118f78e86d87f591f06304eec66a32dab8",
+                "d3c19f77f4b945bb7d38cd9aa49cee975a0d9c32eedc70f34c00ac52c3ce3a9f",
+                "d3344591519a37c3af3f0b2f668be1e68c154a93070a6386ad0821d5b8a9fa7b"
+              ]
+            }
+          },
+          "boot_ranks": {
+            "1": {
+              "spark01": {
+                "container_id": "572cfe5858a1d6991b2cad6ae9b3f05b74bc76e734506ff5f8f41742eec35578",
+                "started_at": "2026-11-28T06:59:03.990046615Z"
+              },
+              "spark02": {
+                "container_id": "466354cdc9d7435ef5f9f85f2011739cf0e05482a7363e5e019c7f8f7c526431",
+                "started_at": "2026-11-28T06:59:03.651785034Z"
+              },
+              "spark03": {
+                "container_id": "3068d5bc2250fd87c681b2f8d636936380c3a1354592527cd7c2ee7978fc6dc4",
+                "started_at": "2026-11-28T06:59:03.640723514Z"
+              },
+              "spark04": {
+                "container_id": "b06e7ff2e18b2d0c833c034e7571433faa39e8372b7bcf1b7a10039be57baba1",
+                "started_at": "2026-11-28T06:59:03.638790248Z"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
