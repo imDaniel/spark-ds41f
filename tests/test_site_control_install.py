@@ -37,3 +37,7 @@ class PromotionInstallerTests(unittest.TestCase):
                 with self.subTest(window=invalid), self.assertRaises(ValueError):
                     PROMOTION["transact"]("prepare", invalid)
             spec.assert_not_called()
+
+
+if __name__ == "__main__":
+    unittest.main()
