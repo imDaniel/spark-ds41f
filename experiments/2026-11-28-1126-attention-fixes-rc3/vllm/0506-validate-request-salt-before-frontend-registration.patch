@@ -1,0 +1,143 @@
+From 71ab85ed5d1632a8fc6cf98110813a040edbdf11 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 12:59:23 +0900
+Subject: [PATCH] Validate mutable request salt before assigning frontend IDs
+
+Base: 1126 Attention fixes RC2 vLLM f32ecc918435920d2b22301406b5b4ee5d162e1c.
+
+Sync and async engines register prebuilt requests under a new internal ID
+before the client dispatches them. A salt edited after construction can
+fail validation at dispatch and leave sync output state pending. An async
+rollback cleans output state but leaves the caller's request ID consumed.
+Check the existing salt contract before changing IDs on either frontend.
+Keep the transport checks for callers that dispatch directly.
+
+Quality: Valid salts, sampling choices, prefix keys, wire format and
+GPU execution keep their existing behavior.
+
+Tests: CPU tests for both public engine entry points with one or two
+outputs. Reject before registering outputs and retry the corrected object
+once, including all children. Both paths use a mocked transport.
+
+Upstream status: downstream Attention maintenance.
+---
+ tests/v1/core/test_kv_cache_utils.py | 79 ++++++++++++++++++++++++++++
+ vllm/v1/engine/input_processor.py    |  5 +-
+ 2 files changed, 83 insertions(+), 1 deletion(-)
+
+diff --git a/tests/v1/core/test_kv_cache_utils.py b/tests/v1/core/test_kv_cache_utils.py
+index 8b428c4820cbc4f713be4af2d7518ed1e754267b..c27d692e9d21095ba3897178dbe7f3e5eb024f41 100644
+--- a/tests/v1/core/test_kv_cache_utils.py
++++ b/tests/v1/core/test_kv_cache_utils.py
+@@ -1117,6 +1117,85 @@ def test_attention_cache_namespace_rechecks_salt_at_dispatch(client_kind, attent
+     send.assert_called_once()
+ 
+ 
++@pytest.mark.parametrize("async_client", [False, True], ids=["sync", "async"])
++@pytest.mark.parametrize("n", [1, 2])
++def test_attention_cache_namespace_rejects_before_registration(
++    async_client, n, attention_wire
++):
++    import asyncio
++    from functools import partial
++    from unittest.mock import AsyncMock, Mock
++
++    from vllm.v1.engine.async_llm import AsyncLLM
++    from vllm.v1.engine.core_client import AsyncMPClient, SyncMPClient
++    from vllm.v1.engine.input_processor import InputProcessor
++    from vllm.v1.engine.llm_engine import LLMEngine
++    from vllm.v1.engine.output_processor import OutputProcessor
++
++    _, make_wire = attention_wire
++    wire = make_wire(False, None, "caller")
++    params = wire.sampling_params
++    params.n = n
++    params.detokenize = False
++    request_id = wire.request_id
++    output = OutputProcessor(None, log_stats=False)
++    engine = SimpleNamespace(
++        input_processor=InputProcessor,
++        output_processor=output,
++        engine_core=SimpleNamespace(),
++    )
++    if async_client:
++        send = AsyncMock()
++        client = SimpleNamespace(
++            _send_input=send, client_index=0, _ensure_output_queue_task=Mock()
++        )
++        engine.engine_core.add_request_async = partial(
++            AsyncMPClient.add_request_async, client
++        )
++        engine.engine_core.abort_requests_async = AsyncMock()
++        engine.vllm_config = SimpleNamespace(
++            cache_config=SimpleNamespace(kv_sharing_fast_prefill=False)
++        )
++        engine.errored = False
++        engine.log_requests = False
++        engine._run_output_handler = Mock()
++        engine.check_admission = Mock()
++        engine._add_request = partial(AsyncLLM._add_request, engine)
++        engine.abort = partial(AsyncLLM.abort, engine)
++
++        def submit():
++            return asyncio.run(AsyncLLM.add_request(engine, request_id, wire, params))
++
++    else:
++        send = Mock()
++        client = SimpleNamespace(is_dp=False, _send_input=send)
++        engine.engine_core.add_request = partial(SyncMPClient.add_request, client)
++
++        def submit():
++            return LLMEngine.add_request(engine, request_id, wire, params)
++
++    # An already-built Python request can be edited after its constructor.
++    wire.cache_salt = 23
++    with pytest.raises(ValueError, match="cache_salt"):
++        submit()
++    send.assert_not_called()
++    assert wire.external_req_id is None and wire.request_id == request_id
++    assert not output.has_unfinished_requests()
++    assert not output.parent_requests and not output.external_req_ids
++    if async_client:
++        engine._run_output_handler.assert_not_called()
++        engine.engine_core.abort_requests_async.assert_not_called()
++
++    wire.cache_salt = "corrected"
++    submit()
++    assert send.call_count == n
++    assert output.get_num_unfinished_requests() == n
++    assert len(output.external_req_ids[request_id]) == n
++    sent = [call.args[1] for call in send.call_args_list]
++    assert {req.request_id for req in sent} == set(output.external_req_ids[request_id])
++    assert all(req.cache_salt == "corrected" for req in sent)
++
++
+ @pytest.mark.parametrize("caching", [False, True])
+ @pytest.mark.parametrize(
+     "extra",
+diff --git a/vllm/v1/engine/input_processor.py b/vllm/v1/engine/input_processor.py
+index 7723faacc76a71fb694b3d30b1fd7e5bc950ff15..42fd3e9a20b8611969a6f536696959e35871082d 100644
+--- a/vllm/v1/engine/input_processor.py
++++ b/vllm/v1/engine/input_processor.py
+@@ -30,7 +30,7 @@ from vllm.tokenizers import TokenizerLike
+ from vllm.utils import length_from_prompt_token_ids_or_embeds, random_uuid
+ from vllm.utils.async_utils import make_async
+ from vllm.utils.jsontree import json_iter_leaves
+-from vllm.v1.engine import EngineCoreRequest
++from vllm.v1.engine import EngineCoreRequest, validate_cache_salt
+ 
+ logger = init_logger(__name__)
+ 
+@@ -271,6 +271,9 @@ class InputProcessor:
+         """Replace the externally supplied request ID with an internal request ID
+         that adds 8 random characters in order to ensure uniqueness.
+         """
++        # Prebuilt requests are mutable. Validate before assigning IDs or
++        # registering output state under those IDs.
++        validate_cache_salt(request.cache_salt)
+         if request.external_req_id is not None:
+             raise ValueError(
+                 "The external_req_id field should not be set on EngineCoreRequests"
+-- 
+2.54.0 (Apple Git-157)
+

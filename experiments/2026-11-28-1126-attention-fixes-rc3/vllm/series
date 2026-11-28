@@ -1,0 +1,2 @@
+include ../../2026-11-28-1126-attention-fixes-rc2/vllm/series
+0506-validate-request-salt-before-frontend-registration.patch

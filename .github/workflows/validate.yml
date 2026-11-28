@@ -200,7 +200,10 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review, 2026-10-23-1022-output-parser, 2026-10-23-1022-release-fixtures, 2026-10-23-1022-parser-byte-alignment, 2026-11-28-1126-attention, 2026-11-28-1126-attention-rc2, 2026-11-28-1126-attention-rc3, 2026-11-28-1126-attention-fixes, 2026-11-28-1126-attention-fixes-rc2]
+        experiment: [2026-10-23-1022-attention-steering, 2026-10-23-1022-attention-review, 2026-10-23-1022-output-parser, 2026-10-23-1022-release-fixtures, 2026-10-23-1022-parser-byte-alignment, 2026-11-28-1126-attention, 2026-11-28-1126-attention-rc2, 2026-11-28-1126-attention-rc3, 2026-11-28-1126-attention-fixes, 2026-11-28-1126-attention-fixes-rc2, 2026-11-28-1126-attention-fixes-rc3]
+        include:
+          - experiment: 2026-11-28-1126-attention-fixes-rc3
+            encoder_experiment: 2026-11-28-1126-attention-fixes-rc2
     env:
       STEERING_EXPERIMENT: ${{ matrix.experiment }}
     steps:
@@ -270,8 +273,8 @@ jobs:
           # This selection does not open checkpoint files; real-tokenizer cases
           # are validated locally and intentionally deselected in this job.
           STEERING_MODEL_IDENTITY: .work/unused-checkpoint
-          STEERING_ENCODER_EXPERIMENT: ${{ startsWith(matrix.experiment, '2026-11-28-1126-attention-rc') && '2026-11-28-1126-attention' || matrix.experiment }}
-          EXPECTED_ENCODER_CASES: ${{ fromJSON('{"2026-11-28-1126-attention-fixes":48,"2026-11-28-1126-attention-fixes-rc2":50}')[matrix.experiment] || 38 }}
+          STEERING_ENCODER_EXPERIMENT: ${{ matrix.encoder_experiment || startsWith(matrix.experiment, '2026-11-28-1126-attention-rc') && '2026-11-28-1126-attention' || matrix.experiment }}
+          EXPECTED_ENCODER_CASES: ${{ fromJSON('{"2026-11-28-1126-attention-fixes":48,"2026-11-28-1126-attention-fixes-rc2":50}')[matrix.encoder_experiment || matrix.experiment] || 38 }}
         run: |
           export STEERING_VLLM_SOURCE=$(PYTHONPATH=scripts .work/steering-1022-cpu-venv/bin/python - <<'PY'
           import os

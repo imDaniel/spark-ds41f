@@ -380,13 +380,17 @@ def node_runtime_problems(
     # another (an arm from before the rename to spark-ds41f, or after it) would keep the GPU.
     others = run_ssh(nodes, node, "docker", "ps", *serving_filters(cluster),
                      "--format", f'{{{{.Names}}}}\t{{{{.Label "{PROFILE_LABEL}"}}}}')
-    for line in others.stdout.splitlines():
-        other, _, profile = line.partition("\t")
-        if other and other != name:
-            problems.append(
-                f"{node['name']}: {other} is serving; stop it with its own profile before starting {name}: "
-                f"{stop_own_profile({'profile': profile or None})}"
-            )
+    if others.returncode:
+        detail = docker_error_detail(node["name"], others.stderr) or f"docker ps exited {others.returncode}"
+        problems.append(f"{node['name']}: cannot list running serving containers: {detail}")
+    else:
+        for line in others.stdout.splitlines():
+            other, _, profile = line.partition("\t")
+            if other and other != name:
+                problems.append(
+                    f"{node['name']}: {other} is serving; stop it with its own profile before starting {name}: "
+                    f"{stop_own_profile({'profile': profile or None})}"
+                )
     sudo = run_ssh(nodes, node, "sudo", "-n", "true")
     if sudo.returncode:
         problems.append(f"{node['name']}: passwordless sudo is unavailable for memguard")

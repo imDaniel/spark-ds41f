@@ -1,0 +1,18 @@
+{
+  "parent_deployment": "518760053633608e143f9b36b7a2c588f9d21bb7",
+  "parent_head": "f32ecc918435920d2b22301406b5b4ee5d162e1c",
+  "parent_tree": "2f003a3cd5fcb135b3dbfdd3f67556052956a9c0",
+  "retained_parent_series": "experiments/2026-11-28-1126-attention-fixes-rc2/vllm/series",
+  "retained_patch_count": 756,
+  "added": [
+    {
+      "patch": "0506-validate-request-salt-before-frontend-registration.patch",
+      "commit": "f54bee45a79182ca0de85aeddff6697e7659f626"
+    }
+  ],
+  "patch_count": 757,
+  "patch_head": "f54bee45a79182ca0de85aeddff6697e7659f626",
+  "expected_tree": "50402286dbe6d2f5975211809be8ecada25c8f69",
+  "patch_series": "experiments/2026-11-28-1126-attention-fixes-rc3/vllm/series",
+  "patchset_sha256": "84bb68f89b2a973c66b0a4dc2027678adc9e5c35f278d52422b9b71f83f28ace"
+}

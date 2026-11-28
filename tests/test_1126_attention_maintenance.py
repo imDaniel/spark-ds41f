@@ -54,5 +54,9 @@ class MaintenanceCandidateTest(unittest.TestCase):
         )
 
 
+class MaintenanceRC3CandidateTest(MaintenanceCandidateTest):
+    experiment = "experiments/2026-11-28-1126-attention-fixes-rc3"
+
+
 if __name__ == "__main__":
     unittest.main()

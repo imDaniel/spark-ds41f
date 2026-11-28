@@ -1,0 +1,150 @@
+{
+  "component_head": "f54bee45a79182ca0de85aeddff6697e7659f626",
+  "component_tree": "50402286dbe6d2f5975211809be8ecada25c8f69",
+  "source_patchset_sha256": "84bb68f89b2a973c66b0a4dc2027678adc9e5c35f278d52422b9b71f83f28ace",
+  "parent_deployment": "518760053633608e143f9b36b7a2c588f9d21bb7",
+  "dependency_image": "sha256:3e28171ec18fcb05dac837a12c680c321fa41f9a862e230d3b966668d3792157",
+  "container_runtime": "runc",
+  "container_network": "none",
+  "visible_gpu_devices": 0,
+  "combined_candidate": {
+    "encoder": {
+      "tests": 87,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "c71c100d6269a79d8a250fabf259fdb03389cfdb084d1ffdefa9e020b84953b7",
+      "log_sha256": "2ec55e7c1c27cec7a40b32780bb4efabc9ed6061091c7f3d50ed34e260792cf6",
+      "real_tokenizer_cases": 37
+    },
+    "tokenizer": {
+      "tests": 161,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "c1bf7cc35706dfcac0ac4cc884fddcdf99ed4d20bab6ab91a8c72f188c257d4f",
+      "log_sha256": "a128b0ce7573ff9f449d03b8825f5eb32fafd9c3a8570a22c3f657d588ebf9e6"
+    },
+    "parser": {
+      "tests": 104,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "7ec5d03514d7ef9b11584121232be53abaee2564291ffaa4cf8531eddf3cef42",
+      "log_sha256": "392aaefb2fdae48270daaf381401aed6859574c19981b956099a6c8b15e3bb65"
+    },
+    "cache": {
+      "tests": 41,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "464926652009926ce8c41f9124a816527121d78df6047906f499bf514e677252",
+      "log_sha256": "5d6eec991031425173468c2412420a43483663d0847d4fcc546ee853e72c3e7a"
+    },
+    "steering": {
+      "tests": 129,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "86afb57faddfc9d97aed9060368b5d4d0a58a58dd16ce48fddfbadc4acc1592c",
+      "log_sha256": "79b838a844d8d3fb1c2deadefc915c9d422c0c401aa191b931a8b53e2279eef5"
+    },
+    "graph": {
+      "tests": 44,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "junit_sha256": "fe66e13506c4de0041e6e7e3197cf5cb5c9eb228ea10b313249fe5b52f145408",
+      "log_sha256": "5ed9322b91b420c631e8750a735bcbcfe56e38600d9101c10efb1d14d20ad5b9"
+    }
+  },
+  "steering_cpu_cases_exact": true,
+  "graph_hardware_cases_deselected": 2,
+  "profile_rebind_repeated": true,
+  "targeted_review": {
+    "two_round_tool_order": {
+      "checked_component": "f32ecc918435920d2b22301406b5b4ee5d162e1c",
+      "real_1017_combinations": 1080,
+      "passed": 1080,
+      "first_candidate_failed": 360,
+      "first_candidate_report_sha256": "088ff8b34fecd725a8452b285d43c426c2402e2866a575a97e55c350ebde0a20",
+      "rc2_report_sha256": "7a6585f78f49734ba8d51393acb9aa7742bbfb5e5f062b4fa158409ec063ced9"
+    },
+    "mixed_source_rebind": {
+      "rc2_fresh_cli_matches_receipt": true,
+      "rc2_after_rc1_produces_wrong_template_identity": true,
+      "comparison_log_sha256": "417f3a71c9a948d463f7e4996dea7df53cc842cc1bc5de57188023aa3bafba71",
+      "incorrect_rc2_artifact_rejected_by_rc2_runtime_loader": true,
+      "loader_check_log_sha256": "6d41c68b78afd76f6dea816cebaf9a00a02b2d9781f09f9b6c48d90809befc0d"
+    },
+    "public_request_admission": {
+      "parent_failure_cases": 4,
+      "public_clients": [
+        "LLMEngine",
+        "AsyncLLM"
+      ],
+      "n": [
+        1,
+        2
+      ],
+      "parent_log_sha256": "e22044fff4fac065c7bb699fee54f623dc75cc8820e21b020449e2432c1d3bc3",
+      "native_and_msgpack_cases_passed": 53,
+      "green_log_sha256": "5d46f302bef40dc2b4f74d1dbdc21ebc5a13ca60ea97f65f8fd138756f6fdfcc"
+    },
+    "lab_recipe": {
+      "new_cpu_cases": 5,
+      "parent_failed_cases": 5,
+      "guard_suite_passed": 18,
+      "parent_log_sha256": "ca3eae2df74e7bb131aca9e20bdd8ac00ee4d274d08616df6c3e5fbae3975072",
+      "fixed_log_sha256": "c62dbe3296dc624e4940bb5516cee8de5ed773ce9d4d2f8a60e3de75c5f40592",
+      "mock_effects_before_sha256": "f2aa4d33a00704bfb5158fe753e8d6d14e57a6a6b175d06041ba4ae0798ff285",
+      "mock_effects_after_sha256": "aa7dbc424970a2937ca344c6ee8cddef1e375664509626f28bf15fa57a6cff3a"
+    },
+    "node_inventory_preflight": {
+      "fixed_passed": 3,
+      "parent_log_sha256": "ca2bee6378dea788b5d424f5899aac7d4568095ba99e817a241a9bc455c2a389",
+      "fixed_log_sha256": "2c37d50a88147ca2ebd5197d74ee37d462dab650d793512e849814c28d5a38f0"
+    },
+    "lab_all_rank_inventory": {
+      "parent_failed_assertions_including_subcases": 12,
+      "fixed_tests": 8,
+      "parent_log_sha256": "34d0e1088ccee1420026401048e4e424dfa54f23ac95c83bacd04292182c6910",
+      "fixed_log_sha256": "7616621c6a61ea6fdc6bc667f40b42f48453d72a4b79f1cd5eb5a07ddb00ae38",
+      "peer_label_red_assertions": 9,
+      "final_inventory_tests_passed": 10,
+      "final_related_tests_passed": 35,
+      "final_related_log_sha256": "0be52f65de8ab8a35bc31515db77060371c72637c062d174c8717068cd8636ac"
+    }
+  },
+  "repository_verification": {
+    "candidate_doctor": "passed",
+    "full_build_prepare": "passed",
+    "build_check": "passed",
+    "fresh_replay_patches": 757,
+    "prepare_log_sha256": "dd49d6f6639291493ecf67a9b04d1bc1cb79eb857cb297c6f4195a73d3eeaf5c",
+    "release_classification": {
+      "gate": 181,
+      "excluded": 61
+    },
+    "classification_log_sha256": "1f500080c18b4542049a8560e2571b5c7598ba10db39169331fc5c4a4f02cd30",
+    "unittest_passed": 1090,
+    "unittest_log_sha256": "8061b467922da2dc57146a4bc41c556166da81df143dfd8e232cb16b53a45ba7",
+    "initial_run_note": "The initial run found a watchdog test that still mocked the previous inventory function. Its restore assertions were retained and passed after updating the mock.",
+    "initial_unittest_log_sha256": "fff1b2bc04ac33a61502e38435d16168547af3ca9897854a5aa7e2444fb055c7",
+    "watchdog_inventory_pins_tests_passed": 15,
+    "watchdog_inventory_pins_log_sha256": "d9a3df322d25604c9056f730f3ece3b56ef64110745dd2882ac73be421cbff39",
+    "json_validation": "passed",
+    "generated_docs": "passed"
+  },
+  "rebind_regressions": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "log_sha256": "0cd48c9f121bf950d47f0a6abcba37440ab4ae1e66ea457d9e50c3bb28dfcf09",
+    "junit_sha256": "0218300a82120cb5acb6dc5521347829203877451c07631635c008f24b267aa8",
+    "fresh_cli_receipt_matches": true,
+    "concurrent_sources_log_sha256": "d3f7a4f53a670db77dfe7c9fecb20c54661f62a0da352f6314002691fd92419e",
+    "setup_note": "The initial container omitted the candidate checkout's read-only Git alternates mount. The final suite ran with the full object store available."
+  }
+}
