@@ -1,0 +1,53 @@
+{
+  "checked_at": "2026-11-28T08:17:42.793766+00:00",
+  "kernel_fault_check_since": "2026-11-28T04:57:48+00:00",
+  "qualification_holds_released": true,
+  "ingress": {
+    "1d6d2564-08f8-470e-a9b5-a76d82b58ab7": "open",
+    "9025c649-3f78-4949-a3b0-62c44787337e": "open"
+  },
+  "production_revision": "63b0c0d31e4378888951295325179211d00cbde6",
+  "image": "sha256:3e28171ec18fcb05dac837a12c680c321fa41f9a862e230d3b966668d3792157",
+  "profile": "81ca5d96cf78a1c0193ab80071efab43d666b5a57e8633ced71b227031bde1f2",
+  "members": {
+    "spark01": {
+      "production": true,
+      "production_guard": true,
+      "candidate": false,
+      "candidate_guard": false,
+      "valid": true,
+      "memguard": "active"
+    },
+    "spark02": {
+      "production": true,
+      "production_guard": true,
+      "candidate": false,
+      "candidate_guard": false,
+      "valid": true,
+      "memguard": "active"
+    },
+    "spark03": {
+      "production": true,
+      "production_guard": true,
+      "candidate": false,
+      "candidate_guard": false,
+      "valid": true,
+      "memguard": "active"
+    },
+    "spark04": {
+      "production": true,
+      "production_guard": true,
+      "candidate": false,
+      "candidate_guard": false,
+      "valid": true,
+      "memguard": "active"
+    }
+  },
+  "ready": true,
+  "gateway": {
+    "group/deepseek-v4.1-flash-sec-1.1": 200,
+    "group/deepseek-v4.1-flash-sec-4.0": 200
+  },
+  "backend_success_before_gateway": 1,
+  "backend_success_after_gateway": 3
+}
