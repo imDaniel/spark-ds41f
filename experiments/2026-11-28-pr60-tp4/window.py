@@ -175,13 +175,15 @@ def spark(root, config, *args, timeout=3600, capture=False):
                cwd=root, timeout=timeout, capture=capture)
 
 
-def transition(root, config, action, *options):
+def transition(root, config, action, *options, pre_apply=None):
     args = ("cluster", action, *options)
     plan = spark(root, config, *args, capture=True).stdout
     print(plan, flush=True)
     if ("live:" not in plan or "--apply would refuse" in plan
             or (action == "start" and not any(p in plan for p in ("shape:   unchanged", "shape:   new engine")))):
         raise RuntimeError("The coordinated plan does not match the expected TP4 transition")
+    if pre_apply:
+        pre_apply()
     spark(root, config, *args, "--apply")
 
 

@@ -61,6 +61,15 @@ class QualificationWindowTest(unittest.TestCase):
         window.atomic_json(self.op / f"watchdog-{self.window}.json", ready)
         window.require_watchdog(self.window)
 
+    def test_lease_lost_after_plan_blocks_apply(self):
+        plan = subprocess.CompletedProcess([], 0, stdout="live: stopped\nshape:   unchanged\n")
+        spark = self.mock("spark", return_value=plan)
+        def revoke():
+            raise RuntimeError("lease expired")
+        with self.assertRaisesRegex(RuntimeError, "lease expired"):
+            window.transition(window.ROOT, window.CFG, "start", "--replace", pre_apply=revoke)
+        self.assertEqual(spark.call_count, 1)
+
     def test_peer_conflict_or_watchdog_death_during_drain(self):
         self.mock("check_peer_reservations", side_effect=[RuntimeError("peer hold"), None])
         self.mock("require_watchdog", side_effect=[None, RuntimeError("watchdog dead")])

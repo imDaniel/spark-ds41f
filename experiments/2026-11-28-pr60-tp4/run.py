@@ -120,7 +120,8 @@ class Run:
         self.stage("kernel", "native", [sys.executable, str(HERE / "native.py"), self.ident, ident,
                                         str(self.result_dir("native"))], minutes=50)
         for boot in (1, 2):
-            self.stage("start", f"start-{boot}", [sys.executable, str(HERE / "run.py"), "transition", "start"],
+            self.stage("start", f"start-{boot}", [sys.executable, str(HERE / "run.py"), "transition", "start",
+                                                  "--window", self.ident],
                        minutes=17 if boot == 1 else 2, observe=True)
             self.stage("test", f"doctor-{boot}", [*SPARK, "doctor", "--live"], minutes=1)
             self.save_boot(boot)
@@ -132,7 +133,8 @@ class Run:
                            minutes={"targeted": 2, "functional": 1, "capacity": 20, "performance": 14}[stage],
                            observe=True)
             if boot == 1:
-                self.stage("start", "stop-1", [sys.executable, str(HERE / "run.py"), "transition", "stop"],
+                self.stage("start", "stop-1", [sys.executable, str(HERE / "run.py"), "transition", "stop",
+                                               "--window", self.ident],
                            minutes=1)
         self.record("hardware-stages-passed")
 
@@ -151,12 +153,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=("execute", "transition"))
     parser.add_argument("value")
+    parser.add_argument("--window")
     args = parser.parse_args()
     if args.action == "transition":
+        if not args.window:
+            parser.error("supply the owning window UUID for a candidate transition")
+        def check_window():
+            h = window.active(args.window)
+            window.require_watchdog(args.window)
+            if window.site.ingress_stage(h) != "blocked":
+                raise RuntimeError("Candidate transition requires drained ingress")
+        check_window()
         if args.value == "start":
-            window.transition(ROOT, CFG, "start", "--replace")
+            window.transition(ROOT, CFG, "start", "--replace", pre_apply=check_window)
         elif args.value == "stop":
-            window.transition(ROOT, CFG, "stop", "--parallel")
+            window.transition(ROOT, CFG, "stop", "--parallel", pre_apply=check_window)
         else:
             parser.error("expected start or stop")
     else:
