@@ -1,5 +1,6 @@
 """Run the native gate on an idle, leased Spark, using only the built image's vLLM."""
 import argparse
+from collections import Counter, defaultdict
 import hashlib
 import json
 import os
@@ -28,6 +29,7 @@ TARGETS = {
     "tests/models/test_deepseek_v4_1_steering_profile.py",
     "tests/models/test_deepseek_v4_1_steering_request.py",
 }
+SUPPLEMENTAL_MINIMUM = {"variant": 2, "warmup": 7, "encoder": 87, "parser": 104}
 
 
 def read(path):
@@ -57,13 +59,71 @@ def make_manifest(source):
             "scope_exclusions": previous["scope_exclusions"]}
 
 
-def test_outcomes(xml_path):
+def test_outcomes(xml_path, *, supplemental=False):
     result = {}
     for case in ElementTree.parse(xml_path).iter("testcase"):
-        key = (case.get("file", case.get("classname", "")), case.get("name"))
-        status = next((tag for tag in ("failure", "error", "skipped") if case.find(tag) is not None), "passed")
-        result[key] = status
+        key = (case.get("file") or "", case.get("classname") or "", case.get("name"))
+        if not key[2] or (not supplemental and not all(key)) or key in result:
+            raise ValueError(f"Missing or duplicate JUnit case identity {key} in {xml_path}")
+        result[key] = next((status for tag, status in (("failure", "failed"), ("error", "error"),
+                           ("skipped", "skipped")) if case.find(tag) is not None), "passed")
+    if supplemental:
+        # Pytest xunit2 can omit both module fields for an external test. Its
+        # complete parametrized name must then be unique within this report.
+        counts = Counter(name for _, _, name in result)
+        for path, classname, name in result:
+            if not path and not classname and counts[name] != 1:
+                raise ValueError(f"Ambiguous supplemental JUnit case {name} in {xml_path}")
     return result
+
+
+def component_cases(folder, files):
+    files = sorted(files)
+    cases = {}
+    reports = set(folder.glob("chunk*.xml"))
+    for start in range(0, len(files), 10):
+        chunk = files[start:start + 10]
+        prefix = f"chunk{start // 10:03d}"
+        whole = folder / f"{prefix}.xml"
+        parts = sorted(folder.glob(f"{prefix}-*.xml"))
+        if parts:
+            # A timed-out chunk can leave its own partial XML. The runner then
+            # emits one authoritative report per file, in manifest order.
+            expected = [folder / f"{prefix}-{index:02d}.xml" for index in range(len(chunk))]
+            if parts != expected:
+                raise ValueError(f"Incomplete per-file fallback for {prefix}")
+            groups = [(part, {path}) for part, path in zip(parts, chunk)]
+        else:
+            groups = [(whole, set(chunk))]
+        reports.discard(whole)
+        for part, expected_files in groups:
+            found = test_outcomes(part)
+            if {key[0] for key in found} != expected_files:
+                raise ValueError(f"Wrong or missing JUnit files in {part}")
+            cases.update(found)
+            reports.discard(part)
+    if reports:
+        raise ValueError(f"Unexpected JUnit reports: {sorted(reports)}")
+    return cases
+
+
+def check_file_counts(rows, cases):
+    observed = defaultdict(Counter)
+    for (path, _, _), outcome in cases.items():
+        observed[path][outcome] += 1
+    for row in rows:
+        path = row["file"]
+        for outcome in ("passed", "skipped", "failed", "error"):
+            if type(row[outcome]) is not int or row[outcome] != observed[path][outcome]:
+                raise ValueError(f"JSON/JUnit count mismatch for {path} {outcome}: "
+                                 f"{row[outcome]} vs {observed[path][outcome]}")
+
+
+def check_regressed_skips(previous, current):
+    skipped = sorted(key for key, value in current.items()
+                     if value == "skipped" and previous.get(key) == "passed")
+    if skipped:
+        raise ValueError(f"Previously passing release cases skipped: {skipped}")
 
 
 def require_cases(cases, names):
@@ -80,45 +140,68 @@ def audit_bulk(folder, manifest):
     failed = [r["file"] for r in rows if r["status"] != "ok" or not (r["passed"] + r["skipped"])]
     if failed:
         raise ValueError(f"Missing or failing native file results: {failed}")
+    cases = component_cases(folder, manifest["files"])
+    check_file_counts(rows, cases)
     historical = read(HIST / "component-run-5-audit.json")
     for path, previous in historical["critical"].items():
         current = by_path[path]
         if current["skipped"] or current["passed"] < previous["passed"]:
             raise ValueError(f"Critical cases skipped or lost: {path} ({current})")
-    cases = {}
-    # In a timed-out chunk its diagnostic XML may be incomplete. The single-file
-    # reruns are authoritative where the original runner produced those.
-    for start in range(0, len(manifest["files"]), 10):
-        prefix = f"chunk{start // 10:03d}"
-        parts = sorted(folder.glob(f"{prefix}-*.xml")) or [folder / f"{prefix}.xml"]
-        for part in parts:
-            cases.update(test_outcomes(part))
-    errors = [key for key, outcome in cases.items() if outcome in {"failure", "error"}]
+    errors = [key for key, outcome in cases.items() if outcome in {"failed", "error"}]
     if errors:
         raise ValueError(f"JUnit failures or collection errors: {errors[:10]}")
     required = [(GRAPH, f"test_profile_cudagraph_memory_frees_throwaway_pool[{n}]") for n in (0, 268435456)]
     required += [(GRAPH, f"test_full_capture_warms_each_input_variant_before_capture[{v}]") for v in ("False", "True")]
     required.append(("tests/models/test_deepseek_v4_1_steering_gpu.py", "test_rows_graph_replay_reuses_controls_and_output"))
-    require_cases(cases, required)
+    require_cases(cases, [(path, path.removesuffix(".py").replace("/", "."), name) for path, name in required])
     for path in TARGETS:
         if not any(key[0] == path and result == "passed" for key, result in cases.items()):
             raise ValueError(f"No maintenance tests passed in {path}")
-    salt = {name: value for (path, name), value in cases.items()
-            if path == SALT and name.startswith("test_attention_cache_namespace")}
-    if not salt or any(result != "passed" for result in salt.values()):
+    salt = [value for (path, _, name), value in cases.items()
+            if path == SALT and name.startswith("test_attention_cache_namespace")]
+    if not salt or any(result != "passed" for result in salt):
         raise ValueError("Attention cache identity cases missing or skipped")
-    previous_passes = set()
-    for file in (HIST / "component-run-5").glob("*.xml"):
-        previous_passes.update(k for k, v in test_outcomes(file).items() if v == "passed")
-    unexpected_skips = sorted(k for k, v in cases.items() if k in previous_passes and v == "skipped")
-    if unexpected_skips:
-        raise ValueError(f"Previously passing release cases skipped: {unexpected_skips}")
+    previous = component_cases(HIST / "component-run-5", read(HIST_MANIFEST)["files"])
+    check_regressed_skips(previous, cases)
     return {"files": len(rows), "totals": {outcome: sum(r[outcome] for r in rows)
-            for outcome in ("passed", "skipped", "failed", "error")}, "required_graph_cases": required,
+            for outcome in ("passed", "skipped", "failed", "error")}, "required_graph_cases": [list(k) for k in required],
             "passing_cache_namespace_cases": len(salt), "critical_files": {p: by_path[p] for p in historical["critical"]}}
 
 
-def supplemental(name, args, minimum, *, tilelang=False):
+def supplemental_result(report):
+    cases = test_outcomes(report, supplemental=True)
+    name = report.stem
+    minimum = SUPPLEMENTAL_MINIMUM[name]
+    if len(cases) < minimum or any(v != "passed" for v in cases.values()):
+        raise ValueError(f"{name} incomplete: {len(cases)} cases, expected at least {minimum} all passing")
+    result = {name: len(cases)}
+    if name == "encoder":
+        result["real_tokenizer"] = sum("checkpoint_tokenizer" in node for _, _, node in cases)
+        if result["real_tokenizer"] < 37:
+            raise ValueError("Not all official 1017 tokenizer cases ran")
+    return result
+
+
+def audit_saved(directory):
+    manifest = read(directory / "manifest.json")
+    if manifest != make_manifest(read(RC3 / "source.json")["vllm"]):
+        raise ValueError("Recorded manifest differs from the RC3 native gate")
+    extras = {}
+    for name in SUPPLEMENTAL_MINIMUM:
+        extras.update(supplemental_result(directory / f"{name}.xml"))
+    if extras != read(directory / "supplemental.json"):
+        raise ValueError("Supplemental JSON/JUnit count mismatch")
+    bulk = audit_bulk(directory / "component", manifest)
+    identity = read(directory / "identity.json")
+    if (identity["source_head"], identity["source_tree"]) != (manifest["source_head"], manifest["source_tree"]):
+        raise ValueError("Recorded source identity differs from the manifest")
+    result = {**identity, **bulk, "supplemental": extras, "status": "passed"}
+    if result != read(directory / "audit.json"):
+        raise ValueError("Stored native audit differs from the rechecked evidence")
+    return result
+
+
+def supplemental(name, args, *, tilelang=False):
     report = Path("/out") / f"{name}.xml"
     options = ["--noconftest", "-p", "no:cacheprovider", "-o", "addopts=", "-q", "-rfEs",
                "--junitxml", str(report), *map(str, args)]
@@ -132,10 +215,7 @@ def supplemental(name, args, minimum, *, tilelang=False):
         status = subprocess.run(cmd, env=env, stdout=log, stderr=subprocess.STDOUT).returncode
     if status:
         raise RuntimeError(f"{name} failed ({status}):\n" + report.with_suffix(".log").read_text()[-4000:])
-    cases = test_outcomes(report)
-    if len(cases) < minimum or any(v != "passed" for v in cases.values()):
-        raise ValueError(f"{name} incomplete: {len(cases)} cases, expected at least {minimum} all passing")
-    return cases
+    return supplemental_result(report)
 
 
 def inside():
@@ -158,21 +238,16 @@ def inside():
         raise RuntimeError(f"Tests absent from the image: {touched}")
     # Fail early on new GPU and wire-format cases before the full gate.
     extras = {}
-    for name, selections, minimum, preload in [
-        ("variant", [HERE / "test_native_variant.py"], 2, True),
-        ("warmup", [RC2 / "tools/test_graph_warmup_offline.py"], 7, True),
-        ("encoder", [RC2 / "tools/test_encoder_offline.py"], 87, False),
+    for name, selections, preload in [
+        ("variant", [HERE / "test_native_variant.py"], True),
+        ("warmup", [RC2 / "tools/test_graph_warmup_offline.py"], True),
+        ("encoder", [RC2 / "tools/test_encoder_offline.py"], False),
         ("parser", [ROOT / "experiments/2026-11-28-1126-attention/tools/test_recorded_output.py",
                     "tests/parser/engine/test_deepseek_v41_token_provenance.py",
-                    "tests/parser/engine/test_token_id_scanner.py"], 104, False),
+                    "tests/parser/engine/test_token_id_scanner.py"], False),
     ]:
-        cases = supplemental(name, selections, minimum, tilelang=preload)
-        extras[name] = len(cases)
-        if name == "encoder":
-            extras["real_tokenizer"] = sum("checkpoint_tokenizer" in node for _, node in cases)
-            if extras["real_tokenizer"] < 37:
-                raise ValueError("Not all official 1017 tokenizer cases ran")
-        print(f"{name}: {len(cases)} passed", flush=True)
+        extras.update(supplemental(name, selections, tilelang=preload))
+        print(f"{name}: {extras[name]} passed", flush=True)
     write(out / "supplemental.json", extras)
     subprocess.run([sys.executable, "/b/release_test_runner.py", str(out / "manifest.json"),
                     str(out / "component")], check=True)
@@ -254,6 +329,11 @@ def launch(window_id, image_id, directory):
 if __name__ == "__main__":
     if sys.argv[1:] == ["--inside"]:
         inside()
+    elif sys.argv[1:2] == ["--audit-only"]:
+        parser = argparse.ArgumentParser(description="Recheck saved JUnit and JSON receipts without starting a container.")
+        parser.add_argument("directory", type=Path)
+        args = parser.parse_args(sys.argv[2:])
+        print(json.dumps(audit_saved(args.directory), indent=2))
     else:
         parser = argparse.ArgumentParser(description=__doc__)
         parser.add_argument("window")
