@@ -1,0 +1,89 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 11:58:48 +0900
+Subject: [PATCH] Warm each graph input variant before its first capture
+
+Base: 1126 Attention RC3 vLLM 9a71ded060b015e40f721a9caf506e43bd1f3fa0.
+
+The capture descriptors distinguish optional model inputs. Include that distinction in the warmup family so eager initialization runs before each variant is first captured. Sizes within the same family still share one warmup.
+
+Quality: Only capture setup changes. Forward computation, graph selection and request outputs retain the same implementation.
+
+Tests: Exercise both sampled profiling and full capture on a CPU fake device. Assert an actual eager forward for stock and active before the first captured forward of each variant, deduplication across sizes, and preservation of all graphs.
+
+Upstream status: Downstream integration with the optional Attention input.
+---
+ ...gpu_model_runner_v2_cudagraph_profiling.py | 31 +++++++++++++++++++
+ vllm/v1/worker/gpu/cudagraph_utils.py         |  6 ++--
+ 2 files changed, 34 insertions(+), 3 deletions(-)
+
+diff --git a/tests/v1/worker/test_gpu_model_runner_v2_cudagraph_profiling.py b/tests/v1/worker/test_gpu_model_runner_v2_cudagraph_profiling.py
+index 7ed68c804e0d427b193ce6185cd21463e32152a8..61ed55ee8df69d55a18f59b108edee46246672f4 100644
+--- a/tests/v1/worker/test_gpu_model_runner_v2_cudagraph_profiling.py
++++ b/tests/v1/worker/test_gpu_model_runner_v2_cudagraph_profiling.py
+@@ -25,6 +25,7 @@ from vllm.compilation.counter import compilation_counter
+ from vllm.config.compilation import CUDAGraphMode
+ from vllm.v1.worker.gpu import cudagraph_utils as cgu
+ from vllm.v1.worker.gpu import model_runner as mrv2
++from vllm.v1.worker.gpu.model_input_variant import expand_capture_variants
+ 
+ GLOBAL_POOL = "global-pool"
+ THROWAWAY_POOL = "throwaway-pool"
+@@ -1294,3 +1295,33 @@ def test_full_capture_warms_once_per_descriptor_family(monkeypatch):
+     assert warmup_tokens == [128]
+     assert capture_tokens == [128, 64, 32, 1]
+     assert len(manager.graphs) == 4
++
++
++@pytest.mark.parametrize("profiling", [False, True])
++def test_full_capture_warms_each_input_variant_before_capture(monkeypatch, profiling):
++    device = _FakeDevice()
++    _patch_capture(monkeypatch, device)
++    monkeypatch.setattr(cgu, "_new_cudagraph", object)
++    manager = _CapturingGraphManager([128, 32])
++    descs = expand_capture_variants(manager._capture_descs[CUDAGraphMode.FULL], (0, 1))
++    manager._capture_descs[CUDAGraphMode.FULL] = descs
++    manager._sample_full_descs = profiling
++    calls: list[tuple[int, int, str]] = []
++
++    def create_forward_fn(desc, warmup):
++        def forward(_mode):
++            assert warmup != device.capturing
++            phase = "capture" if device.capturing else "warmup"
++            calls.append((desc.model_input_variant, desc.num_tokens, phase))
++
++        return forward
++
++    manager.capture(create_forward_fn)
++
++    for variant in (0, 1):
++        assert [(size, phase) for v, size, phase in calls if v == variant] == [
++            (128, "warmup"),
++            (128, "capture"),
++            (32, "capture"),
++        ]
++    assert set(manager.graphs) == set(descs)
+diff --git a/vllm/v1/worker/gpu/cudagraph_utils.py b/vllm/v1/worker/gpu/cudagraph_utils.py
+index e4c2c5599298b9c7b05b39fab52c5f97df497f91..d426b235981f7b9cc2614a12b074315ed2b0af49 100644
+--- a/vllm/v1/worker/gpu/cudagraph_utils.py
++++ b/vllm/v1/worker/gpu/cudagraph_utils.py
+@@ -832,9 +832,8 @@ class CudaGraphManager:
+         Args:
+             create_forward_fn: Factory that prepares inputs (OUTSIDE graph) and
+                 returns a forward_fn. For FULL and breakable PIECEWISE modes,
+-                it is invoked once with warmup=True and again with warmup=False
+-                because attention backends may mutate or lazily initialize
+-                metadata during warmup.
++                each descriptor family warms once. Each capture then gets fresh
++                inputs because backends can mutate metadata during warmup.
+         """
+         with graph_capture(device=self.device), ExitStack() as stack:
+             if self.ubatch_runner is not None:
+@@ -862,6 +861,7 @@ class CudaGraphManager:
+                         desc.max_query_len,
+                         desc.num_active_loras,
+                         desc.num_ubatches,
++                        desc.model_input_variant,
+                     )
+                     need_warmup = (
+                         desc.cg_mode == CUDAGraphMode.PIECEWISE

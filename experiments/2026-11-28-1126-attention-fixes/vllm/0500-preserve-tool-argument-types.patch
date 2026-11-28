@@ -1,0 +1,302 @@
+From 0fe3e15550e4c6c2c59dc32cb124510494142903 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 12:01:05 +0900
+Subject: [PATCH] Preserve business JSON types in DSML tool history
+
+Base: 1126 Attention RC3 vLLM 9a71ded060b015e40f721a9caf506e43bd1f3fa0.
+
+Decode only the protocol-level function.arguments envelope before protecting control spellings. Share the existing one- and two-pass decoder and original non-object fallback with the DSML renderer. Literal, nested and schema values retain their types and source text; caller inputs remain unchanged.
+
+Tests: CPU tokenizer render and token-ID regressions for native, JSON and double-JSON arguments, both thinking modes, literal image spellings, schema examples and non-object fallback.
+
+Upstream status: downstream candidate.
+---
+ tests/tokenizers_/test_deepseek_v41.py   | 101 +++++++++++++++++++++++
+ vllm/tokenizers/deepseek_v41.py          |  53 ++++--------
+ vllm/tokenizers/deepseek_v41_encoding.py |  36 ++++----
+ 3 files changed, 138 insertions(+), 52 deletions(-)
+
+diff --git a/tests/tokenizers_/test_deepseek_v41.py b/tests/tokenizers_/test_deepseek_v41.py
+index 46b4e20f09fbd90c7c8a49fa7b5ab70a71877791..381b07d78dd6dfbba020587d4002c4fc60e97729 100644
+--- a/tests/tokenizers_/test_deepseek_v41.py
++++ b/tests/tokenizers_/test_deepseek_v41.py
+@@ -1548,3 +1548,104 @@ def test_protocol_identifiers_remain_validated_when_controls_are_present():
+     tokenizer = byte_level_tokenizer()
+     with pytest.raises(ValueError, match="Invalid role"):
+         tokenizer.apply_chat_template([{"role": INJECTED, "content": "question"}])
++
++
++@pytest.mark.parametrize("encoding_depth", [0, 1, 2])
++@pytest.mark.parametrize("thinking", [True, False])
++def test_tool_argument_types_survive_control_protection(encoding_depth, thinking):
++    tokenizer = byte_level_tokenizer()
++    payload = '{ "a": 1 }'
++    nested = {"arguments": payload}
++
++    def history(key):
++        arguments = {
++            "arguments": payload,
++            "role": nested,
++            "type": [nested, 42, None, False],
++            key: True,
++        }
++        for _ in range(encoding_depth):
++            arguments = json.dumps(arguments, ensure_ascii=True)
++        return [
++            {"role": "user", "content": "question"},
++            _lookup_call(arguments),
++            {"role": "tool", "tool_call_id": "c1", "content": "result"},
++            {"role": "user", "content": "continue"},
++        ]
++
++    messages = history("<｜User｜>")
++    original = copy.deepcopy(messages)
++    schema = {"type": "object", "examples": [nested]}
++    options = {"thinking": thinking, "response_format": schema}
++    text = tokenizer.apply_chat_template(messages, tokenize=False, **options)
++    ids = tokenizer.apply_chat_template(messages, **options)
++    assert messages == original
++    assert json.dumps(schema) in text
++    assert f'name="arguments" string="true">{payload}</' in text
++    assert f'name="role" string="false">{json.dumps(nested)}</' in text
++    values = json.dumps([nested, 42, None, False])
++    assert f'name="type" string="false">{values}</' in text
++    assert 'name="<｜User｜>" string="false">true</' in text
++    assert tokenizer.decode(ids) == text
++    neutral = tokenizer.apply_chat_template(history("ordinary"), **options)
++    controls = set(tokenizer.get_added_vocab().values())
++    assert [i for i in ids if i in controls] == [i for i in neutral if i in controls]
++
++
++def test_literal_image_preserves_json_argument_strings():
++    tokenizer = byte_level_tokenizer()
++    image_id = tokenizer.get_added_vocab()[IMAGE_PLACEHOLDER]
++    payload = r'{"text":"\u3042"}'
++
++    def envelopes(args):
++        literal = json.dumps(args, ensure_ascii=False)
++        return (args, literal, json.dumps(args), json.dumps(literal, ensure_ascii=True))
++
++    for marker in (IMAGE_PLACEHOLDER, IMAGE_PLACEHOLDER_TEXT):
++        arguments = {
++            "arguments": payload,
++            "role": marker,
++            "type": [{"arguments": payload, marker: marker}],
++            marker: "value",
++        }
++        expected_type = json.dumps(
++            [{"arguments": payload, IMAGE_PLACEHOLDER_TEXT: IMAGE_PLACEHOLDER_TEXT}]
++        )
++        for wire in envelopes(arguments):
++            for has_image in (False, True):
++                parts = [{"type": "text", "text": "question"}]
++                if has_image:
++                    parts.append({"type": "image_url", "image_url": {"url": "h.png"}})
++                messages = [{"role": "user", "content": parts}, _lookup_call(wire)]
++                before = copy.deepcopy(messages)
++                text = tokenizer.apply_chat_template(messages, tokenize=False)
++                ids = tokenizer.apply_chat_template(messages)
++                assert messages == before
++                assert ids.count(image_id) == int(has_image)
++                assert text.count(IMAGE_PLACEHOLDER) == int(has_image)
++                assert f'name="arguments" string="true">{payload}</' in text
++                assert f'name="role" string="true">{IMAGE_PLACEHOLDER_TEXT}</' in text
++                assert f'name="type" string="false">{expected_type}</' in text
++                assert f'name="{IMAGE_PLACEHOLDER_TEXT}" string="true">value</' in text
++                assert tokenizer.decode(ids) == text
++
++    # The two spellings render the same way. Keep each distinct input entry.
++    keys = (IMAGE_PLACEHOLDER, IMAGE_PLACEHOLDER_TEXT)
++    for order in (keys, keys[::-1]):
++        conflict = {key + "</think>": i for i, key in enumerate(order)}
++        nested = json.dumps([conflict], ensure_ascii=False).replace(
++            IMAGE_PLACEHOLDER, IMAGE_PLACEHOLDER_TEXT
++        )
++        for wire in envelopes({**conflict, "type": [conflict]}):
++            messages = [{"role": "user", "content": "q"}, _lookup_call(wire)]
++            text = tokenizer.apply_chat_template(messages, tokenize=False)
++            for i in (0, 1):
++                assert f'name="{IMAGE_PLACEHOLDER_TEXT}</think>" string="false">{i}</' in text
++            assert f'name="type" string="false">{nested}</' in text
++            assert IMAGE_PLACEHOLDER not in text
++
++
++@pytest.mark.parametrize("raw", ["not json", "[1, 2]", '"plain"'])
++def test_non_object_tool_arguments_keep_raw_string(raw):
++    messages = [{"role": "user", "content": INJECTED}, _lookup_call(raw)]
++    assert f'name="arguments" string="true">{raw}</' in render(messages)
+diff --git a/vllm/tokenizers/deepseek_v41.py b/vllm/tokenizers/deepseek_v41.py
+index 3fe7e9bf262606bb83c21df59717d0cf150322ff..7c61c974ee502942a026dd29638b4052260d29d9 100644
+--- a/vllm/tokenizers/deepseek_v41.py
++++ b/vllm/tokenizers/deepseek_v41.py
+@@ -19,6 +19,7 @@ from .deepseek_v41_encoding import (
+     IMAGE_PLACEHOLDER_TEXT,
+     REASONING_EFFORT_MAPPINGS,
+     USER_SP_TOKEN,
++    decode_tool_arguments,
+     encode_messages,
+     eos_token,
+     insert_system_prompt_fields,
+@@ -269,21 +270,12 @@ class _ControlSpellings:
+     def active(self) -> bool:
+         return bool(self.originals)
+ 
+-    def _protect(self, value: Any, key: str | None = None) -> Any:
++    def _protect(self, value: Any) -> Any:
+         if isinstance(value, str):
+             assert self.pattern is not None
+-            if key == "arguments":
+-                decoded = _decode_arguments(value)
+-                if isinstance(decoded, dict):
+-                    # The encoder decodes JSON arguments before rendering them, so
+-                    # spellings escaped in the JSON are protected in decoded form.
+-                    return self._protect(decoded)
+             return self.pattern.sub(self._sentinel, value)
+         if isinstance(value, Mapping):
+-            return {
+-                self._protect(k): self._protect(item, k)
+-                for k, item in value.items()
+-            }
++            return {self._protect(k): self._protect(item) for k, item in value.items()}
+         if isinstance(value, (list, tuple)):
+             return type(value)(self._protect(item) for item in value)
+         return value
+@@ -301,29 +293,25 @@ class _ControlSpellings:
+         )
+ 
+ 
+-def _decode_arguments(arguments: str) -> Any:
+-    """Tool-call arguments as `encode_arguments_to_dsml` decodes them."""
+-    for _ in range(2):
+-        if not isinstance(arguments, str):
+-            break
+-        try:
+-            arguments = json.loads(arguments)
+-        except Exception:
+-            break
+-    return arguments
++def _decode_message_tool_calls(message: ChatCompletionMessageParam):
++    """Expose escaped control spellings at the protocol's JSON boundary only."""
++    if message.get("role") != "assistant" or not (calls := message.get("tool_calls")):
++        return message
++    decoded_calls = []
++    for call in calls:
++        function = call["function"]
++        arguments = decode_tool_arguments(function["arguments"])
++        decoded_calls.append({**call, "function": {**function, "arguments": arguments}})
++    return {**message, "tool_calls": decoded_calls}
+ 
+ 
+-def _strings(value: Any, key: str | None = None):
++def _strings(value: Any):
+     if isinstance(value, str):
+         yield value
+-        if key == "arguments" and "\\" in value:
+-            decoded = _decode_arguments(value)
+-            if not isinstance(decoded, str):
+-                yield from _strings(decoded)
+     elif isinstance(value, Mapping):
+         for k, item in value.items():
+             yield from _strings(k)
+-            yield from _strings(item, k)
++            yield from _strings(item)
+     elif isinstance(value, (list, tuple)):
+         for item in value:
+             yield from _strings(item)
+@@ -357,7 +345,7 @@ def _plain_text_encoder(tokenizer: Any) -> Callable[[list[str]], list[list[int]]
+     return encode
+ 
+ 
+-def _escape_image_token_literal(value: Any, key: str | None = None) -> Any:
++def _escape_image_token_literal(value: Any) -> Any:
+     """Escape the image token's literal spelling in request text to plain text.
+ 
+     The image token in the prompt comes only from image content blocks. The
+@@ -367,16 +355,10 @@ def _escape_image_token_literal(value: Any, key: str | None = None) -> Any:
+     encoder cannot mistake it for an image reference (spark-ds41f issue #1031).
+     """
+     if isinstance(value, str):
+-        if key == "arguments" and IMAGE_PLACEHOLDER not in value and "\\" in value:
+-            decoded = _decode_arguments(value)
+-            if isinstance(decoded, dict):
+-                return _escape_image_token_literal(decoded)
+         return value.replace(IMAGE_PLACEHOLDER, IMAGE_PLACEHOLDER_TEXT)
+     if isinstance(value, Mapping):
+         return {
+-            k: item
+-            if k in _PROTOCOL_KEYS
+-            else _escape_image_token_literal(item, k)
++            k: item if k in _PROTOCOL_KEYS else _escape_image_token_literal(item)
+             for k, item in value.items()
+         }
+     if isinstance(value, (list, tuple)):
+@@ -748,6 +730,7 @@ def get_deepseek_v41_tokenizer(tokenizer: HfTokenizer) -> HfTokenizer:
+             # Control-token spellings in request text must not become control
+             # tokens (see _ControlSpellings); requests without any are unchanged.
+             controls = _ControlSpellings(text_spellings)
++            messages = [_decode_message_tool_calls(message) for message in messages]
+             protected = controls.protect(messages, tools, response_format)
+             messages, tools, response_format = protected
+             # The generic renderer's conversation has already flattened text
+diff --git a/vllm/tokenizers/deepseek_v41_encoding.py b/vllm/tokenizers/deepseek_v41_encoding.py
+index 4193aeec3a0925787731ea04f2dbd22271bc3b39..4a025440fcd60cdd6d8603a7ddfa3cc3744a4fae 100644
+--- a/vllm/tokenizers/deepseek_v41_encoding.py
++++ b/vllm/tokenizers/deepseek_v41_encoding.py
+@@ -513,6 +513,19 @@ def render_tools(tools: List[Dict[str, Union[str, Dict[str, Any]]]]) -> str:
+     )
+ 
+ 
++def decode_tool_arguments(raw: Any) -> Dict[str, Any]:
++    """Unwrap an OpenAI function.arguments envelope, preserving the DSML fallback."""
++    arguments = raw
++    for _ in range(2):
++        if not isinstance(arguments, str):
++            break
++        try:
++            arguments = json.loads(arguments)
++        except (ValueError, RecursionError):
++            break
++    return arguments if isinstance(arguments, dict) else {"arguments": raw}
++
++
+ def encode_arguments_to_dsml(tool_call: Dict[str, Any]) -> str:
+     """Encode tool call arguments into V4.1 DSML parameter format."""
+     p_dsml_template = (
+@@ -521,28 +534,17 @@ def encode_arguments_to_dsml(tool_call: Dict[str, Any]) -> str:
+     )
+     P_dsml_strs = []
+ 
+-    arguments = tool_call["arguments"]
+-    if not isinstance(arguments, dict):
+-        # Tolerate JSON strings, including double-encoded ones.
+-        for _ in range(2):
+-            if isinstance(arguments, str):
+-                try:
+-                    arguments = json.loads(arguments)
+-                except Exception:
+-                    break
+-            else:
+-                break
+-        if not isinstance(arguments, dict):
+-            arguments = {"arguments": tool_call["arguments"]}
+-
+-    for k, v in arguments.items():
++    for k, v in decode_tool_arguments(tool_call["arguments"]).items():
++        # Escape arbitrary business keys and values after serialization. Renaming
++        # keys in the mapping would discard a value if the two spellings coexist.
++        value = v if isinstance(v, str) else to_json(v)
+         P_dsml_strs.append(
+             p_dsml_template.format(
+                 dsml_token=dsml_token,
+                 tool_parameter_tag_name=tool_parameter_tag_name,
+-                key=k,
++                key=str(k).replace(IMAGE_PLACEHOLDER, IMAGE_PLACEHOLDER_TEXT),
+                 is_str="true" if isinstance(v, str) else "false",
+-                value=v if isinstance(v, str) else to_json(v),
++                value=value.replace(IMAGE_PLACEHOLDER, IMAGE_PLACEHOLDER_TEXT),
+             )
+         )
+ 
+-- 
+2.54.0 (Apple Git-157)
+

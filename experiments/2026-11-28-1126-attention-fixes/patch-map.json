@@ -1,0 +1,26 @@
+{
+  "parent_deployment": "63b0c0d31e4378888951295325179211d00cbde6",
+  "parent_head": "9a71ded060b015e40f721a9caf506e43bd1f3fa0",
+  "parent_tree": "7c445f265a7bf21b4860735cd972b326968150c3",
+  "retained_parent_series": "experiments/2026-11-28-1126-attention-rc3/vllm/series",
+  "retained_patch_count": 750,
+  "added": [
+    {
+      "patch": "0500-preserve-tool-argument-types.patch",
+      "commit": "51e8721df00faf8c087244a9e2d060f689832a10"
+    },
+    {
+      "patch": "0501-isolate-attention-prefix-cache-keys.patch",
+      "commit": "7be85759ab9018509c5225026afa76fd0dd66635"
+    },
+    {
+      "patch": "0502-warm-each-graph-input-variant.patch",
+      "commit": "44f3ee2ea2acd7aa70b12053c7f11d4d3d37c90c"
+    }
+  ],
+  "patch_count": 753,
+  "patch_head": "44f3ee2ea2acd7aa70b12053c7f11d4d3d37c90c",
+  "expected_tree": "4d6258642732812b83af5ce8be482f00e575fec5",
+  "patch_series": "experiments/2026-11-28-1126-attention-fixes/vllm/series",
+  "patchset_sha256": "d408b1c06d2818f2634cd3be070f60851f9d17ef336bb2732d45ed86eb713cce"
+}

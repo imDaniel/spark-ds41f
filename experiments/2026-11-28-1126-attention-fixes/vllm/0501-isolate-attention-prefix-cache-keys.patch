@@ -1,0 +1,436 @@
+From 858f4438d77738cc43e3e302e84f8e614daa23c0 Mon Sep 17 00:00:00 2001
+From: Daniel <2660793+imDaniel@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 12:02:29 +0900
+Subject: [PATCH] Isolate Attention prefix hashes from caller salts at engine
+ admission
+
+Base: qualified downstream vLLM 9a71ded060b015e40f721a9caf506e43bd1f3fa0 with the independent tool-encoding fix applied first.
+
+Keep the wire salt as supplied. Load the pinned Attention profile in the core and derive a tagged first-block key before scheduling, including prebuilt EngineCoreRequests. The parent hash carries this dimension through subsequent blocks. Preserve stock, zero scale, explicit caller salts, and the existing GLP key.
+
+Quality: isolates KV produced by different projected writers without changing logits, profile contents or accepted strengths. Existing active hashes change namespace; the eligible site configuration uses process-local prefix caches.
+
+Tests: steering request and profile CPU contracts plus real EngineCoreRequest preprocessing and two-block hash chains for normal and prebuilt requests with SHA-256 pickle and CBOR.
+
+Upstream status: downstream Attention maintenance.
+---
+ .../test_deepseek_v4_1_steering_profile.py    |  7 +-
+ .../test_deepseek_v4_1_steering_request.py    | 21 ++---
+ tests/v1/core/test_kv_cache_utils.py          | 90 +++++++++++++++++++
+ vllm/models/deepseek_v4_1/steering/cache.py   | 28 ------
+ vllm/models/deepseek_v4_1/steering/config.py  |  8 +-
+ vllm/models/deepseek_v4_1/steering/request.py |  7 ++
+ vllm/v1/core/kv_cache_utils.py                | 14 ++-
+ vllm/v1/engine/core.py                        | 14 ++-
+ vllm/v1/engine/input_processor.py             |  6 +-
+ vllm/v1/request.py                            | 21 ++++-
+ 10 files changed, 157 insertions(+), 59 deletions(-)
+ delete mode 100644 vllm/models/deepseek_v4_1/steering/cache.py
+
+diff --git a/tests/models/test_deepseek_v4_1_steering_profile.py b/tests/models/test_deepseek_v4_1_steering_profile.py
+index f782f539e530a7637484df1b0ad6f6deddf6ee90..2a77136be17878d6e73e1eb4cfc0afe6907241d6 100644
+--- a/tests/models/test_deepseek_v4_1_steering_profile.py
++++ b/tests/models/test_deepseek_v4_1_steering_profile.py
+@@ -244,7 +244,6 @@ def test_bundled_selection_checks_index_name_size_and_content(tmp_path):
+ 
+ @pytest.mark.parametrize("scale", [0, 1, 4])
+ def test_1022_template_rebinding_separates_active_prefix_cache(tmp_path, scale):
+-    from ds41_steering_test.cache import steering_cache_salt
+     from ds41_steering_test.request import parse_selection
+ 
+     old_path, old_sha = make_profile(tmp_path)
+@@ -261,9 +260,9 @@ def test_1022_template_rebinding_separates_active_prefix_cache(tmp_path, scale):
+     with pytest.raises(ValueError, match="chat_template_sha256 identity mismatch"):
+         load_profile(new_path, new_sha, expected_template_identity="c" * 64)
+     args = {"steering_profile": old.profile_id, "steering_scale": scale}
+-    before = steering_cache_salt("caller", parse_selection(args, old))
+-    after = steering_cache_salt("caller", parse_selection(args, new))
++    before = parse_selection(args, old).cache_key
++    after = parse_selection(args, new).cache_key
+     if scale:
+         assert before != after
+     else:
+-        assert before == after == "caller"
++        assert before is after is None
+diff --git a/tests/models/test_deepseek_v4_1_steering_request.py b/tests/models/test_deepseek_v4_1_steering_request.py
+index e3f347cb4fce7a9cff8c85ae122907cfe5271ffe..374867e89928d5af9af00414f767d84826995301 100644
+--- a/tests/models/test_deepseek_v4_1_steering_request.py
++++ b/tests/models/test_deepseek_v4_1_steering_request.py
+@@ -11,7 +11,6 @@ from vllm.exceptions import VLLMValidationError
+ 
+ # The helper installs this isolated package before its contracts are imported.
+ # isort: off
+-from ds41_steering_test.cache import steering_cache_salt
+ from ds41_steering_test.config import admit
+ from ds41_steering_test.request import STOCK, parse_selection
+ # isort: on
+@@ -81,25 +80,21 @@ def test_cache_identity_and_admission_do_not_mutate_caller(tmp_path):
+     p = valid_profile(tmp_path)
+     args = {"steering_profile": p.profile_id, "steering_scale": 0.5, "other": 7}
+     clone = SimpleNamespace(extra_args=args)
+-    salt = admit(clone, p, "caller")
++    selected = admit(clone, p)
+     assert args == {"steering_profile": p.profile_id, "steering_scale": 0.5, "other": 7}
+     assert clone.extra_args is not args
+-    assert salt != "caller"
++    assert selected.cache_key == ("ds41-attention-v1", p.identity, selected.scale_bits)
+     a = parse_selection(args, p)
+     b = parse_selection({**args, "steering_scale": 0.50000000000001}, p)
+-    assert a == b and steering_cache_salt("caller", a) == steering_cache_salt(
+-        "caller", b
+-    )
+-    assert len({steering_cache_salt(x, a) for x in [None, "", "caller", "other"]}) == 4
+-    assert steering_cache_salt(None, STOCK) is None
+-    assert steering_cache_salt("caller", STOCK) == "caller"
++    assert a == b and a.cache_key == b.cache_key == selected.cache_key
++    assert STOCK.cache_key is None
+     c = parse_selection({**args, "steering_scale": 0.75}, p)
+-    assert steering_cache_salt("caller", c) != salt
++    assert c.cache_key != selected.cache_key
+     for kw in [{"resumable": True}, {"session_id": "existing"}]:
+         with pytest.raises(VLLMValidationError):
+-            admit(clone, p, "caller", **kw)
++            admit(clone, p, **kw)
+     # Ordinary streamed HTTP responses do not set resumable/session_id.
+-    assert admit(clone, p, "caller", resumable=False) == salt
++    assert admit(clone, p, resumable=False) == selected
+ 
+ 
+ @pytest.mark.parametrize(
+@@ -118,7 +113,7 @@ def test_admission_errors_keep_the_client_error_classification(tmp_path, args):
+     from vllm.exceptions import VLLMClientError
+ 
+     with pytest.raises(VLLMClientError) as caught:
+-        admit(SimpleNamespace(extra_args=args), valid_profile(tmp_path), "caller")
++        admit(SimpleNamespace(extra_args=args), valid_profile(tmp_path))
+     assert caught.value.parameter in ("steering_profile", "steering_scale")
+ 
+ 
+diff --git a/tests/v1/core/test_kv_cache_utils.py b/tests/v1/core/test_kv_cache_utils.py
+index 18e82203b6281e15081c808ceb4f430025bc9638..2a583812ec3c3e371a8d610538a2b8a1e0174b99 100644
+--- a/tests/v1/core/test_kv_cache_utils.py
++++ b/tests/v1/core/test_kv_cache_utils.py
+@@ -950,6 +950,96 @@ def test_generate_block_hash_extra_keys_lora():
+     assert extra_keys is None
+ 
+ 
++@pytest.mark.parametrize("hash_fn", [sha256, sha256_cbor])
++@pytest.mark.parametrize("via_frontend", [False, True], ids=["prebuilt", "frontend"])
++def test_attention_cache_namespace(hash_fn, via_frontend):
++    from unittest.mock import Mock
++
++    from vllm import weightless
++    from vllm.exceptions import VLLMValidationError
++    from vllm.inputs.engine import tokens_input
++    from vllm.v1.engine import EngineCoreRequest
++    from vllm.v1.engine.core import EngineCore
++    from vllm.v1.engine.input_processor import InputProcessor
++
++    profile = SimpleNamespace(profile_id="test-profile", identity="a" * 64)
++    core = SimpleNamespace(
++        mm_receiver_cache=None,
++        _steering_profile=profile,
++        request_block_hasher=get_request_block_hasher(3, hash_fn),
++    )
++    processor = Mock(spec=InputProcessor)
++    processor._steering_profile = profile
++    processor.vllm_config = SimpleNamespace(
++        parallel_config=SimpleNamespace(
++            data_parallel_size=1, data_parallel_size_local=1, local_engines_only=True
++        )
++    )
++    processor.tokenizer = None
++    processor.renderer = Mock()
++    processor.renderer.get_eos_token_id.return_value = None
++    processor.generation_config_fields = {}
++
++    def submit(extra=None, salt=None, **kwargs):
++        params = SamplingParams(max_tokens=1, extra_args=extra)
++        tokens = list(range(6))
++        if via_frontend:
++            prompt = tokens_input(tokens, cache_salt=salt)
++            wire = InputProcessor.process_inputs(
++                processor, "request", prompt, params, ("generate",), **kwargs
++            )
++        else:
++            wire = EngineCoreRequest(
++                request_id="request",
++                prompt_token_ids=tokens,
++                mm_features=None,
++                sampling_params=params,
++                pooling_params=None,
++                arrival_time=0.0,
++                lora_request=None,
++                cache_salt=salt,
++                data_parallel_rank=None,
++                **kwargs,
++            )
++        assert wire.cache_salt == salt
++        req, _ = EngineCore.preprocess_add_request(core, wire)
++        assert req.cache_salt == salt
++        return req
++
++    args = {"steering_profile": profile.profile_id}
++    stock = submit()
++    active = submit(args)
++    assert stock.block_hashes == submit({**args, "steering_scale": 0}).block_hashes
++    assert active.block_hashes == submit({**args, "steering_scale": 1}).block_hashes
++    assert len(active.block_hashes) == len(stock.block_hashes) == 2
++    assert all(x != y for x, y in zip(active.block_hashes, stock.block_hashes))
++    assert active.block_hashes != submit({**args, "steering_scale": 2}).block_hashes
++
++    key = ("ds41-attention-v1", profile.identity, 0x3F800000)
++
++    def first_keys(req):
++        return generate_block_hash_extra_keys(req, 0, 3, 0)[0]
++
++    assert first_keys(active) == (key,)
++    assert generate_block_hash_extra_keys(active, 3, 6, 0) == (None, 0)
++    # Caller salts keep their own slot, including text matching the internal tag.
++    assert first_keys(submit(salt=key[0])) == (key[0],)
++    assert first_keys(submit(args, "caller")) == ("caller", key)
++    salted_chains = {
++        tuple(submit(args, salt).block_hashes) for salt in (None, "", "caller", "other")
++    }
++    assert len(salted_chains) == 4
++    glp = submit({weightless.EXTRA_ARGS_KEY: True}, "caller")
++    assert first_keys(glp) == ("caller", weightless.BLOCK_HASH_KEY)
++
++    with pytest.raises(VLLMValidationError, match="unknown steering_profile"):
++        submit({"steering_profile": "unknown"})
++    with pytest.raises(VLLMValidationError, match="resumable"):
++        submit(args, resumable=True)
++    with pytest.raises(VLLMValidationError, match="resumable"):
++        submit(args, session_id="session")
++
++
+ @pytest.mark.parametrize("hash_fn", [sha256, sha256_cbor])
+ def test_hash_block_tokens(hash_fn):
+     parent_block_hash = BlockHash(b"123")
+diff --git a/vllm/models/deepseek_v4_1/steering/cache.py b/vllm/models/deepseek_v4_1/steering/cache.py
+deleted file mode 100644
+index 796934d7ce15d2ef6a83d1b9007ff68acd6bfbb4..0000000000000000000000000000000000000000
+--- a/vllm/models/deepseek_v4_1/steering/cache.py
++++ /dev/null
+@@ -1,28 +0,0 @@
+-# SPDX-License-Identifier: Apache-2.0
+-# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+-"""A content-addressed namespace in the existing request cache-salt field."""
+-
+-import hashlib
+-import struct
+-
+-from .request import SteeringSelection
+-
+-
+-def steering_cache_salt(
+-    original: str | None, selection: SteeringSelection
+-) -> str | None:
+-    if not selection.active:
+-        return original
+-    if original is not None and not isinstance(original, str):
+-        raise ValueError("cache_salt must be a string or absent")
+-    salt = b"" if original is None else original.encode("utf-8")
+-    identity = bytes.fromhex(selection.profile_identity)
+-    payload = (
+-        b"DS41-STEERING-CACHE\x00\x01"
+-        + identity
+-        + struct.pack("!I", selection.scale_bits)
+-        + bytes([original is not None])
+-        + struct.pack("!Q", len(salt))
+-        + salt
+-    )
+-    return "ds41-steering-v1:" + hashlib.sha256(payload).hexdigest()
+diff --git a/vllm/models/deepseek_v4_1/steering/config.py b/vllm/models/deepseek_v4_1/steering/config.py
+index 092f4e123ce2b7d79ee25aa93df669519c6485eb..0e81df1447dae3a725b57a0b982270ac5d8faa68 100644
+--- a/vllm/models/deepseek_v4_1/steering/config.py
++++ b/vllm/models/deepseek_v4_1/steering/config.py
+@@ -94,10 +94,9 @@ def load_configured_profile(vllm_config):
+     return profile
+ 
+ 
+-def admit(sampling_params, profile, original_salt, *, resumable=False, session_id=None):
++def admit(sampling_params, profile, *, resumable=False, session_id=None):
+     from vllm.exceptions import VLLMValidationError
+ 
+-    from .cache import steering_cache_salt
+     from .request import parse_selection
+ 
+     try:
+@@ -117,7 +116,6 @@ def admit(sampling_params, profile, original_salt, *, resumable=False, session_i
+         or "steering_scale" in sampling_params.extra_args
+     ):
+         extra = dict(sampling_params.extra_args)
+-        if "steering_profile" in extra or "steering_scale" in extra:
+-            extra["steering_scale"] = selection.scale
++        extra["steering_scale"] = selection.scale
+         sampling_params.extra_args = extra
+-    return steering_cache_salt(original_salt, selection)
++    return selection
+diff --git a/vllm/models/deepseek_v4_1/steering/request.py b/vllm/models/deepseek_v4_1/steering/request.py
+index 4c2b02ddb0b2e3f4bbfc20220150b65437c18b73..327ccdd69b4655b9fda3510043c945c228a69820 100644
+--- a/vllm/models/deepseek_v4_1/steering/request.py
++++ b/vllm/models/deepseek_v4_1/steering/request.py
+@@ -19,6 +19,13 @@ class SteeringSelection:
+     profile_identity: str | None = None
+     scale_bits: int = 0
+ 
++    @property
++    def cache_key(self) -> tuple[str, str, int] | None:
++        if not self.active:
++            return None
++        assert self.profile_identity is not None
++        return ("ds41-attention-v1", self.profile_identity, self.scale_bits)
++
+     @property
+     def scale(self) -> float:
+         return struct.unpack("!f", struct.pack("!I", self.scale_bits))[0]
+diff --git a/vllm/v1/core/kv_cache_utils.py b/vllm/v1/core/kv_cache_utils.py
+index 0581e38f7f55d05e7216bd9f34237100aa865015..05f1231d6b69d9d3ef93e21bd32d48d7dbf05819 100644
+--- a/vllm/v1/core/kv_cache_utils.py
++++ b/vllm/v1/core/kv_cache_utils.py
+@@ -619,9 +619,17 @@ def generate_block_hash_extra_keys(
+         request, start_token_idx, end_token_idx, start_mm_idx
+     )
+     lora_extra_keys: list[str] = _gen_lora_extra_hash_keys(request)
+-    cache_salt_keys: list[str] = (
+-        [request.cache_salt] if (start_token_idx == 0 and request.cache_salt) else []
+-    )
++    cache_salt_keys: list[Any] = []
++    if start_token_idx == 0:
++        attention_key = getattr(request, "attention_cache_key", None)
++        # Stock preserves the existing salt convention. Active requests retain
++        # the distinction between an absent and an explicitly empty salt.
++        if request.cache_salt or (
++            attention_key is not None and request.cache_salt is not None
++        ):
++            cache_salt_keys.append(request.cache_salt)
++        if attention_key is not None:
++            cache_salt_keys.append(attention_key)
+     prompt_embeds_keys = _gen_prompt_embeds_extra_hash_keys(
+         request, start_token_idx, end_token_idx
+     )
+diff --git a/vllm/v1/engine/core.py b/vllm/v1/engine/core.py
+index b4ae855eb859103f14138b39c8b12b48c9e9ec79..755147c6daeb04862e1cb33adf8e243b2c7f127c 100644
+--- a/vllm/v1/engine/core.py
++++ b/vllm/v1/engine/core.py
+@@ -257,6 +257,16 @@ class EngineCore:
+         )
+         self.is_pooling_model = vllm_config.model_config.runner_type == "pooling"
+ 
++        # The core owns prefix hashing. Resolve the profile here as well as at
++        # the API frontend: preconstructed EngineCoreRequests skip that frontend.
++        self._steering_profile = None
++        if "ds41_steering" in (vllm_config.additional_config or {}):
++            from vllm.models.deepseek_v4_1.steering.config import (
++                load_configured_profile,
++            )
++
++            self._steering_profile = load_configured_profile(vllm_config)
++
+         self.request_block_hasher: Callable[[Request], list[BlockHash]] | None = None
+         if vllm_config.cache_config.enable_prefix_caching or kv_connector is not None:
+             caching_hash_fn = get_hash_fn_by_name(
+@@ -1246,7 +1256,9 @@ class EngineCore:
+                 request.mm_features
+             )
+ 
+-        req = Request.from_engine_core_request(request, self.request_block_hasher)
++        req = Request.from_engine_core_request(
++            request, self.request_block_hasher, steering_profile=self._steering_profile
++        )
+         if req.use_structured_output:
+             # Note on thread safety: no race condition.
+             # `grammar_init` is only invoked in input processing thread. For
+diff --git a/vllm/v1/engine/input_processor.py b/vllm/v1/engine/input_processor.py
+index 90cd21eec6ae90a4ad466e90f599a0cdf403730d..7723faacc76a71fb694b3d30b1fd7e5bc950ff15 100644
+--- a/vllm/v1/engine/input_processor.py
++++ b/vllm/v1/engine/input_processor.py
+@@ -427,17 +427,15 @@ class InputProcessor:
+                     )
+                 )
+ 
+-        cache_salt = decoder_input.get("cache_salt")
+         extra_args = sampling_params.extra_args if sampling_params is not None else None
+         if extra_args and (
+             "steering_profile" in extra_args or "steering_scale" in extra_args
+         ):
+             from vllm.models.deepseek_v4_1.steering.config import admit
+ 
+-            cache_salt = admit(
++            admit(
+                 sampling_params,
+                 self._steering_profile,
+-                cache_salt,
+                 resumable=resumable,
+                 session_id=session_id,
+             )
+@@ -452,7 +450,7 @@ class InputProcessor:
+             pooling_params=pooling_params,
+             arrival_time=arrival_time,
+             lora_request=lora_request,
+-            cache_salt=cache_salt,
++            cache_salt=decoder_input.get("cache_salt"),
+             priority=priority,
+             data_parallel_rank=data_parallel_rank,
+             trace_headers=trace_headers,
+diff --git a/vllm/v1/request.py b/vllm/v1/request.py
+index 48a2c843d4e9d1ae67080f0598bed0e2e2328e8f..cb70d3c4a3067648233af03757a92fadaa0d4075 100644
+--- a/vllm/v1/request.py
++++ b/vllm/v1/request.py
+@@ -31,6 +31,7 @@ from vllm.v1.utils import ConstantList
+ 
+ if TYPE_CHECKING:
+     from vllm.lora.request import LoRARequest
++    from vllm.models.deepseek_v4_1.steering.profile import SteeringProfile
+     from vllm.v1.core.boundary_checkpoint import BoundaryCheckpoint
+     from vllm.v1.core.kv_cache_utils import BlockHash
+     from vllm.v1.outputs import LogprobsLists, LogprobsTensors
+@@ -86,6 +87,7 @@ class Request:
+         reasoning_parser_kwargs: dict[str, Any] | None = None,
+         abort_immediately: bool = False,
+         recurrent_instruction_boundary: int | None = None,
++        steering_profile: "SteeringProfile | None" = None,
+     ) -> None:
+         self.request_id = request_id
+         self.client_index = client_index
+@@ -206,7 +208,21 @@ class Request:
+ 
+         self.spec_token_ids: list[int] = []
+         self.num_computed_tokens = 0
+-        self.cache_salt: str | None = cache_salt
++        if cache_salt is not None and not isinstance(cache_salt, str):
++            raise ValueError("cache_salt must be a string or absent")
++        self.cache_salt = cache_salt
++        self.attention_cache_key: tuple[str, str, int] | None = None
++        extra = sampling_params.extra_args if sampling_params is not None else None
++        if extra and ("steering_profile" in extra or "steering_scale" in extra):
++            from vllm.models.deepseek_v4_1.steering.config import admit
++
++            selection = admit(
++                sampling_params,
++                steering_profile,
++                resumable=resumable,
++                session_id=session_id,
++            )
++            self.attention_cache_key = selection.cache_key
+ 
+         # Multi-modal related
+         self.mm_features = mm_features or []
+@@ -317,6 +333,8 @@ class Request:
+         cls,
+         request: EngineCoreRequest,
+         block_hasher: Callable[["Request"], list["BlockHash"]] | None,
++        *,
++        steering_profile: "SteeringProfile | None" = None,
+     ) -> "Request":
+         return cls(
+             request_id=request.request_id,
+@@ -330,6 +348,7 @@ class Request:
+             arrival_time=request.arrival_time,
+             lora_request=request.lora_request,
+             cache_salt=request.cache_salt,
++            steering_profile=steering_profile,
+             priority=request.priority,
+             trace_headers=request.trace_headers,
+             block_hasher=block_hasher,
